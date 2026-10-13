@@ -1,4 +1,4 @@
-package com.example.bajet
+package my.minned.bajet
 
 import io.flutter.embedding.android.FlutterActivity
 
