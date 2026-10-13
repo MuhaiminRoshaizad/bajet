@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Private data, secrets and signing material
+*.private.*
+.env
+.env.*
+dart_defines*.json
+*.jks
+*.keystore
+/android/key.properties
