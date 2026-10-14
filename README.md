@@ -4,8 +4,10 @@ A personal money app for one person on one phone. Log a spend in seconds, see
 what is left for the week, and know whether the current savings goal is on
 track.
 
-bajet is offline-first: everything is stored on the device, there is no
-account, and v1 never touches the network.
+bajet is offline-first: everything is stored on the device and there is no
+account. The only network use is the optional coach, which sends a question
+and a summary of the week and month to Anthropic with the owner's own API key;
+without a key, nothing leaves the phone.
 
 ## What it does
 
@@ -25,13 +27,16 @@ account, and v1 never touches the network.
 - **Sunday check-in** compares the balance with the bank and logs any gap.
 - **Home screen**: a widget with what is left of the week, and long-press
   shortcuts, both opening the logger filled in from a favourite.
-- **Coach** builds a plain-text summary of the week to paste into a chat.
+- **Coach** answers questions about your money from this week's and month's
+  figures, using your own Anthropic key, up to ten a day. The week's summary
+  can also be copied to paste anywhere.
 - **Settings** holds every amount and rule: allowance and buffer, goals, bills
   and income, one-off events, the weekly rhythm, favourites, and backups.
 
 ## Status
 
-Version 1.2 is in daily use on Android. An in-app coach follows; see
+Version 1.3 is in daily use on Android. A demo mode for screenshots and CI
+follow; see
 [release phases](docs/architecture.md#release-phases).
 
 ## Documentation
