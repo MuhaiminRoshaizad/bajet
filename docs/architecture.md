@@ -54,6 +54,7 @@ lib/
     database/           drift tables, the database class and its defaults
     money/              sen ↔ RM formatting, the only place money becomes text
     theme/              colour, spacing, radii and motion tokens
+    validation/         input formatters and validators
     widgets/            widgets shared by two or more features
   features/
     <feature>/

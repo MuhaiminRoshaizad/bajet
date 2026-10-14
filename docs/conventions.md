@@ -20,6 +20,8 @@ without a custom pattern.
 - Converted to ringgit only when formatting for display.
 - Typed amounts fill from the right like a cashier's till: typing `1`, `5`, `0`
   gives `RM1.50`. A field can never hold a malformed amount.
+  `RinggitCentsFormatter` in `core/validation/` does this for text fields, and
+  `RinggitCentsFormatter.parse` reads the sen back.
 
 ## Generated code
 
