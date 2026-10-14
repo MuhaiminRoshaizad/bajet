@@ -51,6 +51,7 @@ entries on or after `opening_date`.
 | `category_key`      | text  | References `categories.key`                 |
 | `label`             | text? | Short name, e.g. "Coffee", for item stats   |
 | `note`              | text? | Free text, never used in statistics         |
+| `receipt`           | text? | File name of an attached image, see below   |
 | `recurring_item_id` | int?  | Set when the entry confirms a recurring item|
 | `created_at`        | time  |                                             |
 
@@ -150,5 +151,11 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 1. Any change to a table bumps it and adds a step to
-`AppDatabase.migration`, tested before release.
+`schemaVersion` is 2. Any change to a table bumps it and adds a step to
+`AppDatabase.migration`, tested against a saved copy of the old schema
+(`test/core/fixtures/schema_v<n>.sql`) before release.
+
+| Version | Change                                  |
+|---------|-----------------------------------------|
+| 1       | First release                           |
+| 2       | `entries.receipt`, for attached receipts |

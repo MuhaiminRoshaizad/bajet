@@ -1481,6 +1481,17 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _receiptMeta = const VerificationMeta(
+    'receipt',
+  );
+  @override
+  late final GeneratedColumn<String> receipt = GeneratedColumn<String>(
+    'receipt',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _recurringItemIdMeta = const VerificationMeta(
     'recurringItemId',
   );
@@ -1516,6 +1527,7 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     categoryKey,
     label,
     note,
+    receipt,
     recurringItemId,
     createdAt,
   ];
@@ -1563,6 +1575,12 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
       context.handle(
         _noteMeta,
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('receipt')) {
+      context.handle(
+        _receiptMeta,
+        receipt.isAcceptableOrUnknown(data['receipt']!, _receiptMeta),
       );
     }
     if (data.containsKey('recurring_item_id')) {
@@ -1621,6 +1639,10 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      receipt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt'],
+      ),
       recurringItemId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}recurring_item_id'],
@@ -1650,9 +1672,12 @@ class Entry extends DataClass implements Insertable<Entry> {
   final int amount;
   final String categoryKey;
 
-  /// A short name such as "Lunch", used for habit stats like average lunch.
+  /// A short name such as "Coffee", used for per-item stats like average cost.
   final String? label;
   final String? note;
+
+  /// File name of an attached receipt image in the app's receipts folder.
+  final String? receipt;
 
   /// Set when the entry confirms a recurring item.
   final int? recurringItemId;
@@ -1665,6 +1690,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     required this.categoryKey,
     this.label,
     this.note,
+    this.receipt,
     this.recurringItemId,
     required this.createdAt,
   });
@@ -1688,6 +1714,9 @@ class Entry extends DataClass implements Insertable<Entry> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    if (!nullToAbsent || receipt != null) {
+      map['receipt'] = Variable<String>(receipt);
+    }
     if (!nullToAbsent || recurringItemId != null) {
       map['recurring_item_id'] = Variable<int>(recurringItemId);
     }
@@ -1706,6 +1735,9 @@ class Entry extends DataClass implements Insertable<Entry> {
           ? const Value.absent()
           : Value(label),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      receipt: receipt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receipt),
       recurringItemId: recurringItemId == null && nullToAbsent
           ? const Value.absent()
           : Value(recurringItemId),
@@ -1728,6 +1760,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       categoryKey: serializer.fromJson<String>(json['categoryKey']),
       label: serializer.fromJson<String?>(json['label']),
       note: serializer.fromJson<String?>(json['note']),
+      receipt: serializer.fromJson<String?>(json['receipt']),
       recurringItemId: serializer.fromJson<int?>(json['recurringItemId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1745,6 +1778,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       'categoryKey': serializer.toJson<String>(categoryKey),
       'label': serializer.toJson<String?>(label),
       'note': serializer.toJson<String?>(note),
+      'receipt': serializer.toJson<String?>(receipt),
       'recurringItemId': serializer.toJson<int?>(recurringItemId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1758,6 +1792,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     String? categoryKey,
     Value<String?> label = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    Value<String?> receipt = const Value.absent(),
     Value<int?> recurringItemId = const Value.absent(),
     DateTime? createdAt,
   }) => Entry(
@@ -1768,6 +1803,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     categoryKey: categoryKey ?? this.categoryKey,
     label: label.present ? label.value : this.label,
     note: note.present ? note.value : this.note,
+    receipt: receipt.present ? receipt.value : this.receipt,
     recurringItemId: recurringItemId.present
         ? recurringItemId.value
         : this.recurringItemId,
@@ -1786,6 +1822,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           : this.categoryKey,
       label: data.label.present ? data.label.value : this.label,
       note: data.note.present ? data.note.value : this.note,
+      receipt: data.receipt.present ? data.receipt.value : this.receipt,
       recurringItemId: data.recurringItemId.present
           ? data.recurringItemId.value
           : this.recurringItemId,
@@ -1803,6 +1840,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           ..write('categoryKey: $categoryKey, ')
           ..write('label: $label, ')
           ..write('note: $note, ')
+          ..write('receipt: $receipt, ')
           ..write('recurringItemId: $recurringItemId, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1818,6 +1856,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     categoryKey,
     label,
     note,
+    receipt,
     recurringItemId,
     createdAt,
   );
@@ -1832,6 +1871,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           other.categoryKey == this.categoryKey &&
           other.label == this.label &&
           other.note == this.note &&
+          other.receipt == this.receipt &&
           other.recurringItemId == this.recurringItemId &&
           other.createdAt == this.createdAt);
 }
@@ -1844,6 +1884,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
   final Value<String> categoryKey;
   final Value<String?> label;
   final Value<String?> note;
+  final Value<String?> receipt;
   final Value<int?> recurringItemId;
   final Value<DateTime> createdAt;
   const EntriesCompanion({
@@ -1854,6 +1895,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     this.categoryKey = const Value.absent(),
     this.label = const Value.absent(),
     this.note = const Value.absent(),
+    this.receipt = const Value.absent(),
     this.recurringItemId = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -1865,6 +1907,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     required String categoryKey,
     this.label = const Value.absent(),
     this.note = const Value.absent(),
+    this.receipt = const Value.absent(),
     this.recurringItemId = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : occurredOn = Value(occurredOn),
@@ -1879,6 +1922,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Expression<String>? categoryKey,
     Expression<String>? label,
     Expression<String>? note,
+    Expression<String>? receipt,
     Expression<int>? recurringItemId,
     Expression<DateTime>? createdAt,
   }) {
@@ -1890,6 +1934,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       if (categoryKey != null) 'category_key': categoryKey,
       if (label != null) 'label': label,
       if (note != null) 'note': note,
+      if (receipt != null) 'receipt': receipt,
       if (recurringItemId != null) 'recurring_item_id': recurringItemId,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -1903,6 +1948,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Value<String>? categoryKey,
     Value<String?>? label,
     Value<String?>? note,
+    Value<String?>? receipt,
     Value<int?>? recurringItemId,
     Value<DateTime>? createdAt,
   }) {
@@ -1914,6 +1960,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       categoryKey: categoryKey ?? this.categoryKey,
       label: label ?? this.label,
       note: note ?? this.note,
+      receipt: receipt ?? this.receipt,
       recurringItemId: recurringItemId ?? this.recurringItemId,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -1947,6 +1994,9 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (receipt.present) {
+      map['receipt'] = Variable<String>(receipt.value);
+    }
     if (recurringItemId.present) {
       map['recurring_item_id'] = Variable<int>(recurringItemId.value);
     }
@@ -1966,6 +2016,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
           ..write('categoryKey: $categoryKey, ')
           ..write('label: $label, ')
           ..write('note: $note, ')
+          ..write('receipt: $receipt, ')
           ..write('recurringItemId: $recurringItemId, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -5092,6 +5143,7 @@ typedef $$EntriesTableCreateCompanionBuilder =
       required String categoryKey,
       Value<String?> label,
       Value<String?> note,
+      Value<String?> receipt,
       Value<int?> recurringItemId,
       Value<DateTime> createdAt,
     });
@@ -5104,6 +5156,7 @@ typedef $$EntriesTableUpdateCompanionBuilder =
       Value<String> categoryKey,
       Value<String?> label,
       Value<String?> note,
+      Value<String?> receipt,
       Value<int?> recurringItemId,
       Value<DateTime> createdAt,
     });
@@ -5186,6 +5239,11 @@ class $$EntriesTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receipt => $composableBuilder(
+    column: $table.receipt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5280,6 +5338,11 @@ class $$EntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get receipt => $composableBuilder(
+    column: $table.receipt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5361,6 +5424,9 @@ class $$EntriesTableAnnotationComposer
 
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get receipt =>
+      $composableBuilder(column: $table.receipt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -5447,6 +5513,7 @@ class $$EntriesTableTableManager
                 Value<String> categoryKey = const Value.absent(),
                 Value<String?> label = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<String?> receipt = const Value.absent(),
                 Value<int?> recurringItemId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => EntriesCompanion(
@@ -5457,6 +5524,7 @@ class $$EntriesTableTableManager
                 categoryKey: categoryKey,
                 label: label,
                 note: note,
+                receipt: receipt,
                 recurringItemId: recurringItemId,
                 createdAt: createdAt,
               ),
@@ -5469,6 +5537,7 @@ class $$EntriesTableTableManager
                 required String categoryKey,
                 Value<String?> label = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<String?> receipt = const Value.absent(),
                 Value<int?> recurringItemId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => EntriesCompanion.insert(
@@ -5479,6 +5548,7 @@ class $$EntriesTableTableManager
                 categoryKey: categoryKey,
                 label: label,
                 note: note,
+                receipt: receipt,
                 recurringItemId: recurringItemId,
                 createdAt: createdAt,
               ),

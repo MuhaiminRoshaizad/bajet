@@ -67,6 +67,9 @@ class Entries extends Table {
   TextColumn get label => text().nullable()();
   TextColumn get note => text().nullable()();
 
+  /// File name of an attached receipt image in the app's receipts folder.
+  TextColumn get receipt => text().nullable()();
+
   /// Set when the entry confirms a recurring item.
   IntColumn get recurringItemId => integer().nullable().references(RecurringItems, #id)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

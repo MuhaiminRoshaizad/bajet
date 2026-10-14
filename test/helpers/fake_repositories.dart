@@ -92,7 +92,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     final id = _nextId++;
     _entries.value = [
       ..._entries.value,
-      Entry(id: id, day: d.day, isIncome: d.isIncome, amount: d.amount, categoryKey: d.categoryKey, label: _blank(d.label), note: _blank(d.note)),
+      Entry(id: id, day: d.day, isIncome: d.isIncome, amount: d.amount, categoryKey: d.categoryKey, label: _blank(d.label), note: _blank(d.note), receipt: d.receipt),
     ];
     return id;
   }

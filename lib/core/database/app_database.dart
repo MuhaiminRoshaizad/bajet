@@ -14,13 +14,17 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
           await _seedDefaults();
+        },
+        // One step per version, so any older database climbs to the latest.
+        onUpgrade: (m, from, to) async {
+          if (from < 2) await m.addColumn(entries, entries.receipt);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

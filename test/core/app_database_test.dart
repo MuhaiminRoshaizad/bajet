@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bajet/core/database/app_database.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,8 +56,19 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 1);
+    expect(db.schemaVersion, 2);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
-}
 
+  test('a version 1 database gains the receipt column and keeps its entries', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v1.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key) VALUES ('2026-07-01', 'expense', 450, 'food')");
+      raw.execute('PRAGMA user_version = 1');
+    }));
+    addTearDown(old.close);
+    final entry = await old.select(old.entries).getSingle();
+    expect((entry.amount, entry.receipt), (450, null));
+  });
+}

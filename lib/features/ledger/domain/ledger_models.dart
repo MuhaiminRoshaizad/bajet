@@ -35,6 +35,7 @@ class Entry {
     required this.categoryKey,
     this.label,
     this.note,
+    this.receipt,
   });
 
   final int id;
@@ -44,6 +45,9 @@ class Entry {
   final String categoryKey;
   final String? label;
   final String? note;
+
+  /// File name of an attached receipt image, if any.
+  final String? receipt;
 
   int get signedAmount => isIncome ? amount : -amount;
 }
@@ -57,6 +61,7 @@ class EntryDraft {
     required this.categoryKey,
     this.label,
     this.note,
+    this.receipt,
   });
 
   final DateTime day;
@@ -65,6 +70,7 @@ class EntryDraft {
   final String categoryKey;
   final String? label;
   final String? note;
+  final String? receipt;
 }
 
 class Favourite {

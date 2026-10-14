@@ -59,6 +59,7 @@ class DriftLedgerRepository implements LedgerRepository {
           categoryKey: d.categoryKey,
           label: Value(_blankToNull(d.label)),
           note: Value(_blankToNull(d.note)),
+          receipt: Value(d.receipt),
         ),
       );
 
@@ -72,6 +73,7 @@ class DriftLedgerRepository implements LedgerRepository {
         categoryKey: Value(e.categoryKey),
         label: Value(_blankToNull(e.label)),
         note: Value(_blankToNull(e.note)),
+        receipt: Value(e.receipt),
       ),
     );
   }
@@ -89,6 +91,7 @@ class DriftLedgerRepository implements LedgerRepository {
           categoryKey: e.categoryKey,
           label: Value(e.label),
           note: Value(e.note),
+          receipt: Value(e.receipt),
         ),
       );
 
@@ -100,6 +103,7 @@ class DriftLedgerRepository implements LedgerRepository {
         categoryKey: r.categoryKey,
         label: r.label,
         note: r.note,
+        receipt: r.receipt,
       );
 }
 
