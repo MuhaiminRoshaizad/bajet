@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/routes.dart';
-import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/backup/presentation/backup_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
 import '../features/coach/presentation/coach_screen.dart';
+import '../features/insights/presentation/insights_screen.dart';
 import '../features/ledger/presentation/history_screen.dart';
 import '../features/plan/presentation/runway_screen.dart';
 import '../features/settings/presentation/events_screen.dart';
@@ -66,10 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]),
           _branch(Routes.runway, const RunwayScreen()),
-          _branch(
-            Routes.insights,
-            const ComingSoon(title: 'Insights', icon: Icons.bar_chart_rounded, message: 'Where the money goes, by category, week and month. Arrives in v1.1.'),
-          ),
+          _branch(Routes.insights, const InsightsScreen()),
           _branch(Routes.coach, const CoachScreen()),
         ],
       ),

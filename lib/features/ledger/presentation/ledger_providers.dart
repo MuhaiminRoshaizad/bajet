@@ -16,6 +16,9 @@ final favouritesProvider = StreamProvider<List<Favourite>>((ref) => ref.watch(fa
 /// Null until first-run setup has stored an opening balance.
 final balanceProvider = StreamProvider<int?>((ref) => ref.watch(ledgerRepositoryProvider).watchBalance());
 
+/// Every entry, newest first, for History and Insights.
+final allEntriesProvider = StreamProvider<List<Entry>>((ref) => ref.watch(ledgerRepositoryProvider).watchSince(DateTime.utc(2000)));
+
 /// Entries from the last 60 days, newest first; enough for Today, the
 /// weekly ring and recent history without loading the whole ledger.
 final recentEntriesProvider = StreamProvider<List<Entry>>((ref) {

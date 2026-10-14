@@ -13,7 +13,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('tab-Insights')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Arrives in v1.1'), findsOneWidget);
+    expect(find.text('This month'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('tab-Coach')));
     await tester.pumpAndSettle();

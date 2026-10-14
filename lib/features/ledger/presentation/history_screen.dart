@@ -12,8 +12,6 @@ import 'ledger_providers.dart';
 import 'log_sheet.dart';
 
 /// Every entry, newest first, grouped by day.
-final allEntriesProvider = StreamProvider<List<Entry>>((ref) => ref.watch(ledgerRepositoryProvider).watchSince(DateTime.utc(2000)));
-
 sealed class _Row {}
 
 class _DayRow extends _Row {
