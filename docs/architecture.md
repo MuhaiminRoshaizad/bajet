@@ -75,6 +75,7 @@ A folder under `core/` appears only once two features need it.
 | `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
 | `settings` | The Settings hub behind Today's gear: allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites |
 | `backup` | JSON export through the share sheet and restore from a picked file |
+| `checkin` | The Sunday check-in: compare with the bank, log any gap, look back at the week |
 | `coach`  | The Coach tab: a plain-text week summary to copy into a chat; an in-app coach is planned for v1.3 |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal, or a backup restore instead |
 
@@ -88,8 +89,8 @@ the first with an in-memory database and the second to pin the date.
 one bottom bar, each keeping its own stack and scroll position. Routes are
 declared once in `lib/app/router.dart`; their paths live in
 `lib/core/navigation/routes.dart` so a feature can link to another without
-importing the router. History (`Routes.history`) and Settings (`Routes.settings`) sit under
-Today's branch. Screens planned for a later release show
+importing the router. History (`Routes.history`), the check-in (`Routes.checkin`)
+and Settings (`Routes.settings`) sit under Today's branch. Screens planned for a later release show
 an honest placeholder that names the release, never a dead control.
 
 Until setup has stored an opening balance, every route redirects to

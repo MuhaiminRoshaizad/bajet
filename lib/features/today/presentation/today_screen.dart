@@ -48,6 +48,7 @@ class TodayScreen extends ConsumerWidget {
             spacing: AppSpacing.l,
             children: [
               _BalanceCard(balance: balance.value, rule: rule),
+              if (today.weekday == DateTime.sunday) const _CheckinCard(),
               for (final item in due) _DueCard(item: item),
               if (days != null && weekSpent != null && settings != null)
                 SoftCard(child: WeeklyRing(days: days, spent: weekSpent, cap: settings.weeklyCap)),
@@ -127,6 +128,37 @@ class _BalanceCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// On Sundays, a nudge to compare with the bank before the week turns over.
+class _CheckinCard extends StatelessWidget {
+  const _CheckinCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return SoftCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Sunday check-in', style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('Match bajet with your bank and look back at the week.', style: TextStyle(color: c.muted, fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s),
+          FilledButton.tonal(
+            onPressed: () => context.push(Routes.checkin),
+            style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+            child: const Text('Start'),
+          ),
         ],
       ),
     );

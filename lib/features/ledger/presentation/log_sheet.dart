@@ -17,21 +17,33 @@ import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
 import 'ledger_providers.dart';
 
-/// Opens the logger, or with [editing] the same form filled in with an
-/// existing entry. Saving shows a snackbar with undo on [messengerContext]'s
-/// scaffold, which outlives the sheet.
-Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing}) => showModalBottomSheet<void>(
+/// What to fill the logger with when it opens from somewhere that already
+/// knows part of the entry. Nothing is saved until Log is pressed.
+class LogPrefill {
+  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label});
+
+  final bool isIncome;
+  final int? amount;
+  final String? categoryKey;
+  final String? label;
+}
+
+/// Opens the logger, with [prefill] filled in, or with [editing] the same
+/// form filled in with an existing entry. Saving shows a snackbar with undo
+/// on [messengerContext]'s scaffold, which outlives the sheet.
+Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing, LogPrefill? prefill}) => showModalBottomSheet<void>(
       context: messengerContext,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing),
+      builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing, prefill: prefill),
     );
 
 class _LogSheet extends ConsumerStatefulWidget {
-  const _LogSheet({required this.messenger, this.editing});
+  const _LogSheet({required this.messenger, this.editing, this.prefill});
 
   final ScaffoldMessengerState messenger;
   final Entry? editing;
+  final LogPrefill? prefill;
 
   @override
   ConsumerState<_LogSheet> createState() => _LogSheetState();
@@ -62,6 +74,13 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _label = e.label;
       _note.text = e.note ?? '';
       _day = e.day;
+    }
+    final p = widget.prefill;
+    if (p != null) {
+      _isIncome = p.isIncome;
+      _digits = p.amount == null ? '' : '${p.amount}';
+      _categoryKey = p.categoryKey;
+      _label = p.label;
     }
   }
 

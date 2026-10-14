@@ -137,4 +137,9 @@ all of it is skipped and content appears in place.
   at once would lose the gesture to the page's scrolling. Reorderable lists
   also expose move up and move down to TalkBack. Bought goals move to a Done
   list with their date and price.
+- The Sunday check-in compares bajet's balance with the bank. Money missing
+  from the bank is logged in one tap as Untracked, with undo; extra money in
+  the bank opens the logger as income, filled in, so the owner still picks
+  what it was. Today shows a check-in card on Sundays; Settings always links
+  to it.
 - Touch targets are at least 48 dp.

@@ -54,7 +54,12 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.m),
-          SettingsGroup(children: [SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup))]),
+          SettingsGroup(
+            children: [
+              SettingsRow(title: 'Sunday check-in', value: 'Match your bank', onTap: () => context.push(Routes.checkin)),
+              SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup)),
+            ],
+          ),
           const SizedBox(height: AppSpacing.m),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
