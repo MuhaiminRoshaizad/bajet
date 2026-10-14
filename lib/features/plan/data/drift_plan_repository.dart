@@ -85,6 +85,11 @@ class DriftPlanRepository implements PlanRepository {
           );
 
   @override
+  Future<void> setRecurringActive(int id, {required bool active}) async {
+    await (_db.update(_db.recurringItems)..where((r) => r.id.equals(id))).write(RecurringItemsCompanion(active: Value(active)));
+  }
+
+  @override
   Future<void> confirmRecurring(int id, {required DateTime paidOn}) => _db.transaction(() async {
         final item = await (_db.select(_db.recurringItems)..where((r) => r.id.equals(id))).getSingle();
         await _db.into(_db.entries).insert(

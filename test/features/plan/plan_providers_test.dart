@@ -95,4 +95,15 @@ void main() {
     await plan().saveRule(const WeeklyRule(weekday: 3, label: 'Midweek', type: DayType.flex, plannedSpend: 500));
     expect((await settle(todayRuleProvider))!.label, 'Midweek');
   });
+
+  test('a paused recurring item is neither due nor projected', () async {
+    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
+    final id = await plan().addRecurring(name: 'Gym', isIncome: false, amount: 9000, categoryKey: 'bills', nextDue: d(2026, 10, 10));
+    await plan().addGoal(name: 'Laptop', price: 10000, targetDate: d(2026, 11, 30));
+    await plan().setRecurringActive(id, active: false);
+
+    expect(await settle(dueRecurringProvider), isEmpty);
+    expect((await settle(projectionProvider))!.goals.single.leftAfterBuying, 100000 - 10000);
+    expect((await plan().watchRecurring().first).single.active, isFalse);
+  });
 }

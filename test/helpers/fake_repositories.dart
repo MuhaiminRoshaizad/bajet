@@ -127,6 +127,12 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   }
 
   @override
+  Future<void> setRecurringActive(int id, {required bool active}) async => _recurring.value = [
+        for (final r in _recurring.value)
+          r.id == id ? RecurringItem(id: r.id, name: r.name, amount: r.amount, isIncome: r.isIncome, nextDue: r.nextDue, active: active) : r,
+      ];
+
+  @override
   Future<void> confirmRecurring(int id, {required DateTime paidOn}) async {
     final item = _recurring.value.firstWhere((r) => r.id == id);
     await add(EntryDraft(day: paidOn, isIncome: item.isIncome, amount: item.amount, categoryKey: 'bills', label: item.name));

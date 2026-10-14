@@ -31,6 +31,11 @@ abstract interface class PlanRepository {
     required DateTime nextDue,
   });
 
+  /// Pausing keeps the item and its history but stops it being projected or
+  /// offered for confirmation. Items are paused rather than deleted because
+  /// confirmed entries refer to them.
+  Future<void> setRecurringActive(int id, {required bool active});
+
   /// Logs the occurrence due on [nextDue] as a real entry dated [paidOn] and
   /// moves the item's next due date forward one month, in one transaction.
   Future<void> confirmRecurring(int id, {required DateTime paidOn});
