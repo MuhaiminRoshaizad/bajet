@@ -8,10 +8,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
-import 'settings_screen.dart';
 
 /// One-off future money: a service, a gift, a bonus that may or may not come.
 class EventsScreen extends ConsumerWidget {
@@ -31,7 +31,7 @@ class EventsScreen extends ConsumerWidget {
             child: Text('Mark one done when it happens, and log the money as usual.', style: TextStyle(color: c.muted)),
           ),
           if (events.isNotEmpty)
-            SettingsGroup(
+            CardGroup(
               children: [
                 for (final e in events)
                   ListTile(

@@ -6,10 +6,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
-import 'settings_screen.dart';
 
 /// Shortcuts that fill in the logger. They never save anything themselves.
 class FavouritesScreen extends ConsumerWidget {
@@ -30,7 +30,7 @@ class FavouritesScreen extends ConsumerWidget {
             child: Text('Tapping one in the logger fills in its amount and category. Nothing is saved until you press Log.', style: TextStyle(color: c.muted)),
           ),
           if (favourites.isNotEmpty)
-            SettingsGroup(
+            CardGroup(
               children: [
                 for (final f in favourites)
                   ListTile(

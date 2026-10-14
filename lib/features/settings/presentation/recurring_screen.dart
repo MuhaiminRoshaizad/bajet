@@ -8,10 +8,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
-import 'settings_screen.dart';
 
 /// Monthly bills and income. Each falls due on the same day every month and
 /// appears on Today to be confirmed when it arrives.
@@ -32,7 +32,7 @@ class RecurringScreen extends ConsumerWidget {
             child: Text('Each one repeats monthly. Switch one off to pause it; its past payments stay in History.', style: TextStyle(color: c.muted)),
           ),
           if (items.isNotEmpty)
-            SettingsGroup(
+            CardGroup(
               children: [
                 for (final item in items)
                   SwitchListTile(

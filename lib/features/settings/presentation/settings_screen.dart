@@ -8,7 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
-import '../../../core/widgets/soft.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -31,7 +31,7 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
-          SettingsGroup(
+          CardGroup(
             children: [
               SettingsRow(
                 title: 'Weekly allowance and buffer',
@@ -54,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.m),
-          SettingsGroup(
+          CardGroup(
             children: [
               SettingsRow(title: 'Sunday check-in', value: 'Match your bank', onTap: () => context.push(Routes.checkin)),
               SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup)),
@@ -76,29 +76,6 @@ class SettingsScreen extends ConsumerWidget {
         useSafeArea: true,
         builder: (_) => _AllowanceSheet(settings: settings),
       );
-}
-
-class SettingsGroup extends StatelessWidget {
-  const SettingsGroup({super.key, required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final shape = BorderRadius.circular(AppRadii.card);
-    // A raised card whose inside is a Material, so each row's ink ripple
-    // paints on it.
-    return DecoratedBox(
-      decoration: BoxDecoration(borderRadius: shape, boxShadow: softShadows(c, AppDepth.card)),
-      child: Material(
-        color: c.background,
-        borderRadius: shape,
-        clipBehavior: Clip.antiAlias,
-        child: Column(children: [for (final (i, row) in children.indexed) ...[if (i > 0) Divider(color: c.line, indent: AppSpacing.l), row]]),
-      ),
-    );
-  }
 }
 
 class SettingsRow extends StatelessWidget {

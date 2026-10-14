@@ -8,9 +8,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
-import 'settings_screen.dart';
 
 /// What the owner is saving for, funded in priority order.
 class GoalsScreen extends ConsumerWidget {
@@ -32,7 +32,7 @@ class GoalsScreen extends ConsumerWidget {
             child: Text('Goals are bought in priority order. Marking one bought logs its price and moves it out of the plan.', style: TextStyle(color: c.muted)),
           ),
           if (goals.isNotEmpty)
-            SettingsGroup(
+            CardGroup(
               children: [
                 ReorderableListView(
                   shrinkWrap: true,
@@ -93,7 +93,7 @@ class GoalsScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.xxl, AppSpacing.xs, AppSpacing.s),
               child: Text('Done', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
             ),
-            SettingsGroup(
+            CardGroup(
               children: [
                 for (final g in achieved)
                   ListTile(

@@ -6,9 +6,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
-import 'settings_screen.dart';
 
 const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const _typeLabels = {DayType.zero: 'No spending', DayType.spend: 'Spending', DayType.flex: 'Flexible'};
@@ -32,7 +32,7 @@ class RhythmScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
             child: Text('What each day usually costs. Planned in total: ${Money.format(weekTotal)} a week.', style: TextStyle(color: c.muted)),
           ),
-          SettingsGroup(
+          CardGroup(
             children: [
               for (final r in rules)
                 ListTile(
