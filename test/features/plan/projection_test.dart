@@ -88,4 +88,39 @@ void main() {
     expect(p.days, hasLength(31));
     expect(p.goals, isEmpty);
   });
+
+  group('what if', () {
+    int leftWith(WhatIf w) => project(
+          balance: 180000,
+          today: d(2026, 10, 14),
+          rules: rules,
+          recurring: recurring,
+          events: events,
+          goals: [goal],
+          buffer: 100000,
+          whatIf: w,
+        ).goals.single.leftAfterBuying;
+    final base = leftWith(WhatIf.none);
+
+    test('spending RM7 more a week costs RM1 a day to buy day', () {
+      // 14/10/2026 to 30/01/2027 is 109 days.
+      expect(base - leftWith(const WhatIf(weeklyChange: 700)), 109 * 100);
+    });
+
+    test('spending less never takes a day below zero', () {
+      // RM70 less a week is RM10 a day: the 78 workdays drop to zero, the 16
+      // Saturdays to RM5, and the Sundays were already zero.
+      final saved = leftWith(const WhatIf(weeklyChange: -7000)) - base;
+      expect(saved, (78 * 1000) + (16 * 1000));
+    });
+
+    test('a monthly cost lands on each 1st after today', () {
+      // 01/11, 01/12 and 01/01 fall before buy day.
+      expect(base - leftWith(const WhatIf(monthlyCost: 2000)), 3 * 2000);
+    });
+
+    test('unconfirmed income can be counted', () {
+      expect(leftWith(const WhatIf(countUnconfirmed: true)) - base, 50000);
+    });
+  });
 }

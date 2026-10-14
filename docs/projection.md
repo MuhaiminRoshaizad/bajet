@@ -36,6 +36,19 @@ for each day:
 
 A goal is **on track** when what is left after buying is at least the buffer.
 
+## What if
+
+`project` also takes a `WhatIf`, for trying a change on Runway without saving
+it:
+
+| Field              | Effect                                                        |
+|--------------------|---------------------------------------------------------------|
+| `weeklyChange`     | Spread over the week with `spreadOverWeek` and added to each day's planned spend; a day never goes below zero |
+| `monthlyCost`      | Subtracted on the 1st of every month after today              |
+| `countUnconfirmed` | Planned events marked as not counted are counted too          |
+
+`WhatIf.none` leaves the projection exactly as the plan has it.
+
 ## Why `nextDue` and not "this month"
 
 A bill paid early still falls due later in the same month. Giving each

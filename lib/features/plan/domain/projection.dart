@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'plan_models.dart';
 
 class ProjectedDay {
@@ -21,6 +23,25 @@ class GoalOutcome {
   final bool onTrack;
 }
 
+/// "What if" changes to the plan, tried out on Runway without being saved.
+class WhatIf {
+  const WhatIf({this.weeklyChange = 0, this.monthlyCost = 0, this.countUnconfirmed = false});
+
+  /// Flexible spending added to (or, if negative, taken off) each week,
+  /// spread over its seven days. A day never drops below zero.
+  final int weeklyChange;
+
+  /// A new cost on the 1st of every month after today, such as a subscription.
+  final int monthlyCost;
+
+  /// Also count planned income and expenses marked as not counted.
+  final bool countUnconfirmed;
+
+  static const none = WhatIf();
+
+  bool get isNone => weeklyChange == 0 && monthlyCost == 0 && !countUnconfirmed;
+}
+
 class Projection {
   const Projection(this.days, this.goals);
 
@@ -42,13 +63,17 @@ Projection project({
   required int buffer,
   int flexSpentToday = 0,
   int horizonDaysWithoutGoal = 30,
+  WhatIf whatIf = WhatIf.none,
 }) {
   final start = calendarDay(today);
   final sortedGoals = [...goals]..sort((a, b) => a.priority.compareTo(b.priority));
   final end = sortedGoals.isEmpty
       ? DateTime.utc(start.year, start.month, start.day + horizonDaysWithoutGoal)
       : sortedGoals.map((g) => calendarDay(g.targetDate)).reduce((a, b) => a.isAfter(b) ? a : b);
-  final planned = {for (final r in rules) r.weekday: r.plannedSpend};
+  final change = spreadOverWeek(whatIf.weeklyChange.abs());
+  final planned = {
+    for (final r in rules) r.weekday: math.max(0, r.plannedSpend + whatIf.weeklyChange.sign * change[r.weekday - 1]),
+  };
 
   final days = <ProjectedDay>[];
   final outcomes = <GoalOutcome>[];
@@ -64,8 +89,9 @@ Projection project({
       if (item.active && _dueOn(item, day)) running += item.signedAmount;
     }
     for (final e in events) {
-      if (!e.done && e.countInProjection && calendarDay(e.date) == day) running += e.signedAmount;
+      if (!e.done && (e.countInProjection || whatIf.countUnconfirmed) && calendarDay(e.date) == day) running += e.signedAmount;
     }
+    if (day != start && day.day == 1) running -= whatIf.monthlyCost;
 
     final beforeGoals = running;
     for (final g in sortedGoals) {
