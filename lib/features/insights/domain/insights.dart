@@ -59,7 +59,8 @@ class Insights {
   /// Flexible spending per category key, largest first.
   final List<(String, int)> flexibleByCategory;
 
-  /// The fourteen days up to [to], oldest first, whatever the period.
+  /// The fourteen days up to [to], oldest first, whatever the period. Days
+  /// before the opening date carry no plan and no spending.
   final List<DayAgainstPlan> lastDays;
 
   final int zeroSpendDays;
@@ -117,7 +118,9 @@ Insights insights({
   }
 
   final days = [for (var d = from; !d.isAfter(to); d = DateTime.utc(d.year, d.month, d.day + 1)) d];
-  int spentOn(DateTime d) => flexibleSpent(entries, fixed, d, d);
+  final opening = calendarDay(openingDate);
+  // The balance starts at the opening date, so nothing before it counts.
+  int spentOn(DateTime d) => d.isBefore(opening) ? 0 : flexibleSpent(entries, fixed, d, d);
   // Today is still under way, so it counts toward no habit yet.
   final finished = days.where((d) => d != to).toList();
 
@@ -151,7 +154,7 @@ Insights insights({
       for (var i = 13; i >= 0; i--)
         () {
           final d = DateTime.utc(to.year, to.month, to.day - i);
-          return DayAgainstPlan(d, spentOn(d), planned[d.weekday] ?? 0);
+          return DayAgainstPlan(d, spentOn(d), d.isBefore(opening) ? 0 : planned[d.weekday] ?? 0);
         }(),
     ],
     zeroSpendDays: finished.where((d) => spentOn(d) == 0).length,

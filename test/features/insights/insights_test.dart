@@ -71,4 +71,18 @@ void main() {
     expect(i.from, d(7, 1));
     expect(i.moneyOut, 58150);
   });
+
+  test('days before the opening date carry no plan or spending in the last fourteen', () {
+    final early = insights(
+      period: InsightsPeriod.week,
+      today: d(7, 3),
+      openingDate: d(7, 1),
+      weeklyCap: 5000,
+      entries: entries,
+      categories: demoCategories,
+      rules: rules,
+    ).lastDays;
+    expect(early.where((x) => x.date.isBefore(d(7, 1))).every((x) => x.planned == 0 && x.spent == 0), isTrue);
+    expect(early.last.planned, 1000);
+  });
 }
