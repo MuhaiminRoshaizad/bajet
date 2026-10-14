@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/widgets/coming_soon.dart';
+import '../features/plan/presentation/plan_providers.dart';
+import '../features/setup/presentation/setup_screen.dart';
 import 'shell.dart';
 
 abstract final class Routes {
+  static const loading = '/loading';
+  static const setup = '/setup';
   static const today = '/today';
   static const runway = '/runway';
   static const insights = '/insights';
@@ -13,9 +17,25 @@ abstract final class Routes {
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
+  // Re-runs the redirect whenever settings change, so finishing setup moves
+  // straight to Today without the setup screen navigating itself.
+  final settingsChanged = ValueNotifier(0);
+  ref.listen(settingsProvider, (_, _) => settingsChanged.value++);
+
   final router = GoRouter(
     initialLocation: Routes.today,
+    refreshListenable: settingsChanged,
+    redirect: (context, state) {
+      final settings = ref.read(settingsProvider);
+      final at = state.matchedLocation;
+      if (!settings.hasValue) return at == Routes.loading ? null : Routes.loading;
+      if (settings.value == null) return at == Routes.setup ? null : Routes.setup;
+      if (at == Routes.setup || at == Routes.loading) return Routes.today;
+      return null;
+    },
     routes: [
+      GoRoute(path: Routes.loading, builder: (context, state) => const Scaffold()),
+      GoRoute(path: Routes.setup, builder: (context, state) => const SetupScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -33,7 +53,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-  ref.onDispose(router.dispose);
+  ref.onDispose(() {
+    router.dispose();
+    settingsChanged.dispose();
+  });
   return router;
 });
 

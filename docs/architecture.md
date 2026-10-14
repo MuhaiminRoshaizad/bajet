@@ -52,6 +52,7 @@ lib/
   app/                  router, shell, bootstrap
   core/
     database/           drift tables, the database class and its defaults
+    dates/              dd/mm/yyyy formatting, the only place dates become text
     money/              sen ↔ RM formatting, the only place money becomes text
     theme/              colour, spacing, radii and motion tokens
     validation/         input formatters and validators
@@ -71,6 +72,7 @@ A folder under `core/` appears only once two features need it.
 |----------|-----------------------------------------------------------------------|
 | `ledger` | Entries, categories and favourites; balance and flexible-spend maths  |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals and the projection |
+| `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 
 Shared providers live beside what they provide: `databaseProvider` and
 `todayProvider` in `core/database/database_provider.dart`. Tests override both,
@@ -83,6 +85,11 @@ one bottom bar, each keeping its own stack and scroll position. Routes are
 declared once in `lib/app/router.dart` (`Routes.today`, `Routes.runway`,
 `Routes.insights`, `Routes.coach`). Screens planned for a later release show
 an honest placeholder that names the release, never a dead control.
+
+Until setup has stored an opening balance, every route redirects to
+`/setup`; once settings exist, `/setup` redirects to Today. The router listens
+to `settingsProvider`, so finishing setup moves on without the setup screen
+navigating itself.
 
 ## Storage and backup
 
