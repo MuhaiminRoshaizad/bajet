@@ -69,7 +69,7 @@ A folder under `core/` appears only once two features need it.
 | Feature  | Owns                                                                  |
 |----------|-----------------------------------------------------------------------|
 | `ledger` | Entries, categories and favourites; balance and flexible-spend maths  |
-| `plan`   | Weekly rhythm, recurring items, planned events, goals, the projection |
+| `plan`   | Settings, weekly rhythm, recurring items, planned events, goals and the projection |
 
 Shared providers live beside what they provide: `databaseProvider` and
 `todayProvider` in `core/database/database_provider.dart`. Tests override both,

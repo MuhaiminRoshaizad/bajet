@@ -43,8 +43,22 @@ recurring item the date of its next unpaid occurrence makes the rule exact:
 nothing before `nextDue` is charged. Confirming a payment moves `nextDue`
 forward a month. See [decision 008](decisions.md#008-recurring-items-track-their-next-due-date).
 
+## Live inputs
+
+`projectionProvider` in `features/plan/presentation/plan_providers.dart` feeds
+the engine from the database: the balance from the ledger, settings, rhythm,
+recurring items, events and active goals from the plan, and today's flexible
+spending from recent entries. It returns null until setup is complete and
+every stream has loaded, and recalculates whenever any of them changes.
+
+Confirming a recurring item (`PlanRepository.confirmRecurring`) logs a real
+entry and moves `nextDue` forward a month in one transaction, so the payment
+is never counted twice.
+
 ## Tests
 
 `test/features/plan/projection_test.dart` checks the daily series, the buy-day
 step, the partial first day, `nextDue`, uncounted events and the no-goal
 horizon against values computed independently, using demo figures only.
+`test/features/plan/plan_providers_test.dart` runs the same logic end to end
+through an in-memory database.
