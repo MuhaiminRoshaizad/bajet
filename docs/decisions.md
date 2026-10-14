@@ -13,7 +13,8 @@ auth and sync code for no benefit.
 
 **Costs:** losing the phone loses the data unless it is backed up, so Android
 Auto Backup is on and JSON export exists. A chat assistant cannot query the data
-directly, so the app exports a short text summary to paste instead.
+directly, so the Coach tab builds a short text summary of the week to copy and
+paste instead (`weekSummary` in `features/coach/domain`).
 
 ## 002: drift for storage
 

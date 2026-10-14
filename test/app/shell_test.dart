@@ -17,7 +17,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('tab-Coach')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Arrives in v1.3'), findsOneWidget);
+    expect(find.textContaining('arrives in v1.3'), findsOneWidget);
   });
 
   testWidgets('every tab is at least 48 dp tall', (tester) async {

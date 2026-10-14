@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/navigation/routes.dart';
 import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
+import '../features/coach/presentation/coach_screen.dart';
 import '../features/ledger/presentation/history_screen.dart';
 import '../features/plan/presentation/runway_screen.dart';
 import '../features/settings/presentation/events_screen.dart';
@@ -65,10 +66,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             Routes.insights,
             const ComingSoon(title: 'Insights', icon: Icons.bar_chart_rounded, message: 'Where the money goes, by category, week and month. Arrives in v1.1.'),
           ),
-          _branch(
-            Routes.coach,
-            const ComingSoon(title: 'Coach', icon: Icons.chat_bubble_rounded, message: 'A coach that reads your logs and knows your rules. Arrives in v1.3.'),
-          ),
+          _branch(Routes.coach, const CoachScreen()),
         ],
       ),
     ],

@@ -74,6 +74,7 @@ A folder under `core/` appears only once two features need it.
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
 | `settings` | The Settings hub behind Today's gear: allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites |
+| `coach`  | The Coach tab: a plain-text week summary to copy into a chat; an in-app coach is planned for v1.3 |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 
 Shared providers live beside what they provide: `databaseProvider` and
