@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/soft.dart';
 import 'backup_files.dart';
 import 'restore_flow.dart';
 
@@ -44,13 +45,13 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   Widget build(BuildContext context) {
     final c = context.colors;
     return Scaffold(
-      appBar: AppBar(title: const Text('Backup'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('Backup')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
-          Container(
+          SoftWell(
             padding: const EdgeInsets.all(AppSpacing.l + 2),
-            decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.card)),
+            radius: AppRadii.card,
             child: Text(
               'Everything bajet knows lives only on this phone. When backup is on in Android\'s settings, Android copies it to your '
               'Google account about once a day. A backup file is a copy you keep yourself.',

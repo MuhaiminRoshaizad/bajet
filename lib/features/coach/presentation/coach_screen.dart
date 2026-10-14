@@ -6,6 +6,7 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
+import '../../../core/widgets/soft.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../plan/presentation/runway_screen.dart';
@@ -53,24 +54,19 @@ class CoachScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.m),
           RiseIn(
-            spacing: AppSpacing.m,
+            spacing: AppSpacing.l,
             children: [
-              Container(
+              SoftWell(
                 padding: const EdgeInsets.all(AppSpacing.l + 2),
-                decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.card)),
+                radius: AppRadii.card,
                 child: Text(
                   'Copy this week\'s summary and paste it into a chat to ask for advice. A coach inside the app arrives in v1.3.',
                   style: TextStyle(color: c.ink, height: 1.45),
                 ),
               ),
               if (summary != null) ...[
-                Container(
+                SoftCard(
                   padding: const EdgeInsets.all(AppSpacing.l),
-                  decoration: BoxDecoration(
-                    color: c.card,
-                    borderRadius: BorderRadius.circular(AppRadii.card),
-                    border: Border.all(color: c.line),
-                  ),
                   child: SelectableText(summary, style: const TextStyle(fontSize: 13, height: 1.55, fontFeatures: [FontFeature.tabularFigures()])),
                 ),
                 FilledButton.icon(

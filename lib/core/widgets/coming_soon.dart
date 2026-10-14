@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import 'soft.dart';
 
 /// An honest placeholder for a screen planned for a later release.
 class ComingSoon extends StatelessWidget {
@@ -22,10 +23,9 @@ class ComingSoon extends StatelessWidget {
           children: [
             Text(title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: AppSpacing.l),
-            Container(
-              width: double.infinity,
+            SoftWell(
               padding: const EdgeInsets.all(AppSpacing.xl),
-              decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.card)),
+              radius: AppRadii.card,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
