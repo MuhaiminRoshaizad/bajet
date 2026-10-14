@@ -6,6 +6,7 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_motion.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/widgets/rise_in.dart';
+import '../core/widgets/soft.dart';
 import '../features/ledger/presentation/log_sheet.dart';
 
 class _Tab {
@@ -35,11 +36,8 @@ class AppShell extends ConsumerWidget {
     final c = context.colors;
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          color: c.background,
-          border: Border(top: BorderSide(color: c.line)),
-        ),
+      bottomNavigationBar: ColoredBox(
+        color: c.background,
         child: SafeArea(
           top: false,
           child: Padding(
@@ -101,10 +99,10 @@ class _TabButton extends StatelessWidget {
                 width: 52,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: selected ? c.primarySoft : Colors.transparent,
+                  color: selected ? c.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppRadii.pill),
                 ),
-                child: Icon(selected ? tab.selectedIcon : tab.icon, size: 22, color: color),
+                child: Icon(selected ? tab.selectedIcon : tab.icon, size: 22, color: selected ? c.onPrimary : color),
               ),
               const SizedBox(height: 2),
               // One line that shrinks to fit, so a large system font or a
@@ -133,21 +131,13 @@ class _AddButton extends StatelessWidget {
     final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
-      child: Semantics(
-        button: true,
-        label: 'Log spending or income',
-        excludeSemantics: true,
-        child: Material(
-          key: const ValueKey('add'),
-          color: c.primary,
-          borderRadius: BorderRadius.circular(AppRadii.card - 4),
-          elevation: 0,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadii.card - 4),
-            onTap: () => showLogSheet(context),
-            child: SizedBox(width: 58, height: 58, child: Icon(Icons.add_rounded, size: 28, color: c.onPrimary)),
-          ),
-        ),
+      child: SoftButton(
+        key: const ValueKey('add'),
+        semanticLabel: 'Log spending or income',
+        color: c.primary,
+        radius: AppRadii.card - 4,
+        onTap: () => showLogSheet(context),
+        child: SizedBox(width: 58, height: 58, child: Icon(Icons.add_rounded, size: 28, color: c.onPrimary)),
       ),
     );
   }
