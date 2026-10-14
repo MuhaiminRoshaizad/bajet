@@ -1,5 +1,5 @@
 name: bajet
-description: "A new Flutter project."
+description: "A personal, offline money app: log spending, watch the week, and see what is left after buying a goal."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
