@@ -1,7 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:bajet/features/insights/domain/insights.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/features/plan/domain/projection.dart';
+import 'package:bajet/features/report/data/report_pdf.dart';
 import 'package:bajet/features/report/domain/report.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -47,5 +51,25 @@ void main() {
       '2026-07-03,expense,Bills,Rent,,500.00',
       '',
     ]);
+  });
+
+  test('the PDF builds with the bundled font, over several pages if needed', () async {
+    ByteData font(String w) => ByteData.sublistView(File('assets/fonts/Figtree-$w.ttf').readAsBytesSync());
+    final many = [
+      for (var n = 0; n < 120; n++) Entry(id: n, day: d(7, 2), isIncome: false, amount: 100 + n, categoryKey: 'food', label: 'Snack'),
+    ];
+    final bytes = await reportPdf(
+      i: month(),
+      entries: many,
+      categories: categories,
+      balance: 249200,
+      buffer: 50000,
+      goal: null,
+      regular: font('Regular'),
+      bold: font('Bold'),
+    );
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+    // The page objects are compressed, so check the file is complete instead.
+    expect(String.fromCharCodes(bytes.skip(bytes.length - 8)).trim(), endsWith('%%EOF'));
   });
 }
