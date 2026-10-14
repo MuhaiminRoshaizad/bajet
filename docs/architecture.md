@@ -75,6 +75,14 @@ Shared providers live beside what they provide: `databaseProvider` and
 `todayProvider` in `core/database/database_provider.dart`. Tests override both,
 the first with an in-memory database and the second to pin the date.
 
+## Navigation
+
+`go_router` with a `StatefulShellRoute`: four top-level destinations behind
+one bottom bar, each keeping its own stack and scroll position. Routes are
+declared once in `lib/app/router.dart` (`Routes.today`, `Routes.runway`,
+`Routes.insights`, `Routes.coach`). Screens planned for a later release show
+an honest placeholder that names the release, never a dead control.
+
 ## Storage and backup
 
 - **Database:** drift over SQLite, opened with `drift_flutter`. Money is stored
