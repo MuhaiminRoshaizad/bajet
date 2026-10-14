@@ -22,6 +22,7 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).value;
     final favourites = ref.watch(favouritesProvider).value?.length ?? 0;
     final weekPlan = ref.watch(rulesProvider).value?.fold(0, (s, r) => s + r.plannedSpend);
+    final recurring = ref.watch(recurringProvider).value?.where((r) => r.active).length ?? 0;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings'), backgroundColor: c.background),
       body: ListView(
@@ -38,6 +39,11 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Weekly rhythm',
                 value: weekPlan == null ? '' : '${Money.formatWhole(weekPlan)} planned',
                 onTap: () => context.push(Routes.rhythm),
+              ),
+              SettingsRow(
+                title: 'Bills and income',
+                value: recurring == 0 ? 'None yet' : '$recurring active',
+                onTap: () => context.push(Routes.recurring),
               ),
               SettingsRow(title: 'Favourites', value: favourites == 0 ? 'None yet' : '$favourites saved', onTap: () => context.push(Routes.favourites)),
             ],

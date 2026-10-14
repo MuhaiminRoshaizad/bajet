@@ -8,6 +8,7 @@ import '../features/plan/presentation/plan_providers.dart';
 import '../features/ledger/presentation/history_screen.dart';
 import '../features/plan/presentation/runway_screen.dart';
 import '../features/settings/presentation/favourites_screen.dart';
+import '../features/settings/presentation/recurring_screen.dart';
 import '../features/settings/presentation/rhythm_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/setup/presentation/setup_screen.dart';
@@ -49,6 +50,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   routes: [
                     GoRoute(path: 'favourites', builder: (context, state) => const FavouritesScreen()),
                     GoRoute(path: 'rhythm', builder: (context, state) => const RhythmScreen()),
+                    GoRoute(path: 'recurring', builder: (context, state) => const RecurringScreen()),
                   ],
                 ),
               ],
