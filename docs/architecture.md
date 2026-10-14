@@ -70,7 +70,7 @@ A folder under `core/` appears only once two features need it.
 
 | Feature  | Owns                                                                  |
 |----------|-----------------------------------------------------------------------|
-| `ledger` | Entries, categories and favourites, the log sheet, balance and flexible-spend maths |
+| `ledger` | Entries, categories and favourites, the log sheet, history, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals and the projection |
 | `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
@@ -83,8 +83,9 @@ the first with an in-memory database and the second to pin the date.
 
 `go_router` with a `StatefulShellRoute`: four top-level destinations behind
 one bottom bar, each keeping its own stack and scroll position. Routes are
-declared once in `lib/app/router.dart` (`Routes.today`, `Routes.runway`,
-`Routes.insights`, `Routes.coach`). Screens planned for a later release show
+declared once in `lib/app/router.dart`; their paths live in
+`lib/core/navigation/routes.dart` so a feature can link to another without
+importing the router. History (`Routes.history`) sits under Today's branch. Screens planned for a later release show
 an honest placeholder that names the release, never a dead control.
 
 Until setup has stored an opening balance, every route redirects to

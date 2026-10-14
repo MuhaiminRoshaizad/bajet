@@ -91,5 +91,7 @@ all of it is skipped and content appears in place.
 - Nothing logs on a single tap or a hold. Favourites fill in the logger; the
   entry is saved only when Log is pressed. The same applies to widget and
   launcher shortcuts.
-- Destructive actions ask for confirmation, then offer undo.
+- Destructive actions ask for confirmation, then offer undo. In History,
+  swiping an entry left asks before deleting it; tapping it edits it in the
+  same sheet used for logging.
 - Touch targets are at least 48 dp.

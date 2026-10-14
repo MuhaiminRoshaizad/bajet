@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -283,8 +285,15 @@ class _Recent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.s, AppSpacing.xs, AppSpacing.s),
-          child: Text('Recent', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, 0, 0),
+          child: Row(
+            children: [
+              Text('Recent', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              if (children.isNotEmpty)
+                TextButton(onPressed: () => context.push(Routes.history), style: TextButton.styleFrom(minimumSize: const Size(48, 48)), child: const Text('See all')),
+            ],
+          ),
         ),
         _Card(
           child: children.isEmpty

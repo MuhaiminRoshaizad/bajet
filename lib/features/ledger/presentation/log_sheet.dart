@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
@@ -14,19 +15,21 @@ import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
 import 'ledger_providers.dart';
 
-/// Opens the logger. Saving shows a snackbar with undo on [messengerContext]'s
+/// Opens the logger, or with [editing] the same form filled in with an
+/// existing entry. Saving shows a snackbar with undo on [messengerContext]'s
 /// scaffold, which outlives the sheet.
-Future<void> showLogSheet(BuildContext messengerContext) => showModalBottomSheet<void>(
+Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing}) => showModalBottomSheet<void>(
       context: messengerContext,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext)),
+      builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing),
     );
 
 class _LogSheet extends ConsumerStatefulWidget {
-  const _LogSheet({required this.messenger});
+  const _LogSheet({required this.messenger, this.editing});
 
   final ScaffoldMessengerState messenger;
+  final Entry? editing;
 
   @override
   ConsumerState<_LogSheet> createState() => _LogSheetState();
@@ -45,6 +48,20 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   bool _saving = false;
 
   int get _amount => int.tryParse(_digits) ?? 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.editing;
+    if (e != null) {
+      _isIncome = e.isIncome;
+      _digits = '${e.amount}';
+      _categoryKey = e.categoryKey;
+      _label = e.label;
+      _note.text = e.note ?? '';
+      _day = e.day;
+    }
+  }
 
   @override
   void dispose() {
@@ -89,17 +106,32 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       note: _note.text,
     );
     final repo = ref.read(ledgerRepositoryProvider);
-    final id = await repo.add(draft);
+    final before = widget.editing;
+    final String message;
+    final VoidCallback undo;
+    if (before == null) {
+      final id = await repo.add(draft);
+      message = '${_isIncome ? 'Added' : 'Logged'} ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(draft.amount)}';
+      undo = () => repo.delete(id);
+    } else {
+      await repo.update(Entry(
+        id: before.id,
+        day: draft.day,
+        isIncome: draft.isIncome,
+        amount: draft.amount,
+        categoryKey: draft.categoryKey,
+        label: draft.label,
+        note: draft.note,
+      ));
+      message = 'Saved changes';
+      undo = () => repo.update(before);
+    }
     unawaited(HapticFeedback.lightImpact());
     if (!mounted) return;
-    final name = _label ?? _categoryLabel(_categoryKey!);
     Navigator.of(context).pop();
     widget.messenger
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text('${_isIncome ? 'Added' : 'Logged'} $name ${Money.format(draft.amount)}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => repo.delete(id)),
-      ));
+      ..showSnackBar(SnackBar(content: Text(message), action: SnackBarAction(label: 'Undo', onPressed: undo)));
   }
 
   String _categoryLabel(String key) =>
@@ -244,7 +276,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       ? 'Type the amount'
                       : _categoryKey == null
                           ? 'Pick a category'
-                          : '${_isIncome ? 'Add' : 'Log'} ${Money.format(_amount)}',
+                          : widget.editing != null
+                              ? 'Save changes'
+                              : '${_isIncome ? 'Add' : 'Log'} ${Money.format(_amount)}',
                 ),
               ),
             ),
@@ -333,6 +367,8 @@ class _DayToggle extends StatelessWidget {
     final yesterday = DateTime.utc(today.year, today.month, today.day - 1);
     return SegmentedButton<DateTime>(
       segments: [
+        // An entry being edited may come from an older day; keep it choosable.
+        if (day.isBefore(yesterday)) ButtonSegment(value: day, label: Text(Dates.short(day))),
         ButtonSegment(value: today, label: const Text('Today')),
         ButtonSegment(value: yesterday, label: const Text('Yesterday')),
       ],
