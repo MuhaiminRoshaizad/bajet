@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../domain/projection.dart';
 
 /// The projected balance from today to buy day. Salary days step up, bills
@@ -24,21 +25,36 @@ class RunwayChart extends StatelessWidget {
     return Semantics(
       label: 'Projected balance from ${Money.format(days.first.balance)} today to ${Money.format(last.balance)} on ${Dates.full(last.date)}',
       excludeSemantics: true,
-      child: AspectRatio(
-        aspectRatio: 1.75,
-        child: CustomPaint(
-          painter: _RunwayPainter(
-            days: days,
-            buffer: buffer,
-            line: c.primary,
-            fill: c.primary.withValues(alpha: 0.10),
-            bufferColour: c.keep,
-            endColour: onTrack ? c.keep : c.bad,
-            labels: c.muted,
-            card: c.card,
-            ink: c.ink,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 1.75,
+            child: CustomPaint(
+              painter: _RunwayPainter(
+                days: days,
+                buffer: buffer,
+                line: c.primary,
+                fill: c.primary.withValues(alpha: 0.10),
+                bufferColour: c.keep,
+                endColour: onTrack ? c.keep : c.bad,
+                labels: c.muted,
+                card: c.card,
+                ink: c.ink,
+              ),
+            ),
           ),
-        ),
+          if (buffer > 0) ...[
+            const SizedBox(height: AppSpacing.s),
+            Row(
+              children: [
+                Text('·····', style: TextStyle(color: c.keep, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                const SizedBox(width: AppSpacing.s),
+                Flexible(child: Text('Keep at least ${Money.formatWhole(buffer)}', style: TextStyle(color: c.keep, fontSize: 13))),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -81,8 +97,9 @@ class _RunwayPainter extends CustomPainter {
       ..close();
     canvas.drawPath(area, Paint()..color = fill);
 
-    _dotted(canvas, Offset(_side, y(buffer)), Offset(size.width - _side, y(buffer)), bufferColour);
-    _text(canvas, 'Buffer ${Money.formatWhole(buffer)}', Offset(_side + 2, y(buffer) - 16), bufferColour);
+    // Labelled in a legend below, as any spot inside the chart can collide
+    // with the balance line. No buffer, no line.
+    if (buffer > 0) _dotted(canvas, Offset(_side, y(buffer)), Offset(size.width - _side, y(buffer)), bufferColour);
 
     canvas.drawPath(
       path,

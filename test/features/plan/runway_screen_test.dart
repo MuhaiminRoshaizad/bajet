@@ -26,6 +26,8 @@ void main() {
     expect(find.text('Left after buying Laptop'), findsOneWidget);
     expect(find.text('RM1,000.00'), findsOneWidget);
     expect(find.text('RM500.00 above your RM500 buffer'), findsOneWidget);
+    // The buffer line is named in a legend, not inside the chart.
+    expect(find.text('Keep at least RM500'), findsOneWidget);
   });
 
   testWidgets('a goal short of the buffer says by how much', (tester) async {
