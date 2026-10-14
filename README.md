@@ -76,6 +76,9 @@ flutter analyze
 flutter test
 ```
 
+GitHub Actions runs the same two checks on every push to `main` and every pull
+request (`.github/workflows/ci.yml`), on the pinned Flutter version.
+
 ## Privacy
 
 This repository is public and contains demo data only. Real financial data is
