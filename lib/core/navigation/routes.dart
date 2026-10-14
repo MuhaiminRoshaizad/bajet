@@ -11,6 +11,7 @@ abstract final class Routes {
   static const recurring = '/today/settings/recurring';
   static const goals = '/today/settings/goals';
   static const events = '/today/settings/events';
+  static const backup = '/today/settings/backup';
   static const runway = '/runway';
   static const insights = '/insights';
   static const coach = '/coach';

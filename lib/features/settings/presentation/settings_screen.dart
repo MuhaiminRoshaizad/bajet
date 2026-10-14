@@ -53,6 +53,8 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.m),
+          SettingsGroup(children: [SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup))]),
+          const SizedBox(height: AppSpacing.m),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Text('Every amount and rule bajet works from is set here.', style: TextStyle(color: c.muted)),

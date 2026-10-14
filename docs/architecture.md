@@ -74,6 +74,7 @@ A folder under `core/` appears only once two features need it.
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
 | `settings` | The Settings hub behind Today's gear: allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites |
+| `backup` | JSON export through the share sheet and restore from a picked file |
 | `coach`  | The Coach tab: a plain-text week summary to copy into a chat; an in-app coach is planned for v1.3 |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 
@@ -102,8 +103,11 @@ navigating itself.
   as integer sen.
 - **Android Auto Backup:** on. Android copies app data to the owner's Google
   Drive about once a day, while the phone is idle, charging and on Wi-Fi.
-- **JSON export and import:** a manual backup the owner controls, and the way
-  real data is loaded onto a device (planned for v1).
+- **JSON export and import:** Settings → Backup exports every table as one
+  JSON file through the share sheet and restores one picked with the system
+  file picker, after confirming. It is the backup the owner controls, and the
+  way a set-up plan is loaded onto a new phone. See the
+  [backup format](data-model.md#backup-format).
 
 ## Platforms
 
