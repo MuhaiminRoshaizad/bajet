@@ -54,6 +54,8 @@ lib/
     database/           drift tables, the database class and its defaults
     dates/              dd/mm/yyyy formatting, the only place dates become text
     money/              sen ↔ RM formatting, the only place money becomes text
+    navigation/         route paths, so features can link without the router
+    sharing/            the share sheet, for backups and reports
     theme/              colour, spacing, radii and motion tokens
     validation/         input formatters and validators
     widgets/            widgets shared by two or more features

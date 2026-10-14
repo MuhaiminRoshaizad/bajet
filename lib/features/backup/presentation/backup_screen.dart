@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/sharing/file_sharer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/soft.dart';
-import 'backup_files.dart';
 import 'restore_flow.dart';
 
 class BackupScreen extends ConsumerStatefulWidget {
@@ -26,7 +26,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       final backup = await ref.read(backupRepositoryProvider).export();
       final today = ref.read(todayProvider);
       final name = 'bajet-backup-${today.toIso8601String().substring(0, 10)}.json';
-      await ref.read(backupFilesProvider).share(const JsonEncoder.withIndent('  ').convert(backup), name);
+      await ref.read(fileSharerProvider).shareFile(utf8.encode(const JsonEncoder.withIndent('  ').convert(backup)), name, 'application/json');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

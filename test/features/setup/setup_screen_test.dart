@@ -12,9 +12,6 @@ import '../../helpers/fake_repositories.dart';
 class _PickedFile implements BackupFiles {
   @override
   Future<String?> pick() async => jsonEncode({'app': 'bajet', 'format': 1, 'entries': []});
-
-  @override
-  Future<void> share(String contents, String fileName) async {}
 }
 
 /// Stands in for the real repository by saving the settings a backup would
