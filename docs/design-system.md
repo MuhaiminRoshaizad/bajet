@@ -28,7 +28,7 @@ Every text colour passes WCAG AA against both `background` and `well`.
 | `line`         | `#D0D9E2`   | `#2B333B`   | Dividers inside cards                 |
 | `primary`      | `#0C5F96`   | `#79C0F1`   | Buttons, charts, selection, focus     |
 | `onPrimary`    | `#FFFFFF`   | `#031C30`   | Text on primary                       |
-| `primarySoft`  | `#D4ECFD`   | `#193043`   | Today's rule chip                     |
+| `primarySoft`  | `#D4ECFD`   | `#193043`   | Today's rule chip, tonal buttons      |
 | `keepSurface`  | `#FDDFC2`   | `#2D2217`   | Goal number badges                    |
 | `keep`         | `#88491A`   | `#EFC093`   | Money kept: text, meters, buffer line |
 | `goodSurface`  | `#D0EED5`   | `#1F3724`   | On-track pills                        |

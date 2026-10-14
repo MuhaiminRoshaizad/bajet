@@ -18,6 +18,10 @@ abstract final class AppTheme {
       onPrimaryContainer: c.ink,
       secondary: c.keep,
       onSecondary: c.card,
+      // Tonal buttons fill with secondaryContainer, which would otherwise
+      // fall back to the apricot keep colour.
+      secondaryContainer: c.primarySoft,
+      onSecondaryContainer: c.ink,
       error: c.bad,
       onError: c.card,
       surface: c.background,
