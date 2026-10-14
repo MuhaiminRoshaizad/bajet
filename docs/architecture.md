@@ -139,7 +139,7 @@ build hook at build time. The app itself never downloads anything.
 | Phase | Scope                                                                 |
 |-------|-----------------------------------------------------------------------|
 | v1    | Log, Today, weekly ring, history, basic runway, coach-ready export    |
-| v1.1  | Insights, PDF and CSV export                                          |
+| v1.1  | Insights, text, PDF and CSV reports, Sunday check-in, receipts        |
 | v1.2  | What-if sliders, home-screen widget, launcher shortcuts               |
 | v1.3  | Coach                                                                 |
 | later | Demo mode, CI                                                         |

@@ -10,20 +10,26 @@ account, and v1 never touches the network.
 ## What it does
 
 - **Log** spending or income from the + in the middle of the bottom bar, with a
-  fill-from-right keypad, favourites that fill the form in, and undo.
+  fill-from-right keypad, favourites that fill the form in, an optional receipt
+  photo or screenshot, and undo.
 - **Today** shows the balance, today's planned spend, bills due for
   confirmation, a weekly ring of spending against the allowance, the current
   goal, and recent entries. History lists everything, to edit or delete.
 - **Runway** charts the projected balance up to a goal's buy day and says what
   will be left after buying it, against a buffer you choose.
+- **Insights** shows money in and out, fixed against flexible spending, where
+  the flexible money went, the last fourteen days against the plan, and
+  habits, for this week, this month or all time.
+- **Reports** share any of those periods as text, a PDF or a CSV file.
+- **Sunday check-in** compares the balance with the bank and logs any gap.
 - **Coach** builds a plain-text summary of the week to paste into a chat.
 - **Settings** holds every amount and rule: allowance and buffer, goals, bills
   and income, one-off events, the weekly rhythm, favourites, and backups.
 
 ## Status
 
-v1 is feature-complete for daily use on Android. Insights, PDF and CSV export,
-what-if sliders, a home-screen widget and an in-app coach follow; see
+Version 1.1 is in daily use on Android. What-if sliders, a home-screen widget
+and launcher shortcuts, and an in-app coach follow; see
 [release phases](docs/architecture.md#release-phases).
 
 ## Documentation
