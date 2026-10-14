@@ -89,6 +89,6 @@ void main() {
     await typeKeys(tester, '1000');
     await tester.tap(find.bySemanticsLabel('Food'));
     await tester.pump();
-    expect(find.text("RM2.00 over today's plan"), findsOneWidget);
+    expect(find.text("RM2.00 over today's RM8.00 plan"), findsOneWidget);
   });
 }

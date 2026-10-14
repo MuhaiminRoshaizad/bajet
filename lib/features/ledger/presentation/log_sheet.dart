@@ -337,7 +337,7 @@ class _PlanHint extends ConsumerWidget {
     final over = amount - room;
     final whose = day == ref.read(todayProvider) ? "today's" : "that day's";
     final (bg, fg, text) = over > 0
-        ? (c.badSurface, c.bad, '${Money.format(over)} over $whose plan')
+        ? (c.badSurface, c.bad, '${Money.format(over)} over $whose ${Money.format(planned)} plan')
         : (c.goodSurface, c.good, 'Within $whose plan');
     return Container(
       height: 28,
