@@ -3,6 +3,7 @@ import 'package:bajet/core/database/database_provider.dart';
 import 'package:bajet/features/ledger/presentation/ledger_providers.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/presentation/plan_providers.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,6 +20,11 @@ final demoSettings = PlanSettings(openingBalance: 150000, openingDate: testToday
 /// real in-memory database; widget tests stay on the fakes because drift's
 /// stream timers do not run on the widget tester's fake clock.
 Future<FakeWorld> pumpApp(WidgetTester tester, {bool setUpDone = true, void Function(FakeWorld world)? seed}) async {
+  // A typical phone: 360 x 780 logical pixels.
+  tester.view
+    ..physicalSize = const Size(1080, 2340)
+    ..devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
   final world = FakeWorld(settings: setUpDone ? demoSettings : null);
   seed?.call(world);
   await tester.pumpWidget(ProviderScope(

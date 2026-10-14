@@ -80,9 +80,10 @@ class _TabButton extends StatelessWidget {
       child: InkResponse(
         onTap: onTap,
         radius: 36,
-        child: SizedBox(
-          height: 56,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedContainer(
@@ -97,7 +98,16 @@ class _TabButton extends StatelessWidget {
                 child: Icon(selected ? tab.selectedIcon : tab.icon, size: 22, color: color),
               ),
               const SizedBox(height: 2),
-              Text(tab.label, style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+              // One line that shrinks to fit, so a large system font or a
+              // narrow phone never pushes the label out of the bar.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  tab.label,
+                  maxLines: 1,
+                  style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w700 : FontWeight.w500),
+                ),
+              ),
             ],
           ),
         ),
