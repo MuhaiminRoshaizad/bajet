@@ -35,8 +35,8 @@ without a key, nothing leaves the phone.
 
 ## Status
 
-Version 1.3 is in daily use on Android. A demo mode for screenshots and CI
-follow; see
+Version 1.3 is in daily use on Android, with a demo mode for screenshots and
+CI on every push; see
 [release phases](docs/architecture.md#release-phases).
 
 ## Documentation
@@ -57,6 +57,13 @@ Requires Flutter 3.44 or later.
 ```bash
 flutter pub get
 flutter run
+```
+
+To try bajet, or take screenshots, without touching your own data, start it
+on made-up data held in memory:
+
+```bash
+flutter run --dart-define=BAJET_DEMO=true
 ```
 
 A release build for one phone architecture keeps the APK small:

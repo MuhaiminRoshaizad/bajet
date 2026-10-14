@@ -157,4 +157,4 @@ build hook at build time. The app itself never downloads anything.
 | v1.1  | Insights, text, PDF and CSV reports, Sunday check-in, receipts        |
 | v1.2  | What-if sliders, home-screen widget, launcher shortcuts               |
 | v1.3  | Coach                                                                 |
-| later | Demo mode, CI                                                         |
+| later | Demo mode (`--dart-define=BAJET_DEMO=true`, in-memory made-up data), CI |
