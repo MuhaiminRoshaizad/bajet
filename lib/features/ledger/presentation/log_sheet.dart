@@ -10,8 +10,8 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/soft.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
@@ -184,19 +184,28 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppSpacing.s),
-                    Semantics(
-                      liveRegion: true,
-                      label: 'Amount ${Money.format(_amount)}',
-                      excludeSemantics: true,
-                      child: Text(
-                        Money.format(_amount),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 44,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -1,
-                          color: _amount == 0 ? c.muted : c.ink,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                    // The amount reads out of a display set into the sheet,
+                    // like a calculator's, above the keys that fill it.
+                    SoftWell(
+                      radius: AppRadii.card,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.m, horizontal: AppSpacing.l),
+                      child: Semantics(
+                        liveRegion: true,
+                        label: 'Amount ${Money.format(_amount)}',
+                        excludeSemantics: true,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            Money.format(_amount),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 44,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -1,
+                              color: _amount == 0 ? c.muted : c.ink,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -221,11 +230,13 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                         ],
                       ),
                       SizedBox(
-                        height: 52,
+                        height: 64,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
+                          // Room for the chips' shadows, which a list clips.
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.s - 2),
                           itemCount: favourites.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s),
+                          separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.m),
                           itemBuilder: (_, i) {
                             final f = favourites[i];
                             final cat = categories.where((x) => x.key == f.categoryKey).firstOrNull;
@@ -246,36 +257,28 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       crossAxisCount: 4,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: AppSpacing.xs,
-                      crossAxisSpacing: AppSpacing.xs,
-                      childAspectRatio: 1.05,
+                      // Room around each tile for its shadow.
+                      padding: const EdgeInsets.all(AppSpacing.xs),
+                      mainAxisSpacing: AppSpacing.m,
+                      crossAxisSpacing: AppSpacing.m,
+                      childAspectRatio: 0.95,
                       children: [
                         for (final cat in categories)
                           _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.m),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _note,
-                            maxLength: 60,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: InputDecoration(
-                              labelText: 'Note (optional)',
-                              hintText: 'e.g. Lunch with team',
-                              counterText: '',
-                              filled: true,
-                              fillColor: c.background,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide.none),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.s),
-                        _DayToggle(day: _day, today: ref.read(todayProvider), onChanged: (d) => setState(() => _day = d)),
-                      ],
+                    // Full width, so the label is never cut short.
+                    TextField(
+                      controller: _note,
+                      maxLength: 60,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
+                    ),
+                    const SizedBox(height: AppSpacing.s),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _DayToggle(day: _day, today: ref.read(todayProvider), onChanged: (d) => setState(() => _day = d)),
                     ),
                     const SizedBox(height: AppSpacing.m),
                     _Keypad(onKey: _key),
@@ -413,33 +416,19 @@ class _FavouriteChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Semantics(
-      button: true,
+    return SoftButton(
       selected: selected,
-      label: 'Fill in ${favourite.label}, ${Money.format(favourite.amount)}',
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.control),
-        child: AnimatedContainer(
-          duration: AppMotion.fast,
-          curve: AppMotion.ease,
-          padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.m, AppSpacing.xs),
-          decoration: BoxDecoration(
-            color: c.card,
-            borderRadius: BorderRadius.circular(AppRadii.control),
-            border: Border.all(color: selected ? c.primary : c.line, width: selected ? 2 : 1),
-          ),
-          child: Row(
-            children: [
-              CategoryBubble(categoryKey: favourite.categoryKey, tint: tint, size: 34),
-              const SizedBox(width: AppSpacing.s),
-              Text(favourite.label, style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(width: AppSpacing.xs),
-              Text(Money.format(favourite.amount), style: TextStyle(color: c.muted, fontFeatures: const [FontFeature.tabularFigures()])),
-            ],
-          ),
-        ),
+      onTap: onTap,
+      semanticLabel: 'Fill in ${favourite.label}, ${Money.format(favourite.amount)}',
+      padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.m, AppSpacing.xs),
+      child: Row(
+        children: [
+          CategoryBubble(categoryKey: favourite.categoryKey, tint: tint, size: 34),
+          const SizedBox(width: AppSpacing.s),
+          Text(favourite.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(width: AppSpacing.xs),
+          Text(Money.format(favourite.amount), style: TextStyle(color: c.muted, fontFeatures: const [FontFeature.tabularFigures()])),
+        ],
       ),
     );
   }
@@ -455,35 +444,26 @@ class _CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Semantics(
-      button: true,
+    return SoftButton(
       selected: selected,
-      label: category.label,
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.control + 2),
-        child: AnimatedContainer(
-          duration: AppMotion.fast,
-          curve: AppMotion.ease,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.control + 2),
-            border: Border.all(color: selected ? c.primary : Colors.transparent, width: 2),
+      onTap: onTap,
+      semanticLabel: category.label,
+      radius: AppRadii.control + 2,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CategoryBubble(categoryKey: category.key, tint: categoryTint(category), size: 36),
+          const SizedBox(height: AppSpacing.xs),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Text(
+              category.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: selected ? c.ink : c.muted, fontWeight: selected ? FontWeight.w600 : FontWeight.w500),
+            ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CategoryBubble(categoryKey: category.key, tint: categoryTint(category), size: 36),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                category.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: selected ? c.ink : c.muted, fontWeight: selected ? FontWeight.w600 : FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -502,22 +482,19 @@ class _Keypad extends StatelessWidget {
       crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: AppSpacing.s - 2,
-      crossAxisSpacing: AppSpacing.s - 2,
+      // Room around each key for its shadow.
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      mainAxisSpacing: AppSpacing.m,
+      crossAxisSpacing: AppSpacing.m,
       childAspectRatio: 2.4,
       children: [
         for (final k in keys)
-          Material(
-            color: c.background,
-            borderRadius: BorderRadius.circular(AppRadii.control),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppRadii.control),
-              onTap: () => onKey(k),
-              child: Center(
-                child: k == 'del'
-                    ? Icon(Icons.backspace_outlined, color: c.ink, semanticLabel: 'Delete digit')
-                    : Text(k, style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: c.ink)),
-              ),
+          SoftButton(
+            onTap: () => onKey(k),
+            child: Center(
+              child: k == 'del'
+                  ? Icon(Icons.backspace_outlined, color: c.ink, semanticLabel: 'Delete digit')
+                  : Text(k, style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: c.ink)),
             ),
           ),
       ],
