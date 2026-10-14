@@ -79,6 +79,7 @@ A folder under `core/` appears only once two features need it.
 | `backup` | JSON export through the share sheet and restore from a picked file |
 | `checkin` | The Sunday check-in: compare with the bank, log any gap, look back at the week |
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
+| `launch` | Launcher shortcuts and the home-screen widget: one `bajet://log` link format, a pending launch held until the shell can open the logger, and syncing what the widget shows |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
 | `coach`  | The Coach tab: a plain-text week summary to copy into a chat; an in-app coach is planned for v1.3 |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal, or a backup restore instead |

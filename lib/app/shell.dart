@@ -7,6 +7,9 @@ import '../core/theme/app_motion.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/widgets/rise_in.dart';
 import '../core/widgets/soft.dart';
+import '../features/launch/domain/launch_link.dart';
+import '../features/launch/presentation/launch_providers.dart';
+import '../features/ledger/presentation/ledger_providers.dart';
 import '../features/ledger/presentation/log_sheet.dart';
 
 class _Tab {
@@ -26,13 +29,43 @@ const _tabs = [
 
 /// The four top-level destinations behind one bottom bar, with the logger's
 /// button in the middle. Each branch keeps its own stack and scroll position.
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  @override
+  void initState() {
+    super.initState();
+    // A shortcut or widget tap opens the logger, filled in from a favourite
+    // when the link names one. Fires at once too, for a link that started
+    // the app before the shell existed.
+    ref.listenManual(pendingLaunchProvider, (_, link) {
+      if (link != null) WidgetsBinding.instance.addPostFrameCallback((_) => _open(link));
+    }, fireImmediately: true);
+  }
+
+  Future<void> _open(LaunchLink link) async {
+    ref.read(pendingLaunchProvider.notifier).consume();
+    if (!mounted) return;
+    final id = link.favouriteId;
+    final favourite = id == null ? null : (await ref.read(favouriteRepositoryProvider).watchAll().first).where((f) => f.id == id).firstOrNull;
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    await showLogSheet(
+      context,
+      prefill: favourite == null ? null : LogPrefill(amount: favourite.amount, categoryKey: favourite.categoryKey, label: favourite.label),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final navigationShell = widget.navigationShell;
     final c = context.colors;
     return Scaffold(
       body: navigationShell,

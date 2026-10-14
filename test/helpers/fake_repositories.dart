@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 
+import 'package:bajet/features/launch/data/home_surface.dart';
+import 'package:bajet/features/launch/domain/launch_link.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/receipt_store.dart';
@@ -63,6 +65,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   final _achieved = _Live<List<Goal>>([]);
   final favourites = FakeFavourites();
   final receipts = FakeReceipts();
+  final home = FakeHomeSurface();
   var _nextId = 1;
 
   PlanSettings? get settings => _settings.value;
@@ -260,4 +263,23 @@ class FakeReceipts implements ReceiptStore {
 
   @override
   Future<void> keepOnly(Set<String> names) async => kept = names;
+}
+
+/// The home screen without a launcher: records what bajet sends it, and
+/// [launch] stands in for a tap on a shortcut or the widget.
+class FakeHomeSurface implements HomeSurface {
+  final _links = StreamController<LaunchLink>.broadcast();
+  List<(int, String)>? shortcuts;
+  WidgetSnapshot? widget;
+
+  void launch(LaunchLink link) => _links.add(link);
+
+  @override
+  Stream<LaunchLink> get launches => _links.stream;
+
+  @override
+  Future<void> setShortcuts(List<(int, String)> favourites) async => shortcuts = favourites;
+
+  @override
+  Future<void> updateWidget(WidgetSnapshot snapshot) async => widget = snapshot;
 }

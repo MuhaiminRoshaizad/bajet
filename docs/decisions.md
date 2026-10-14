@@ -136,3 +136,22 @@ spend now looks bigger, and over plan shows as a bar past its mark as well as
 in rose.
 
 **Costs:** the card is taller than the ring was.
+
+## 013: A native widget through home_widget
+
+**Decided:** the home-screen widget is a small Android layout
+(`BajetWidgetProvider`, `res/layout/bajet_widget.xml`) fed by the
+`home_widget` package; launcher shortcuts use Flutter's own
+`quick_actions`. Both open the app with a `bajet://log` link, optionally
+naming a favourite.
+
+**Why:** Android widgets cannot be drawn by Flutter, so some native code is
+unavoidable. `home_widget` handles the data hand-over and the launch intents,
+leaving only the layout and a short provider to write. One link format means
+one parser serves both the widget and the shortcuts.
+
+**Costs:** a third-party dependency with native code. Through AndroidX
+WorkManager it adds four install-time permissions (wake lock, network state,
+start at boot, foreground service), none of which Android asks the owner
+about and none of which is internet access. The widget shows the week's
+remaining allowance only; the balance stays inside the app.

@@ -1,5 +1,6 @@
 import 'package:bajet/app/app.dart';
 import 'package:bajet/core/database/database_provider.dart';
+import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/ledger/presentation/ledger_providers.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/presentation/plan_providers.dart';
@@ -39,6 +40,7 @@ Future<FakeWorld> pumpApp(
       ledgerRepositoryProvider.overrideWithValue(world),
       favouriteRepositoryProvider.overrideWithValue(world.favourites),
       receiptStoreProvider.overrideWithValue(world.receipts),
+      homeSurfaceProvider.overrideWithValue(world.home),
       planRepositoryProvider.overrideWithValue(world),
       ...?overrides?.call(world),
     ],

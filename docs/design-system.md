@@ -129,7 +129,11 @@ all of it is skipped and content appears in place.
 - Saving gives a light haptic and a snackbar with Undo.
 - Nothing logs on a single tap or a hold. Favourites fill in the logger; the
   entry is saved only when Log is pressed. The same applies to widget and
-  launcher shortcuts. Favourites are the owner's own, managed under
+  launcher shortcuts: long-pressing the icon offers Log a spend and up to
+  three favourites, and the widget shows what is left of the week with a
+  Log button and two favourites. Each opens the logger, filled in where it
+  names a favourite. The widget never shows the balance, since a home
+  screen is seen by anyone holding the phone. Favourites are the owner's own, managed under
   Settings → Favourites and reachable from the logger's Edit link.
 - Destructive actions ask for confirmation, then offer undo. In History,
   swiping an entry left asks before deleting it; tapping it edits it in the

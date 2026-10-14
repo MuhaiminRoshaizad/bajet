@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's dark tokens, from lib/core/theme/app_colors.dart. -->
+    <color name="widget_surface">#1D2329</color>
+    <color name="widget_well">#161B20</color>
+    <color name="widget_ink">#E3E9EE</color>
+    <color name="widget_muted">#A3ACB4</color>
+    <color name="widget_primary">#79C0F1</color>
+    <color name="widget_on_primary">#031C30</color>
+</resources>
