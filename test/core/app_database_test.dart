@@ -10,7 +10,7 @@ void main() {
 
   test('a new database starts with generic categories and a blank rhythm', () async {
     final cats = await db.select(db.categories).get();
-    expect(cats.where((c) => c.kind == EntryKind.expense), hasLength(8));
+    expect(cats.where((c) => c.kind == EntryKind.expense), hasLength(9));
     expect(cats.where((c) => c.kind == EntryKind.income), hasLength(4));
 
     final rules = await db.select(db.weeklyRules).get();

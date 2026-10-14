@@ -34,6 +34,7 @@ void main() {
     await openRecurring(tester);
     await tester.tap(find.text('Add a bill or income'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
 

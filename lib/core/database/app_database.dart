@@ -64,6 +64,7 @@ const _defaultCategories = [
   ('bills', 'Bills', EntryKind.expense, 'teal', true),
   ('personal', 'Personal', EntryKind.expense, 'olive', false),
   ('other', 'Other', EntryKind.expense, 'neutral', false),
+  ('goal', 'Goals', EntryKind.expense, 'apricot', true),
   ('salary', 'Salary', EntryKind.income, 'sage', true),
   ('kwsp', 'KWSP', EntryKind.income, 'teal', true),
   ('refund', 'Refund', EntryKind.income, 'sky', false),

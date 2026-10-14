@@ -116,8 +116,9 @@ Shortcuts that fill in the logger. They never log on their own.
 ## Defaults on a new install
 
 Eight expense categories (Food, Transport, Pets, Family, Gifts, Bills, Personal,
-Other) and four income categories (Salary, KWSP, Refund, Other); only Bills,
-Salary and KWSP start as fixed. The rhythm starts as "Weekday" and "Weekend"
+Other), a fixed Goals category that goal purchases are logged under and the
+logger does not offer, and four income categories (Salary, KWSP, Refund,
+Other); only Bills, Goals, Salary and KWSP start as fixed. The rhythm starts as "Weekday" and "Weekend"
 with no planned spend. There are no favourites, goals or recurring items until
 the owner adds them or imports a backup.
 

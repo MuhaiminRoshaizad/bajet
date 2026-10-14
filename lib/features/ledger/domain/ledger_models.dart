@@ -20,6 +20,9 @@ class Category {
 
   /// Fixed spending does not count toward the weekly cap.
   final bool isFixed;
+
+  /// Goal purchases are logged by marking a goal bought, never picked by hand.
+  bool get isGoal => key == goalCategoryKey;
 }
 
 class Entry {
@@ -71,6 +74,10 @@ class Favourite {
   final String categoryKey;
   final int amount;
 }
+
+/// The category goal purchases are logged under. It is fixed, so a purchase
+/// never counts toward the weekly cap, and the logger does not offer it.
+const goalCategoryKey = 'goal';
 
 /// Spending that counts toward the weekly cap: expenses outside fixed
 /// categories, from [from] to [to] inclusive.

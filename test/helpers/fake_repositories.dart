@@ -38,6 +38,7 @@ const demoCategories = [
   Category(key: 'bills', label: 'Bills', isIncome: false, tint: 'teal', isFixed: true),
   Category(key: 'personal', label: 'Personal', isIncome: false, tint: 'olive', isFixed: false),
   Category(key: 'other', label: 'Other', isIncome: false, tint: 'neutral', isFixed: false),
+  Category(key: goalCategoryKey, label: 'Goals', isIncome: false, tint: 'apricot', isFixed: true),
   Category(key: 'salary', label: 'Salary', isIncome: true, tint: 'sage', isFixed: true),
   Category(key: 'refund', label: 'Refund', isIncome: true, tint: 'sky', isFixed: false),
 ];
