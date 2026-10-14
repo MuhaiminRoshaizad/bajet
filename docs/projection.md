@@ -55,6 +55,14 @@ Confirming a recurring item (`PlanRepository.confirmRecurring`) logs a real
 entry and moves `nextDue` forward a month in one transaction, so the payment
 is never counted twice.
 
+## On screen
+
+The Runway tab draws the projected series with `RunwayChart`: the balance
+line from today, the buffer as a dotted line across, and buy day as a dotted
+step from the balance before buying to what is left. Below it sit what is
+left after buying against the buffer, and `upcoming()`'s list of bills,
+income, events and purchases due before then.
+
 ## Tests
 
 `test/features/plan/projection_test.dart` checks the daily series, the buy-day

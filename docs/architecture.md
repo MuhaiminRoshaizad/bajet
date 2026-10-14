@@ -71,7 +71,7 @@ A folder under `core/` appears only once two features need it.
 | Feature  | Owns                                                                  |
 |----------|-----------------------------------------------------------------------|
 | `ledger` | Entries, categories and favourites, the log sheet, history, balance and flexible-spend maths |
-| `plan`   | Settings, weekly rhythm, recurring items, planned events, goals and the projection |
+| `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 

@@ -6,6 +6,7 @@ import '../core/navigation/routes.dart';
 import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/ledger/presentation/history_screen.dart';
+import '../features/plan/presentation/runway_screen.dart';
 import '../features/setup/presentation/setup_screen.dart';
 import '../features/today/presentation/today_screen.dart';
 import 'shell.dart';
@@ -40,7 +41,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: [GoRoute(path: 'history', builder: (context, state) => const HistoryScreen())],
             ),
           ]),
-          _branch(Routes.runway, const ComingSoon(title: 'Runway', icon: Icons.show_chart_rounded, message: 'The projected balance up to buy day will live here.')),
+          _branch(Routes.runway, const RunwayScreen()),
           _branch(
             Routes.insights,
             const ComingSoon(title: 'Insights', icon: Icons.bar_chart_rounded, message: 'Where the money goes, by category, week and month. Arrives in v1.1.'),
