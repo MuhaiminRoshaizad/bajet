@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_motion.dart';
 import '../core/theme/app_spacing.dart';
+import '../features/ledger/presentation/log_sheet.dart';
 
 class _Tab {
   const _Tab(this.label, this.icon, this.selectedIcon);
@@ -20,8 +21,8 @@ const _tabs = [
   _Tab('Coach', Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded),
 ];
 
-/// The four top-level destinations behind one bottom bar. Each branch keeps
-/// its own navigation stack and scroll position.
+/// The four top-level destinations behind one bottom bar, with the logger's
+/// button in the middle. Each branch keeps its own stack and scroll position.
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.navigationShell});
 
@@ -43,7 +44,9 @@ class AppShell extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.xs),
             child: Row(
               children: [
-                for (final (i, tab) in _tabs.indexed)
+                for (final (i, tab) in _tabs.indexed) ...[
+                  // The one way to log sits in the middle, under the thumb.
+                  if (i == 2) const _AddButton(),
                   Expanded(
                     child: _TabButton(
                       key: ValueKey('tab-${tab.label}'),
@@ -52,6 +55,7 @@ class AppShell extends StatelessWidget {
                       onTap: () => navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex),
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -109,6 +113,34 @@ class _TabButton extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddButton extends StatelessWidget {
+  const _AddButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+      child: Semantics(
+        button: true,
+        label: 'Log spending or income',
+        excludeSemantics: true,
+        child: Material(
+          key: const ValueKey('add'),
+          color: c.primary,
+          borderRadius: BorderRadius.circular(AppRadii.card - 4),
+          elevation: 0,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadii.card - 4),
+            onTap: () => showLogSheet(context),
+            child: SizedBox(width: 58, height: 58, child: Icon(Icons.add_rounded, size: 28, color: c.onPrimary)),
           ),
         ),
       ),

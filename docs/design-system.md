@@ -79,7 +79,12 @@ it is skipped and content appears in place.
 
 ## Interaction rules
 
-- There is one way to log: the + in the centre of the bottom bar.
+- There is one way to log: the + in the centre of the bottom bar. The sheet
+  reads top to bottom as amount, favourites, category, note and day, keypad,
+  then a Log button that stays visible and names what it will save.
+- Before saving, a pill says whether the amount fits the day's planned spend
+  or how far over it goes. Income and fixed categories get no pill.
+- Saving gives a light haptic and a snackbar with Undo.
 - Nothing logs on a single tap or a hold. Favourites fill in the logger; the
   entry is saved only when Log is pressed. The same applies to widget and
   launcher shortcuts.

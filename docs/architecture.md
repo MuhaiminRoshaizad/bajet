@@ -70,7 +70,7 @@ A folder under `core/` appears only once two features need it.
 
 | Feature  | Owns                                                                  |
 |----------|-----------------------------------------------------------------------|
-| `ledger` | Entries, categories and favourites; balance and flexible-spend maths  |
+| `ledger` | Entries, categories and favourites, the log sheet, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals and the projection |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 
