@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and below. Everything is backed up except the coach's API key:
+     its encryption key lives in the phone's Keystore, which is never backed
+     up, so a restored copy could not be read. The app asks for the key again. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
+    <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
+</full-backup-content>

@@ -155,3 +155,20 @@ WorkManager it adds four install-time permissions (wake lock, network state,
 start at boot, foreground service), none of which Android asks the owner
 about and none of which is internet access. The widget shows the week's
 remaining allowance only; the balance stays inside the app.
+
+## 014: The coach runs on the owner's own key
+
+**Decided:** the in-app coach calls Anthropic's Messages API directly from
+the phone with an API key the owner pastes into Settings → Coach, stored in
+secure storage, with at most 10 questions a day.
+
+**Why:** with no bajet server, there is nowhere else a key could live, and a
+key shipped inside the app would be readable by anyone who unpacks it. The
+owner's own key keeps the cost and the account in the owner's hands. The
+daily cap protects that bill from a stuck retry or a long evening of
+questions.
+
+**Costs:** this is the app's only use of the network, and what is sent (the
+question plus a summary of the week and month) goes to Anthropic under the
+owner's account. The Coach screen says so before the first question. A
+backup does not carry the key, so it is entered again after a restore.

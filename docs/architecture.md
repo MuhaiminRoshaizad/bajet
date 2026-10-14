@@ -111,11 +111,25 @@ restored settings row is what moves the router on.
   as integer sen.
 - **Android Auto Backup:** on. Android copies app data to the owner's Google
   Drive about once a day, while the phone is idle, charging and on Wi-Fi.
+  The coach's API key is left out (`res/xml/backup_rules.xml` and
+  `data_extraction_rules.xml`): it is encrypted with a Keystore key that is
+  never backed up, so a restored copy could not be read.
+- **Secrets:** the coach's Anthropic key is the only secret, kept with
+  `flutter_secure_storage` (Android Keystore, iOS Keychain). It never enters
+  the database, a backup file or the code.
 - **JSON export and import:** Settings → Backup exports every table as one
   JSON file through the share sheet and restores one picked with the system
   file picker, after confirming. It is the backup the owner controls, and the
   way a set-up plan is loaded onto a new phone. See the
   [backup format](data-model.md#backup-format).
+
+## Network
+
+The only network traffic is the coach: one HTTPS request to
+`api.anthropic.com/v1/messages` per question, made from the phone with the
+owner's own key, carrying the question and a short text summary of the week
+and month. Nothing else leaves the phone, and without a key nothing does at
+all. `INTERNET` is in the manifest for this alone.
 
 ## Platforms
 
