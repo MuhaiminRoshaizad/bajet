@@ -2,20 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/navigation/routes.dart';
 import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/setup/presentation/setup_screen.dart';
 import '../features/today/presentation/today_screen.dart';
 import 'shell.dart';
-
-abstract final class Routes {
-  static const loading = '/loading';
-  static const setup = '/setup';
-  static const today = '/today';
-  static const runway = '/runway';
-  static const insights = '/insights';
-  static const coach = '/coach';
-}
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Re-runs the redirect whenever settings change, so finishing setup moves
