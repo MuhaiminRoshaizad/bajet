@@ -73,9 +73,12 @@ A 4 pt scale: `AppSpacing.xs` 4, `s` 8, `m` 12, `l` 16, `xl` 20, `xxl` 24,
 | `stagger`          | 55 ms      | Delay between consecutive cards      |
 | `rise`             | 18 px      | Distance a card travels on entry     |
 
-When a screen opens, its cards rise and fade in one after another. When the
-system's reduce-motion setting is on (`MediaQuery.disableAnimationsOf`), all of
-it is skipped and content appears in place.
+When a screen opens, its cards rise and fade in one after another. `RiseIn`
+in `core/widgets/rise_in.dart` does this for any list of cards. Tabs keep their
+state, so the shell bumps `screenEntryProvider` on every tab tap and `RiseIn`
+keys its entrance on it, replaying it each visit without resetting scroll.
+When the system's reduce-motion setting is on (`MediaQuery.disableAnimationsOf`),
+all of it is skipped and content appears in place.
 
 ## Interaction rules
 

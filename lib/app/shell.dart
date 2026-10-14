@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_motion.dart';
 import '../core/theme/app_spacing.dart';
+import '../core/widgets/rise_in.dart';
 import '../features/ledger/presentation/log_sheet.dart';
 
 class _Tab {
@@ -23,13 +25,13 @@ const _tabs = [
 
 /// The four top-level destinations behind one bottom bar, with the logger's
 /// button in the middle. Each branch keeps its own stack and scroll position.
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     return Scaffold(
       body: navigationShell,
@@ -52,7 +54,10 @@ class AppShell extends StatelessWidget {
                       key: ValueKey('tab-${tab.label}'),
                       tab: tab,
                       selected: navigationShell.currentIndex == i,
-                      onTap: () => navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex),
+                      onTap: () {
+                        ref.read(screenEntryProvider.notifier).arrive();
+                        navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
+                      },
                     ),
                   ),
                 ],
