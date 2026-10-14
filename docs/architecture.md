@@ -72,6 +72,7 @@ A folder under `core/` appears only once two features need it.
 |----------|-----------------------------------------------------------------------|
 | `ledger` | Entries, categories and favourites, the log sheet, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals and the projection |
+| `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 
 Shared providers live beside what they provide: `databaseProvider` and

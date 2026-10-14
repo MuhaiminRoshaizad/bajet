@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/setup/presentation/setup_screen.dart';
+import '../features/today/presentation/today_screen.dart';
 import 'shell.dart';
 
 abstract final class Routes {
@@ -39,7 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [
-          _branch(Routes.today, const ComingSoon(title: 'Today', icon: Icons.home_rounded, message: 'Your balance, this week and the goal will live here.')),
+          _branch(Routes.today, const TodayScreen()),
           _branch(Routes.runway, const ComingSoon(title: 'Runway', icon: Icons.show_chart_rounded, message: 'The projected balance up to buy day will live here.')),
           _branch(
             Routes.insights,
