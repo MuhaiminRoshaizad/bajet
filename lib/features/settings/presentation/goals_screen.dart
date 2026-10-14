@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/database/database_provider.dart';
+import '../../../core/dates/dates.dart';
+import '../../../core/money/money.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/money_field.dart';
+import '../../plan/domain/plan_models.dart';
+import '../../plan/presentation/plan_providers.dart';
+import 'settings_screen.dart';
+
+/// What the owner is saving for, funded in priority order.
+class GoalsScreen extends ConsumerWidget {
+  const GoalsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
+    final outcomes = {for (final o in ref.watch(projectionProvider)?.goals ?? const []) o.goal.id: o};
+    return Scaffold(
+      appBar: AppBar(title: const Text('Goals'), backgroundColor: c.background),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.l),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
+            child: Text('Goals are bought in priority order. Marking one bought logs its price and moves it out of the plan.', style: TextStyle(color: c.muted)),
+          ),
+          if (goals.isNotEmpty)
+            SettingsGroup(
+              children: [
+                for (final (i, g) in goals.indexed)
+                  ListTile(
+                    minTileHeight: 64,
+                    leading: CircleAvatar(backgroundColor: c.keepSurface, foregroundColor: c.keep, child: Text('${i + 1}')),
+                    title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      '${Money.format(g.price)} by ${Dates.full(g.targetDate)}'
+                      '${outcomes[g.id] == null ? '' : outcomes[g.id]!.onTrack ? ' · on track' : ' · short'}',
+                    ),
+                    trailing: TextButton(onPressed: () => _markBought(context, ref, g), child: const Text('Bought')),
+                  ),
+              ],
+            ),
+          const SizedBox(height: AppSpacing.l),
+          FilledButton.icon(
+            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _GoalForm()),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add a goal'),
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _markBought(BuildContext context, WidgetRef ref, Goal goal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Mark ${goal.name} as bought?'),
+        content: Text('This logs ${Money.format(goal.price)} as spent today and takes the goal out of the plan.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Not yet')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Mark bought')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(planRepositoryProvider).markGoalBought(goal.id, on: ref.read(todayProvider));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${goal.name} bought. Well saved.')));
+    }
+  }
+}
+
+class _GoalForm extends ConsumerStatefulWidget {
+  const _GoalForm();
+
+  @override
+  ConsumerState<_GoalForm> createState() => _GoalFormState();
+}
+
+class _GoalFormState extends ConsumerState<_GoalForm> {
+  final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _price = TextEditingController();
+  DateTime? _date;
+  bool _tried = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _price.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final today = ref.read(todayProvider);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date ?? DateTime(today.year, today.month + 3, today.day),
+      firstDate: DateTime(today.year, today.month, today.day + 1),
+      lastDate: DateTime(today.year + 10),
+      helpText: 'Buy day',
+    );
+    if (picked != null) setState(() => _date = DateTime.utc(picked.year, picked.month, picked.day));
+  }
+
+  Future<void> _save() async {
+    final ok = _form.currentState!.validate();
+    setState(() => _tried = true);
+    if (!ok || _date == null) return;
+    final goals = ref.read(goalsProvider).value ?? const <Goal>[];
+    // A new goal joins the end of the queue.
+    final priority = goals.fold(0, (m, g) => g.priority > m ? g.priority : m) + 1;
+    await ref.read(planRepositoryProvider).addGoal(name: _name.text, price: RinggitCentsFormatter.parse(_price.text), targetDate: _date!, priority: priority);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('New goal', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: AppSpacing.l),
+              TextFormField(
+                controller: _name,
+                maxLength: 40,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.next,
+                autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                validator: (v) => (v ?? '').trim().isEmpty ? 'Give the goal a name' : null,
+                decoration: InputDecoration(
+                  labelText: 'Goal',
+                  hintText: 'e.g. New laptop',
+                  counterText: '',
+                  filled: true,
+                  fillColor: c.background,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.m),
+              MoneyField(
+                controller: _price,
+                label: 'Price',
+                hint: 'e.g. 4,500.00',
+                textInputAction: TextInputAction.done,
+                validator: (sen) => sen > 0 ? null : 'Enter the price',
+              ),
+              const SizedBox(height: AppSpacing.l),
+              OutlinedButton.icon(
+                onPressed: _pickDate,
+                icon: const Icon(Icons.event_outlined),
+                label: Text(_date == null ? 'Pick a buy day' : 'Buy day ${Dates.full(_date!)}'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  alignment: Alignment.centerLeft,
+                  side: BorderSide(color: _tried && _date == null ? c.bad : c.line),
+                ),
+              ),
+              if (_tried && _date == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs, left: AppSpacing.l),
+                  child: Text('Pick the day you plan to buy it', style: TextStyle(color: c.bad, fontSize: 12)),
+                ),
+              const SizedBox(height: AppSpacing.xl),
+              FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save goal')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

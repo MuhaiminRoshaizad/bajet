@@ -210,6 +210,8 @@ class _GoalCard extends StatelessWidget {
             if (!hasGoal) ...[
               const SizedBox(height: AppSpacing.xs),
               Text('Set one up to see what is left on buy day.', style: TextStyle(color: c.muted)),
+              const SizedBox(height: AppSpacing.s),
+              FilledButton.tonal(onPressed: () => context.push(Routes.goals), child: const Text('Add a goal')),
             ],
           ],
         ),

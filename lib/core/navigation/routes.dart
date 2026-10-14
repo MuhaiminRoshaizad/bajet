@@ -9,6 +9,7 @@ abstract final class Routes {
   static const favourites = '/today/settings/favourites';
   static const rhythm = '/today/settings/rhythm';
   static const recurring = '/today/settings/recurring';
+  static const goals = '/today/settings/goals';
   static const runway = '/runway';
   static const insights = '/insights';
   static const coach = '/coach';
