@@ -103,7 +103,7 @@ spent on unknown days. Counting it against the weekly allowance would mark
 whichever day the check-in happens as over plan. Keeping it separate also lets
 Insights show how much went untracked, which is the habit worth watching.
 
-**Costs:** untracked spending never shows in the weekly ring. Insights
+**Costs:** untracked spending never shows in the week strip. Insights
 surfaces it instead.
 
 ## 011: Receipts are files beside the database, not in it
@@ -122,3 +122,17 @@ backup restored on another phone keeps the entries and loses the pictures;
 the entry then shows a placeholder. If Android closes bajet while the camera
 is open, the half-written log is lost along with the photo, so there is
 nothing to recover the image into; the owner logs it again.
+
+## 012: The week as bars, not a ring
+
+**Decided:** Today and the check-in show the week as one allowance bar and
+seven day columns, each filled to its spend with a mark at its plan. This
+replaces a ring of seven equal segments.
+
+**Why:** the ring's segments were the same size whatever was spent, so only
+their colour carried meaning and every amount had to be read from text beside
+it. A length is the most accurately read encoding of a quantity, so a bigger
+spend now looks bigger, and over plan shows as a bar past its mark as well as
+in rose.
+
+**Costs:** the card is taller than the ring was.

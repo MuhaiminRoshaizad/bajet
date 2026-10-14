@@ -13,6 +13,8 @@ void seedTwoDays(FakeWorld w) {
 }
 
 Future<void> openHistory(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('See all'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('See all'));
   await tester.pumpAndSettle();
 }

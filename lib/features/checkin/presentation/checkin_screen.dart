@@ -16,7 +16,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../today/presentation/today_providers.dart';
-import '../../today/presentation/weekly_ring.dart';
+import '../../today/presentation/week_strip.dart';
 
 /// The weekly look back: does bajet's balance match the bank, and how did
 /// the week go against the rhythm. Any gap can be logged on the spot.
@@ -121,7 +121,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.l),
-            if (days != null && spent != null && cap != null) SoftCard(child: _Week(days: days, spent: spent, cap: cap)),
+            if (days != null && spent != null && cap != null) SoftCard(child: WeekStrip(days: days, spent: spent, cap: cap)),
             const SizedBox(height: AppSpacing.l),
             OutlinedButton.icon(
               onPressed: () => context.push('${Routes.report}?period=week'),
@@ -194,104 +194,6 @@ class _Pill extends StatelessWidget {
             Flexible(child: Text(text, style: TextStyle(color: good ? c.good : c.bad, fontWeight: FontWeight.w600))),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// The week day by day against the rhythm, and the allowance as a whole.
-class _Week extends StatelessWidget {
-  const _Week({required this.days, required this.spent, required this.cap});
-
-  final List<WeekDay> days;
-  final int spent;
-  final int cap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final past = days.where((d) => d.status != DayStatus.ahead && d.status != DayStatus.today);
-    final kept = past.where((d) => d.status == DayStatus.kept).length;
-    final left = cap - spent;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Text('This week', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-            const SizedBox(width: AppSpacing.s),
-            Expanded(
-              child: Text(
-                '${Money.format(spent)} of ${Money.formatWhole(cap)}',
-                textAlign: TextAlign.end,
-                style: TextStyle(color: c.muted, fontFeatures: const [FontFeature.tabularFigures()]),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.m),
-        Row(
-          children: [
-            for (final (i, d) in days.indexed) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.xs + 2),
-              Expanded(child: _DayCell(day: d)),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.m),
-        if (past.isNotEmpty) Text('$kept of ${past.length} ${past.length == 1 ? 'day' : 'days'} so far within plan'),
-        Text(
-          left >= 0 ? '${Money.format(left)} of the allowance left' : '${Money.format(-left)} over the allowance',
-          style: TextStyle(color: left >= 0 ? c.good : c.bad, fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-}
-
-class _DayCell extends StatelessWidget {
-  const _DayCell({required this.day});
-
-  final WeekDay day;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final (bg, fg) = switch (day.status) {
-      DayStatus.kept => (c.goodSurface, c.good),
-      DayStatus.over => (c.badSurface, c.bad),
-      DayStatus.today => (c.primarySoft, c.ink),
-      DayStatus.ahead => (c.well, c.muted),
-    };
-    final status = switch (day.status) {
-      DayStatus.kept => 'within plan',
-      DayStatus.over => 'over plan',
-      DayStatus.today => 'today',
-      DayStatus.ahead => 'to come',
-    };
-    return Semantics(
-      label: '${day.label}, ${Money.format(day.spent)}, $status',
-      excludeSemantics: true,
-      child: Column(
-        children: [
-          Container(
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadii.small)),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Text(
-                  day.status == DayStatus.ahead ? '' : Money.formatWhole(day.spent).replaceFirst('RM', ''),
-                  style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(day.label.substring(0, 1), style: TextStyle(color: c.muted, fontSize: 12)),
-        ],
       ),
     );
   }

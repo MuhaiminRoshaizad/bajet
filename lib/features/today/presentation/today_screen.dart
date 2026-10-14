@@ -17,7 +17,7 @@ import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
 import 'today_providers.dart';
-import 'weekly_ring.dart';
+import 'week_strip.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -51,7 +51,7 @@ class TodayScreen extends ConsumerWidget {
               if (today.weekday == DateTime.sunday) const _CheckinCard(),
               for (final item in due) _DueCard(item: item),
               if (days != null && weekSpent != null && settings != null)
-                SoftCard(child: WeeklyRing(days: days, spent: weekSpent, cap: settings.weeklyCap)),
+                SoftCard(child: WeekStrip(days: days, spent: weekSpent, cap: settings.weeklyCap)),
               _GoalCard(outcome: projection?.goals.firstOrNull, hasGoal: goals?.isNotEmpty ?? false, today: today, balance: balance.value),
               _Recent(
                 children: [

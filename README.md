@@ -13,7 +13,7 @@ account, and v1 never touches the network.
   fill-from-right keypad, favourites that fill the form in, an optional receipt
   photo or screenshot, and undo.
 - **Today** shows the balance, today's planned spend, bills due for
-  confirmation, a weekly ring of spending against the allowance, the current
+  confirmation, a week strip of spending against the allowance and each day's plan, the current
   goal, and recent entries. History lists everything, to edit or delete.
 - **Runway** charts the projected balance up to a goal's buy day and says what
   will be left after buying it, against a buffer you choose.

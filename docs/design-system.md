@@ -65,7 +65,7 @@ only four ways to do this:
 | Widget       | Looks like                       | Used for                               |
 |--------------|----------------------------------|----------------------------------------|
 | `SoftCard`   | Raised `AppDepth.card` (6 px)    | Every card                             |
-| `SoftWell`   | Pressed in `AppDepth.well` (3 px) | Notices, readouts, the ring's bed      |
+| `SoftWell`   | Pressed in `AppDepth.well` (3 px) | Notices, readouts, tracks              |
 | `SoftButton` | Raised 3 px, sinks flat on press | Keys, tiles, chips, the + button       |
 | `SoftMeter`  | A well with a coloured fill      | Progress toward a goal                 |
 

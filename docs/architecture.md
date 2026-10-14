@@ -74,7 +74,7 @@ A folder under `core/` appears only once two features need it.
 |----------|-----------------------------------------------------------------------|
 | `ledger` | Entries, categories and favourites, the log sheet, history, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
-| `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
+| `today`  | The Today screen: balance, today's rule, bills due, the week strip, goal, recent entries |
 | `settings` | The Settings hub behind Today's gear: allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites |
 | `backup` | JSON export through the share sheet and restore from a picked file |
 | `checkin` | The Sunday check-in: compare with the bank, log any gap, look back at the week |

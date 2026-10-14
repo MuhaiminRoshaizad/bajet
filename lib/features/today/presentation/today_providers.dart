@@ -5,7 +5,7 @@ import '../../../core/dates/dates.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
-import 'weekly_ring.dart';
+import 'week_strip.dart';
 
 /// Monday to Sunday of the current week, each with its flexible spend and how
 /// it went against the rhythm. Null while inputs load.
@@ -31,7 +31,7 @@ final weekDaysProvider = Provider<List<WeekDay>?>((ref) {
                 : day == today
                     ? DayStatus.today
                     : DayStatus.kept;
-        return WeekDay(date: day, label: Dates.weekday(day), spent: spent, status: status);
+        return WeekDay(date: day, label: Dates.weekday(day), spent: spent, planned: planned, status: status);
       }(),
   ];
 });

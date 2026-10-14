@@ -22,7 +22,7 @@ void main() {
     expect(find.text('No goal yet'), findsOneWidget);
   });
 
-  testWidgets('the weekly ring counts flexible spending against the cap', (tester) async {
+  testWidgets('the week strip counts flexible spending against the allowance', (tester) async {
     await pumpApp(tester, seed: (w) {
       // Monday of this week, flexible; and a bill, which does not count.
       w.add(EntryDraft(day: d(2026, 6, 29), isIncome: false, amount: 1500, categoryKey: 'transport'));
