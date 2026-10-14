@@ -7,6 +7,7 @@ abstract final class Routes {
   static const history = '/today/history';
   static const settings = '/today/settings';
   static const favourites = '/today/settings/favourites';
+  static const rhythm = '/today/settings/rhythm';
   static const runway = '/runway';
   static const insights = '/insights';
   static const coach = '/coach';

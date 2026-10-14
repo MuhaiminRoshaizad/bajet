@@ -21,6 +21,7 @@ class SettingsScreen extends ConsumerWidget {
     final c = context.colors;
     final settings = ref.watch(settingsProvider).value;
     final favourites = ref.watch(favouritesProvider).value?.length ?? 0;
+    final weekPlan = ref.watch(rulesProvider).value?.fold(0, (s, r) => s + r.plannedSpend);
     return Scaffold(
       appBar: AppBar(title: const Text('Settings'), backgroundColor: c.background),
       body: ListView(
@@ -32,6 +33,11 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Weekly allowance and buffer',
                 value: settings == null ? '' : '${Money.formatWhole(settings.weeklyCap)} a week',
                 onTap: settings == null ? null : () => _editAllowance(context, settings),
+              ),
+              SettingsRow(
+                title: 'Weekly rhythm',
+                value: weekPlan == null ? '' : '${Money.formatWhole(weekPlan)} planned',
+                onTap: () => context.push(Routes.rhythm),
               ),
               SettingsRow(title: 'Favourites', value: favourites == 0 ? 'None yet' : '$favourites saved', onTap: () => context.push(Routes.favourites)),
             ],
