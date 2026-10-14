@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
+import '../../../core/widgets/soft.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
@@ -44,12 +45,12 @@ class TodayScreen extends ConsumerWidget {
           _Header(today: today),
           const SizedBox(height: AppSpacing.m),
           RiseIn(
-            spacing: AppSpacing.m,
+            spacing: AppSpacing.l,
             children: [
               _BalanceCard(balance: balance.value, rule: rule),
               for (final item in due) _DueCard(item: item),
               if (days != null && weekSpent != null && settings != null)
-                _Card(child: WeeklyRing(days: days, spent: weekSpent, cap: settings.weeklyCap)),
+                SoftCard(child: WeeklyRing(days: days, spent: weekSpent, cap: settings.weeklyCap)),
               _GoalCard(outcome: projection?.goals.firstOrNull, hasGoal: goals?.isNotEmpty ?? false, today: today, balance: balance.value),
               _Recent(
                 children: [
@@ -84,31 +85,6 @@ class _Header extends StatelessWidget {
       );
 }
 
-class _Card extends StatelessWidget {
-  const _Card({required this.child, this.color});
-
-  final Widget child;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.l + 2),
-      decoration: BoxDecoration(
-        color: color ?? c.card,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: dark && color == null ? Border.all(color: c.line) : null,
-        boxShadow: dark || color != null
-            ? null
-            : [BoxShadow(color: c.ink.withValues(alpha: 0.06), blurRadius: 24, offset: const Offset(0, 8), spreadRadius: -12)],
-      ),
-      child: child,
-    );
-  }
-}
-
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard({required this.balance, required this.rule});
 
@@ -119,7 +95,7 @@ class _BalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final animate = !MediaQuery.disableAnimationsOf(context);
-    return _Card(
+    return SoftCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -165,7 +141,7 @@ class _DueCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
-    return _Card(
+    return SoftCard(
       child: Row(
         children: [
           Expanded(
@@ -201,8 +177,9 @@ class _GoalCard extends StatelessWidget {
     final c = context.colors;
     final o = outcome;
     if (o == null) {
-      return _Card(
-        color: c.primarySoft,
+      return SoftWell(
+        padding: const EdgeInsets.all(AppSpacing.l + 2),
+        radius: AppRadii.card,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -219,32 +196,37 @@ class _GoalCard extends StatelessWidget {
     }
     final daysLeft = o.goal.targetDate.difference(today).inDays;
     final saved = ((balance ?? 0) / o.goal.price).clamp(0.0, 1.0);
-    return _Card(
-      color: c.keepSurface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    // The whole card opens Runway, where the buy-day figure comes from.
+    return Semantics(
+      button: true,
+      onTapHint: 'open Runway',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => context.go(Routes.runway),
+        child: SoftCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text('${o.goal.name} · buy day', style: TextStyle(color: c.keep, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('${o.goal.name} · buy day', style: TextStyle(color: c.keep, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                  ),
+                  _StatusPill(onTrack: o.onTrack),
+                ],
               ),
-              _StatusPill(onTrack: o.onTrack),
+              const SizedBox(height: AppSpacing.s),
+              Text('$daysLeft ${daysLeft == 1 ? 'day' : 'days'}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              Text('${Dates.full(o.goal.targetDate)} · ${Money.format(o.leftAfterBuying)} left after buying', style: TextStyle(color: c.keep)),
+              const SizedBox(height: AppSpacing.m),
+              Semantics(
+                label: '${(saved * 100).round()} percent of the price saved',
+                excludeSemantics: true,
+                child: SoftMeter(value: saved, color: c.keep),
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s),
-          Text('$daysLeft ${daysLeft == 1 ? 'day' : 'days'}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-          Text('${Dates.full(o.goal.targetDate)} · ${Money.format(o.leftAfterBuying)} left after buying', style: TextStyle(color: c.keep)),
-          const SizedBox(height: AppSpacing.m),
-          Semantics(
-            label: '${(saved * 100).round()} percent of the price saved',
-            excludeSemantics: true,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              child: LinearProgressIndicator(value: saved, minHeight: 10, color: c.keep, backgroundColor: c.keep.withValues(alpha: 0.18)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -298,7 +280,7 @@ class _Recent extends StatelessWidget {
             ],
           ),
         ),
-        _Card(
+        SoftCard(
           child: children.isEmpty
               ? Text('Nothing logged yet. Tap + to log your first spend.', style: TextStyle(color: c.muted))
               : Column(children: [for (final (i, w) in children.indexed) ...[if (i > 0) Divider(color: c.line), w]]),

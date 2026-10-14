@@ -40,6 +40,13 @@ void main() {
     expect(find.text('On track'), findsOneWidget);
   });
 
+  testWidgets('tapping the goal card opens Runway', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
+    await tester.tap(find.text('Laptop · buy day'));
+    await tester.pumpAndSettle();
+    expect(find.text('Left after buying Laptop'), findsOneWidget);
+  });
+
   testWidgets('a due bill can be marked paid, which logs it', (tester) async {
     final world = await pumpApp(tester, seed: (w) {
       w.addRecurring(name: 'Internet', isIncome: false, amount: 12900, categoryKey: 'bills', nextDue: testToday);

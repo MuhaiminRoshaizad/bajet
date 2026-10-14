@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/soft.dart';
 
 enum DayStatus { kept, over, today, ahead }
 
@@ -30,7 +31,7 @@ class WeeklyRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final left = cap - spent;
-    final colours = {DayStatus.kept: c.good, DayStatus.over: c.bad, DayStatus.today: c.primary, DayStatus.ahead: c.line};
+    final colours = {DayStatus.kept: c.good, DayStatus.over: c.bad, DayStatus.today: c.primary, DayStatus.ahead: c.muted.withValues(alpha: 0.25)};
     return Semantics(
       label: 'This week ${Money.format(spent)} of ${Money.format(cap)} spent. '
           '${left >= 0 ? '${Money.format(left)} left' : '${Money.format(-left)} over'}.',
@@ -39,7 +40,11 @@ class WeeklyRing extends StatelessWidget {
         children: [
           SizedBox.square(
             dimension: 132,
-            child: CustomPaint(
+            // The ring runs in a groove pressed into the card.
+            child: SoftWell(
+              circle: true,
+              padding: EdgeInsets.zero,
+              child: CustomPaint(
               painter: _RingPainter([for (final d in days) colours[d.status]!], todayIndex: days.indexWhere((d) => d.status == DayStatus.today)),
               child: Center(
                 child: Column(
@@ -52,6 +57,7 @@ class WeeklyRing extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
             ),
           ),
           const SizedBox(width: AppSpacing.l),
@@ -101,7 +107,7 @@ class _RingPainter extends CustomPainter {
     const stroke = 11.0;
     const gap = 0.14;
     final rect = Offset.zero & size;
-    final arcRect = rect.deflate(stroke / 2 + 2);
+    final arcRect = rect.deflate(stroke / 2 + 5);
     final sweep = 2 * math.pi / colours.length;
     for (var i = 0; i < colours.length; i++) {
       final paint = Paint()
