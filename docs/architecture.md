@@ -51,6 +51,7 @@ lib/
   main.dart
   app/                  router, shell, bootstrap
   core/
+    money/              sen ↔ RM formatting, the only place money becomes text
     theme/              colour, spacing, radii and motion tokens
     widgets/            widgets shared by two or more features
   features/
