@@ -21,6 +21,12 @@ without a custom pattern.
 - Typed amounts fill from the right like a cashier's till: typing `1`, `5`, `0`
   gives `RM1.50`. A field can never hold a malformed amount.
 
+## Generated code
+
+drift output (`*.g.dart`) is committed, and regenerated with
+`dart run build_runner build` in the same commit as the table change that
+caused it, so every commit builds from a fresh clone.
+
 ## Language
 
 English only, as plain strings. There is no localisation layer.

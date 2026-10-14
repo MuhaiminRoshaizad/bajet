@@ -21,6 +21,7 @@ a basic runway and a coach-ready text export. See
 | [Conventions](docs/conventions.md)        | Formatting, money, naming, commits, privacy    |
 | [Design system](docs/design-system.md)    | Colour, type, spacing, motion, interaction     |
 | [Decisions](docs/decisions.md)            | Why the app is built the way it is             |
+| [Data model](docs/data-model.md)          | Tables, columns and defaults                   |
 | [Projection](docs/projection.md)          | How the buy-day forecast is calculated         |
 
 ## Getting started

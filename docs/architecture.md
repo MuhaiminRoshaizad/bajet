@@ -51,6 +51,7 @@ lib/
   main.dart
   app/                  router, shell, bootstrap
   core/
+    database/           drift tables, the database class and its defaults
     money/              sen ↔ RM formatting, the only place money becomes text
     theme/              colour, spacing, radii and motion tokens
     widgets/            widgets shared by two or more features
@@ -81,7 +82,7 @@ not use Android-only APIs, so iOS is an addition rather than a rewrite.
 
 ```bash
 flutter pub get
-dart run build_runner build   # drift code generation
+dart run build_runner build   # only after changing a table
 flutter run
 flutter analyze
 flutter test
