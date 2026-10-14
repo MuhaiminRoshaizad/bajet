@@ -62,3 +62,14 @@ which gives contrast without clashing.
 
 **Why:** fetching fonts at runtime needs the internet permission, which v1 does
 not otherwise use.
+
+## 008: Recurring items track their next due date
+
+**Decided:** each recurring item stores `nextDue`, the date of its next unpaid
+occurrence. The projection charges it from that date onward, and confirming a
+payment moves it forward a month.
+
+**Why:** "skip it if it was confirmed this month" breaks when a bill is paid
+early. A bill due on the 15th but paid on the 11th, before the opening balance
+was taken, would otherwise be charged twice. `nextDue` states exactly which
+occurrences are still to come.
