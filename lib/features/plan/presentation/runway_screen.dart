@@ -7,6 +7,7 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
+import '../../../core/widgets/soft.dart';
 import '../domain/upcoming.dart';
 import 'plan_providers.dart';
 import 'runway_chart.dart';
@@ -54,9 +55,9 @@ class RunwayScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.m),
           if (projection != null && settings != null)
             RiseIn(
-              spacing: AppSpacing.m,
+              spacing: AppSpacing.l,
               children: [
-                _Panel(
+                SoftCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -70,8 +71,7 @@ class RunwayScreen extends ConsumerWidget {
                   ),
                 ),
                 if (outcome != null)
-                  _Panel(
-                    color: outcome.onTrack ? c.keepSurface : c.badSurface,
+                  SoftCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -88,15 +88,16 @@ class RunwayScreen extends ConsumerWidget {
                     ),
                   )
                 else
-                  _Panel(
-                    color: c.primarySoft,
+                  SoftWell(
+                    radius: AppRadii.card,
+                    padding: const EdgeInsets.all(AppSpacing.l + 2),
                     child: Text('Add a goal to see what would be left after buying it.', style: TextStyle(color: c.ink)),
                   ),
                 Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.xs, top: AppSpacing.s),
                   child: Text('Coming up', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
                 ),
-                _Panel(
+                SoftCard(
                   child: items.isEmpty
                       ? Text('No bills, income or events planned yet.', style: TextStyle(color: c.muted))
                       : Column(
@@ -147,28 +148,6 @@ class _UpcomingRow extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Panel extends StatelessWidget {
-  const _Panel({required this.child, this.color});
-
-  final Widget child;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.l + 2),
-      decoration: BoxDecoration(
-        color: color ?? c.card,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        border: dark && color == null ? Border.all(color: c.line) : null,
-      ),
-      child: child,
     );
   }
 }
