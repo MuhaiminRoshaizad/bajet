@@ -91,4 +91,15 @@ void main() {
     await tester.pump();
     expect(find.text("RM2.00 over today's RM8.00 plan"), findsOneWidget);
   });
+
+  testWidgets('the keypad stays in view, and steps aside while the keyboard is up', (tester) async {
+    await pumpApp(tester);
+    await openLogger(tester);
+    expect(tester.getRect(find.text('9')).bottom, lessThan(780));
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 900);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+    expect(find.text('9'), findsNothing);
+  });
 }

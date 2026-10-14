@@ -177,40 +177,50 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 ],
               ),
             ),
+            // The amount and the keys that fill it stay in view; only the
+            // choices between them scroll.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppSpacing.s),
+                  // The amount reads out of a display set into the sheet,
+                  // like a calculator's, above the keys that fill it.
+                  SoftWell(
+                    radius: AppRadii.card,
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.l),
+                    child: Semantics(
+                      liveRegion: true,
+                      label: 'Amount ${Money.format(_amount)}',
+                      excludeSemantics: true,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          Money.format(_amount),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 44,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -1,
+                            color: _amount == 0 ? c.muted : c.ink,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s),
+                  Center(child: _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day)),
+                ],
+              ),
+            ),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: AppSpacing.s),
-                    // The amount reads out of a display set into the sheet,
-                    // like a calculator's, above the keys that fill it.
-                    SoftWell(
-                      radius: AppRadii.card,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.m, horizontal: AppSpacing.l),
-                      child: Semantics(
-                        liveRegion: true,
-                        label: 'Amount ${Money.format(_amount)}',
-                        excludeSemantics: true,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            Money.format(_amount),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 44,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -1,
-                              color: _amount == 0 ? c.muted : c.ink,
-                              fontFeatures: const [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.s),
-                    Center(child: _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day)),
                     if (!_isIncome && favourites.isEmpty && widget.editing == null)
                       Align(
                         alignment: Alignment.centerLeft,
@@ -261,7 +271,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       padding: const EdgeInsets.all(AppSpacing.xs),
                       mainAxisSpacing: AppSpacing.m,
                       crossAxisSpacing: AppSpacing.m,
-                      childAspectRatio: 0.95,
+                      childAspectRatio: 1.1,
                       children: [
                         for (final cat in categories)
                           _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
@@ -280,13 +290,18 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       alignment: Alignment.centerLeft,
                       child: _DayToggle(day: _day, today: ref.read(todayProvider), onChanged: (d) => setState(() => _day = d)),
                     ),
-                    const SizedBox(height: AppSpacing.m),
-                    _Keypad(onKey: _key),
                     const SizedBox(height: AppSpacing.s),
                   ],
                 ),
               ),
             ),
+            // While the system keyboard is up for the note, the keypad
+            // steps aside so the note field keeps its room.
+            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
+                child: _Keypad(onKey: _key),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
               child: FilledButton(
@@ -485,7 +500,7 @@ class _Keypad extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.xs),
       mainAxisSpacing: AppSpacing.m,
       crossAxisSpacing: AppSpacing.m,
-      childAspectRatio: 2.4,
+      childAspectRatio: 2.2,
       children: [
         for (final k in keys)
           SoftButton(

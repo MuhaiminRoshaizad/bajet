@@ -119,7 +119,10 @@ all of it is skipped and content appears in place.
 
 - There is one way to log: the + in the centre of the bottom bar. The sheet
   reads top to bottom as amount, favourites, category, note and day, keypad,
-  then a Log button that stays visible and names what it will save.
+  then a Log button that names what it will save. The amount, keypad and Log
+  button stay in view; only favourites, categories, note and day scroll
+  between them. While the system keyboard is up for the note, the keypad
+  steps aside.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
 - Saving gives a light haptic and a snackbar with Undo.
