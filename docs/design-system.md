@@ -149,4 +149,10 @@ all of it is skipped and content appears in place.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;
   the thumbnail in the logger opens it full screen, pinch to zoom.
+- Runway's What if… card tries a weekly change in spending, a new monthly
+  cost and, when there are any, events not yet counted. The chart and the
+  outcome redraw as the levers move, with the difference from the plan in
+  words; Reset puts the plan back, and nothing is ever saved. The weekly
+  slider runs both ways, so its track is one colour rather than filling from
+  the left.
 - Touch targets are at least 48 dp.

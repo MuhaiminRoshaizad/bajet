@@ -49,4 +49,28 @@ void main() {
     expect(find.text('05/08/2026'), findsOneWidget);
     expect(find.text('20/08/2026 · buy day'), findsOneWidget);
   });
+
+  testWidgets('a what-if moves buy day without changing the plan, and resets', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 8, 15)));
+    await openRunway(tester);
+    expect(find.text('RM1,000.00'), findsOneWidget);
+
+    // A new monthly cost: drag the second slider to its far end, RM300.
+    final monthly = find.byType(Slider).at(1);
+    // Scroll it well clear of the bottom bar before dragging it.
+    await tester.ensureVisible(monthly);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.drag(monthly, const Offset(1000, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('RM300 a month'), findsOneWidget);
+    // Today is 01/07 itself, so the first cost lands on 01/08, before buy day.
+    expect(find.text('RM700.00'), findsOneWidget);
+    expect(find.text('−RM300.00 compared with the plan'), findsOneWidget);
+    expect(world.events, isEmpty);
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(find.text('RM1,000.00'), findsOneWidget);
+  });
 }

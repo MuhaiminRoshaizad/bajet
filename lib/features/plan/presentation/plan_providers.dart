@@ -39,8 +39,24 @@ final weekSpentProvider = Provider<int?>((ref) {
   return flexibleSpent(entries, fixed, weekStart(today), today);
 });
 
-/// The live projection, or null until setup is done and every input loaded.
-final projectionProvider = Provider<Projection?>((ref) {
+/// The live projection of the plan as saved, or null until setup is done and
+/// every input loaded.
+final projectionProvider = Provider<Projection?>((ref) => ref.watch(projectionWithProvider(WhatIf.none)));
+
+/// The what-if being tried on Runway. Never saved; the plan is untouched.
+class WhatIfController extends Notifier<WhatIf> {
+  @override
+  WhatIf build() => WhatIf.none;
+
+  void change(WhatIf next) => state = next;
+
+  void reset() => state = WhatIf.none;
+}
+
+final whatIfProvider = NotifierProvider<WhatIfController, WhatIf>(WhatIfController.new);
+
+/// The projection with a what-if applied.
+final projectionWithProvider = Provider.family<Projection?, WhatIf>((ref, whatIf) {
   final today = ref.watch(todayProvider);
   final balance = ref.watch(balanceProvider).value;
   final settings = ref.watch(settingsProvider).value;
@@ -62,5 +78,6 @@ final projectionProvider = Provider<Projection?>((ref) {
     goals: goals!,
     buffer: settings!.buffer,
     flexSpentToday: flexibleSpent(entries!, fixed, today, today),
+    whatIf: whatIf,
   );
 });

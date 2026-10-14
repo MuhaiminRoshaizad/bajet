@@ -11,6 +11,7 @@ import '../../../core/widgets/soft.dart';
 import '../domain/upcoming.dart';
 import 'plan_providers.dart';
 import 'runway_chart.dart';
+import 'what_if_panel.dart';
 
 final upcomingProvider = Provider<List<UpcomingItem>?>((ref) {
   final projection = ref.watch(projectionProvider);
@@ -33,7 +34,9 @@ class RunwayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
-    final projection = ref.watch(projectionProvider);
+    final whatIf = ref.watch(whatIfProvider);
+    final projection = ref.watch(projectionWithProvider(whatIf));
+    final planned = ref.watch(projectionProvider)?.goals.firstOrNull?.leftAfterBuying;
     final settings = ref.watch(settingsProvider).value;
     final items = ref.watch(upcomingProvider) ?? const [];
     final outcome = projection?.goals.firstOrNull;
@@ -84,6 +87,15 @@ class RunwayScreen extends ConsumerWidget {
                               : '${Money.format(settings.buffer - outcome.leftAfterBuying)} short of your ${Money.formatWhole(settings.buffer)} buffer',
                           style: TextStyle(color: outcome.onTrack ? c.keep : c.bad),
                         ),
+                        if (!whatIf.isNone && planned != null) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            outcome.leftAfterBuying == planned
+                                ? 'The same as the plan'
+                                : '${outcome.leftAfterBuying > planned ? '+' : '−'}${Money.format((outcome.leftAfterBuying - planned).abs())} compared with the plan',
+                            style: TextStyle(color: c.ink, fontWeight: FontWeight.w600),
+                          ),
+                        ],
                       ],
                     ),
                   )
@@ -93,6 +105,7 @@ class RunwayScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(AppSpacing.l + 2),
                     child: Text('Add a goal to see what would be left after buying it.', style: TextStyle(color: c.ink)),
                   ),
+                if (outcome != null) const SoftCard(child: WhatIfPanel()),
                 Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.xs, top: AppSpacing.s),
                   child: Text('Coming up', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),

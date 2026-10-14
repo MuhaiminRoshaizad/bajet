@@ -48,6 +48,8 @@ it:
 | `countUnconfirmed` | Planned events marked as not counted are counted too          |
 
 `WhatIf.none` leaves the projection exactly as the plan has it.
+`projectionProvider` is always the saved plan; Runway reads
+`projectionWithProvider(whatIf)` with the levers' current `whatIfProvider`.
 
 ## Why `nextDue` and not "this month"
 

@@ -40,6 +40,19 @@ class WhatIf {
   static const none = WhatIf();
 
   bool get isNone => weeklyChange == 0 && monthlyCost == 0 && !countUnconfirmed;
+
+  WhatIf copyWith({int? weeklyChange, int? monthlyCost, bool? countUnconfirmed}) => WhatIf(
+        weeklyChange: weeklyChange ?? this.weeklyChange,
+        monthlyCost: monthlyCost ?? this.monthlyCost,
+        countUnconfirmed: countUnconfirmed ?? this.countUnconfirmed,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is WhatIf && other.weeklyChange == weeklyChange && other.monthlyCost == monthlyCost && other.countUnconfirmed == countUnconfirmed;
+
+  @override
+  int get hashCode => Object.hash(weeklyChange, monthlyCost, countUnconfirmed);
 }
 
 class Projection {

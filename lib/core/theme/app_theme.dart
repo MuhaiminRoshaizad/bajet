@@ -80,6 +80,13 @@ abstract final class AppTheme {
           side: BorderSide.none,
         ),
       ),
+      // A clear groove on the soft surface; no tick dots, the value is in words.
+      sliderTheme: SliderThemeData(
+        activeTrackColor: c.primary,
+        inactiveTrackColor: c.muted.withValues(alpha: 0.35),
+        thumbColor: c.primary,
+        tickMarkShape: SliderTickMarkShape.noTickMark,
+      ),
       dialogTheme: DialogThemeData(backgroundColor: c.background, surfaceTintColor: Colors.transparent),
       datePickerTheme: DatePickerThemeData(backgroundColor: c.background, surfaceTintColor: Colors.transparent),
       snackBarTheme: SnackBarThemeData(
