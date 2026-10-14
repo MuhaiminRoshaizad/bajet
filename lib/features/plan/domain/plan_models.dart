@@ -88,3 +88,7 @@ class Goal {
 }
 
 DateTime calendarDay(DateTime d) => DateTime.utc(d.year, d.month, d.day);
+
+/// Splits a weekly amount into seven daily ones, Monday first, that add back
+/// up to it exactly; leftover sen go to the earliest days.
+List<int> spreadOverWeek(int weekly) => [for (var i = 0; i < 7; i++) weekly ~/ 7 + (i < weekly % 7 ? 1 : 0)];

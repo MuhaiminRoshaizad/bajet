@@ -82,6 +82,17 @@ void main() {
     expect(world.goals, isEmpty);
   });
 
+  testWidgets('the weekly allowance is spread over the rhythm, so days are not planned at RM0', (tester) async {
+    final world = await pumpApp(tester, setUpDone: false);
+    await fillMoneyStep(tester);
+    await tester.tap(find.text('Skip for now'));
+    await tester.pumpAndSettle();
+
+    final rules = await world.watchRules().first;
+    // RM50 a week: RM7.15 on Monday and Tuesday, RM7.14 on the other five.
+    expect([for (final r in rules) r.plannedSpend], [715, 715, 714, 714, 714, 714, 714]);
+  });
+
   testWidgets('a half-filled goal cannot be skipped by accident', (tester) async {
     await pumpApp(tester, setUpDone: false);
     await fillMoneyStep(tester);

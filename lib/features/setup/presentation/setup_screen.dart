@@ -8,6 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../backup/presentation/restore_flow.dart';
+import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
 
@@ -58,10 +59,18 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     if (withGoal) {
       await repo.addGoal(name: _goalName.text, price: RinggitCentsFormatter.parse(_goalPrice.text), targetDate: _goalDate!);
     }
+    // Start the weekly rhythm from the allowance, so a first lunch is not
+    // judged against a plan of nothing. Each day can be changed later.
+    final cap = RinggitCentsFormatter.parse(_cap.text);
+    final daily = spreadOverWeek(cap);
+    for (final rule in await repo.watchRules().first) {
+      await repo.saveRule(WeeklyRule(weekday: rule.weekday, label: rule.label, type: rule.type, plannedSpend: daily[rule.weekday - 1]));
+    }
+    // Saved last: settings existing is what moves the router on to Today.
     await repo.saveSettings(PlanSettings(
       openingBalance: RinggitCentsFormatter.parse(_balance.text),
       openingDate: ref.read(todayProvider),
-      weeklyCap: RinggitCentsFormatter.parse(_cap.text),
+      weeklyCap: cap,
       buffer: RinggitCentsFormatter.parse(_buffer.text),
     ));
   }
