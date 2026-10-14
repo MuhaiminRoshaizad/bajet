@@ -78,6 +78,7 @@ class _Header extends StatelessWidget {
             Text('Today', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
             const Spacer(),
             Text('${Dates.weekday(today)} ${Dates.short(today)}', style: TextStyle(color: context.colors.muted)),
+            IconButton(onPressed: () => context.push(Routes.settings), icon: const Icon(Icons.tune_rounded), tooltip: 'Settings'),
           ],
         ),
       );

@@ -73,6 +73,7 @@ A folder under `core/` appears only once two features need it.
 | `ledger` | Entries, categories and favourites, the log sheet, history, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, weekly ring, goal, recent entries |
+| `settings` | The Settings hub behind Today's gear, and editors for each rule and amount |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
 
 Shared providers live beside what they provide: `databaseProvider` and
@@ -85,7 +86,8 @@ the first with an in-memory database and the second to pin the date.
 one bottom bar, each keeping its own stack and scroll position. Routes are
 declared once in `lib/app/router.dart`; their paths live in
 `lib/core/navigation/routes.dart` so a feature can link to another without
-importing the router. History (`Routes.history`) sits under Today's branch. Screens planned for a later release show
+importing the router. History (`Routes.history`) and Settings (`Routes.settings`) sit under
+Today's branch. Screens planned for a later release show
 an honest placeholder that names the release, never a dead control.
 
 Until setup has stored an opening balance, every route redirects to
