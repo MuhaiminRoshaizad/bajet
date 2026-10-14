@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -61,5 +62,44 @@ void main() {
     expect(find.text('Enter the price'), findsOneWidget);
     expect(find.text('Pick the day you plan to buy it'), findsOneWidget);
     expect(world.goals, isEmpty);
+  });
+
+  testWidgets('a bought goal moves to Done with its date and price', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Goals'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bought'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mark bought'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.text('Bought 01/07/2026 for RM500.00'), findsOneWidget);
+  });
+
+  testWidgets('holding and dragging a goal changes which is bought first', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31), priority: 1);
+      w.addGoal(name: 'Holiday', price: 20000, targetDate: d(2026, 9, 30), priority: 2);
+    });
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Goals'));
+    await tester.pumpAndSettle();
+
+    final drag = await tester.startGesture(tester.getCenter(find.text('Holiday')));
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+    // In steps, so the list sees the item travel over the one above it.
+    for (var i = 0; i < 10; i++) {
+      await drag.moveBy(const Offset(0, -30));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pumpAndSettle();
+    await drag.up();
+    await tester.pumpAndSettle();
+
+    expect([for (final g in world.goals..sort((a, b) => a.priority.compareTo(b.priority))) g.name], ['Holiday', 'Laptop']);
   });
 }

@@ -133,4 +133,8 @@ all of it is skipped and content appears in place.
 - Destructive actions ask for confirmation, then offer undo. In History,
   swiping an entry left asks before deleting it; tapping it edits it in the
   same sheet used for logging.
+- Goals are reordered by holding one and dragging it; a drag that starts
+  at once would lose the gesture to the page's scrolling. Reorderable lists
+  also expose move up and move down to TalkBack. Bought goals move to a Done
+  list with their date and price.
 - Touch targets are at least 48 dp.

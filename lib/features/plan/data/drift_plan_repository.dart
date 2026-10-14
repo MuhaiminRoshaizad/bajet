@@ -158,6 +158,24 @@ class DriftPlanRepository implements PlanRepository {
   }
 
   @override
+  Stream<List<domain.Goal>> watchAchievedGoals() {
+    final q = _db.select(_db.goals)
+      ..where((g) => g.status.equalsValue(GoalStatus.achieved))
+      ..orderBy([(g) => OrderingTerm(expression: g.achievedOn, mode: OrderingMode.desc)]);
+    return q.watch().map((rows) => [
+          for (final r in rows)
+            domain.Goal(id: r.id, name: r.name, price: r.price, targetDate: r.targetDate, priority: r.priority, achievedOn: r.achievedOn),
+        ]);
+  }
+
+  @override
+  Future<void> reorderGoals(List<int> ids) => _db.transaction(() async {
+        for (final (i, id) in ids.indexed) {
+          await (_db.update(_db.goals)..where((g) => g.id.equals(id))).write(GoalsCompanion(priority: Value(i + 1)));
+        }
+      });
+
+  @override
   Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1}) =>
       _db.into(_db.goals).insert(GoalsCompanion.insert(name: name.trim(), price: price, targetDate: targetDate, priority: Value(priority)));
 

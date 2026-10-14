@@ -56,6 +56,12 @@ abstract interface class PlanRepository {
 
   /// Active goals, highest priority first.
   Stream<List<Goal>> watchActiveGoals();
+
+  /// Goals marked bought, most recent first.
+  Stream<List<Goal>> watchAchievedGoals();
+
+  /// Sets active goals' priorities to follow [ids], first is highest.
+  Future<void> reorderGoals(List<int> ids);
   Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1});
 
   /// Logs the purchase as an expense on [on] and marks the goal achieved, in

@@ -15,6 +15,7 @@ final rulesProvider = StreamProvider<List<WeeklyRule>>((ref) => ref.watch(planRe
 final recurringProvider = StreamProvider<List<RecurringItem>>((ref) => ref.watch(planRepositoryProvider).watchRecurring());
 final eventsProvider = StreamProvider<List<PlannedEvent>>((ref) => ref.watch(planRepositoryProvider).watchEvents());
 final goalsProvider = StreamProvider<List<Goal>>((ref) => ref.watch(planRepositoryProvider).watchActiveGoals());
+final achievedGoalsProvider = StreamProvider<List<Goal>>((ref) => ref.watch(planRepositoryProvider).watchAchievedGoals());
 
 /// Today's rule from the weekly rhythm, or null while it loads.
 final todayRuleProvider = Provider<WeeklyRule?>((ref) {

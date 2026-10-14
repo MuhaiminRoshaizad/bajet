@@ -76,6 +76,7 @@ class Goal {
     required this.price,
     required this.targetDate,
     this.priority = 1,
+    this.achievedOn,
   });
 
   final int id;
@@ -85,6 +86,9 @@ class Goal {
 
   /// Lower runs first when two goals fall on the same day.
   final int priority;
+
+  /// The day it was marked bought; null while it is still being saved for.
+  final DateTime? achievedOn;
 }
 
 DateTime calendarDay(DateTime d) => DateTime.utc(d.year, d.month, d.day);

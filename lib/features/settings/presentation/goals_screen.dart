@@ -20,6 +20,7 @@ class GoalsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
+    final achieved = ref.watch(achievedGoalsProvider).value ?? const <Goal>[];
     final outcomes = {for (final o in ref.watch(projectionProvider)?.goals ?? const []) o.goal.id: o};
     return Scaffold(
       appBar: AppBar(title: const Text('Goals')),
@@ -33,18 +34,52 @@ class GoalsScreen extends ConsumerWidget {
           if (goals.isNotEmpty)
             SettingsGroup(
               children: [
-                for (final (i, g) in goals.indexed)
-                  ListTile(
-                    minTileHeight: 64,
-                    leading: CircleAvatar(backgroundColor: c.keepSurface, foregroundColor: c.keep, child: Text('${i + 1}')),
-                    title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(
-                      '${Money.format(g.price)} by ${Dates.full(g.targetDate)}'
-                      '${outcomes[g.id] == null ? '' : outcomes[g.id]!.onTrack ? ' · on track' : ' · short'}',
-                    ),
-                    trailing: TextButton(onPressed: () => _markBought(context, ref, g), child: const Text('Bought')),
-                  ),
+                ReorderableListView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  buildDefaultDragHandles: false,
+                  onReorderItem: (from, to) {
+                    final ids = [for (final g in goals) g.id];
+                    ids.insert(to, ids.removeAt(from));
+                    ref.read(planRepositoryProvider).reorderGoals(ids);
+                  },
+                  children: [
+                    // Hold to drag: an immediate drag would lose the gesture
+                    // to the page's own scrolling.
+                    for (final (i, g) in goals.indexed)
+                      ReorderableDelayedDragStartListener(
+                        key: ValueKey('goal-${g.id}'),
+                        index: i,
+                        enabled: goals.length > 1,
+                        child: ListTile(
+                          minTileHeight: 64,
+                          leading: CircleAvatar(backgroundColor: c.keepSurface, foregroundColor: c.keep, child: Text('${i + 1}')),
+                          title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          subtitle: Text(
+                            '${Money.format(g.price)} by ${Dates.full(g.targetDate)}'
+                            '${outcomes[g.id] == null ? '' : outcomes[g.id]!.onTrack ? ' · on track' : ' · short'}',
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextButton(onPressed: () => _markBought(context, ref, g), child: const Text('Bought')),
+                              if (goals.length > 1)
+                                Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.m),
+                                  child: Icon(Icons.drag_handle_rounded, color: c.muted),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
+            ),
+          if (goals.length > 1)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.s, AppSpacing.xs, 0),
+              child: Text('Hold a goal and drag it to change which is bought first.', style: TextStyle(color: c.muted, fontSize: 13)),
             ),
           const SizedBox(height: AppSpacing.l),
           FilledButton.icon(
@@ -53,6 +88,23 @@ class GoalsScreen extends ConsumerWidget {
             label: const Text('Add a goal'),
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
           ),
+          if (achieved.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.xxl, AppSpacing.xs, AppSpacing.s),
+              child: Text('Done', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
+            ),
+            SettingsGroup(
+              children: [
+                for (final g in achieved)
+                  ListTile(
+                    minTileHeight: 64,
+                    leading: CircleAvatar(backgroundColor: c.goodSurface, foregroundColor: c.good, child: const Icon(Icons.check_rounded)),
+                    title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Bought ${Dates.full(g.achievedOn!)} for ${Money.format(g.price)}'),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );

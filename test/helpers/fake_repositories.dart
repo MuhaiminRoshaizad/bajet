@@ -55,6 +55,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   final _recurring = _Live<List<RecurringItem>>([]);
   final _events = _Live<List<PlannedEvent>>([]);
   final _goals = _Live<List<Goal>>([]);
+  final _achieved = _Live<List<Goal>>([]);
   final favourites = FakeFavourites();
   var _nextId = 1;
 
@@ -180,10 +181,26 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     final goal = _goals.value.firstWhere((g) => g.id == id);
     await add(EntryDraft(day: on, isIncome: false, amount: goal.price, categoryKey: goalCategoryKey, label: goal.name));
     _goals.value = [..._goals.value.where((g) => g.id != id)];
+    _achieved.value = [
+      Goal(id: goal.id, name: goal.name, price: goal.price, targetDate: goal.targetDate, priority: goal.priority, achievedOn: on),
+      ..._achieved.value,
+    ];
   }
 
   @override
-  Stream<List<Goal>> watchActiveGoals() => _goals.stream;
+  Stream<List<Goal>> watchAchievedGoals() => _achieved.stream;
+
+  @override
+  Future<void> reorderGoals(List<int> ids) async => _goals.value = [
+        for (final (i, id) in ids.indexed)
+          () {
+            final g = _goals.value.firstWhere((g) => g.id == id);
+            return Goal(id: g.id, name: g.name, price: g.price, targetDate: g.targetDate, priority: i + 1);
+          }(),
+      ];
+
+  @override
+  Stream<List<Goal>> watchActiveGoals() => _goals.stream.map((all) => [...all]..sort((a, b) => a.priority.compareTo(b.priority)));
 
   @override
   Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1}) async {
