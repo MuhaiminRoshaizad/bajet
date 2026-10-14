@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/money/money.dart';
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
 
@@ -17,6 +20,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final settings = ref.watch(settingsProvider).value;
+    final favourites = ref.watch(favouritesProvider).value?.length ?? 0;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings'), backgroundColor: c.background),
       body: ListView(
@@ -29,6 +33,7 @@ class SettingsScreen extends ConsumerWidget {
                 value: settings == null ? '' : '${Money.formatWhole(settings.weeklyCap)} a week',
                 onTap: settings == null ? null : () => _editAllowance(context, settings),
               ),
+              SettingsRow(title: 'Favourites', value: favourites == 0 ? 'None yet' : '$favourites saved', onTap: () => context.push(Routes.favourites)),
             ],
           ),
           const SizedBox(height: AppSpacing.m),

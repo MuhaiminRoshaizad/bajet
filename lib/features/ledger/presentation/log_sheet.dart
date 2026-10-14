@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -134,6 +136,12 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       ..showSnackBar(SnackBar(content: Text(message), action: SnackBarAction(label: 'Undo', onPressed: undo)));
   }
 
+  void _manageFavourites() {
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop();
+    router.push(Routes.favourites);
+  }
+
   String _categoryLabel(String key) =>
       ref.read(categoriesProvider).value?.firstWhere((c) => c.key == key).label ?? key;
 
@@ -194,10 +202,24 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     ),
                     const SizedBox(height: AppSpacing.s),
                     Center(child: _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day)),
+                    if (!_isIncome && favourites.isEmpty && widget.editing == null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: _manageFavourites,
+                          icon: const Icon(Icons.star_outline_rounded),
+                          label: const Text('Set up favourites for things you buy often'),
+                        ),
+                      ),
                     if (!_isIncome && favourites.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.l),
-                      _SectionLabel('Favourites'),
                       const SizedBox(height: AppSpacing.s),
+                      Row(
+                        children: [
+                          _SectionLabel('Favourites'),
+                          const Spacer(),
+                          TextButton(onPressed: _manageFavourites, style: TextButton.styleFrom(minimumSize: const Size(48, 40)), child: const Text('Edit')),
+                        ],
+                      ),
                       SizedBox(
                         height: 52,
                         child: ListView.separated(

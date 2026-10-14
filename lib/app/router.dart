@@ -7,6 +7,7 @@ import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/ledger/presentation/history_screen.dart';
 import '../features/plan/presentation/runway_screen.dart';
+import '../features/settings/presentation/favourites_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/setup/presentation/setup_screen.dart';
 import '../features/today/presentation/today_screen.dart';
@@ -41,7 +42,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (context, state) => const TodayScreen(),
               routes: [
                 GoRoute(path: 'history', builder: (context, state) => const HistoryScreen()),
-                GoRoute(path: 'settings', builder: (context, state) => const SettingsScreen()),
+                GoRoute(
+                  path: 'settings',
+                  builder: (context, state) => const SettingsScreen(),
+                  routes: [GoRoute(path: 'favourites', builder: (context, state) => const FavouritesScreen())],
+                ),
               ],
             ),
           ]),
