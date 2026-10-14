@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../backup/presentation/restore_flow.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
 
@@ -156,6 +157,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               onPressed: _next,
               style: _buttonStyle(),
               child: const Text('Continue'),
+            ),
+            const SizedBox(height: AppSpacing.s),
+            // A restore saves settings too, which moves the router on to Today.
+            TextButton.icon(
+              onPressed: () => pickAndRestore(context, ref, replacing: false),
+              icon: const Icon(Icons.restore_rounded),
+              label: const Text('Restore from a backup file instead'),
+              style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             ),
           ],
         ),

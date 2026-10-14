@@ -1,7 +1,35 @@
+import 'dart:convert';
+
+import 'package:bajet/features/backup/domain/backup_repository.dart';
+import 'package:bajet/features/backup/presentation/backup_files.dart';
+import 'package:bajet/features/backup/presentation/restore_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
+import '../../helpers/fake_repositories.dart';
+
+class _PickedFile implements BackupFiles {
+  @override
+  Future<String?> pick() async => jsonEncode({'app': 'bajet', 'format': 1, 'entries': []});
+
+  @override
+  Future<void> share(String contents, String fileName) async {}
+}
+
+/// Stands in for the real repository by saving the settings a backup would
+/// carry.
+class _RestoreInto implements BackupRepository {
+  _RestoreInto(this.world);
+
+  final FakeWorld world;
+
+  @override
+  Future<Map<String, Object?>> export() async => {};
+
+  @override
+  Future<void> restore(Map<String, Object?> backup) => world.saveSettings(demoSettings);
+}
 
 Finder field(String label) => find.widgetWithText(TextFormField, label);
 
@@ -66,5 +94,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Enter the price'), findsOneWidget);
     expect(find.text('Pick the day you plan to buy it'), findsOneWidget);
+  });
+
+  testWidgets('a new phone can start from a backup instead of setup', (tester) async {
+    final world = await pumpApp(
+      tester,
+      setUpDone: false,
+      overrides: (world) => [
+        backupFilesProvider.overrideWithValue(_PickedFile()),
+        backupRepositoryProvider.overrideWithValue(_RestoreInto(world)),
+      ],
+    );
+    await tester.tap(find.text('Restore from a backup file instead'));
+    await tester.pumpAndSettle();
+    expect(find.text('Restore this backup?'), findsOneWidget);
+
+    await tester.tap(find.text('Restore'));
+    await tester.pumpAndSettle();
+    expect(world.settings, isNotNull);
+    expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget);
+    expect(find.text('Backup restored'), findsOneWidget);
   });
 }

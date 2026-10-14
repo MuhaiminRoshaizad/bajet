@@ -76,7 +76,7 @@ A folder under `core/` appears only once two features need it.
 | `settings` | The Settings hub behind Today's gear: allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites |
 | `backup` | JSON export through the share sheet and restore from a picked file |
 | `coach`  | The Coach tab: a plain-text week summary to copy into a chat; an in-app coach is planned for v1.3 |
-| `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal |
+| `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal, or a backup restore instead |
 
 Shared providers live beside what they provide: `databaseProvider` and
 `todayProvider` in `core/database/database_provider.dart`. Tests override both,
@@ -95,7 +95,8 @@ an honest placeholder that names the release, never a dead control.
 Until setup has stored an opening balance, every route redirects to
 `/setup`; once settings exist, `/setup` redirects to Today. The router listens
 to `settingsProvider`, so finishing setup moves on without the setup screen
-navigating itself.
+navigating itself. Restoring a backup from setup works the same way: the
+restored settings row is what moves the router on.
 
 ## Storage and backup
 

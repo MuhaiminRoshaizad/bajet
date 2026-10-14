@@ -53,7 +53,8 @@ flutter build apk --release --split-per-abi
 ```
 
 To move an existing plan onto a phone, export a backup from Settings → Backup
-on one install and restore it on the other.
+on one install and restore it on the other, either from the same screen or
+straight from first-run setup.
 
 Before committing:
 
