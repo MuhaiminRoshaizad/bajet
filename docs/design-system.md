@@ -122,7 +122,8 @@ all of it is skipped and content appears in place.
   then a Log button that names what it will save. The amount, keypad and Log
   button stay in view; only favourites, categories, note and day scroll
   between them. While the system keyboard is up for the note, the keypad
-  steps aside.
+  steps aside. The day is today unless the owner taps it and picks another
+  in the calendar, from the opening date up to today.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
 - Saving gives a light haptic and a snackbar with Undo.

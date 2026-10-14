@@ -183,10 +183,14 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // The toggle sits in the middle; a box as wide as the close
+            // button on the left keeps it truly centred.
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.s, 0),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
               child: Row(
                 children: [
+                  const SizedBox(width: 48),
+                  const Spacer(),
                   _KindToggle(
                     isIncome: _isIncome,
                     onChanged: (v) => setState(() {
@@ -312,7 +316,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     const SizedBox(height: AppSpacing.s),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: _DayToggle(day: _day, today: ref.read(todayProvider), onChanged: (d) => setState(() => _day = d)),
+                      child: _DayPicker(day: _day, onChanged: (d) => setState(() => _day = d)),
                     ),
                     const SizedBox(height: AppSpacing.s),
                     ReceiptField(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r)),
@@ -420,27 +424,37 @@ class _KindToggle extends StatelessWidget {
       );
 }
 
-class _DayToggle extends StatelessWidget {
-  const _DayToggle({required this.day, required this.today, required this.onChanged});
+/// Today unless changed. One tap opens the calendar for any day from the
+/// opening date, the first day the balance counts, up to today.
+class _DayPicker extends ConsumerWidget {
+  const _DayPicker({required this.day, required this.onChanged});
 
   final DateTime day;
-  final DateTime today;
   final ValueChanged<DateTime> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    final yesterday = DateTime.utc(today.year, today.month, today.day - 1);
-    return SegmentedButton<DateTime>(
-      segments: [
-        // An entry being edited may come from an older day; keep it choosable.
-        if (day.isBefore(yesterday)) ButtonSegment(value: day, label: Text(Dates.short(day))),
-        ButtonSegment(value: today, label: const Text('Today')),
-        ButtonSegment(value: yesterday, label: const Text('Yesterday')),
-      ],
-      selected: {day},
-      showSelectedIcon: false,
-      style: const ButtonStyle(visualDensity: VisualDensity.compact),
-      onSelectionChanged: (s) => onChanged(s.single),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(todayProvider);
+    final opening = ref.watch(settingsProvider).value?.openingDate ?? today;
+    final label = day == today
+        ? 'Today'
+        : day == DateTime.utc(today.year, today.month, today.day - 1)
+            ? 'Yesterday, ${Dates.short(day)}'
+            : '${Dates.weekday(day)} ${Dates.full(day)}';
+    return OutlinedButton.icon(
+      onPressed: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: day,
+          firstDate: opening.isAfter(day) ? day : opening,
+          lastDate: today,
+          helpText: 'Day of this entry',
+        );
+        if (picked != null) onChanged(DateTime.utc(picked.year, picked.month, picked.day));
+      },
+      icon: const Icon(Icons.event_outlined),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
     );
   }
 }

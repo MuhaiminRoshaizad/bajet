@@ -1,5 +1,6 @@
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
+import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -149,5 +150,29 @@ void main() {
       w.add(EntryDraft(day: testToday, isIncome: false, amount: 300, categoryKey: 'food'));
     });
     expect(world.receipts.kept, {'kept.jpg'});
+  });
+
+  testWidgets('the day is today unless another is picked from the calendar', (tester) async {
+    final world = await pumpApp(tester, setUpDone: false, seed: (w) => w.saveSettings(PlanSettings(openingBalance: 150000, openingDate: DateTime.utc(2026, 6, 1), weeklyCap: 5000, buffer: 0)));
+    await openLogger(tester);
+    await typeKeys(tester, '500');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.pump();
+
+    // The bottom bar has a Today too, so find the day button itself.
+    final dayButton = find.widgetWithText(OutlinedButton, 'Today');
+    await tester.ensureVisible(dayButton);
+    await tester.tap(dayButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Previous month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('28'));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sun 28/06/2026'), findsOneWidget);
+
+    await tester.tap(find.text('Log RM5.00'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.day, DateTime.utc(2026, 6, 28));
   });
 }
