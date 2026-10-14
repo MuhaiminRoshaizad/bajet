@@ -96,6 +96,7 @@ class DriftBackupRepository implements BackupRepository {
             'categoryKey': e.categoryKey,
             'label': e.label,
             'note': e.note,
+            'receipt': e.receipt,
             'recurringItemId': e.recurringItemId,
           },
       ],
@@ -103,11 +104,9 @@ class DriftBackupRepository implements BackupRepository {
   }
 
   @override
-  Future<void> restore(Map<String, Object?> backup) async {
-    if (backup['app'] != 'bajet') throw const BackupFormatException('This file is not a bajet backup.');
-    if (backup['format'] != backupFormatVersion) {
-      throw BackupFormatException('This backup uses format ${backup['format']}, which this version of bajet cannot read.');
-    }
+  Future<void> restore(Map<String, Object?> original) async {
+    if (original['app'] != 'bajet') throw const BackupFormatException('This file is not a bajet backup.');
+    final backup = upgradeBackup(original);
     try {
       await _db.transaction(() async {
         // Children before parents, so foreign keys never point at nothing.
@@ -206,6 +205,7 @@ class DriftBackupRepository implements BackupRepository {
                 categoryKey: e['categoryKey']! as String,
                 label: Value(e['label'] as String?),
                 note: Value(e['note'] as String?),
+                receipt: Value(e['receipt'] as String?),
                 recurringItemId: Value(e['recurringItemId'] as int?),
               ),
           ]);

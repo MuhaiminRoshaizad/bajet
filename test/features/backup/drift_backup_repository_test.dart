@@ -80,4 +80,23 @@ void main() {
     final keys = [for (final c in await target.select(target.categories).get()) c.key];
     expect(keys, contains('untracked'));
   });
+
+  test('a format 1 backup, from before receipts, still restores', () async {
+    await fill(source);
+    final v2 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    final v1 = {
+      ...v2,
+      'format': 1,
+      'entries': [for (final e in v2['entries']! as List) {...(e as Map<String, Object?>)}..remove('receipt')],
+    };
+    await DriftBackupRepository(target).restore(v1);
+    final restored = await DriftLedgerRepository(target).watchSince(d(2000, 1, 1)).first;
+    expect(restored.firstWhere((e) => e.label == 'Coffee').receipt, isNull);
+  });
+
+  test('receipts survive a round trip by file name', () async {
+    await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1200, categoryKey: 'food', receipt: 'r1.jpg'));
+    await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
+    expect((await DriftLedgerRepository(target).watchSince(d(2000, 1, 1)).first).single.receipt, 'r1.jpg');
+  });
 }

@@ -135,7 +135,7 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 1,
+  "format": 2,
   "settings": { "openingBalance": 150000, "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000 },
   "categories": [], "weeklyRules": [], "recurringItems": [],
   "plannedEvents": [], "goals": [], "favourites": [], "entries": []
@@ -145,7 +145,16 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 Each list holds one object per row, with the same fields as the tables above
 in camelCase, amounts in sen and days as `yyyy-mm-dd`. The mapping is written
 by hand rather than taken from drift, so the file format only changes when
-`format` does. Restoring replaces everything in one transaction; a file that
+`format` does. Older files are brought up to date one step at a time by
+`upgradeBackup` before they are read:
+
+| Format | Change                                                  |
+|--------|---------------------------------------------------------|
+| 1      | First release                                           |
+| 2      | Each entry carries `receipt`, the file name of its image |
+
+A backup holds a receipt's file name, not the image itself, so a backup moved
+to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
 is not a bajet backup, has another `format`, or is damaged is refused and the
 data on the phone is left as it was.
 

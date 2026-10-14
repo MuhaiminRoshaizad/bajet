@@ -1,6 +1,28 @@
-/// The version written into every backup file. Bump it, and teach
-/// [BackupRepository.restore] to read the old one, whenever the format changes.
-const backupFormatVersion = 1;
+/// The version written into every backup file. Bump it, and add a step to
+/// [upgradeBackup], whenever the format changes.
+///
+/// 1: first release. 2: entries carry `receipt`, an image file name.
+const backupFormatVersion = 2;
+
+/// Brings an older backup up to [backupFormatVersion] one step at a time,
+/// so every format ever written still restores. Throws
+/// [BackupFormatException] for a format newer than this version knows.
+Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
+  var format = backup['format'];
+  if (format is! int || format < 1 || format > backupFormatVersion) {
+    throw BackupFormatException('This backup uses format $format, which this version of bajet cannot read.');
+  }
+  var b = backup;
+  if (format == 1) {
+    b = {
+      ...b,
+      'format': 2,
+      'entries': [for (final e in (b['entries'] as List<Object?>? ?? const [])) {...e! as Map<String, Object?>, 'receipt': null}],
+    };
+    format = 2;
+  }
+  return b;
+}
 
 /// Thrown when a file is not a bajet backup this version can read.
 class BackupFormatException implements Exception {
