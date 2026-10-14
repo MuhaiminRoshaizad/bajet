@@ -11,6 +11,7 @@ import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_repository.dart';
+import '../../coach/presentation/coach_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 
 /// Every amount and rule the app works from, so none of it is fixed in code.
@@ -59,6 +60,11 @@ class SettingsScreen extends ConsumerWidget {
               SettingsRow(title: 'Sunday check-in', value: 'Match your bank', onTap: () => context.push(Routes.checkin)),
               SettingsRow(title: 'Share a report', value: 'Text, PDF or CSV', onTap: () => context.push(Routes.report)),
               SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup)),
+              SettingsRow(
+                title: 'Coach',
+                value: ref.watch(coachKeyProvider).value == null ? 'Add your key' : 'Key saved',
+                onTap: () => context.push(Routes.coachKey),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.m),

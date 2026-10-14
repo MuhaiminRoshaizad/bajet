@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 
+import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
@@ -66,6 +67,8 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   final favourites = FakeFavourites();
   final receipts = FakeReceipts();
   final home = FakeHomeSurface();
+  final coachKeys = FakeCoachKeys();
+  final coach = FakeCoach();
   var _nextId = 1;
 
   PlanSettings? get settings => _settings.value;
@@ -282,4 +285,40 @@ class FakeHomeSurface implements HomeSurface {
 
   @override
   Future<void> updateWidget(WidgetSnapshot snapshot) async => widget = snapshot;
+}
+
+class FakeCoachKeys implements CoachKeyStore {
+  String? key;
+  final used = <DateTime, int>{};
+
+  @override
+  Future<String?> readKey() async => key;
+
+  @override
+  Future<void> saveKey(String k) async => key = k.trim();
+
+  @override
+  Future<void> deleteKey() async => key = null;
+
+  @override
+  Future<int> usedOn(DateTime day) async => used[day] ?? 0;
+
+  @override
+  Future<void> recordUse(DateTime day) async => used[day] = (used[day] ?? 0) + 1;
+}
+
+/// Answers with [reply], or throws [failWith]; records what it was sent.
+class FakeCoach implements CoachClient {
+  String reply = 'You are on track.';
+  CoachProblem? failWith;
+  String? lastSystem;
+  List<CoachMessage>? lastConversation;
+
+  @override
+  Future<String> ask({required String apiKey, required String system, required List<CoachMessage> conversation}) async {
+    lastSystem = system;
+    lastConversation = conversation;
+    if (failWith != null) throw CoachException(failWith!);
+    return reply;
+  }
 }

@@ -6,6 +6,7 @@ import '../core/navigation/routes.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/backup/presentation/backup_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
+import '../features/coach/presentation/coach_key_screen.dart';
 import '../features/coach/presentation/coach_screen.dart';
 import '../features/insights/domain/insights.dart';
 import '../features/insights/presentation/insights_screen.dart';
@@ -68,6 +69,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     GoRoute(path: 'goals', builder: (context, state) => const GoalsScreen()),
                     GoRoute(path: 'events', builder: (context, state) => const EventsScreen()),
                     GoRoute(path: 'backup', builder: (context, state) => const BackupScreen()),
+                    GoRoute(path: 'coach', builder: (context, state) => const CoachKeyScreen()),
                   ],
                 ),
               ],

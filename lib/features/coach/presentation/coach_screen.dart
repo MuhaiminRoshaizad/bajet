@@ -2,35 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
-import '../../ledger/presentation/ledger_providers.dart';
-import '../../plan/presentation/plan_providers.dart';
-import '../../plan/presentation/runway_screen.dart';
-import '../domain/week_summary.dart';
-
-final weekSummaryProvider = Provider<String?>((ref) {
-  final balance = ref.watch(balanceProvider).value;
-  final settings = ref.watch(settingsProvider).value;
-  final entries = ref.watch(recentEntriesProvider).value;
-  final categories = ref.watch(categoriesProvider).value;
-  final rules = ref.watch(rulesProvider).value;
-  if (balance == null || settings == null || entries == null || categories == null || rules == null) return null;
-  return weekSummary(
-    today: ref.watch(todayProvider),
-    balance: balance,
-    weeklyCap: settings.weeklyCap,
-    buffer: settings.buffer,
-    entries: entries,
-    categories: categories,
-    rules: rules,
-    projection: ref.watch(projectionProvider),
-    upcoming: ref.watch(upcomingProvider) ?? const [],
-  );
-});
+import 'coach_providers.dart';
 
 /// For now the coach is whoever the owner pastes this summary to. An in-app
 /// coach arrives in v1.3.

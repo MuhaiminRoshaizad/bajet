@@ -13,6 +13,7 @@ abstract final class Routes {
   static const goals = '/today/settings/goals';
   static const events = '/today/settings/events';
   static const backup = '/today/settings/backup';
+  static const coachKey = '/today/settings/coach';
   static const runway = '/runway';
   static const insights = '/insights';
   static const coach = '/coach';
