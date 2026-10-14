@@ -148,7 +148,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final categories = [...?ref.watch(categoriesProvider).value?.where((cat) => cat.isIncome == _isIncome && !cat.isGoal)];
+    final categories = [...?ref.watch(categoriesProvider).value?.where((cat) => cat.isIncome == _isIncome && !cat.isAutomatic)];
     final favourites = ref.watch(favouritesProvider).value ?? const [];
     final ready = _amount > 0 && _categoryKey != null && !_saving;
 

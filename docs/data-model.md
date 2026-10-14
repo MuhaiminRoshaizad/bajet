@@ -116,9 +116,12 @@ Shortcuts that fill in the logger. They never log on their own.
 ## Defaults on a new install
 
 Eight expense categories (Food, Transport, Pets, Family, Gifts, Bills, Personal,
-Other), a fixed Goals category that goal purchases are logged under and the
-logger does not offer, and four income categories (Salary, KWSP, Refund,
-Other); only Bills, Goals, Salary and KWSP start as fixed. The rhythm starts as "Weekday" and "Weekend"
+Other), two built-in fixed categories the app logs into itself and no picker
+offers (Goals, for goal purchases, and Untracked, for money found missing at a
+check-in), and four income categories (Salary, KWSP, Refund, Other); only
+Bills, Goals, Untracked, Salary and KWSP start as fixed. The built-in pair is
+re-added whenever the database opens and after every restore
+(`ensureBuiltInCategories`), so older installs and backups gain them. The rhythm starts as "Weekday" and "Weekend"
 with no planned spend; finishing setup then spreads the weekly allowance over
 the seven days (`spreadOverWeek`), so no day starts planned at RM0.00 while the
 week allows more. There are no favourites, goals or recurring items until

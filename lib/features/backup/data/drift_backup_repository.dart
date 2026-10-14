@@ -210,6 +210,8 @@ class DriftBackupRepository implements BackupRepository {
               ),
           ]);
         });
+        // Older backups predate some built-in categories; add them back.
+        await _db.ensureBuiltInCategories();
       });
     } on TypeError {
       throw const BackupFormatException('This backup is damaged or incomplete.');

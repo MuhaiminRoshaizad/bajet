@@ -71,4 +71,13 @@ void main() {
     await expectLater(DriftBackupRepository(target).restore(damaged), throwsA(isA<BackupFormatException>()));
     expect(await DriftBackupRepository(target).export(), before);
   });
+
+  test('restoring a backup from before the Untracked category adds it back', () async {
+    await fill(source);
+    final backup = await DriftBackupRepository(source).export();
+    final older = {...backup, 'categories': [for (final c in backup['categories']! as List) if ((c as Map)['key'] != 'untracked') c]};
+    await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(older)) as Map<String, Object?>);
+    final keys = [for (final c in await target.select(target.categories).get()) c.key];
+    expect(keys, contains('untracked'));
+  });
 }

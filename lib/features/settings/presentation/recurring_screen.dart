@@ -114,7 +114,7 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final categories = [...?ref.watch(categoriesProvider).value?.where((x) => x.isIncome == _isIncome && !x.isGoal)];
+    final categories = [...?ref.watch(categoriesProvider).value?.where((x) => x.isIncome == _isIncome && !x.isAutomatic)];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(

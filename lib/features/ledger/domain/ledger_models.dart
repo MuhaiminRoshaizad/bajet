@@ -21,8 +21,9 @@ class Category {
   /// Fixed spending does not count toward the weekly cap.
   final bool isFixed;
 
-  /// Goal purchases are logged by marking a goal bought, never picked by hand.
-  bool get isGoal => key == goalCategoryKey;
+  /// Goal purchases and check-in gaps are logged by the app, never picked by
+  /// hand.
+  bool get isAutomatic => key == goalCategoryKey || key == untrackedCategoryKey;
 }
 
 class Entry {
@@ -78,6 +79,11 @@ class Favourite {
 /// The category goal purchases are logged under. It is fixed, so a purchase
 /// never counts toward the weekly cap, and the logger does not offer it.
 const goalCategoryKey = 'goal';
+
+/// Money that left the account without being logged, found by comparing
+/// with the bank at a check-in. Fixed, so a lump found on Sunday does not
+/// mark the week over its allowance.
+const untrackedCategoryKey = 'untracked';
 
 /// Spending that counts toward the weekly cap: expenses outside fixed
 /// categories, from [from] to [to] inclusive.

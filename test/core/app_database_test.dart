@@ -10,7 +10,7 @@ void main() {
 
   test('a new database starts with generic categories and a blank rhythm', () async {
     final cats = await db.select(db.categories).get();
-    expect(cats.where((c) => c.kind == EntryKind.expense), hasLength(9));
+    expect(cats.where((c) => c.kind == EntryKind.expense), hasLength(10));
     expect(cats.where((c) => c.kind == EntryKind.income), hasLength(4));
 
     final rules = await db.select(db.weeklyRules).get();
@@ -19,6 +19,14 @@ void main() {
 
     expect(await db.select(db.favourites).get(), isEmpty);
     expect(await db.select(db.appSettings).getSingleOrNull(), isNull);
+  });
+
+  test('built-in categories come back if missing, and nothing is duplicated', () async {
+    await (db.delete(db.categories)..where((c) => c.key.equals('untracked'))).go();
+    await db.ensureBuiltInCategories();
+    await db.ensureBuiltInCategories();
+    final untracked = await (db.select(db.categories)..where((c) => c.key.equals('untracked'))).get();
+    expect(untracked.single.isFixed, isTrue);
   });
 
   test('stores calendar days as ISO text and reads them back unchanged', () async {

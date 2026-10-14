@@ -92,3 +92,16 @@ outline, focus gets a 3 px accent ring, and the main action of each screen
 stays a solid accent button. WCAG does not require a boundary around a button
 identified by its text, so plain soft buttons are allowed. Every text colour
 was rechecked against both the surface and the darker well.
+
+## 010: Untracked money is its own fixed category
+
+**Decided:** when the bank shows less than bajet at a check-in, the gap is
+logged under a built-in `untracked` category, which is fixed.
+
+**Why:** the gap is real money gone, so it must leave the balance, but it was
+spent on unknown days. Counting it against the weekly allowance would mark
+whichever day the check-in happens as over plan. Keeping it separate also lets
+Insights show how much went untracked, which is the habit worth watching.
+
+**Costs:** untracked spending never shows in the weekly ring. Insights
+surfaces it instead.

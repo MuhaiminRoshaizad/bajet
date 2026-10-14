@@ -24,8 +24,22 @@ class AppDatabase extends _$AppDatabase {
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
+          await ensureBuiltInCategories();
         },
       );
+
+  /// The categories the app logs into itself, which the owner never picks:
+  /// goal purchases and money found missing at a check-in. Added if absent,
+  /// so older installs and older backups gain any added since.
+  Future<void> ensureBuiltInCategories() => batch((b) {
+        for (final (i, c) in _defaultCategories.indexed.where((e) => _builtIn.contains(e.$2.$1))) {
+          b.insert(
+            categories,
+            CategoriesCompanion.insert(key: c.$1, label: c.$2, kind: c.$3, tint: c.$4, isFixed: Value(c.$5), sortOrder: Value(i)),
+            mode: InsertMode.insertOrIgnore,
+          );
+        }
+      });
 
   /// Starting values a new install needs before the owner edits them. They
   /// are deliberately generic; balances, bills, goals and favourites come from
@@ -55,6 +69,8 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
+const _builtIn = {'goal', 'untracked'};
+
 const _defaultCategories = [
   ('food', 'Food', EntryKind.expense, 'apricot', false),
   ('transport', 'Transport', EntryKind.expense, 'sky', false),
@@ -65,6 +81,7 @@ const _defaultCategories = [
   ('personal', 'Personal', EntryKind.expense, 'olive', false),
   ('other', 'Other', EntryKind.expense, 'neutral', false),
   ('goal', 'Goals', EntryKind.expense, 'apricot', true),
+  ('untracked', 'Untracked', EntryKind.expense, 'neutral', true),
   ('salary', 'Salary', EntryKind.income, 'sage', true),
   ('kwsp', 'KWSP', EntryKind.income, 'teal', true),
   ('refund', 'Refund', EntryKind.income, 'sky', false),

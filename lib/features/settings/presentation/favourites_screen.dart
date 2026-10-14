@@ -136,7 +136,7 @@ class _FavouriteFormState extends ConsumerState<_FavouriteForm> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final categories = [...?ref.watch(categoriesProvider).value?.where((x) => !x.isIncome && !x.isGoal)];
+    final categories = [...?ref.watch(categoriesProvider).value?.where((x) => !x.isIncome && !x.isAutomatic)];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
