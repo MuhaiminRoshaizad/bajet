@@ -293,7 +293,6 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 onPressed: ready ? _save : null,
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control + 4)),
                 ),
                 child: Text(

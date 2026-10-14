@@ -240,7 +240,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   ButtonStyle _buttonStyle() => FilledButton.styleFrom(
         minimumSize: const Size.fromHeight(56),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control + 4)),
       );
 

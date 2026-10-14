@@ -58,7 +58,14 @@ abstract final class AppTheme {
         errorBorder: field(c.bad, 1.5),
         focusedErrorBorder: field(c.bad, 2),
       ),
-      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(shape: controlShape)),
+      // A button's textStyle replaces the ambient one whole, font family and
+      // all, so it is set here once with Figtree rather than at each button.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          shape: controlShape,
+          textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+      ),
       outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(shape: controlShape, side: BorderSide(color: c.muted))),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: SegmentedButton.styleFrom(
