@@ -62,6 +62,22 @@ English only, as plain strings. There is no localisation layer.
   Check `git log` for an existing scope before inventing one.
 - Every commit leaves `flutter analyze` and `flutter test` green.
 
+## Testing
+
+| Kind               | What it covers                          | Runs against                 |
+|--------------------|-----------------------------------------|------------------------------|
+| Unit               | Pure logic: projection, formatters      | Plain Dart                   |
+| Repository         | drift queries, constraints, migrations  | `NativeDatabase.memory()`    |
+| Provider           | How providers combine repository data   | In-memory drift database     |
+| Widget             | Screens and flows                       | Fakes in `test/helpers/`     |
+
+Widget tests use `pumpApp` from `test/helpers/app_harness.dart`, which swaps
+the repositories for in-memory fakes and pins today's date. They do not use
+drift directly: drift's stream-cleanup timers do not run on the widget
+tester's fake clock, so a drift database cannot be closed inside a widget test.
+Expected values in tests are worked out independently, never copied from the
+code's own output.
+
 ## Documentation
 
 Docs change in the same commit as the code they describe. A feature that
