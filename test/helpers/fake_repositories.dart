@@ -62,6 +62,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   List<Entry> get entries => _entries.value;
   List<Goal> get goals => _goals.value;
   List<RecurringItem> get recurring => _recurring.value;
+  List<PlannedEvent> get events => _events.value;
 
   // Ledger
 
@@ -148,6 +149,38 @@ class FakeWorld implements LedgerRepository, PlanRepository {
 
   @override
   Stream<List<PlannedEvent>> watchEvents() => _events.stream;
+
+  @override
+  Future<int> addEvent({
+    required String name,
+    required bool isIncome,
+    required int amount,
+    required String categoryKey,
+    required DateTime date,
+    bool countInProjection = true,
+  }) async {
+    final id = _nextId++;
+    _events.value = [
+      ..._events.value,
+      PlannedEvent(id: id, name: name.trim(), amount: amount, isIncome: isIncome, date: date, countInProjection: countInProjection),
+    ];
+    return id;
+  }
+
+  @override
+  Future<void> setEventDone(int id, {required bool done}) async => _events.value = [
+        for (final e in _events.value)
+          e.id == id
+              ? PlannedEvent(id: e.id, name: e.name, amount: e.amount, isIncome: e.isIncome, date: e.date, countInProjection: e.countInProjection, done: done)
+              : e,
+      ];
+
+  @override
+  Future<void> markGoalBought(int id, {required DateTime on}) async {
+    final goal = _goals.value.firstWhere((g) => g.id == id);
+    await add(EntryDraft(day: on, isIncome: false, amount: goal.price, categoryKey: goalCategoryKey, label: goal.name));
+    _goals.value = [..._goals.value.where((g) => g.id != id)];
+  }
 
   @override
   Stream<List<Goal>> watchActiveGoals() => _goals.stream;

@@ -41,8 +41,24 @@ abstract interface class PlanRepository {
   Future<void> confirmRecurring(int id, {required DateTime paidOn});
 
   Stream<List<PlannedEvent>> watchEvents();
+  Future<int> addEvent({
+    required String name,
+    required bool isIncome,
+    required int amount,
+    required String categoryKey,
+    required DateTime date,
+    bool countInProjection = true,
+  });
+
+  /// Marks a one-off event as having happened, so the projection stops
+  /// counting it. Logging the money itself stays a normal entry.
+  Future<void> setEventDone(int id, {required bool done});
 
   /// Active goals, highest priority first.
   Stream<List<Goal>> watchActiveGoals();
   Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1});
+
+  /// Logs the purchase as an expense on [on] and marks the goal achieved, in
+  /// one transaction, so it leaves the active goals.
+  Future<void> markGoalBought(int id, {required DateTime on});
 }

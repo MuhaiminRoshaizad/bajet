@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../ledger/domain/ledger_models.dart' show goalCategoryKey;
 import '../domain/plan_models.dart' as domain;
 import '../domain/plan_repository.dart';
 
@@ -122,6 +123,31 @@ class DriftPlanRepository implements PlanRepository {
       ]);
 
   @override
+  Future<int> addEvent({
+    required String name,
+    required bool isIncome,
+    required int amount,
+    required String categoryKey,
+    required DateTime date,
+    bool countInProjection = true,
+  }) =>
+      _db.into(_db.plannedEvents).insert(
+            PlannedEventsCompanion.insert(
+              name: name.trim(),
+              kind: isIncome ? EntryKind.income : EntryKind.expense,
+              amount: amount,
+              categoryKey: categoryKey,
+              dueOn: date,
+              countInProjection: Value(countInProjection),
+            ),
+          );
+
+  @override
+  Future<void> setEventDone(int id, {required bool done}) async {
+    await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(id))).write(PlannedEventsCompanion(done: Value(done)));
+  }
+
+  @override
   Stream<List<domain.Goal>> watchActiveGoals() {
     final q = _db.select(_db.goals)
       ..where((g) => g.status.equalsValue(GoalStatus.active))
@@ -134,4 +160,14 @@ class DriftPlanRepository implements PlanRepository {
   @override
   Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1}) =>
       _db.into(_db.goals).insert(GoalsCompanion.insert(name: name.trim(), price: price, targetDate: targetDate, priority: Value(priority)));
+
+  @override
+  Future<void> markGoalBought(int id, {required DateTime on}) => _db.transaction(() async {
+        final goal = await (_db.select(_db.goals)..where((g) => g.id.equals(id))).getSingle();
+        await _db.into(_db.entries).insert(
+              EntriesCompanion.insert(occurredOn: on, kind: EntryKind.expense, amount: goal.price, categoryKey: goalCategoryKey, label: Value(goal.name)),
+            );
+        await (_db.update(_db.goals)..where((g) => g.id.equals(id)))
+            .write(GoalsCompanion(status: const Value(GoalStatus.achieved), achievedOn: Value(on)));
+      });
 }
