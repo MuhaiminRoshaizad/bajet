@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/soft.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -26,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
     final goals = ref.watch(goalsProvider).value?.length ?? 0;
     final events = ref.watch(eventsProvider).value?.where((e) => !e.done).length ?? 0;
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
@@ -80,15 +81,17 @@ class SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    // A Material surface, so each row's ink ripple paints on it.
-    return Material(
-      color: c.card,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        side: Theme.of(context).brightness == Brightness.dark ? BorderSide(color: c.line) : BorderSide.none,
+    final shape = BorderRadius.circular(AppRadii.card);
+    // A raised card whose inside is a Material, so each row's ink ripple
+    // paints on it.
+    return DecoratedBox(
+      decoration: BoxDecoration(borderRadius: shape, boxShadow: softShadows(c, AppDepth.card)),
+      child: Material(
+        color: c.background,
+        borderRadius: shape,
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [for (final (i, row) in children.indexed) ...[if (i > 0) Divider(color: c.line, indent: AppSpacing.l), row]]),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(children: [for (final (i, row) in children.indexed) ...[if (i > 0) Divider(color: c.line, indent: AppSpacing.l), row]]),
     );
   }
 }

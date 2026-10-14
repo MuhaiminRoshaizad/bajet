@@ -21,7 +21,7 @@ class FavouritesScreen extends ConsumerWidget {
     final favourites = ref.watch(favouritesProvider).value ?? const <Favourite>[];
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
     return Scaffold(
-      appBar: AppBar(title: const Text('Favourites'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('Favourites')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
@@ -114,7 +114,7 @@ class _FavouriteFormState extends ConsumerState<_FavouriteForm> {
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Keep')),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.card),
+            style: FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.onBad),
             child: const Text('Remove'),
           ),
         ],
@@ -159,9 +159,6 @@ class _FavouriteFormState extends ConsumerState<_FavouriteForm> {
                   labelText: 'Name',
                   hintText: 'e.g. Coffee',
                   counterText: '',
-                  filled: true,
-                  fillColor: c.background,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: AppSpacing.m),

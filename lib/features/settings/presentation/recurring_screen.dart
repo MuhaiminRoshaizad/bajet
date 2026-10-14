@@ -23,7 +23,7 @@ class RecurringScreen extends ConsumerWidget {
     final c = context.colors;
     final items = [...?ref.watch(recurringProvider).value]..sort((a, b) => a.active == b.active ? a.nextDue.compareTo(b.nextDue) : (a.active ? -1 : 1));
     return Scaffold(
-      appBar: AppBar(title: const Text('Bills and income'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('Bills and income')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
@@ -147,9 +147,6 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
                   labelText: 'Name',
                   hintText: _isIncome ? 'e.g. Salary' : 'e.g. Phone bill',
                   counterText: '',
-                  filled: true,
-                  fillColor: c.background,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: AppSpacing.m),
@@ -186,7 +183,7 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
                   alignment: Alignment.centerLeft,
-                  side: BorderSide(color: _tried && _nextDue == null ? c.bad : c.line),
+                  side: BorderSide(color: _tried && _nextDue == null ? c.bad : c.muted),
                 ),
               ),
               if (_tried && _nextDue == null)

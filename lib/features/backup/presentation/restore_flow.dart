@@ -44,7 +44,7 @@ Future<void> pickAndRestore(BuildContext context, WidgetRef ref, {required bool 
         TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(replacing ? 'Keep what is here' : 'Cancel')),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          style: replacing ? FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.card) : null,
+          style: replacing ? FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.onBad) : null,
           child: Text(replacing ? 'Replace' : 'Restore'),
         ),
       ],

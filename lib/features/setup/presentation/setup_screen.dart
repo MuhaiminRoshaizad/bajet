@@ -212,7 +212,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(56),
               alignment: Alignment.centerLeft,
-              side: BorderSide(color: _goalDateMissing ? c.bad : c.line),
+              side: BorderSide(color: _goalDateMissing ? c.bad : c.muted),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control)),
             ),
           ),
@@ -243,17 +243,5 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control + 4)),
       );
 
-  InputDecoration _decoration(String label, String hint) {
-    final c = context.colors;
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      filled: true,
-      fillColor: c.card,
-      counterText: '',
-      contentPadding: const EdgeInsets.all(AppSpacing.l),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide(color: c.line)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide(color: c.line)),
-    );
-  }
+  InputDecoration _decoration(String label, String hint) => InputDecoration(labelText: label, hintText: hint, counterText: '');
 }

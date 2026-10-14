@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
 import '../validation/ringgit_cents_formatter.dart';
 
 /// A labelled money field that fills from the right. It validates when the
@@ -35,7 +33,6 @@ class _MoneyFieldState extends State<MoneyField> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
     return Focus(
       skipTraversal: true,
       onFocusChange: (hasFocus) {
@@ -56,11 +53,6 @@ class _MoneyFieldState extends State<MoneyField> {
           helperText: widget.helper,
           helperMaxLines: 3,
           prefixText: 'RM',
-          filled: true,
-          fillColor: c.card,
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.l),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide(color: c.line)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide(color: c.line)),
         ),
       ),
     );

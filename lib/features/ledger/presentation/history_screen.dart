@@ -38,7 +38,7 @@ class HistoryScreen extends ConsumerWidget {
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
 
     return Scaffold(
-      appBar: AppBar(title: const Text('History'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('History')),
       body: switch (entries) {
         AsyncValue(hasError: true) => Padding(
             padding: const EdgeInsets.all(AppSpacing.xl),
@@ -102,7 +102,7 @@ class _HistoryList extends ConsumerWidget {
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: AppSpacing.xl),
               decoration: BoxDecoration(color: c.bad, borderRadius: BorderRadius.circular(AppRadii.control)),
-              child: Text('Delete', style: TextStyle(color: c.card, fontWeight: FontWeight.w700)),
+              child: Text('Delete', style: TextStyle(color: c.onBad, fontWeight: FontWeight.w700)),
             ),
             child: EntryTile(
               entry: entry,
@@ -135,7 +135,7 @@ class _HistoryList extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Keep')),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.card),
+            style: FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.onBad),
             child: const Text('Delete'),
           ),
         ],

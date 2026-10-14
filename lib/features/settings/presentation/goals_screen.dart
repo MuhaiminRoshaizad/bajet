@@ -22,7 +22,7 @@ class GoalsScreen extends ConsumerWidget {
     final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
     final outcomes = {for (final o in ref.watch(projectionProvider)?.goals ?? const []) o.goal.id: o};
     return Scaffold(
-      appBar: AppBar(title: const Text('Goals'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('Goals')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
@@ -147,9 +147,6 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                   labelText: 'Goal',
                   hintText: 'e.g. New laptop',
                   counterText: '',
-                  filled: true,
-                  fillColor: c.background,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: AppSpacing.m),
@@ -168,7 +165,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
                   alignment: Alignment.centerLeft,
-                  side: BorderSide(color: _tried && _date == null ? c.bad : c.line),
+                  side: BorderSide(color: _tried && _date == null ? c.bad : c.muted),
                 ),
               ),
               if (_tried && _date == null)

@@ -24,7 +24,7 @@ class RhythmScreen extends ConsumerWidget {
     final rules = ref.watch(rulesProvider).value ?? const <WeeklyRule>[];
     final weekTotal = rules.fold(0, (s, r) => s + r.plannedSpend);
     return Scaffold(
-      appBar: AppBar(title: const Text('Weekly rhythm'), backgroundColor: c.background),
+      appBar: AppBar(title: const Text('Weekly rhythm')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
@@ -92,7 +92,6 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
@@ -114,9 +113,6 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
                   labelText: 'Name',
                   hintText: 'e.g. Office day',
                   counterText: '',
-                  filled: true,
-                  fillColor: c.background,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadii.control), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: AppSpacing.m),
