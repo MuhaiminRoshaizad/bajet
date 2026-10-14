@@ -54,7 +54,7 @@ class _MoneyFieldState extends State<MoneyField> {
           labelText: widget.label,
           hintText: widget.hint,
           helperText: widget.helper,
-          helperMaxLines: 2,
+          helperMaxLines: 3,
           prefixText: 'RM',
           filled: true,
           fillColor: c.card,
