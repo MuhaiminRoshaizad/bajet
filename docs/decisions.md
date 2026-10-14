@@ -74,3 +74,21 @@ payment moves it forward a month.
 early. A bill due on the 15th but paid on the 11th, before the opening balance
 was taken, would otherwise be charged twice. `nextDue` states exactly which
 occurrences are still to come.
+
+## 009: A soft, neumorphic surface
+
+**Decided:** cards and controls share the background colour and stand out
+only through two soft shadows, lit from the top left; inputs, tracks and
+notices are wells pressed into it. The Ocean hues stay, on a blue-grey base.
+See [design system](design-system.md#surfaces).
+
+**Why:** a calmer, more physical look than flat white cards, suited to an app
+opened many times a day for a few seconds.
+
+**Costs:** neumorphism's known weakness is contrast. A shadow derived from the
+background cannot reach the 3:1 that WCAG 1.4.11 asks of state indicators, so
+depth never carries meaning alone: selected controls also get an accent fill or
+outline, focus gets a 3 px accent ring, and the main action of each screen
+stays a solid accent button. WCAG does not require a boundary around a button
+identified by its text, so plain soft buttons are allowed. Every text colour
+was rechecked against both the surface and the darker well.

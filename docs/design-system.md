@@ -11,26 +11,31 @@ goal card, the buffer line and savings figures. Sage (on track) and rose (over
 the limit) are the only other meaning colours, and each is always paired with a
 word or an icon, never used alone.
 
-Contrast is deliberately softer than black on white (about 14:1 rather than
-21:1), and dark mode uses a dark grey base with off-white text, following
-Material's dark theme guidance. Every text pairing below passes WCAG AA.
+Everything sits on one blue-grey surface (see [Surfaces](#surfaces)). Dark
+mode uses a dark slate rather than black, so shadows still have somewhere
+darker to go, and off-white text, following Material's dark theme guidance.
+Every text colour passes WCAG AA against both `background` and `well`.
 
-| Token          | Light     | Dark      | Use                                   |
-|----------------|-----------|-----------|---------------------------------------|
-| `background`   | `#F3F7FA` | `#101418` | Screen background                     |
-| `card`         | `#FFFFFF` | `#191F23` | Cards, sheets                         |
-| `ink`          | `#1E2830` | `#E3E9EE` | Primary text                          |
-| `muted`        | `#606A74` | `#9DA6AE` | Secondary text, labels                |
-| `line`         | `#E2E7EB` | `#292F34` | Dividers, borders                     |
-| `primary`      | `#0F68A2` | `#79C0F1` | Buttons, charts, selection            |
-| `onPrimary`    | `#FFFFFF` | `#031C30` | Text on primary                       |
-| `primarySoft`  | `#D4ECFD` | `#193043` | Tinted cards, selected tabs           |
-| `keepSurface`  | `#FDDFC2` | `#2D2217` | Goal card                             |
-| `keep`         | `#925019` | `#EFC093` | Money kept: text, meters, buffer line |
-| `goodSurface`  | `#D0EED5` | `#1F3724` | On-track pills                        |
-| `good`         | `#31693F` | `#9DD8A9` | On-track text, income amounts         |
-| `badSurface`   | `#FFDFDE` | `#4B2727` | Over-limit pills                      |
-| `bad`          | `#AF3C40` | `#F8A4A3` | Over-limit text                       |
+| Token          | Light       | Dark        | Use                                   |
+|----------------|-------------|-------------|---------------------------------------|
+| `background`   | `#E3E9EF`   | `#1D2329`   | The one surface: screens, cards, sheets |
+| `card`         | `#E3E9EF`   | `#1D2329`   | Cards; equal to `background` by design |
+| `well`         | `#D7DFE7`   | `#161B20`   | Inputs, tracks, notices, selected keys |
+| `highlight`    | white 90%   | white 12%   | Lit edge of a soft surface            |
+| `shade`        | `#A3B1C0` 60% | black 70% | Shadowed edge of a soft surface       |
+| `ink`          | `#1E2830`   | `#E3E9EE`   | Primary text                          |
+| `muted`        | `#545E68`   | `#A3ACB4`   | Secondary text, labels                |
+| `line`         | `#D0D9E2`   | `#2B333B`   | Dividers inside cards                 |
+| `primary`      | `#0C5F96`   | `#79C0F1`   | Buttons, charts, selection, focus     |
+| `onPrimary`    | `#FFFFFF`   | `#031C30`   | Text on primary                       |
+| `primarySoft`  | `#D4ECFD`   | `#193043`   | Today's rule chip                     |
+| `keepSurface`  | `#FDDFC2`   | `#2D2217`   | Goal number badges                    |
+| `keep`         | `#88491A`   | `#EFC093`   | Money kept: text, meters, buffer line |
+| `goodSurface`  | `#D0EED5`   | `#1F3724`   | On-track pills                        |
+| `good`         | `#2E643B`   | `#9DD8A9`   | On-track text, income amounts         |
+| `badSurface`   | `#FFDFDE`   | `#4B2727`   | Over-limit pills                      |
+| `bad`          | `#A8383C`   | `#F8A4A3`   | Over-limit text, destructive buttons  |
+| `onBad`        | `#FFFFFF`   | `#2A0D0E`   | Text on `bad`                         |
 
 ### Tints
 
@@ -51,6 +56,34 @@ space, so no category looks louder than another. The theme names them by colour
 
 Purple and indigo are deliberately absent.
 
+## Surfaces
+
+bajet is soft UI: nothing is drawn on top of the background, it is moulded out
+of it. The light comes from the top left. `core/widgets/soft.dart` holds the
+only four ways to do this:
+
+| Widget       | Looks like                       | Used for                               |
+|--------------|----------------------------------|----------------------------------------|
+| `SoftCard`   | Raised `AppDepth.card` (6 px)    | Every card                             |
+| `SoftWell`   | Pressed in `AppDepth.well` (3 px) | Notices, readouts, the ring's bed      |
+| `SoftButton` | Raised 3 px, sinks flat on press | Keys, tiles, chips, the + button       |
+| `SoftMeter`  | A well with a coloured fill      | Progress toward a goal                 |
+
+A raised surface casts a `highlight` shadow up and left and a `shade` shadow
+down and right, each offset by its depth and blurred to twice that. Flutter has
+no inset shadow, so `SoftWell` paints one: the blurred outline of everything
+outside the shape, nudged inward and clipped to it. Text fields get the same
+idea more cheaply from the theme, as a `well` fill with no border.
+
+Depth is decoration, never the only signal, because a shadow drawn from the
+background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
+
+- A selected tile or chip sits in a well **and** gets a 2 px `primary` outline.
+- Segmented buttons fill the selected segment with `primary`.
+- A focused `SoftButton` gets a 3 px `primary` ring; text fields outline in
+  `primary` on focus and in `bad` on error.
+- The main action of a screen stays a solid `primary` button.
+
 ## Type
 
 Figtree, one family, weights 400 to 800, bundled under `assets/fonts/` (SIL OFL
@@ -61,6 +94,8 @@ they change.
 
 A 4 pt scale: `AppSpacing.xs` 4, `s` 8, `m` 12, `l` 16, `xl` 20, `xxl` 24,
 `xxxl` 32. Radii: `small` 12, `control` 16, `card` 24, `sheet` 30, `pill` 999.
+Depth: `AppDepth.card` 6, `control` 3, `well` 3. Cards need at least `l` of
+space around them, or their shadows run into each other.
 
 ## Motion
 

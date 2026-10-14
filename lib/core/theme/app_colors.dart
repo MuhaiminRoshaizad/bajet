@@ -4,14 +4,20 @@ import 'package:flutter/material.dart';
 /// unaware of which feature uses it.
 enum Tint { apricot, sky, sage, teal, rose, pink, olive, neutral }
 
-/// The Ocean palette: blue 245° with its complement, apricot 65°, for money
-/// kept. Tints share one OKLCH lightness so no category outshouts another,
-/// and every text pairing clears WCAG AA in both modes.
+/// The Ocean palette on a soft (neumorphic) base: one blue-grey surface that
+/// cards and controls share, lit from the top left. Blue 245° marks actions
+/// and selection; its complement, apricot 65°, marks money kept. Tints share
+/// one OKLCH lightness so no category outshouts another, and every text
+/// pairing clears WCAG AA on both the surface and the darker well.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
     required this.background,
     required this.card,
+    required this.well,
+    required this.highlight,
+    required this.shade,
+    required this.onBad,
     required this.ink,
     required this.muted,
     required this.line,
@@ -30,6 +36,14 @@ class AppColors extends ThemeExtension<AppColors> {
 
   final Color background;
   final Color card;
+
+  /// A sunken area pressed into the surface: inputs, tracks, notices.
+  final Color well;
+
+  /// The lit edge and the shadowed edge of a raised or pressed surface.
+  final Color highlight;
+  final Color shade;
+  final Color onBad;
   final Color ink;
   final Color muted;
   final Color line;
@@ -52,20 +66,24 @@ class AppColors extends ThemeExtension<AppColors> {
   Color tintInk(Tint tint) => tintInks[tint]!;
 
   static const light = AppColors(
-    background: Color(0xFFF3F7FA),
-    card: Color(0xFFFFFFFF),
+    background: Color(0xFFE3E9EF),
+    card: Color(0xFFE3E9EF),
+    well: Color(0xFFD7DFE7),
+    highlight: Color(0xE6FFFFFF),
+    shade: Color(0x99A3B1C0),
+    onBad: Color(0xFFFFFFFF),
     ink: Color(0xFF1E2830),
-    muted: Color(0xFF606A74),
-    line: Color(0xFFE2E7EB),
-    primary: Color(0xFF0F68A2),
+    muted: Color(0xFF545E68),
+    line: Color(0xFFD0D9E2),
+    primary: Color(0xFF0C5F96),
     onPrimary: Color(0xFFFFFFFF),
     primarySoft: Color(0xFFD4ECFD),
     keepSurface: Color(0xFFFDDFC2),
-    keep: Color(0xFF925019),
+    keep: Color(0xFF88491A),
     goodSurface: Color(0xFFD0EED5),
-    good: Color(0xFF31693F),
+    good: Color(0xFF2E643B),
     badSurface: Color(0xFFFFDFDE),
-    bad: Color(0xFFAF3C40),
+    bad: Color(0xFFA8383C),
     tintFills: {
       Tint.apricot: Color(0xFFFADFC6),
       Tint.sky: Color(0xFFCBE9FF),
@@ -88,14 +106,19 @@ class AppColors extends ThemeExtension<AppColors> {
     },
   );
 
-  /// Dark grey rather than black, and off-white text, to avoid the halation
-  /// of pure white on black (Material's dark theme guidance).
+  /// Dark slate rather than black, so the shadowed edge still has somewhere
+  /// darker to go, and off-white text to avoid the halation of pure white on
+  /// black (Material's dark theme guidance).
   static const dark = AppColors(
-    background: Color(0xFF101418),
-    card: Color(0xFF191F23),
+    background: Color(0xFF1D2329),
+    card: Color(0xFF1D2329),
+    well: Color(0xFF161B20),
+    highlight: Color(0x1FFFFFFF),
+    shade: Color(0xB3080A0C),
+    onBad: Color(0xFF2A0D0E),
     ink: Color(0xFFE3E9EE),
-    muted: Color(0xFF9DA6AE),
-    line: Color(0xFF292F34),
+    muted: Color(0xFFA3ACB4),
+    line: Color(0xFF2B333B),
     primary: Color(0xFF79C0F1),
     onPrimary: Color(0xFF031C30),
     primarySoft: Color(0xFF193043),

@@ -16,3 +16,12 @@ abstract final class AppRadii {
   static const double sheet = 30;
   static const double pill = 999;
 }
+
+/// How far a soft surface stands out from, or sinks into, the background:
+/// the offset of its light and dark edges in logical pixels. The blur is
+/// twice the offset.
+abstract final class AppDepth {
+  static const double card = 6;
+  static const double control = 3;
+  static const double well = 3;
+}
