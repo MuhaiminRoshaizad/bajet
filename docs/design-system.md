@@ -159,4 +159,9 @@ all of it is skipped and content appears in place.
   words; Reset puts the plan back, and nothing is ever saved. The weekly
   slider runs both ways, so its track is one colour rather than filling from
   the left.
+- The coach is a chat with the question box pinned to the bottom and three
+  suggested questions while it is empty. The header counts the questions left
+  today. A failed question says why (offline, key refused, busy) and offers
+  Try again; nothing is counted until an answer arrives. The conversation is
+  never stored. Without a key, the tab explains and links to Settings → Coach.
 - Touch targets are at least 48 dp.

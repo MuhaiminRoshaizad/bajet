@@ -81,7 +81,7 @@ A folder under `core/` appears only once two features need it.
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
 | `launch` | Launcher shortcuts and the home-screen widget: one `bajet://log` link format, a pending launch held until the shell can open the logger, and syncing what the widget shows |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
-| `coach`  | The Coach tab: a plain-text week summary to copy into a chat; an in-app coach is planned for v1.3 |
+| `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day, given the week and month as context; the week's summary can still be copied |
 | `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal, or a backup restore instead |
 
 Shared providers live beside what they provide: `databaseProvider` and
