@@ -64,6 +64,17 @@ lib/
 
 A folder under `core/` appears only once two features need it.
 
+## Features
+
+| Feature  | Owns                                                                  |
+|----------|-----------------------------------------------------------------------|
+| `ledger` | Entries, categories and favourites; balance and flexible-spend maths  |
+| `plan`   | Weekly rhythm, recurring items, planned events, goals, the projection |
+
+Shared providers live beside what they provide: `databaseProvider` and
+`todayProvider` in `core/database/database_provider.dart`. Tests override both,
+the first with an in-memory database and the second to pin the date.
+
 ## Storage and backup
 
 - **Database:** drift over SQLite, opened with `drift_flutter`. Money is stored
