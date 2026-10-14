@@ -8,6 +8,10 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>bajet</string>
+	<key>NSCameraUsageDescription</key>
+	<string>bajet uses the camera only when you take a photo of a receipt to attach to an entry.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>bajet opens your photos only when you choose a receipt or screenshot to attach to an entry.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

@@ -16,6 +16,7 @@ import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
 import 'ledger_providers.dart';
+import 'receipt_widgets.dart';
 
 /// What to fill the logger with when it opens from somewhere that already
 /// knows part of the entry. Nothing is saved until Log is pressed.
@@ -57,6 +58,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   String? _categoryKey;
   String? _label;
   int? _favouriteId;
+  String? _receipt;
   final _note = TextEditingController();
   late DateTime _day = ref.read(todayProvider);
   bool _saving = false;
@@ -74,6 +76,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _label = e.label;
       _note.text = e.note ?? '';
       _day = e.day;
+      _receipt = e.receipt;
     }
     final p = widget.prefill;
     if (p != null) {
@@ -125,6 +128,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       categoryKey: _categoryKey!,
       label: _label,
       note: _note.text,
+      receipt: _receipt,
     );
     final repo = ref.read(ledgerRepositoryProvider);
     final before = widget.editing;
@@ -143,6 +147,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         categoryKey: draft.categoryKey,
         label: draft.label,
         note: draft.note,
+        receipt: draft.receipt,
       ));
       message = 'Saved changes';
       undo = () => repo.update(before);
@@ -309,6 +314,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       alignment: Alignment.centerLeft,
                       child: _DayToggle(day: _day, today: ref.read(todayProvider), onChanged: (d) => setState(() => _day = d)),
                     ),
+                    const SizedBox(height: AppSpacing.s),
+                    ReceiptField(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r)),
                     const SizedBox(height: AppSpacing.s),
                   ],
                 ),

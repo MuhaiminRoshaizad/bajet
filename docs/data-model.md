@@ -128,6 +128,16 @@ the seven days (`spreadOverWeek`), so no day starts planned at RM0.00 while the
 week allows more. There are no favourites, goals or recurring items until
 the owner adds them or imports a backup.
 
+## Receipts
+
+An entry's receipt is an image file in a `receipts` folder inside the app's own
+documents directory, which other apps cannot read and Android Auto Backup
+copies. `entries.receipt` holds only its file name. Images are scaled to at
+most 1600 px and saved as compressed JPEG, a few hundred KB each. At every
+launch, before anything is being logged, files that no entry names are deleted
+(`receiptCleanupProvider`), which clears the images of deleted entries and of
+logs closed without saving.
+
 ## Backup format
 
 A backup is one JSON file written by `DriftBackupRepository.export`:

@@ -145,4 +145,7 @@ all of it is skipped and content appears in place.
 - A report is shared as text, PDF or CSV, picked with radio buttons, for the
   same three periods as Insights. The Share button is pinned to the bottom so
   it stays in view however long the preview runs.
+- An entry can carry a receipt, attached in the logger from the camera or the
+  gallery and always optional. Entries with one show a small receipt mark;
+  the thumbnail in the logger opens it full screen, pinch to zoom.
 - Touch targets are at least 48 dp.

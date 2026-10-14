@@ -105,3 +105,20 @@ Insights show how much went untracked, which is the habit worth watching.
 
 **Costs:** untracked spending never shows in the weekly ring. Insights
 surfaces it instead.
+
+## 011: Receipts are files beside the database, not in it
+
+**Decided:** a receipt image is saved as a file in the app's private storage,
+and the entry stores its file name. Picking uses `image_picker`, which on
+Android goes through the system photo picker and camera, so bajet asks for no
+storage or camera permission.
+
+**Why:** images would bloat the database and every query that reads entries.
+As files, they are compressed once, read only when shown, and copied by
+Android Auto Backup alongside the database.
+
+**Costs:** the JSON backup carries the file name but not the image, so a
+backup restored on another phone keeps the entries and loses the pictures;
+the entry then shows a placeholder. If Android closes bajet while the camera
+is open, the half-written log is lost along with the photo, so there is
+nothing to recover the image into; the owner logs it again.

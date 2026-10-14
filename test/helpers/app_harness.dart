@@ -38,6 +38,7 @@ Future<FakeWorld> pumpApp(
       todayProvider.overrideWithValue(testToday),
       ledgerRepositoryProvider.overrideWithValue(world),
       favouriteRepositoryProvider.overrideWithValue(world.favourites),
+      receiptStoreProvider.overrideWithValue(world.receipts),
       planRepositoryProvider.overrideWithValue(world),
       ...?overrides?.call(world),
     ],

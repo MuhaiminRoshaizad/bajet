@@ -1,3 +1,4 @@
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -101,5 +102,52 @@ void main() {
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpAndSettle();
     expect(find.text('9'), findsNothing);
+  });
+
+  testWidgets('a receipt can be attached from the gallery and is saved with the entry', (tester) async {
+    final world = await pumpApp(tester);
+    await openLogger(tester);
+    await typeKeys(tester, '1250');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('Attach a receipt (optional)'));
+    await tester.tap(find.text('Attach a receipt (optional)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose a photo or screenshot'));
+    await tester.pumpAndSettle();
+    expect(find.text('Receipt attached'), findsOneWidget);
+
+    await tester.tap(find.text('Log RM12.50'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.receipt, 'receipt-1.jpg');
+    expect(find.bySemanticsLabel(RegExp('has a receipt')), findsOneWidget);
+  });
+
+  testWidgets('an attached receipt can be taken off before saving', (tester) async {
+    final world = await pumpApp(tester);
+    await openLogger(tester);
+    await typeKeys(tester, '500');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Attach a receipt (optional)'));
+    await tester.tap(find.text('Attach a receipt (optional)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take a photo'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Remove receipt'));
+    await tester.pump();
+    await tester.tap(find.text('Log RM5.00'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.receipt, isNull);
+  });
+
+  testWidgets('at launch, receipts no entry refers to are cleared out', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 800, categoryKey: 'food', receipt: 'kept.jpg'));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 300, categoryKey: 'food'));
+    });
+    expect(world.receipts.kept, {'kept.jpg'});
   });
 }

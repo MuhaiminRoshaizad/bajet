@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:flutter/widgets.dart';
 
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_repository.dart';
+import 'package:bajet/features/ledger/domain/receipt_store.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 
@@ -58,6 +62,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   final _goals = _Live<List<Goal>>([]);
   final _achieved = _Live<List<Goal>>([]);
   final favourites = FakeFavourites();
+  final receipts = FakeReceipts();
   var _nextId = 1;
 
   PlanSettings? get settings => _settings.value;
@@ -235,3 +240,24 @@ class FakeFavourites implements FavouriteRepository {
 }
 
 String? _blank(String? s) => (s == null || s.trim().isEmpty) ? null : s.trim();
+
+/// Receipts without a camera or a disk: [next] is what the next pick returns.
+class FakeReceipts implements ReceiptStore {
+  String? next = 'receipt-1.jpg';
+  Set<String>? kept;
+
+  // The smallest valid GIF, so an Image can decode it.
+  static final _pixel = Uint8List.fromList([
+    0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 1, 0, 1, 0, 0x80, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, //
+    0x21, 0xf9, 4, 1, 0, 0, 0, 0, 0x2c, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 0x44, 1, 0, 0x3b,
+  ]);
+
+  @override
+  Future<String?> pick(ReceiptSource source) async => next;
+
+  @override
+  Future<ImageProvider> image(String name) async => MemoryImage(_pixel);
+
+  @override
+  Future<void> keepOnly(Set<String> names) async => kept = names;
+}

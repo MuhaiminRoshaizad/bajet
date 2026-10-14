@@ -28,7 +28,7 @@ class EntryTile extends StatelessWidget {
     final detail = [when, if (entry.label != null && category != null) category!.label, if (entry.note != null) entry.note!].join(' · ');
     final amount = '${entry.isIncome ? '+' : '−'}${Money.format(entry.amount)}';
     return Semantics(
-      label: '$title, $amount, $detail',
+      label: '$title, $amount, $detail${entry.receipt == null ? '' : ', has a receipt'}',
       button: onTap != null,
       excludeSemantics: true,
       child: InkWell(
@@ -45,7 +45,15 @@ class EntryTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
+                      Row(
+                        children: [
+                          Flexible(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                          if (entry.receipt != null) ...[
+                            const SizedBox(width: AppSpacing.xs),
+                            Icon(Icons.receipt_long_rounded, size: 16, color: c.muted),
+                          ],
+                        ],
+                      ),
                       Text(detail, style: TextStyle(fontSize: 13, color: c.muted), overflow: TextOverflow.ellipsis),
                     ],
                   ),
