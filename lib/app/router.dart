@@ -7,6 +7,7 @@ import '../core/widgets/coming_soon.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/ledger/presentation/history_screen.dart';
 import '../features/plan/presentation/runway_screen.dart';
+import '../features/settings/presentation/events_screen.dart';
 import '../features/settings/presentation/favourites_screen.dart';
 import '../features/settings/presentation/goals_screen.dart';
 import '../features/settings/presentation/recurring_screen.dart';
@@ -53,6 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     GoRoute(path: 'rhythm', builder: (context, state) => const RhythmScreen()),
                     GoRoute(path: 'recurring', builder: (context, state) => const RecurringScreen()),
                     GoRoute(path: 'goals', builder: (context, state) => const GoalsScreen()),
+                    GoRoute(path: 'events', builder: (context, state) => const EventsScreen()),
                   ],
                 ),
               ],
