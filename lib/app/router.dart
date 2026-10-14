@@ -7,9 +7,11 @@ import '../features/plan/presentation/plan_providers.dart';
 import '../features/backup/presentation/backup_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
 import '../features/coach/presentation/coach_screen.dart';
+import '../features/insights/domain/insights.dart';
 import '../features/insights/presentation/insights_screen.dart';
 import '../features/ledger/presentation/history_screen.dart';
 import '../features/plan/presentation/runway_screen.dart';
+import '../features/report/presentation/report_screen.dart';
 import '../features/settings/presentation/events_screen.dart';
 import '../features/settings/presentation/favourites_screen.dart';
 import '../features/settings/presentation/goals_screen.dart';
@@ -40,6 +42,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: Routes.loading, builder: (context, state) => const Scaffold()),
       GoRoute(path: Routes.setup, builder: (context, state) => const SetupScreen()),
+      GoRoute(
+        path: Routes.report,
+        builder: (context, state) => ReportScreen(
+          initialPeriod: InsightsPeriod.values.asNameMap()[state.uri.queryParameters['period']] ?? InsightsPeriod.week,
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [

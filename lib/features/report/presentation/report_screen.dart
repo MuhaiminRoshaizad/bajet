@@ -1,0 +1,182 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/dates/dates.dart';
+import '../../../core/sharing/file_sharer.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/soft.dart';
+import '../../insights/domain/insights.dart';
+import '../../insights/presentation/insights_providers.dart';
+import '../../ledger/domain/ledger_models.dart';
+import '../../ledger/presentation/ledger_providers.dart';
+import '../../plan/presentation/plan_providers.dart';
+import '../data/report_pdf.dart';
+import '../domain/report.dart';
+
+enum ReportFormat { text, pdf, csv }
+
+/// Shares a report of a week, a month or everything, as text to paste, a
+/// PDF to keep or a CSV for a spreadsheet.
+class ReportScreen extends ConsumerStatefulWidget {
+  const ReportScreen({super.key, this.initialPeriod = InsightsPeriod.week});
+
+  final InsightsPeriod initialPeriod;
+
+  @override
+  ConsumerState<ReportScreen> createState() => _ReportScreenState();
+}
+
+class _ReportScreenState extends ConsumerState<ReportScreen> {
+  late InsightsPeriod _period = widget.initialPeriod;
+  ReportFormat _format = ReportFormat.text;
+  bool _busy = false;
+
+  String _fileName(Insights i, String extension) {
+    String iso(DateTime d) => d.toIso8601String().substring(0, 10);
+    return 'bajet-report-${iso(i.from)}-to-${iso(i.to)}.$extension';
+  }
+
+  Future<void> _share(Insights i, String text, List<Entry> entries, Map<String, Category> categories) async {
+    final sharer = ref.read(fileSharerProvider);
+    setState(() => _busy = true);
+    try {
+      switch (_format) {
+        case ReportFormat.text:
+          await sharer.shareText(text, subject: 'bajet report');
+        case ReportFormat.csv:
+          await sharer.shareFile(utf8.encode(reportCsv(entries, categories)), _fileName(i, 'csv'), 'text/csv');
+        case ReportFormat.pdf:
+          final settings = ref.read(settingsProvider).value!;
+          final bytes = await reportPdf(
+            i: i,
+            entries: entries,
+            categories: categories,
+            balance: ref.read(balanceProvider).value ?? 0,
+            buffer: settings.buffer,
+            goal: ref.read(projectionProvider)?.goals.firstOrNull,
+            regular: await rootBundle.load('assets/fonts/Figtree-Regular.ttf'),
+            bold: await rootBundle.load('assets/fonts/Figtree-Bold.ttf'),
+          );
+          await sharer.shareFile(bytes, _fileName(i, 'pdf'), 'application/pdf');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final i = ref.watch(insightsForProvider(_period));
+    final settings = ref.watch(settingsProvider).value;
+    final balance = ref.watch(balanceProvider).value;
+    final all = ref.watch(allEntriesProvider).value;
+    final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
+    final ready = i != null && settings != null && balance != null && all != null;
+    final text = !ready
+        ? ''
+        : reportText(
+            i: i,
+            balance: balance,
+            weeklyCap: settings.weeklyCap,
+            buffer: settings.buffer,
+            categories: categories,
+            goal: ref.watch(projectionProvider)?.goals.firstOrNull,
+          );
+    final entries = ready ? entriesIn(i, all) : const <Entry>[];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Share a report')),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.l),
+        children: [
+          SegmentedButton<InsightsPeriod>(
+            segments: const [
+              ButtonSegment(value: InsightsPeriod.week, label: Text('This week')),
+              ButtonSegment(value: InsightsPeriod.month, label: Text('This month')),
+              ButtonSegment(value: InsightsPeriod.all, label: Text('All')),
+            ],
+            selected: {_period},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => setState(() => _period = s.single),
+          ),
+          if (ready)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.s, AppSpacing.xs, 0),
+              child: Text('${Dates.full(i.from)} to ${Dates.full(i.to)}', style: TextStyle(color: c.muted)),
+            ),
+          const SizedBox(height: AppSpacing.l),
+          // Few options, one choice: radio buttons rather than a dropdown.
+          RadioGroup<ReportFormat>(
+            groupValue: _format,
+            onChanged: (f) => setState(() => _format = f!),
+            child: const CardGroup(
+              children: [
+                RadioListTile(value: ReportFormat.text, title: Text('Text'), subtitle: Text('To paste into a chat or a note')),
+                RadioListTile(value: ReportFormat.pdf, title: Text('PDF'), subtitle: Text('A summary, then every entry, to keep or print')),
+                RadioListTile(value: ReportFormat.csv, title: Text('CSV'), subtitle: Text('Every entry, to open in a spreadsheet')),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.l),
+          if (ready && _format == ReportFormat.text)
+            SoftWell(
+              radius: AppRadii.card,
+              child: SelectableText(text, style: const TextStyle(fontSize: 13, height: 1.5, fontFeatures: [FontFeature.tabularFigures()])),
+            )
+          else if (ready)
+            SoftWell(
+              radius: AppRadii.card,
+              child: Text(
+                '${entries.length} ${entries.length == 1 ? 'entry' : 'entries'} from ${Dates.full(i.from)} to ${Dates.full(i.to)}.',
+                style: TextStyle(color: c.ink),
+              ),
+            ),
+        ],
+      ),
+      // The action stays in view however long the preview runs.
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.l),
+          child: Row(
+            children: [
+              if (_format == ReportFormat.text) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: !ready
+                        ? null
+                        : () async {
+                            await Clipboard.setData(ClipboardData(text: text));
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context)
+                                ..clearSnackBars()
+                                ..showSnackBar(const SnackBar(content: Text('Report copied')));
+                            }
+                          },
+                    icon: const Icon(Icons.copy_rounded),
+                    label: const Text('Copy'),
+                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.m),
+              ],
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: !ready || _busy ? null : () => _share(i, text, entries, categories),
+                  icon: const Icon(Icons.ios_share_rounded),
+                  label: Text(switch (_format) { ReportFormat.text => 'Share', ReportFormat.pdf => 'Share PDF', ReportFormat.csv => 'Share CSV' }),
+                  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

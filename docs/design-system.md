@@ -142,4 +142,7 @@ all of it is skipped and content appears in place.
   the bank opens the logger as income, filled in, so the owner still picks
   what it was. Today shows a check-in card on Sundays; Settings always links
   to it.
+- A report is shared as text, PDF or CSV, picked with radio buttons, for the
+  same three periods as Insights. The Share button is pinned to the bottom so
+  it stays in view however long the preview runs.
 - Touch targets are at least 48 dp.

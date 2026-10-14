@@ -2,10 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
@@ -15,33 +16,7 @@ import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/insights.dart';
-
-class InsightsPeriodController extends Notifier<InsightsPeriod> {
-  @override
-  InsightsPeriod build() => InsightsPeriod.month;
-
-  void select(InsightsPeriod period) => state = period;
-}
-
-final insightsPeriodProvider = NotifierProvider<InsightsPeriodController, InsightsPeriod>(InsightsPeriodController.new);
-
-/// Null until settings, entries and the rhythm have loaded.
-final insightsProvider = Provider<Insights?>((ref) {
-  final settings = ref.watch(settingsProvider).value;
-  final entries = ref.watch(allEntriesProvider).value;
-  final categories = ref.watch(categoriesProvider).value;
-  final rules = ref.watch(rulesProvider).value;
-  if (settings == null || entries == null || categories == null || rules == null) return null;
-  return insights(
-    period: ref.watch(insightsPeriodProvider),
-    today: ref.watch(todayProvider),
-    openingDate: settings.openingDate,
-    weeklyCap: settings.weeklyCap,
-    entries: entries,
-    categories: categories,
-    rules: rules,
-  );
-});
+import 'insights_providers.dart';
 
 class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
@@ -59,9 +34,16 @@ class InsightsScreen extends ConsumerWidget {
         children: [
           SizedBox(
             height: 48,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Insights', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+            child: Row(
+              children: [
+                Text('Insights', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => context.push('${Routes.report}?period=${period.name}'),
+                  icon: const Icon(Icons.ios_share_rounded),
+                  tooltip: 'Share a report',
+                ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.s),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
@@ -120,6 +122,13 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
             ),
             const SizedBox(height: AppSpacing.l),
             if (days != null && spent != null && cap != null) SoftCard(child: _Week(days: days, spent: spent, cap: cap)),
+            const SizedBox(height: AppSpacing.l),
+            OutlinedButton.icon(
+              onPressed: () => context.push('${Routes.report}?period=week'),
+              icon: const Icon(Icons.ios_share_rounded),
+              label: const Text("Share this week's report"),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            ),
           ],
         ),
       ),

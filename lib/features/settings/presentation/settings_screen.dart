@@ -57,6 +57,7 @@ class SettingsScreen extends ConsumerWidget {
           CardGroup(
             children: [
               SettingsRow(title: 'Sunday check-in', value: 'Match your bank', onTap: () => context.push(Routes.checkin)),
+              SettingsRow(title: 'Share a report', value: 'Text, PDF or CSV', onTap: () => context.push(Routes.report)),
               SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup)),
             ],
           ),

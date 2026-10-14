@@ -16,4 +16,8 @@ abstract final class Routes {
   static const runway = '/runway';
   static const insights = '/insights';
   static const coach = '/coach';
+
+  /// Above the tabs, so it opens the same way from any of them. Takes
+  /// `?period=week|month|all`.
+  static const report = '/report';
 }
