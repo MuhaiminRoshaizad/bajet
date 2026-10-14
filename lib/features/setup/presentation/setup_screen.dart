@@ -6,9 +6,9 @@ import '../../../core/dates/dates.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/money_field.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
-import 'money_field.dart';
 
 /// First run: the starting balance and weekly allowance, then an optional
 /// first goal. Saving settings is what lets the router leave this screen.

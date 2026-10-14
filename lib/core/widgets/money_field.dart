@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../validation/ringgit_cents_formatter.dart';
 
 /// A labelled money field that fills from the right. It validates when the
 /// user leaves it with something typed, then re-checks on every keystroke
