@@ -97,6 +97,8 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTick
                 ),
               ),
             ),
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton.tonalIcon(onPressed: () => showAddAccount(context), icon: const Icon(Icons.add), label: const Text('Add an account')),
           ],
         ),
       ),

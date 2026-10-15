@@ -54,3 +54,28 @@ String finishLabel(CardFinish finish) => switch (finish) {
       CardFinish.gloss => 'Gloss',
       CardFinish.leather => 'Leather',
     };
+
+/// The swatch a new account starts on: near a provider's own colour when it
+/// has a well-known one, slate otherwise, brown leather for cash. The owner
+/// can change it straight away.
+CardSwatch startingSwatch(AccountKind kind, String provider) {
+  if (kind == AccountKind.cash) return leatherSwatches[1];
+  final name = _nearProvider[provider] ?? 'Slate';
+  return cardSwatches.firstWhere((s) => s.name == name);
+}
+
+const _nearProvider = {
+  'Maybank': 'Sunflower',
+  'MAE by Maybank': 'Sunflower',
+  'CIMB': 'Crimson',
+  'Public Bank': 'Crimson',
+  'RHB': 'Navy',
+  'Hong Leong Bank': 'Navy',
+  'Bank Islam': 'Black and gold',
+  'BSN': 'Ocean',
+  'GXBank': 'Graphite',
+  "Touch 'n Go eWallet": 'Ocean',
+  'Setel': 'Teal',
+  'GrabPay': 'Forest',
+  'ShopeePay': 'Brick',
+};

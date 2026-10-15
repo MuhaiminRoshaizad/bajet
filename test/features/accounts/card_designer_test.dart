@@ -60,4 +60,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.totalLook, const TotalCardLook());
   });
+
+  testWidgets('a bank is added by searching for it, starting on a colour near its own', (tester) async {
+    final world = await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.ensureVisible(find.text('Add an account'));
+    await tester.tap(find.text('Add an account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bank account'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Add account'));
+    await tester.tap(find.text('Add account'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose one, or type its name'), findsOneWidget);
+    expect(world.accounts, hasLength(1));
+
+    await tester.enterText(find.widgetWithText(TextField, 'Which bank?'), 'isl');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bank Islam'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'How much is in it now'), '200000');
+    await tester.ensureVisible(find.text('Add account'));
+    await tester.tap(find.text('Add account'));
+    await tester.pumpAndSettle();
+
+    final added = world.accounts.last;
+    expect((added.kind, added.name, added.balance, added.look.color, added.look.ink), (AccountKind.bank, 'Bank Islam', 200000, 0xFF151515, 0xFFE6C674));
+  });
+
+  testWidgets('a provider not on the list can be typed in', (tester) async {
+    final world = await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.ensureVisible(find.text('Add an account'));
+    await tester.tap(find.text('Add an account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('E-wallet'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Which e-wallet?'), 'Office card');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use “Office card”'));
+    await tester.ensureVisible(find.text('Add account'));
+    await tester.tap(find.text('Add account'));
+    await tester.pumpAndSettle();
+    expect((world.accounts.last.name, world.accounts.last.balance), ('Office card', 0));
+  });
 }
