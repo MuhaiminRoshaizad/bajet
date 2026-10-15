@@ -152,6 +152,16 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   }
 
   @override
+  Future<RecurringRemoval> deleteRecurring(int id) async {
+    final item = _recurring.value.firstWhere((r) => r.id == id);
+    _recurring.value = [..._recurring.value.where((r) => r.id != id)];
+    return RecurringRemoval(item, const []);
+  }
+
+  @override
+  Future<void> restoreRecurring(RecurringRemoval removal) async => _recurring.value = [..._recurring.value, removal.item];
+
+  @override
   Future<void> updateRecurring(RecurringItem item) async => _recurring.value = [for (final r in _recurring.value) r.id == item.id ? item : r];
 
   @override

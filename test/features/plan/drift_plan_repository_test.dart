@@ -77,4 +77,19 @@ void main() {
     final back = (await plan.watchEvents().first).single;
     expect((back.id, back.amount, back.countInProjection), (id, 30000, false));
   });
+
+  test('deleting a bill keeps its confirmed payments, and undo links them again', () async {
+    final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1), windowDays: 2);
+    await plan.confirmRecurring(id, paidOn: d(2026, 7, 1));
+
+    final removal = await plan.deleteRecurring(id);
+    expect(await plan.watchRecurring().first, isEmpty);
+    final paid = await db.select(db.entries).getSingle();
+    expect((paid.amount, paid.recurringItemId), (50000, null));
+
+    await plan.restoreRecurring(removal);
+    final back = (await plan.watchRecurring().first).single;
+    expect((back.id, back.windowDays, back.nextDue), (id, 2, d(2026, 8, 1)));
+    expect((await db.select(db.entries).getSingle()).recurringItemId, id);
+  });
 }

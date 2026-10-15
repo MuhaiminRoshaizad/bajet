@@ -153,4 +153,22 @@ void main() {
     expect((salary.name, salary.amount, salary.windowDays), ('Salary', 300000, 3));
     expect(find.text('Next 25/07 to 28/07/2026'), findsOneWidget);
   });
+
+  testWidgets('deleting a bill asks first and can be undone', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Gym', isIncome: false, amount: 9000, categoryKey: 'bills', nextDue: d(2026, 8, 3)));
+    await openRecurring(tester);
+    await tester.tap(find.text('Gym'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Delete bill'));
+    await tester.tap(find.text('Delete bill'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Gym?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(world.recurring, isEmpty);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.recurring.single.name, 'Gym');
+  });
 }

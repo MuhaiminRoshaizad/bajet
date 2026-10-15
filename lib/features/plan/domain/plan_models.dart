@@ -78,6 +78,15 @@ class RecurringItem {
       );
 }
 
+/// What [PlanRepository.deleteRecurring] took away, kept so it can be put
+/// back: the item, and the confirmed entries that pointed at it.
+class RecurringRemoval {
+  const RecurringRemoval(this.item, this.linkedEntryIds);
+
+  final RecurringItem item;
+  final List<int> linkedEntryIds;
+}
+
 /// A one-off future income or expense, such as a birthday or a payment.
 class PlannedEvent {
   const PlannedEvent({

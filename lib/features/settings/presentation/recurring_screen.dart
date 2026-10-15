@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/soft.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
@@ -206,6 +207,24 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  Future<void> _delete() async {
+    final item = widget.item!;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final confirmed = await confirmDelete(
+      context,
+      title: 'Delete ${item.name}?',
+      message: 'It stops repeating and comes off Runway. Payments you already confirmed stay in History. To stop it for a while instead, switch off Counted each month.',
+    );
+    if (!confirmed) return;
+    final repo = ref.read(planRepositoryProvider);
+    final removal = await repo.deleteRecurring(item.id);
+    navigator.pop();
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text('Deleted ${item.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreRecurring(removal))));
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -320,6 +339,10 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
                 ),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save')),
+              if (widget.item != null) ...[
+                const SizedBox(height: AppSpacing.s),
+                DeleteButton(label: widget.item!.isIncome ? 'Delete income' : 'Delete bill', onPressed: _delete),
+              ],
             ],
           ),
         ),

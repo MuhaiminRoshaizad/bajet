@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 import '../../ledger/domain/ledger_models.dart' show goalCategoryKey;
 import '../domain/plan_models.dart' as domain;
+import '../domain/plan_models.dart' show RecurringRemoval;
 import '../domain/plan_repository.dart';
 
 class DriftPlanRepository implements PlanRepository {
@@ -99,6 +100,31 @@ class DriftPlanRepository implements PlanRepository {
           windowDays: Value(item.windowDays),
         ));
   }
+
+  @override
+  Future<RecurringRemoval> deleteRecurring(int id) => _db.transaction(() async {
+        final item = (await watchRecurring().first).firstWhere((r) => r.id == id);
+        final linked = await (_db.select(_db.entries)..where((e) => e.recurringItemId.equals(id))).get();
+        await (_db.update(_db.entries)..where((e) => e.recurringItemId.equals(id))).write(const EntriesCompanion(recurringItemId: Value(null)));
+        await (_db.delete(_db.recurringItems)..where((r) => r.id.equals(id))).go();
+        return RecurringRemoval(item, [for (final e in linked) e.id]);
+      });
+
+  @override
+  Future<void> restoreRecurring(RecurringRemoval removal) => _db.transaction(() async {
+        final item = removal.item;
+        await _db.into(_db.recurringItems).insert(RecurringItemsCompanion.insert(
+              id: Value(item.id),
+              name: item.name,
+              kind: item.isIncome ? EntryKind.income : EntryKind.expense,
+              amount: item.amount,
+              categoryKey: item.categoryKey,
+              nextDue: item.nextDue,
+              windowDays: Value(item.windowDays),
+              active: Value(item.active),
+            ));
+        await (_db.update(_db.entries)..where((e) => e.id.isIn(removal.linkedEntryIds))).write(EntriesCompanion(recurringItemId: Value(item.id)));
+      });
 
   @override
   Future<void> setRecurringActive(int id, {required bool active}) async {

@@ -36,6 +36,14 @@ abstract interface class PlanRepository {
   /// or income stays as it was, since confirmed entries were logged as one.
   Future<void> updateRecurring(RecurringItem item);
 
+  /// Removes an item for good. Payments already confirmed stay in History as
+  /// ordinary entries, no longer linked to it.
+  Future<RecurringRemoval> deleteRecurring(int id);
+
+  /// Undoes [deleteRecurring]: the item comes back with its id, and its
+  /// confirmed entries point at it again.
+  Future<void> restoreRecurring(RecurringRemoval removal);
+
   /// Pausing keeps the item and its history but stops it being projected or
   /// offered for confirmation. Items are paused rather than deleted because
   /// confirmed entries refer to them.
