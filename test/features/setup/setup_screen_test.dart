@@ -116,6 +116,16 @@ void main() {
     expect(tester.testTextInput.isVisible, isFalse);
   });
 
+  testWidgets('RM sits beside an amount, never in front of the hint', (tester) async {
+    await pumpApp(tester, setUpDone: false);
+    InputDecoration decoration() =>
+        tester.widget<TextField>(find.descendant(of: field('Balance today'), matching: find.byType(TextField))).decoration!;
+    expect((decoration().prefixText, decoration().hintText), (null, 'e.g. 2,500.00'));
+
+    await enterAmount(tester, field('Balance today'), '250000');
+    expect(decoration().prefixText, 'RM');
+  });
+
   testWidgets('the buy day calendar opens with no day chosen for the owner', (tester) async {
     await pumpApp(tester, setUpDone: false);
     await fillMoneyStep(tester);

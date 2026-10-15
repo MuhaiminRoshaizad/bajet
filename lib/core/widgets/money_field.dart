@@ -50,26 +50,31 @@ class _MoneyFieldState extends State<MoneyField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      key: _fieldKey,
-      controller: widget.controller,
-      enabled: widget.enabled,
-      // The phone's keyboard never opens; the keypad sheet does the typing.
-      readOnly: true,
-      showCursor: false,
-      keyboardType: TextInputType.none,
-      textInputAction: widget.textInputAction,
-      onTap: _openKeypad,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly, const RinggitCentsFormatter()],
-      autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-      validator: widget.validator == null ? null : (text) => widget.validator!(RinggitCentsFormatter.parse(text ?? '')),
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()]),
-      decoration: InputDecoration(
-        labelText: widget.label,
-        hintText: widget.hint,
-        helperText: widget.helper,
-        helperMaxLines: 3,
-        prefixText: 'RM',
+    // RM shows only beside an amount; on an empty field it would run into the
+    // hint and read "RMe.g. 45.00".
+    return ValueListenableBuilder(
+      valueListenable: widget.controller,
+      builder: (context, value, _) => TextFormField(
+        key: _fieldKey,
+        controller: widget.controller,
+        enabled: widget.enabled,
+        // The phone's keyboard never opens; the keypad sheet does the typing.
+        readOnly: true,
+        showCursor: false,
+        keyboardType: TextInputType.none,
+        textInputAction: widget.textInputAction,
+        onTap: _openKeypad,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly, const RinggitCentsFormatter()],
+        autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+        validator: widget.validator == null ? null : (text) => widget.validator!(RinggitCentsFormatter.parse(text ?? '')),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()]),
+        decoration: InputDecoration(
+          labelText: widget.label,
+          hintText: widget.hint,
+          helperText: widget.helper,
+          helperMaxLines: 3,
+          prefixText: value.text.isEmpty ? null : 'RM',
+        ),
       ),
     );
   }
