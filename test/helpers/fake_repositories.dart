@@ -186,7 +186,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     final id = _nextId++;
     _events.value = [
       ..._events.value,
-      PlannedEvent(id: id, name: name.trim(), amount: amount, isIncome: isIncome, date: date, countInProjection: countInProjection),
+      PlannedEvent(id: id, name: name.trim(), amount: amount, categoryKey: categoryKey, isIncome: isIncome, date: date, countInProjection: countInProjection),
     ];
     return id;
   }
@@ -195,7 +195,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   Future<void> setEventDone(int id, {required bool done}) async => _events.value = [
         for (final e in _events.value)
           e.id == id
-              ? PlannedEvent(id: e.id, name: e.name, amount: e.amount, isIncome: e.isIncome, date: e.date, countInProjection: e.countInProjection, done: done)
+              ? e.copyWith(done: done)
               : e,
       ];
 
@@ -209,6 +209,15 @@ class FakeWorld implements LedgerRepository, PlanRepository {
       ..._achieved.value,
     ];
   }
+
+  @override
+  Future<void> updateEvent(PlannedEvent event) async => _events.value = [for (final e in _events.value) e.id == event.id ? event : e];
+
+  @override
+  Future<void> deleteEvent(int id) async => _events.value = [..._events.value.where((e) => e.id != id)];
+
+  @override
+  Future<void> restoreEvent(PlannedEvent event) async => _events.value = [..._events.value, event];
 
   @override
   Stream<List<Goal>> watchAchievedGoals() => _achieved.stream;

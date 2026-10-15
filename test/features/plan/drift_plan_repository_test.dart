@@ -63,4 +63,18 @@ void main() {
     expect((await plan.watchAchievedGoals().first).single.achievedOn, d(2026, 11, 20));
     expect(await plan.watchActiveGoals().first, isEmpty);
   });
+
+  test('an event can be edited, deleted and put back exactly as it was', () async {
+    final id = await plan.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 11, 20));
+    final event = (await plan.watchEvents().first).single;
+    await plan.updateEvent(event.copyWith(amount: 30000, countInProjection: false));
+    final edited = (await plan.watchEvents().first).single;
+    expect((edited.amount, edited.categoryKey, edited.countInProjection), (30000, 'transport', false));
+
+    await plan.deleteEvent(id);
+    expect(await plan.watchEvents().first, isEmpty);
+    await plan.restoreEvent(edited);
+    final back = (await plan.watchEvents().first).single;
+    expect((back.id, back.amount, back.countInProjection), (id, 30000, false));
+  });
 }

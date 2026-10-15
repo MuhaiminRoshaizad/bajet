@@ -8,7 +8,7 @@ void main() {
   test('repeats recurring items monthly and lists everything soonest first', () {
     final list = upcoming(
       recurring: [RecurringItem(id: 1, name: 'Rent', amount: 50000, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 8, 1))],
-      events: [PlannedEvent(id: 1, name: 'Car service', amount: 25000, isIncome: false, date: d(2026, 8, 20))],
+      events: [PlannedEvent(id: 1, name: 'Car service', amount: 25000, categoryKey: 'other', isIncome: false, date: d(2026, 8, 20))],
       goals: [Goal(id: 1, name: 'Laptop', price: 450000, targetDate: d(2026, 9, 15))],
       from: d(2026, 7, 1),
       to: d(2026, 9, 30),
@@ -27,8 +27,8 @@ void main() {
     final list = upcoming(
       recurring: [RecurringItem(id: 1, name: 'Old plan', amount: 100, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 7, 5), active: false)],
       events: [
-        PlannedEvent(id: 1, name: 'Done', amount: 100, isIncome: false, date: d(2026, 7, 5), done: true),
-        PlannedEvent(id: 2, name: 'Too late', amount: 100, isIncome: false, date: d(2026, 12, 1)),
+        PlannedEvent(id: 1, name: 'Done', amount: 100, categoryKey: 'other', isIncome: false, date: d(2026, 7, 5), done: true),
+        PlannedEvent(id: 2, name: 'Too late', amount: 100, categoryKey: 'other', isIncome: false, date: d(2026, 12, 1)),
       ],
       goals: const [],
       from: d(2026, 7, 1),
@@ -40,7 +40,7 @@ void main() {
   test('marks events the projection does not count', () {
     final list = upcoming(
       recurring: const [],
-      events: [PlannedEvent(id: 1, name: 'Bonus', amount: 30000, isIncome: true, date: d(2026, 7, 10), countInProjection: false)],
+      events: [PlannedEvent(id: 1, name: 'Bonus', amount: 30000, categoryKey: 'salary', isIncome: true, date: d(2026, 7, 10), countInProjection: false)],
       goals: const [],
       from: d(2026, 7, 1),
       to: d(2026, 7, 31),

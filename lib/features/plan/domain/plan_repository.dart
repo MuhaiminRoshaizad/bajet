@@ -59,6 +59,15 @@ abstract interface class PlanRepository {
   /// counting it. Logging the money itself stays a normal entry.
   Future<void> setEventDone(int id, {required bool done});
 
+  /// Changes an event's name, amount, category, date and whether it counts.
+  /// It stays an expense or an income.
+  Future<void> updateEvent(PlannedEvent event);
+
+  Future<void> deleteEvent(int id);
+
+  /// Puts back an event exactly as it was before [deleteEvent], for undo.
+  Future<void> restoreEvent(PlannedEvent event);
+
   /// Active goals, highest priority first.
   Stream<List<Goal>> watchActiveGoals();
 

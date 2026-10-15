@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
@@ -44,5 +45,37 @@ void main() {
     expect(find.text('Give it a name'), findsOneWidget);
     expect(find.text('Pick when it happens'), findsOneWidget);
     expect(world.events, isEmpty);
+  });
+
+  testWidgets('tapping an event edits it, and keeps its category', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 7, 20)));
+    await openEvents(tester);
+    await tester.tap(find.text('Car service'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit event'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '30000');
+    await tester.ensureVisible(find.text('Save event'));
+    await tester.tap(find.text('Save event'));
+    await tester.pumpAndSettle();
+    final e = world.events.single;
+    expect((e.amount, e.categoryKey, e.date), (30000, 'transport', d(2026, 7, 20)));
+  });
+
+  testWidgets('deleting an event asks first and can be undone', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 7, 20)));
+    await openEvents(tester);
+    await tester.tap(find.text('Car service'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Delete event'));
+    await tester.tap(find.text('Delete event'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(world.events, isEmpty);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.events.single.name, 'Car service');
   });
 }

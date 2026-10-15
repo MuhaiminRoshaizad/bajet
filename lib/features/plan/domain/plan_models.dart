@@ -84,6 +84,7 @@ class PlannedEvent {
     required this.id,
     required this.name,
     required this.amount,
+    required this.categoryKey,
     required this.isIncome,
     required this.date,
     this.countInProjection = true,
@@ -93,6 +94,7 @@ class PlannedEvent {
   final int id;
   final String name;
   final int amount;
+  final String categoryKey;
   final bool isIncome;
   final DateTime date;
 
@@ -101,6 +103,17 @@ class PlannedEvent {
   final bool done;
 
   int get signedAmount => isIncome ? amount : -amount;
+
+  PlannedEvent copyWith({String? name, int? amount, String? categoryKey, DateTime? date, bool? countInProjection, bool? done}) => PlannedEvent(
+        id: id,
+        name: name ?? this.name,
+        amount: amount ?? this.amount,
+        categoryKey: categoryKey ?? this.categoryKey,
+        isIncome: isIncome,
+        date: date ?? this.date,
+        countInProjection: countInProjection ?? this.countInProjection,
+        done: done ?? this.done,
+      );
 }
 
 class Goal {

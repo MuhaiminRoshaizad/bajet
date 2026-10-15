@@ -23,8 +23,8 @@ final recurring = [
 ];
 
 final events = [
-  PlannedEvent(id: 1, name: 'Car service', amount: 25000, isIncome: false, date: d(2026, 11, 20)),
-  PlannedEvent(id: 2, name: 'Bonus', amount: 50000, isIncome: true, date: d(2026, 12, 20), countInProjection: false),
+  PlannedEvent(id: 1, name: 'Car service', amount: 25000, categoryKey: 'other', isIncome: false, date: d(2026, 11, 20)),
+  PlannedEvent(id: 2, name: 'Bonus', amount: 50000, categoryKey: 'salary', isIncome: true, date: d(2026, 12, 20), countInProjection: false),
 ];
 
 final goal = Goal(id: 1, name: 'Laptop', price: 450000, targetDate: d(2027, 1, 30));

@@ -9,8 +9,10 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 
 /// One-off future money: a service, a gift, a bonus that may or may not come.
@@ -28,7 +30,7 @@ class EventsScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
-            child: Text('Mark one done when it happens, and log the money as usual.', style: TextStyle(color: c.muted)),
+            child: Text('Mark one done when it happens, and log the money as usual. Tap one to change or delete it.', style: TextStyle(color: c.muted)),
           ),
           if (events.isNotEmpty)
             CardGroup(
@@ -36,6 +38,7 @@ class EventsScreen extends ConsumerWidget {
                 for (final e in events)
                   ListTile(
                     minTileHeight: 60,
+                    onTap: () => _openForm(context, e),
                     title: Text(e.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       '${e.isIncome ? '+' : '−'}${Money.format(e.amount)} · ${Dates.full(e.date)}${e.countInProjection ? '' : ' · not counted'}',
@@ -49,7 +52,7 @@ class EventsScreen extends ConsumerWidget {
             ),
           const SizedBox(height: AppSpacing.l),
           FilledButton.icon(
-            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _EventForm()),
+            onPressed: () => _openForm(context, null),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Add an event'),
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
@@ -60,8 +63,14 @@ class EventsScreen extends ConsumerWidget {
   }
 }
 
+void _openForm(BuildContext context, PlannedEvent? event) =>
+    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _EventForm(event: event));
+
+/// Adds an event, or changes [event] when one is given.
 class _EventForm extends ConsumerStatefulWidget {
-  const _EventForm();
+  const _EventForm({this.event});
+
+  final PlannedEvent? event;
 
   @override
   ConsumerState<_EventForm> createState() => _EventFormState();
@@ -69,12 +78,12 @@ class _EventForm extends ConsumerStatefulWidget {
 
 class _EventFormState extends ConsumerState<_EventForm> {
   final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _amount = TextEditingController();
-  bool _isIncome = false;
-  bool _counted = true;
-  String? _category;
-  DateTime? _date;
+  late final _name = TextEditingController(text: widget.event?.name);
+  late final _amount = TextEditingController(text: widget.event == null ? '' : RinggitCentsFormatter.format(widget.event!.amount));
+  late bool _isIncome = widget.event?.isIncome ?? false;
+  late bool _counted = widget.event?.countInProjection ?? true;
+  late String? _category = widget.event?.categoryKey;
+  late DateTime? _date = widget.event?.date;
   bool _tried = false;
 
   @override
@@ -102,15 +111,27 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
     if (!ok || _category == null || _date == null) return;
-    await ref.read(planRepositoryProvider).addEvent(
-          name: _name.text,
-          isIncome: _isIncome,
-          amount: RinggitCentsFormatter.parse(_amount.text),
-          categoryKey: _category!,
-          date: _date!,
-          countInProjection: _counted,
-        );
+    final repo = ref.read(planRepositoryProvider);
+    final amount = RinggitCentsFormatter.parse(_amount.text);
+    if (widget.event case final event?) {
+      await repo.updateEvent(event.copyWith(name: _name.text, amount: amount, categoryKey: _category, date: _date, countInProjection: _counted));
+    } else {
+      await repo.addEvent(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, date: _date!, countInProjection: _counted);
+    }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _delete() async {
+    final event = widget.event!;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    if (!await confirmDelete(context, title: 'Delete ${event.name}?', message: 'It comes off Runway and Coming up. Anything you have logged for it stays.')) return;
+    final repo = ref.read(planRepositoryProvider);
+    await repo.deleteEvent(event.id);
+    navigator.pop();
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text('Deleted ${event.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreEvent(event))));
   }
 
   @override
@@ -126,18 +147,23 @@ class _EventFormState extends ConsumerState<_EventForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('New event', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: AppSpacing.l),
-              SegmentedButton<bool>(
-                segments: const [ButtonSegment(value: false, label: Text('Expense')), ButtonSegment(value: true, label: Text('Income'))],
-                selected: {_isIncome},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() {
-                  _isIncome = s.single;
-                  _category = null;
-                }),
+              Text(
+                switch (widget.event?.isIncome) { null => 'New event', true => 'Edit expected income', false => 'Edit event' },
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: AppSpacing.m),
+              const SizedBox(height: AppSpacing.l),
+              if (widget.event == null) ...[
+                SegmentedButton<bool>(
+                  segments: const [ButtonSegment(value: false, label: Text('Expense')), ButtonSegment(value: true, label: Text('Income'))],
+                  selected: {_isIncome},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setState(() {
+                    _isIncome = s.single;
+                    _category = null;
+                  }),
+                ),
+                const SizedBox(height: AppSpacing.m),
+              ],
               TextFormField(
                 controller: _name,
                 maxLength: 40,
@@ -202,6 +228,10 @@ class _EventFormState extends ConsumerState<_EventForm> {
               ),
               const SizedBox(height: AppSpacing.l),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save event')),
+              if (widget.event != null) ...[
+                const SizedBox(height: AppSpacing.s),
+                DeleteButton(label: 'Delete event', onPressed: _delete),
+              ],
             ],
           ),
         ),

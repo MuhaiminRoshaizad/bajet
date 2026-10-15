@@ -130,6 +130,7 @@ class DriftPlanRepository implements PlanRepository {
             id: r.id,
             name: r.name,
             amount: r.amount,
+            categoryKey: r.categoryKey,
             isIncome: r.kind == EntryKind.income,
             date: r.dueOn,
             countInProjection: r.countInProjection,
@@ -160,6 +161,36 @@ class DriftPlanRepository implements PlanRepository {
   @override
   Future<void> setEventDone(int id, {required bool done}) async {
     await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(id))).write(PlannedEventsCompanion(done: Value(done)));
+  }
+
+  @override
+  Future<void> updateEvent(domain.PlannedEvent event) async {
+    await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(event.id))).write(PlannedEventsCompanion(
+          name: Value(event.name.trim()),
+          amount: Value(event.amount),
+          categoryKey: Value(event.categoryKey),
+          dueOn: Value(event.date),
+          countInProjection: Value(event.countInProjection),
+        ));
+  }
+
+  @override
+  Future<void> deleteEvent(int id) async {
+    await (_db.delete(_db.plannedEvents)..where((e) => e.id.equals(id))).go();
+  }
+
+  @override
+  Future<void> restoreEvent(domain.PlannedEvent event) async {
+    await _db.into(_db.plannedEvents).insert(PlannedEventsCompanion.insert(
+          id: Value(event.id),
+          name: event.name,
+          kind: event.isIncome ? EntryKind.income : EntryKind.expense,
+          amount: event.amount,
+          categoryKey: event.categoryKey,
+          dueOn: event.date,
+          countInProjection: Value(event.countInProjection),
+          done: Value(event.done),
+        ));
   }
 
   @override
