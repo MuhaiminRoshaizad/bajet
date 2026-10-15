@@ -6,8 +6,9 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../domain/account_models.dart';
 
-/// A bank card's shape, 85.60 by 53.98 mm (ISO/IEC 7810 ID-1).
-const cardAspectRatio = 85.6 / 53.98;
+/// Wider than a real bank card (85.60 by 53.98 mm, about 1.59 to 1), so the
+/// cards take less of the screen while still reading as cards.
+const cardAspectRatio = 1.9;
 
 const _radius = BorderRadius.all(Radius.circular(16));
 

@@ -89,8 +89,9 @@ background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
 
 ## Account cards
 
-Each account is drawn as a card at a real bank card's shape, 85.60 by 53.98
-mm (`cardAspectRatio`), with a 16 px radius (`card_face.dart`). A card is one
+Each account is drawn as a card 1.9 times as wide as it is tall
+(`cardAspectRatio`), a little wider than a real bank card's 1.59, so cards take
+less of the screen; the radius is 16 px (`card_face.dart`). A card is one
 colour the owner picked, lit from the top left, under a finish that never
 moves: brushed metal (fine vertical streaks), matte or gloss (a fixed
 diagonal sheen). Text is dark on light cards and white on dark ones unless
