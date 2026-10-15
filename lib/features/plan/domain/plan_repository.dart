@@ -30,6 +30,7 @@ abstract interface class PlanRepository {
     required String categoryKey,
     required DateTime nextDue,
     int windowDays = 0,
+    int? accountId,
   });
 
   /// Changes an item's name, amount, category and when it next lands. Bill

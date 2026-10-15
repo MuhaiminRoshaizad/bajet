@@ -9,13 +9,13 @@ export 'tables.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [AppSettings, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites],
+  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -32,12 +32,44 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(entries, entries.plannedEventId);
             await m.addColumn(entries, entries.plannedEventOn);
           }
+          if (from < 6) await _moveToAccounts(m);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
           await ensureBuiltInCategories();
         },
       );
+
+  /// Version 6 keeps money in accounts. The one starting balance becomes the
+  /// first account's, and every entry and bill so far belongs to it; the
+  /// owner names it and adds the others afterwards.
+  Future<void> _moveToAccounts(Migrator m) async {
+    await m.createTable(accounts);
+    await m.createTable(transfers);
+    final opening = await customSelect('SELECT opening_balance FROM app_settings').getSingleOrNull();
+    await into(accounts).insert(AccountsCompanion.insert(
+      id: const Value(1),
+      kind: AccountKind.bank,
+      name: firstAccountName,
+      openingBalance: Value(opening?.read<int>('opening_balance') ?? 0),
+      color: firstAccountColor,
+    ));
+    await m.alterTable(TableMigration(entries, newColumns: [entries.accountId], columnTransformer: {entries.accountId: const Constant(1)}));
+    await m.alterTable(TableMigration(recurringItems, newColumns: [recurringItems.accountId], columnTransformer: {recurringItems.accountId: const Constant(1)}));
+    await m.alterTable(TableMigration(appSettings, newColumns: [appSettings.totalCardColor, appSettings.totalCardFinish]));
+  }
+
+  /// [id], or when none is named the first account in order. Throws before
+  /// setup has added an account, since nothing can be logged then.
+  Future<int> accountOrFirst(int? id) async {
+    if (id != null) return id;
+    final q = select(accounts)
+      ..orderBy([(a) => OrderingTerm(expression: a.sortOrder), (a) => OrderingTerm(expression: a.id)])
+      ..limit(1);
+    final first = await q.getSingleOrNull();
+    if (first == null) throw StateError('No account yet: setup has not been finished.');
+    return first.id;
+  }
 
   /// The categories the app logs into itself, which the owner never picks:
   /// goal purchases and money found missing at a check-in. Added if absent,
@@ -81,6 +113,11 @@ class AppDatabase extends _$AppDatabase {
 }
 
 const _builtIn = {'goal', 'untracked'};
+
+/// What an upgraded install's balance is filed under until the owner says
+/// where it really is: a neutral slate card.
+const firstAccountName = 'Main account';
+const firstAccountColor = 0xFF4A5866;
 
 const _defaultCategories = [
   ('food', 'Food', EntryKind.expense, 'apricot', false),

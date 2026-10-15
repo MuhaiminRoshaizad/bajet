@@ -31,10 +31,12 @@ void main() {
     expect(untracked.single.isFixed, isTrue);
   });
 
+  Future<int> account() => db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.cash, name: 'Cash', color: 0xFF6B3F24));
+
   test('stores calendar days as ISO text and reads them back unchanged', () async {
     final day = DateTime.utc(2026, 7, 1);
     await db.into(db.entries).insert(
-          EntriesCompanion.insert(occurredOn: day, kind: EntryKind.expense, amount: 450, categoryKey: 'food'),
+          EntriesCompanion.insert(occurredOn: day, kind: EntryKind.expense, amount: 450, categoryKey: 'food', accountId: await account()),
         );
     final raw = await db.customSelect('SELECT occurred_on FROM entries').getSingle();
     expect(raw.read<String>('occurred_on'), '2026-07-01');
@@ -43,20 +45,20 @@ void main() {
 
   test('rejects an amount of zero', () async {
     final insert = db.into(db.entries).insert(
-          EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 0, categoryKey: 'food'),
+          EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 0, categoryKey: 'food', accountId: await account()),
         );
     expect(insert, throwsA(isA<SqliteException>()));
   });
 
   test('rejects an entry in a category that does not exist', () async {
     final insert = db.into(db.entries).insert(
-          EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 100, categoryKey: 'nope'),
+          EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 100, categoryKey: 'nope', accountId: await account()),
         );
     expect(insert, throwsA(isA<SqliteException>()));
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 5);
+    expect(db.schemaVersion, 6);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -106,5 +108,30 @@ void main() {
     addTearDown(old.close);
     final entry = await old.select(old.entries).getSingle();
     expect((entry.amount, entry.plannedEventId, entry.plannedEventOn), (450, null, null));
+  });
+
+  test('rejects money moved from an account to itself', () async {
+    final id = await account();
+    final insert = db.into(db.transfers).insert(TransfersCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), fromAccountId: id, toAccountId: id, amount: 100));
+    expect(insert, throwsA(isA<SqliteException>()));
+  });
+
+  test('a version 5 database moves its balance, entries and bills into a first account', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v5.sql').readAsStringSync());
+      raw.execute("INSERT INTO app_settings (opening_balance, opening_date, weekly_cap, buffer) VALUES (397825, '2026-07-01', 3000, 100000)");
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO recurring_items (name, kind, amount, category_key, next_due) VALUES ('Rent', 'expense', 50000, 'food', '2026-08-01')");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key, recurring_item_id) VALUES ('2026-07-01', 'expense', 450, 'food', 1)");
+      raw.execute('PRAGMA user_version = 5');
+    }));
+    addTearDown(old.close);
+    final first = await old.select(old.accounts).getSingle();
+    expect((first.id, first.name, first.kind, first.openingBalance), (1, firstAccountName, AccountKind.bank, 397825));
+    final entry = await old.select(old.entries).getSingle();
+    expect((entry.amount, entry.accountId, entry.recurringItemId), (450, 1, 1));
+    expect((await old.select(old.recurringItems).getSingle()).accountId, 1);
+    final settings = await old.select(old.appSettings).getSingle();
+    expect((settings.openingDate, settings.weeklyCap, settings.totalCardColor, settings.totalCardFinish), (DateTime.utc(2026, 7, 1), 3000, null, CardFinish.brushed));
   });
 }

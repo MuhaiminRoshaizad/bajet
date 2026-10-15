@@ -12,6 +12,9 @@ erDiagram
   categories ||--o{ favourites : ""
   recurring_items ||--o{ entries : "confirmed by"
   planned_events ||--o{ entries : "spent on"
+  accounts ||--o{ entries : "holds"
+  accounts ||--o{ recurring_items : "pays"
+  accounts ||--o{ transfers : "from / to"
 ```
 
 ## Tables
@@ -21,11 +24,43 @@ One row, created during first-run setup.
 
 | Column            | Type | Notes                                     |
 |-------------------|------|-------------------------------------------|
-| `id`              | int  | Always 1                                  |
-| `opening_balance` | int  | Balance on the opening date               |
-| `opening_date`    | day  | Entries before this date are ignored      |
-| `weekly_cap`      | int  | Flexible spending allowed per week        |
-| `buffer`          | int  | Minimum left after buying a goal          |
+| `id`                | int  | Always 1                                  |
+| `opening_date`      | day  | Entries before this date are ignored      |
+| `weekly_cap`        | int  | Flexible spending allowed per week        |
+| `buffer`            | int  | Minimum left after buying a goal          |
+| `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |
+| `total_card_finish` | enum | `brushed`, `matte`, `gloss` or `leather`  |
+
+### `accounts`
+A place money is kept. Its balance is `opening_balance` on the opening date,
+plus its entries and the transfers into it, less those out of it, since.
+
+| Column            | Type  | Notes                                          |
+|-------------------|-------|------------------------------------------------|
+| `id`              | int   | Primary key                                    |
+| `kind`            | enum  | `cash`, `bank` or `ewallet`                    |
+| `name`            | text  | The provider as plain text, e.g. a bank's name; "Cash" for cash |
+| `nickname`        | text? | e.g. "Savings", shown where a card has the holder's name |
+| `opening_balance` | int   | Balance on the opening date                    |
+| `color`           | int   | The card's colour as ARGB                      |
+| `ink_color`       | int?  | The card's text colour when picked, e.g. gold on black; otherwise it follows the card's lightness |
+| `finish`          | enum  | `brushed`, `matte`, `gloss` or `leather` (cash) |
+| `sort_order`      | int   | Display order; the first account takes anything logged without one |
+
+### `transfers`
+Money moved from one account to another. Neither spending nor income, so it is
+kept apart from `entries`: the total balance, the weekly allowance, Insights
+and Runway never see it.
+
+| Column            | Type  | Notes                                |
+|-------------------|-------|--------------------------------------|
+| `id`              | int   | Primary key                          |
+| `occurred_on`     | day   |                                      |
+| `from_account_id` | int   | References `accounts.id`             |
+| `to_account_id`   | int   | References `accounts.id`; never the same as `from_account_id` |
+| `amount`          | int   | Greater than zero                    |
+| `note`            | text? |                                      |
+| `created_at`      | time  |                                      |
 
 ### `categories`
 | Column           | Type   | Notes                                           |
@@ -40,8 +75,8 @@ One row, created during first-run setup.
 | `sort_order`     | int    | Display order                                   |
 
 ### `entries`
-Every logged spend or income. The balance is `opening_balance` plus the sum of
-entries on or after `opening_date`.
+Every logged spend or income. The total balance is every account's
+`opening_balance` plus the sum of entries on or after `opening_date`.
 
 | Column              | Type  | Notes                                       |
 |---------------------|-------|---------------------------------------------|
@@ -50,6 +85,7 @@ entries on or after `opening_date`.
 | `kind`              | enum  | `income` or `expense`                       |
 | `amount`            | int   | Greater than zero                           |
 | `category_key`      | text  | References `categories.key`                 |
+| `account_id`        | int   | References `accounts.id`                    |
 | `label`             | text? | Short name, e.g. "Coffee", for item stats   |
 | `note`              | text? | Free text, never used in statistics         |
 | `receipt`           | text? | File name of an attached image, see below   |
@@ -90,6 +126,7 @@ Monthly bills and income.
 | `active`       | bool |                                                |
 | `is_estimate`  | bool | The amount varies month to month               |
 | `window_days`  | int  | 0–27 days after `next_due` it may still land; 0 for a fixed day (decision 015) |
+| `account_id`   | int  | The account it is paid from or into; confirmed entries go there |
 
 ### `planned_events`
 Future income or expenses, once or every year.
@@ -184,6 +221,10 @@ by hand rather than taken from drift, so the file format only changes when
 | 4      | Each planned event carries `repeatsYearly`; older files get false |
 | 5      | Each entry carries `plannedEventId` and `plannedEventOn`; older files get null |
 
+Until backups carry accounts of their own, `settings.openingBalance` holds the
+accounts' opening balances together, and a restore puts everything in one
+account.
+
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
 is not a bajet backup, has another `format`, or is damaged is refused and the
@@ -191,7 +232,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 5. Any change to a table bumps it and adds a step to
+`schemaVersion` is 6. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -202,3 +243,4 @@ data on the phone is left as it was.
 | 3       | `recurring_items.window_days`, for pay and bills that move around |
 | 4       | `planned_events.repeats_yearly`, for birthdays and other yearly events |
 | 5       | `entries.planned_event_id` and `planned_event_on`, for spending against an event |
+| 6       | `accounts` and `transfers`; `entries.account_id` and `recurring_items.account_id`; the total card's look on `app_settings`, whose `opening_balance` moves to a first account, "Main account", which every existing entry and bill joins |

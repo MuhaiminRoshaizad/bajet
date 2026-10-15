@@ -43,6 +43,7 @@ class RecurringItem {
     required this.nextDue,
     this.windowDays = 0,
     this.active = true,
+    this.accountId,
   });
 
   final int id;
@@ -51,6 +52,9 @@ class RecurringItem {
   final String categoryKey;
   final bool isIncome;
   final DateTime nextDue;
+
+  /// The account it is paid from or into; null means the first account.
+  final int? accountId;
 
   /// Days after [nextDue] it may still land; 0 for a fixed day.
   final int windowDays;
@@ -75,6 +79,7 @@ class RecurringItem {
         nextDue: nextDue ?? this.nextDue,
         windowDays: windowDays ?? this.windowDays,
         active: active ?? this.active,
+        accountId: accountId,
       );
 }
 

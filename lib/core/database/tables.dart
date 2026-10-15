@@ -28,18 +28,61 @@ enum RhythmDayType { zero, spend, flex }
 
 enum GoalStatus { active, paused, achieved, archived }
 
-/// One row only, created during first-run setup.
+enum AccountKind { cash, bank, ewallet }
+
+/// How a card is drawn. Leather is the cash wallet's.
+enum CardFinish { brushed, matte, gloss, leather }
+
+/// One row only, created during first-run setup. The starting balance lives
+/// on each account, as of [openingDate].
 class AppSettings extends Table {
   IntColumn get id => integer().withDefault(const Constant(1))();
-  IntColumn get openingBalance => integer()();
   TextColumn get openingDate => text().map(const DayConverter())();
   IntColumn get weeklyCap => integer()();
 
   /// The minimum that must remain after buying a goal.
   IntColumn get buffer => integer()();
 
+  /// The total card's look; no colour means it follows the app's theme.
+  IntColumn get totalCardColor => integer().nullable()();
+  TextColumn get totalCardFinish => textEnum<CardFinish>().withDefault(const Constant('brushed'))();
+
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// A place money is kept: cash, a bank account or an e-wallet. Its balance is
+/// [openingBalance] on the opening date, plus its entries and transfers since.
+class Accounts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get kind => textEnum<AccountKind>()();
+
+  /// The provider, such as a bank's name, shown as plain text; "Cash" for cash.
+  TextColumn get name => text()();
+  TextColumn get nickname => text().nullable()();
+  IntColumn get openingBalance => integer().withDefault(const Constant(0))();
+
+  /// The card's colour as ARGB, and its text colour when the owner picked one
+  /// (such as gold on black); otherwise text follows the card's lightness.
+  IntColumn get color => integer()();
+  IntColumn get inkColor => integer().nullable()();
+  TextColumn get finish => textEnum<CardFinish>().withDefault(const Constant('brushed'))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+}
+
+/// Money moved between two accounts. Neither spending nor income, so it lives
+/// apart from entries and nothing that sums entries ever sees it.
+class Transfers extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get occurredOn => text().map(const DayConverter())();
+  IntColumn get fromAccountId => integer().references(Accounts, #id)();
+  IntColumn get toAccountId => integer().references(Accounts, #id)();
+  IntColumn get amount => integer().check(amount.isBiggerThanValue(0))();
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  List<String> get customConstraints => ['CHECK (from_account_id <> to_account_id)'];
 }
 
 class Categories extends Table {
@@ -64,6 +107,9 @@ class Entries extends Table {
   TextColumn get kind => textEnum<EntryKind>()();
   IntColumn get amount => integer().check(amount.isBiggerThanValue(0))();
   TextColumn get categoryKey => text().references(Categories, #key)();
+
+  /// Where the money came from or went to.
+  IntColumn get accountId => integer().references(Accounts, #id)();
 
   /// A short name such as "Coffee", used for per-item stats like average cost.
   TextColumn get label => text().nullable()();
@@ -110,6 +156,9 @@ class RecurringItems extends Table {
   /// Days after [nextDue] it may still land, for pay or bills that move
   /// around; 0 means on the day itself.
   IntColumn get windowDays => integer().withDefault(const Constant(0)).check(windowDays.isBetweenValues(0, maxWindowDays))();
+
+  /// The account it is paid from or into.
+  IntColumn get accountId => integer().references(Accounts, #id)();
 }
 
 class PlannedEvents extends Table {

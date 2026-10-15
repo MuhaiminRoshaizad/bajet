@@ -165,6 +165,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     required String categoryKey,
     required DateTime nextDue,
     int windowDays = 0,
+    int? accountId,
   }) async {
     final id = _nextId++;
     _recurring.value = [..._recurring.value, RecurringItem(id: id, name: name, amount: amount, categoryKey: categoryKey, isIncome: isIncome, nextDue: nextDue, windowDays: windowDays)];

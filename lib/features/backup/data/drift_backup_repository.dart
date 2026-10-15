@@ -4,6 +4,7 @@ import '../../../core/database/app_database.dart';
 import '../domain/backup_repository.dart';
 
 const _day = DayConverter();
+const _firstAccount = 1;
 
 /// Writes and reads the backup format by hand, table by table, so the file
 /// stays stable and readable whatever drift does internally.
@@ -15,13 +16,16 @@ class DriftBackupRepository implements BackupRepository {
   @override
   Future<Map<String, Object?>> export() async {
     final settings = await _db.select(_db.appSettings).getSingleOrNull();
+    // One account is all there can be so far, so its balance is the opening
+    // balance; a format with accounts of their own follows.
+    final accounts = await _db.select(_db.accounts).get();
     return {
       'app': 'bajet',
       'format': backupFormatVersion,
       'settings': settings == null
           ? null
           : {
-              'openingBalance': settings.openingBalance,
+              'openingBalance': accounts.fold(0, (sum, a) => sum + a.openingBalance),
               'openingDate': _day.toSql(settings.openingDate),
               'weeklyCap': settings.weeklyCap,
               'buffer': settings.buffer,
@@ -114,18 +118,36 @@ class DriftBackupRepository implements BackupRepository {
     try {
       await _db.transaction(() async {
         // Children before parents, so foreign keys never point at nothing.
-        for (final TableInfo<Table, Object?> t in [_db.entries, _db.favourites, _db.recurringItems, _db.plannedEvents, _db.goals, _db.weeklyRules, _db.categories, _db.appSettings]) {
+        for (final TableInfo<Table, Object?> t in [
+          _db.entries,
+          _db.favourites,
+          _db.transfers,
+          _db.recurringItems,
+          _db.plannedEvents,
+          _db.goals,
+          _db.weeklyRules,
+          _db.accounts,
+          _db.categories,
+          _db.appSettings,
+        ]) {
           await _db.delete(t).go();
         }
         final s = backup['settings'] as Map<String, Object?>?;
         if (s != null) {
           await _db.into(_db.appSettings).insert(AppSettingsCompanion.insert(
-                openingBalance: s['openingBalance']! as int,
                 openingDate: _day.fromSql(s['openingDate']! as String),
                 weeklyCap: s['weeklyCap']! as int,
                 buffer: s['buffer']! as int,
               ));
         }
+        // Everything in the file belongs to one account holding its balance.
+        await _db.into(_db.accounts).insert(AccountsCompanion.insert(
+              id: const Value(_firstAccount),
+              kind: AccountKind.bank,
+              name: firstAccountName,
+              openingBalance: Value(s?['openingBalance'] as int? ?? 0),
+              color: firstAccountColor,
+            ));
         await _db.batch((b) {
           b.insertAll(_db.categories, [
             for (final c in _list(backup, 'categories'))
@@ -162,6 +184,7 @@ class DriftBackupRepository implements BackupRepository {
                 active: Value(r['active']! as bool),
                 isEstimate: Value(r['isEstimate']! as bool),
                 windowDays: Value(r['windowDays']! as int),
+                accountId: _firstAccount,
               ),
           ]);
           b.insertAll(_db.plannedEvents, [
@@ -215,6 +238,7 @@ class DriftBackupRepository implements BackupRepository {
                 recurringItemId: Value(e['recurringItemId'] as int?),
                 plannedEventId: Value(e['plannedEventId'] as int?),
                 plannedEventOn: Value(e['plannedEventOn'] == null ? null : _day.fromSql(e['plannedEventOn']! as String)),
+                accountId: _firstAccount,
               ),
           ]);
         });

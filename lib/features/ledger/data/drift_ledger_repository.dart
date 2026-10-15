@@ -39,24 +39,27 @@ class DriftLedgerRepository implements LedgerRepository {
 
   @override
   Stream<int?> watchBalance() {
-    // ISO day strings compare correctly as text, so the date filter stays in SQL.
+    // ISO day strings compare correctly as text, so the date filter stays in
+    // SQL. Transfers only move money between accounts, so the total ignores them.
     final query = _db.customSelect(
-      'SELECT s.opening_balance + COALESCE(SUM(CASE WHEN e.kind = ? THEN e.amount ELSE -e.amount END), 0) AS balance '
+      'SELECT (SELECT COALESCE(SUM(opening_balance), 0) FROM accounts) '
+      '+ COALESCE(SUM(CASE WHEN e.kind = ? THEN e.amount ELSE -e.amount END), 0) AS balance '
       'FROM app_settings s LEFT JOIN entries e ON e.occurred_on >= s.opening_date '
       'GROUP BY s.id',
       variables: [Variable.withString(EntryKind.income.name)],
-      readsFrom: {_db.appSettings, _db.entries},
+      readsFrom: {_db.appSettings, _db.accounts, _db.entries},
     );
     return query.watch().map((rows) => rows.isEmpty ? null : rows.single.read<int>('balance'));
   }
 
   @override
-  Future<int> add(domain.EntryDraft d) => _db.into(_db.entries).insert(
+  Future<int> add(domain.EntryDraft d) async => _db.into(_db.entries).insert(
         EntriesCompanion.insert(
           occurredOn: d.day,
           kind: d.isIncome ? EntryKind.income : EntryKind.expense,
           amount: d.amount,
           categoryKey: d.categoryKey,
+          accountId: await _db.accountOrFirst(d.accountId),
           label: Value(_blankToNull(d.label)),
           note: Value(_blankToNull(d.note)),
           receipt: Value(d.receipt),
@@ -78,6 +81,7 @@ class DriftLedgerRepository implements LedgerRepository {
         receipt: Value(e.receipt),
         plannedEventId: Value(e.event?.eventId),
         plannedEventOn: Value(e.event?.on),
+        accountId: Value(await _db.accountOrFirst(e.accountId)),
       ),
     );
   }
@@ -86,13 +90,14 @@ class DriftLedgerRepository implements LedgerRepository {
   Future<void> delete(int id) => (_db.delete(_db.entries)..where((t) => t.id.equals(id))).go();
 
   @override
-  Future<void> restore(domain.Entry e) => _db.into(_db.entries).insert(
+  Future<void> restore(domain.Entry e) async => _db.into(_db.entries).insert(
         EntriesCompanion.insert(
           id: Value(e.id),
           occurredOn: e.day,
           kind: e.isIncome ? EntryKind.income : EntryKind.expense,
           amount: e.amount,
           categoryKey: e.categoryKey,
+          accountId: await _db.accountOrFirst(e.accountId),
           label: Value(e.label),
           note: Value(e.note),
           receipt: Value(e.receipt),
@@ -111,6 +116,7 @@ class DriftLedgerRepository implements LedgerRepository {
         note: r.note,
         receipt: r.receipt,
         event: r.plannedEventId == null || r.plannedEventOn == null ? null : domain.EventLink(r.plannedEventId!, r.plannedEventOn!),
+        accountId: r.accountId,
       );
 }
 

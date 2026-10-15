@@ -11,9 +11,11 @@ void main() {
   late AppDatabase db;
   late DriftPlanRepository plan;
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
     plan = DriftPlanRepository(db);
+    // Bills paid and goals bought are logged to an account.
+    await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: 'Bank', color: 0xFF4A5866));
   });
   tearDown(() => db.close());
 

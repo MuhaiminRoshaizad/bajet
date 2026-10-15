@@ -25,6 +25,10 @@ void main() {
     await target.close();
   });
 
+  // Something must exist for an entry to belong to.
+  Future<void> anAccount(AppDatabase db) =>
+      db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: 'Bank', color: 0xFF4A5866));
+
   Future<void> fill(AppDatabase db) async {
     final plan = DriftPlanRepository(db);
     final ledger = DriftLedgerRepository(db);
@@ -49,6 +53,7 @@ void main() {
   });
 
   test('restore replaces what was there', () async {
+    await anAccount(target);
     await DriftLedgerRepository(target).add(EntryDraft(day: d(2026, 6, 1), isIncome: false, amount: 999, categoryKey: 'other'));
     await fill(source);
     await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
@@ -160,6 +165,7 @@ void main() {
   });
 
   test('receipts survive a round trip by file name', () async {
+    await anAccount(source);
     await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1200, categoryKey: 'food', receipt: 'r1.jpg'));
     await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
     expect((await DriftLedgerRepository(target).watchSince(d(2000, 1, 1)).first).single.receipt, 'r1.jpg');

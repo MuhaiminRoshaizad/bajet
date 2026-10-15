@@ -12,16 +12,22 @@ void main() {
   late DriftLedgerRepository ledger;
   late DriftFavouriteRepository favourites;
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
     ledger = DriftLedgerRepository(db);
     favourites = DriftFavouriteRepository(db);
+    // Every entry belongs to an account; this first one starts empty.
+    await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: 'Bank', color: 0xFF4A5866));
   });
   tearDown(() => db.close());
 
-  Future<void> setUpOpening(int balance, DateTime day) => db
-      .into(db.appSettings)
-      .insert(AppSettingsCompanion.insert(openingBalance: balance, openingDate: day, weeklyCap: 5000, buffer: 50000));
+  Future<int> openAccount(int balance, {String name = 'Bank'}) =>
+      db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: name, openingBalance: Value(balance), color: 0xFF4A5866));
+
+  Future<void> setUpOpening(int balance, DateTime day) async {
+    await db.into(db.appSettings).insert(AppSettingsCompanion.insert(openingDate: day, weeklyCap: 5000, buffer: 50000));
+    await (db.update(db.accounts)..where((a) => a.id.equals(1))).write(AccountsCompanion(openingBalance: Value(balance)));
+  }
 
   domain.EntryDraft spend(DateTime day, int amount, {String category = 'food', String? label}) =>
       domain.EntryDraft(day: day, isIncome: false, amount: amount, categoryKey: category, label: label);
@@ -100,5 +106,24 @@ void main() {
     expect(domain.weekStart(d(2026, 7, 1)), d(2026, 6, 29));
     expect(domain.weekStart(d(2026, 6, 29)), d(2026, 6, 29));
     expect(domain.weekStart(d(2026, 7, 5)), d(2026, 6, 29));
+  });
+
+  test('the balance is every account together, and moving money between them leaves it alone', () async {
+    await setUpOpening(100000, d(2026, 7, 1));
+    final cash = await openAccount(5000, name: 'Cash');
+    await ledger.add(domain.EntryDraft(day: d(2026, 7, 2), isIncome: false, amount: 700, categoryKey: 'food', accountId: cash));
+    expect(await ledger.watchBalance().first, 104300);
+
+    await db.into(db.transfers).insert(TransfersCompanion.insert(occurredOn: d(2026, 7, 3), fromAccountId: 1, toAccountId: cash, amount: 20000));
+    expect(await ledger.watchBalance().first, 104300);
+  });
+
+  test('an entry goes to the account it names, or else to the first one', () async {
+    await setUpOpening(100000, d(2026, 7, 1));
+    final cash = await openAccount(5000, name: 'Cash');
+    await ledger.add(spend(d(2026, 7, 2), 450));
+    await ledger.add(domain.EntryDraft(day: d(2026, 7, 2), isIncome: false, amount: 700, categoryKey: 'food', accountId: cash));
+    final entries = await ledger.watchSince(d(2026, 7, 1)).first;
+    expect({for (final e in entries) e.amount: e.accountId}, {450: 1, 700: cash});
   });
 }

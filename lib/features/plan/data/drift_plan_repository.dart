@@ -11,23 +11,42 @@ class DriftPlanRepository implements PlanRepository {
 
   final AppDatabase _db;
 
+  // The starting balance is the accounts' together. Until each account can
+  // be set up on its own, saving one adjusts the first account by the
+  // difference, or opens it on a new install.
   @override
-  Stream<PlanSettings?> watchSettings() => _db.select(_db.appSettings).watchSingleOrNull().map(
-        (r) => r == null
-            ? null
-            : PlanSettings(openingBalance: r.openingBalance, openingDate: r.openingDate, weeklyCap: r.weeklyCap, buffer: r.buffer),
-      );
+  Stream<PlanSettings?> watchSettings() => _db
+      .customSelect(
+        'SELECT s.opening_date, s.weekly_cap, s.buffer, (SELECT COALESCE(SUM(opening_balance), 0) FROM accounts) AS opening FROM app_settings s',
+        readsFrom: {_db.appSettings, _db.accounts},
+      )
+      .watchSingleOrNull()
+      .map((r) => r == null
+          ? null
+          : PlanSettings(
+              openingBalance: r.read<int>('opening'),
+              openingDate: const DayConverter().fromSql(r.read<String>('opening_date')),
+              weeklyCap: r.read<int>('weekly_cap'),
+              buffer: r.read<int>('buffer'),
+            ));
 
   @override
-  Future<void> saveSettings(PlanSettings s) => _db.into(_db.appSettings).insertOnConflictUpdate(
-        AppSettingsCompanion.insert(
-          id: const Value(1),
-          openingBalance: s.openingBalance,
-          openingDate: s.openingDate,
-          weeklyCap: s.weeklyCap,
-          buffer: s.buffer,
-        ),
-      );
+  Future<void> saveSettings(PlanSettings s) => _db.transaction(() async {
+        await _db.into(_db.appSettings).insertOnConflictUpdate(
+              AppSettingsCompanion.insert(id: const Value(1), openingDate: s.openingDate, weeklyCap: s.weeklyCap, buffer: s.buffer),
+            );
+        final accounts = await (_db.select(_db.accounts)..orderBy([(a) => OrderingTerm(expression: a.sortOrder), (a) => OrderingTerm(expression: a.id)])).get();
+        if (accounts.isEmpty) {
+          await _db.into(_db.accounts).insert(
+                AccountsCompanion.insert(kind: AccountKind.bank, name: firstAccountName, openingBalance: Value(s.openingBalance), color: firstAccountColor),
+              );
+          return;
+        }
+        final now = accounts.fold(0, (sum, a) => sum + a.openingBalance);
+        final first = accounts.first;
+        await (_db.update(_db.accounts)..where((a) => a.id.equals(first.id)))
+            .write(AccountsCompanion(openingBalance: Value(first.openingBalance + s.openingBalance - now)));
+      });
 
   @override
   Stream<List<domain.WeeklyRule>> watchRules() {
@@ -67,6 +86,7 @@ class DriftPlanRepository implements PlanRepository {
             nextDue: r.nextDue,
             windowDays: r.windowDays,
             active: r.active,
+            accountId: r.accountId,
           ),
       ]);
 
@@ -78,7 +98,8 @@ class DriftPlanRepository implements PlanRepository {
     required String categoryKey,
     required DateTime nextDue,
     int windowDays = 0,
-  }) =>
+    int? accountId,
+  }) async =>
       _db.into(_db.recurringItems).insert(
             RecurringItemsCompanion.insert(
               name: name.trim(),
@@ -87,6 +108,7 @@ class DriftPlanRepository implements PlanRepository {
               categoryKey: categoryKey,
               nextDue: nextDue,
               windowDays: Value(windowDays),
+              accountId: await _db.accountOrFirst(accountId),
             ),
           );
 
@@ -122,6 +144,7 @@ class DriftPlanRepository implements PlanRepository {
               nextDue: item.nextDue,
               windowDays: Value(item.windowDays),
               active: Value(item.active),
+              accountId: await _db.accountOrFirst(item.accountId),
             ));
         await (_db.update(_db.entries)..where((e) => e.id.isIn(removal.linkedEntryIds))).write(EntriesCompanion(recurringItemId: Value(item.id)));
       });
@@ -142,6 +165,7 @@ class DriftPlanRepository implements PlanRepository {
                 categoryKey: item.categoryKey,
                 label: Value(item.name),
                 recurringItemId: Value(item.id),
+                accountId: item.accountId,
               ),
             );
         final due = item.nextDue;
@@ -290,7 +314,14 @@ class DriftPlanRepository implements PlanRepository {
   Future<void> markGoalBought(int id, {required DateTime on}) => _db.transaction(() async {
         final goal = await (_db.select(_db.goals)..where((g) => g.id.equals(id))).getSingle();
         await _db.into(_db.entries).insert(
-              EntriesCompanion.insert(occurredOn: on, kind: EntryKind.expense, amount: goal.price, categoryKey: goalCategoryKey, label: Value(goal.name)),
+              EntriesCompanion.insert(
+                occurredOn: on,
+                kind: EntryKind.expense,
+                amount: goal.price,
+                categoryKey: goalCategoryKey,
+                label: Value(goal.name),
+                accountId: await _db.accountOrFirst(null),
+              ),
             );
         await (_db.update(_db.goals)..where((g) => g.id.equals(id)))
             .write(GoalsCompanion(status: const Value(GoalStatus.achieved), achievedOn: Value(on)));

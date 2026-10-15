@@ -15,9 +15,22 @@ Future<void> fillWithDemoData(AppDatabase db, DateTime today) async {
   }
 
   await db.transaction(() async {
-    await db.into(db.appSettings).insert(
-          AppSettingsCompanion.insert(openingBalance: 182000, openingDate: opening, weeklyCap: 7000, buffer: 100000),
-        );
+    await db.into(db.appSettings).insert(AppSettingsCompanion.insert(openingDate: opening, weeklyCap: 7000, buffer: 100000));
+    final bank = await db.into(db.accounts).insert(AccountsCompanion.insert(
+          kind: AccountKind.bank,
+          name: 'Bank',
+          nickname: const Value('Savings'),
+          openingBalance: const Value(170000),
+          color: 0xFF0D55C0,
+          sortOrder: const Value(1),
+        ));
+    final cash = await db.into(db.accounts).insert(AccountsCompanion.insert(
+          kind: AccountKind.cash,
+          name: 'Cash',
+          openingBalance: const Value(12000),
+          color: 0xFF6B3F24,
+          finish: const Value(CardFinish.leather),
+        ));
     for (var w = 1; w <= 7; w++) {
       await db.into(db.weeklyRules).insertOnConflictUpdate(WeeklyRulesCompanion.insert(
             weekday: Value(w),
@@ -28,6 +41,7 @@ Future<void> fillWithDemoData(AppDatabase db, DateTime today) async {
     }
     final salary = await db.into(db.recurringItems).insert(RecurringItemsCompanion.insert(
           name: 'Salary',
+          accountId: bank,
           kind: EntryKind.income,
           amount: 320000,
           categoryKey: 'salary',
@@ -35,6 +49,7 @@ Future<void> fillWithDemoData(AppDatabase db, DateTime today) async {
         ));
     final rent = await db.into(db.recurringItems).insert(RecurringItemsCompanion.insert(
           name: 'Rent',
+          accountId: bank,
           kind: EntryKind.expense,
           amount: 90000,
           categoryKey: 'bills',
@@ -42,6 +57,7 @@ Future<void> fillWithDemoData(AppDatabase db, DateTime today) async {
         ));
     await db.into(db.recurringItems).insert(RecurringItemsCompanion.insert(
           name: 'Phone',
+          accountId: bank,
           kind: EntryKind.expense,
           amount: 4800,
           categoryKey: 'bills',
@@ -59,12 +75,14 @@ Future<void> fillWithDemoData(AppDatabase db, DateTime today) async {
       await db.into(db.favourites).insert(FavouritesCompanion.insert(label: f.$1, categoryKey: f.$2, amount: f.$3, sortOrder: Value(i)));
     }
 
+    // Lunches are paid in cash; everything else goes through the bank.
     Future<void> log(DateTime on, int amount, String category, String label, {bool income = false, int? recurring}) =>
         db.into(db.entries).insert(EntriesCompanion.insert(
               occurredOn: on,
               kind: income ? EntryKind.income : EntryKind.expense,
               amount: amount,
               categoryKey: category,
+              accountId: label == 'Lunch' ? cash : bank,
               label: Value(label),
               recurringItemId: Value(recurring),
             ));

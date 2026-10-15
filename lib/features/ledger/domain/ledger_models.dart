@@ -52,6 +52,7 @@ class Entry {
     this.note,
     this.receipt,
     this.event,
+    this.accountId,
   });
 
   final int id;
@@ -67,6 +68,9 @@ class Entry {
 
   /// The planned event it was spent on, if any.
   final EventLink? event;
+
+  /// Where the money came from or went to; null means the first account.
+  final int? accountId;
 
   int get signedAmount => isIncome ? amount : -amount;
 
@@ -87,6 +91,7 @@ class EntryDraft {
     this.note,
     this.receipt,
     this.event,
+    this.accountId,
   });
 
   final DateTime day;
@@ -97,6 +102,9 @@ class EntryDraft {
   final String? note;
   final String? receipt;
   final EventLink? event;
+
+  /// Null means the first account.
+  final int? accountId;
 }
 
 class Favourite {
