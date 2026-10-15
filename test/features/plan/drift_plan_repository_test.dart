@@ -152,4 +152,16 @@ void main() {
       expect((await plan.watchEvents().first).single.spent, 4500);
     });
   });
+
+  test('a bill is paid from its own account, and moving it keeps what was paid where it was', () async {
+    final cash = await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.cash, name: 'Cash', color: 0xFF6B3F24));
+    final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1), accountId: cash);
+    await plan.confirmRecurring(id, paidOn: d(2026, 7, 1));
+    expect((await db.select(db.entries).getSingle()).accountId, cash);
+
+    final rent = (await plan.watchRecurring().first).single;
+    await plan.updateRecurring(rent.copyWith(accountId: 1));
+    expect((await plan.watchRecurring().first).single.accountId, 1);
+    expect((await db.select(db.entries).getSingle()).accountId, cash);
+  });
 }

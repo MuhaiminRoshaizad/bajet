@@ -127,7 +127,7 @@ Monthly bills and income.
 | `active`       | bool |                                                |
 | `is_estimate`  | bool | The amount varies month to month               |
 | `window_days`  | int  | 0–27 days after `next_due` it may still land; 0 for a fixed day (decision 015) |
-| `account_id`   | int  | The account it is paid from or into; confirmed entries go there |
+| `account_id`   | int  | The account it is paid from or into, chosen in its form once there are two accounts; confirmed entries go there |
 
 ### `planned_events`
 Future income or expenses, once or every year.

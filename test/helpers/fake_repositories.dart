@@ -275,7 +275,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
     int? accountId,
   }) async {
     final id = _nextId++;
-    _recurring.value = [..._recurring.value, RecurringItem(id: id, name: name, amount: amount, categoryKey: categoryKey, isIncome: isIncome, nextDue: nextDue, windowDays: windowDays)];
+    _recurring.value = [..._recurring.value, RecurringItem(id: id, name: name, amount: amount, categoryKey: categoryKey, isIncome: isIncome, nextDue: nextDue, windowDays: windowDays, accountId: accountId)];
     return id;
   }
 
@@ -301,7 +301,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   @override
   Future<void> confirmRecurring(int id, {required DateTime paidOn}) async {
     final item = _recurring.value.firstWhere((r) => r.id == id);
-    await add(EntryDraft(day: paidOn, isIncome: item.isIncome, amount: item.amount, categoryKey: 'bills', label: item.name));
+    await add(EntryDraft(day: paidOn, isIncome: item.isIncome, amount: item.amount, categoryKey: 'bills', label: item.name, accountId: item.accountId));
     final due = item.nextDue;
     _recurring.value = [
       for (final r in _recurring.value)

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../accounts/presentation/account_choice.dart';
+import '../../accounts/presentation/account_providers.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
@@ -140,6 +142,9 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
   late DateTime? _lastDay = (widget.item?.windowDays ?? 0) > 0 ? widget.item!.windowEnd : null;
   late bool _varies = _lastDay != null;
   late bool _active = widget.item?.active ?? true;
+
+  /// Where it is paid from or into; null means the first account.
+  late int? _accountId = widget.item?.accountId;
   bool _tried = false;
 
   @override
@@ -199,9 +204,9 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     final window = _varies ? _lastDay!.difference(_nextDue!).inDays : 0;
     final item = widget.item;
     if (item == null) {
-      await repo.addRecurring(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, nextDue: _nextDue!, windowDays: window);
+      await repo.addRecurring(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, nextDue: _nextDue!, windowDays: window, accountId: _accountId);
     } else {
-      await repo.updateRecurring(item.copyWith(name: _name.text, amount: amount, categoryKey: _category, nextDue: _nextDue, windowDays: window));
+      await repo.updateRecurring(item.copyWith(name: _name.text, amount: amount, categoryKey: _category, nextDue: _nextDue, windowDays: window, accountId: _accountId));
       if (_active != item.active) await repo.setRecurringActive(item.id, active: _active);
     }
     if (mounted) Navigator.of(context).pop();
@@ -229,6 +234,7 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final categories = [...?ref.watch(categoriesProvider).value?.where((x) => x.isIncome == _isIncome && !x.isAutomatic)];
+    final accounts = ref.watch(accountsProvider).value ?? const [];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
@@ -294,6 +300,16 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
               ),
               if (_tried && _category == null)
                 Padding(padding: const EdgeInsets.only(top: AppSpacing.xs), child: Text('Pick a category', style: TextStyle(color: c.bad, fontSize: 12))),
+              // Confirming it logs the payment to this account.
+              if (accounts.length > 1) ...[
+                const SizedBox(height: AppSpacing.l),
+                AccountChoice(
+                  label: _isIncome ? 'Paid into' : 'Paid from',
+                  accounts: accounts,
+                  selected: accounts.any((a) => a.id == _accountId) ? _accountId : accounts.first.id,
+                  onSelect: (id) => setState(() => _accountId = id),
+                ),
+              ],
               const SizedBox(height: AppSpacing.s),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,

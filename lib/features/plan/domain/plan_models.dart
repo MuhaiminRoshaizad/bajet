@@ -70,7 +70,7 @@ class RecurringItem {
   /// the plan never leans on money coming early or a bill coming late.
   int get countedAfter => isIncome ? windowDays : 0;
 
-  RecurringItem copyWith({String? name, int? amount, String? categoryKey, DateTime? nextDue, int? windowDays, bool? active}) => RecurringItem(
+  RecurringItem copyWith({String? name, int? amount, String? categoryKey, DateTime? nextDue, int? windowDays, bool? active, int? accountId}) => RecurringItem(
         id: id,
         name: name ?? this.name,
         amount: amount ?? this.amount,
@@ -79,7 +79,7 @@ class RecurringItem {
         nextDue: nextDue ?? this.nextDue,
         windowDays: windowDays ?? this.windowDays,
         active: active ?? this.active,
-        accountId: accountId,
+        accountId: accountId ?? this.accountId,
       );
 }
 

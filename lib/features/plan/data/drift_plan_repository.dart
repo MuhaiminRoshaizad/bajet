@@ -121,6 +121,7 @@ class DriftPlanRepository implements PlanRepository {
           categoryKey: Value(item.categoryKey),
           nextDue: Value(item.nextDue),
           windowDays: Value(item.windowDays),
+          accountId: item.accountId == null ? const Value.absent() : Value(item.accountId!),
         ));
   }
 

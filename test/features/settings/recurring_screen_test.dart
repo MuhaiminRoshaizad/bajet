@@ -1,3 +1,4 @@
+import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -170,5 +171,22 @@ void main() {
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     expect(world.recurring.single.name, 'Gym');
+  });
+
+  testWidgets('with two accounts a bill says which one it is paid from', (tester) async {
+    late int cash;
+    final world = await pumpApp(tester, seed: (w) async {
+      w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 8, 1));
+      cash = await w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather)));
+    });
+    await openRecurring(tester);
+    await tester.tap(find.text('Rent'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(ValueKey('Paid from-$cash')));
+    await tester.tap(find.byKey(ValueKey('Paid from-$cash')));
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(world.recurring.single.accountId, cash);
   });
 }
