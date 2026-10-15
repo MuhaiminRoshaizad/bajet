@@ -74,6 +74,12 @@ class Entries extends Table {
 
   /// Set when the entry confirms a recurring item.
   IntColumn get recurringItemId => integer().nullable().references(RecurringItems, #id)();
+
+  /// Set when the entry was spent on a planned event, such as a birthday,
+  /// with the date of the occurrence it was for, so a yearly event's
+  /// spending stays with its own year.
+  IntColumn get plannedEventId => integer().nullable().references(PlannedEvents, #id)();
+  TextColumn get plannedEventOn => text().map(const DayConverter()).nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 

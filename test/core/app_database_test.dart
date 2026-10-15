@@ -56,7 +56,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 4);
+    expect(db.schemaVersion, 5);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -94,5 +94,17 @@ void main() {
     addTearDown(old.close);
     final e = await old.select(old.plannedEvents).getSingle();
     expect((e.name, e.repeatsYearly), ('Birthday', false));
+  });
+
+  test('a version 4 database gains the event link on entries and keeps them', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v4.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key) VALUES ('2026-07-01', 'expense', 450, 'food')");
+      raw.execute('PRAGMA user_version = 4');
+    }));
+    addTearDown(old.close);
+    final entry = await old.select(old.entries).getSingle();
+    expect((entry.amount, entry.plannedEventId, entry.plannedEventOn), (450, null, null));
   });
 }

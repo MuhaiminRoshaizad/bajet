@@ -1455,995 +1455,6 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
   }
 }
 
-class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $EntriesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<DateTime, String> occurredOn =
-      GeneratedColumn<String>(
-        'occurred_on',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<DateTime>($EntriesTable.$converteroccurredOn);
-  @override
-  late final GeneratedColumnWithTypeConverter<EntryKind, String> kind =
-      GeneratedColumn<String>(
-        'kind',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<EntryKind>($EntriesTable.$converterkind);
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
-    'amount',
-    aliasedName,
-    false,
-    check: () => ComparableExpr(amount).isBiggerThanValue(0),
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _categoryKeyMeta = const VerificationMeta(
-    'categoryKey',
-  );
-  @override
-  late final GeneratedColumn<String> categoryKey = GeneratedColumn<String>(
-    'category_key',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES categories ("key")',
-    ),
-  );
-  static const VerificationMeta _labelMeta = const VerificationMeta('label');
-  @override
-  late final GeneratedColumn<String> label = GeneratedColumn<String>(
-    'label',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-    'note',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _receiptMeta = const VerificationMeta(
-    'receipt',
-  );
-  @override
-  late final GeneratedColumn<String> receipt = GeneratedColumn<String>(
-    'receipt',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _recurringItemIdMeta = const VerificationMeta(
-    'recurringItemId',
-  );
-  @override
-  late final GeneratedColumn<int> recurringItemId = GeneratedColumn<int>(
-    'recurring_item_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES recurring_items (id)',
-    ),
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    occurredOn,
-    kind,
-    amount,
-    categoryKey,
-    label,
-    note,
-    receipt,
-    recurringItemId,
-    createdAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'entries';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<Entry> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('amount')) {
-      context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
-    }
-    if (data.containsKey('category_key')) {
-      context.handle(
-        _categoryKeyMeta,
-        categoryKey.isAcceptableOrUnknown(
-          data['category_key']!,
-          _categoryKeyMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_categoryKeyMeta);
-    }
-    if (data.containsKey('label')) {
-      context.handle(
-        _labelMeta,
-        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
-      );
-    }
-    if (data.containsKey('note')) {
-      context.handle(
-        _noteMeta,
-        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
-      );
-    }
-    if (data.containsKey('receipt')) {
-      context.handle(
-        _receiptMeta,
-        receipt.isAcceptableOrUnknown(data['receipt']!, _receiptMeta),
-      );
-    }
-    if (data.containsKey('recurring_item_id')) {
-      context.handle(
-        _recurringItemIdMeta,
-        recurringItemId.isAcceptableOrUnknown(
-          data['recurring_item_id']!,
-          _recurringItemIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Entry map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Entry(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      occurredOn: $EntriesTable.$converteroccurredOn.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}occurred_on'],
-        )!,
-      ),
-      kind: $EntriesTable.$converterkind.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}kind'],
-        )!,
-      ),
-      amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}amount'],
-      )!,
-      categoryKey: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}category_key'],
-      )!,
-      label: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}label'],
-      ),
-      note: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}note'],
-      ),
-      receipt: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}receipt'],
-      ),
-      recurringItemId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}recurring_item_id'],
-      ),
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-    );
-  }
-
-  @override
-  $EntriesTable createAlias(String alias) {
-    return $EntriesTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<DateTime, String> $converteroccurredOn =
-      const DayConverter();
-  static JsonTypeConverter2<EntryKind, String, String> $converterkind =
-      const EnumNameConverter<EntryKind>(EntryKind.values);
-}
-
-class Entry extends DataClass implements Insertable<Entry> {
-  final int id;
-  final DateTime occurredOn;
-  final EntryKind kind;
-  final int amount;
-  final String categoryKey;
-
-  /// A short name such as "Coffee", used for per-item stats like average cost.
-  final String? label;
-  final String? note;
-
-  /// File name of an attached receipt image in the app's receipts folder.
-  final String? receipt;
-
-  /// Set when the entry confirms a recurring item.
-  final int? recurringItemId;
-  final DateTime createdAt;
-  const Entry({
-    required this.id,
-    required this.occurredOn,
-    required this.kind,
-    required this.amount,
-    required this.categoryKey,
-    this.label,
-    this.note,
-    this.receipt,
-    this.recurringItemId,
-    required this.createdAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    {
-      map['occurred_on'] = Variable<String>(
-        $EntriesTable.$converteroccurredOn.toSql(occurredOn),
-      );
-    }
-    {
-      map['kind'] = Variable<String>($EntriesTable.$converterkind.toSql(kind));
-    }
-    map['amount'] = Variable<int>(amount);
-    map['category_key'] = Variable<String>(categoryKey);
-    if (!nullToAbsent || label != null) {
-      map['label'] = Variable<String>(label);
-    }
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
-    }
-    if (!nullToAbsent || receipt != null) {
-      map['receipt'] = Variable<String>(receipt);
-    }
-    if (!nullToAbsent || recurringItemId != null) {
-      map['recurring_item_id'] = Variable<int>(recurringItemId);
-    }
-    map['created_at'] = Variable<DateTime>(createdAt);
-    return map;
-  }
-
-  EntriesCompanion toCompanion(bool nullToAbsent) {
-    return EntriesCompanion(
-      id: Value(id),
-      occurredOn: Value(occurredOn),
-      kind: Value(kind),
-      amount: Value(amount),
-      categoryKey: Value(categoryKey),
-      label: label == null && nullToAbsent
-          ? const Value.absent()
-          : Value(label),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
-      receipt: receipt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(receipt),
-      recurringItemId: recurringItemId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(recurringItemId),
-      createdAt: Value(createdAt),
-    );
-  }
-
-  factory Entry.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Entry(
-      id: serializer.fromJson<int>(json['id']),
-      occurredOn: serializer.fromJson<DateTime>(json['occurredOn']),
-      kind: $EntriesTable.$converterkind.fromJson(
-        serializer.fromJson<String>(json['kind']),
-      ),
-      amount: serializer.fromJson<int>(json['amount']),
-      categoryKey: serializer.fromJson<String>(json['categoryKey']),
-      label: serializer.fromJson<String?>(json['label']),
-      note: serializer.fromJson<String?>(json['note']),
-      receipt: serializer.fromJson<String?>(json['receipt']),
-      recurringItemId: serializer.fromJson<int?>(json['recurringItemId']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'occurredOn': serializer.toJson<DateTime>(occurredOn),
-      'kind': serializer.toJson<String>(
-        $EntriesTable.$converterkind.toJson(kind),
-      ),
-      'amount': serializer.toJson<int>(amount),
-      'categoryKey': serializer.toJson<String>(categoryKey),
-      'label': serializer.toJson<String?>(label),
-      'note': serializer.toJson<String?>(note),
-      'receipt': serializer.toJson<String?>(receipt),
-      'recurringItemId': serializer.toJson<int?>(recurringItemId),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-    };
-  }
-
-  Entry copyWith({
-    int? id,
-    DateTime? occurredOn,
-    EntryKind? kind,
-    int? amount,
-    String? categoryKey,
-    Value<String?> label = const Value.absent(),
-    Value<String?> note = const Value.absent(),
-    Value<String?> receipt = const Value.absent(),
-    Value<int?> recurringItemId = const Value.absent(),
-    DateTime? createdAt,
-  }) => Entry(
-    id: id ?? this.id,
-    occurredOn: occurredOn ?? this.occurredOn,
-    kind: kind ?? this.kind,
-    amount: amount ?? this.amount,
-    categoryKey: categoryKey ?? this.categoryKey,
-    label: label.present ? label.value : this.label,
-    note: note.present ? note.value : this.note,
-    receipt: receipt.present ? receipt.value : this.receipt,
-    recurringItemId: recurringItemId.present
-        ? recurringItemId.value
-        : this.recurringItemId,
-    createdAt: createdAt ?? this.createdAt,
-  );
-  Entry copyWithCompanion(EntriesCompanion data) {
-    return Entry(
-      id: data.id.present ? data.id.value : this.id,
-      occurredOn: data.occurredOn.present
-          ? data.occurredOn.value
-          : this.occurredOn,
-      kind: data.kind.present ? data.kind.value : this.kind,
-      amount: data.amount.present ? data.amount.value : this.amount,
-      categoryKey: data.categoryKey.present
-          ? data.categoryKey.value
-          : this.categoryKey,
-      label: data.label.present ? data.label.value : this.label,
-      note: data.note.present ? data.note.value : this.note,
-      receipt: data.receipt.present ? data.receipt.value : this.receipt,
-      recurringItemId: data.recurringItemId.present
-          ? data.recurringItemId.value
-          : this.recurringItemId,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Entry(')
-          ..write('id: $id, ')
-          ..write('occurredOn: $occurredOn, ')
-          ..write('kind: $kind, ')
-          ..write('amount: $amount, ')
-          ..write('categoryKey: $categoryKey, ')
-          ..write('label: $label, ')
-          ..write('note: $note, ')
-          ..write('receipt: $receipt, ')
-          ..write('recurringItemId: $recurringItemId, ')
-          ..write('createdAt: $createdAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    occurredOn,
-    kind,
-    amount,
-    categoryKey,
-    label,
-    note,
-    receipt,
-    recurringItemId,
-    createdAt,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Entry &&
-          other.id == this.id &&
-          other.occurredOn == this.occurredOn &&
-          other.kind == this.kind &&
-          other.amount == this.amount &&
-          other.categoryKey == this.categoryKey &&
-          other.label == this.label &&
-          other.note == this.note &&
-          other.receipt == this.receipt &&
-          other.recurringItemId == this.recurringItemId &&
-          other.createdAt == this.createdAt);
-}
-
-class EntriesCompanion extends UpdateCompanion<Entry> {
-  final Value<int> id;
-  final Value<DateTime> occurredOn;
-  final Value<EntryKind> kind;
-  final Value<int> amount;
-  final Value<String> categoryKey;
-  final Value<String?> label;
-  final Value<String?> note;
-  final Value<String?> receipt;
-  final Value<int?> recurringItemId;
-  final Value<DateTime> createdAt;
-  const EntriesCompanion({
-    this.id = const Value.absent(),
-    this.occurredOn = const Value.absent(),
-    this.kind = const Value.absent(),
-    this.amount = const Value.absent(),
-    this.categoryKey = const Value.absent(),
-    this.label = const Value.absent(),
-    this.note = const Value.absent(),
-    this.receipt = const Value.absent(),
-    this.recurringItemId = const Value.absent(),
-    this.createdAt = const Value.absent(),
-  });
-  EntriesCompanion.insert({
-    this.id = const Value.absent(),
-    required DateTime occurredOn,
-    required EntryKind kind,
-    required int amount,
-    required String categoryKey,
-    this.label = const Value.absent(),
-    this.note = const Value.absent(),
-    this.receipt = const Value.absent(),
-    this.recurringItemId = const Value.absent(),
-    this.createdAt = const Value.absent(),
-  }) : occurredOn = Value(occurredOn),
-       kind = Value(kind),
-       amount = Value(amount),
-       categoryKey = Value(categoryKey);
-  static Insertable<Entry> custom({
-    Expression<int>? id,
-    Expression<String>? occurredOn,
-    Expression<String>? kind,
-    Expression<int>? amount,
-    Expression<String>? categoryKey,
-    Expression<String>? label,
-    Expression<String>? note,
-    Expression<String>? receipt,
-    Expression<int>? recurringItemId,
-    Expression<DateTime>? createdAt,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (occurredOn != null) 'occurred_on': occurredOn,
-      if (kind != null) 'kind': kind,
-      if (amount != null) 'amount': amount,
-      if (categoryKey != null) 'category_key': categoryKey,
-      if (label != null) 'label': label,
-      if (note != null) 'note': note,
-      if (receipt != null) 'receipt': receipt,
-      if (recurringItemId != null) 'recurring_item_id': recurringItemId,
-      if (createdAt != null) 'created_at': createdAt,
-    });
-  }
-
-  EntriesCompanion copyWith({
-    Value<int>? id,
-    Value<DateTime>? occurredOn,
-    Value<EntryKind>? kind,
-    Value<int>? amount,
-    Value<String>? categoryKey,
-    Value<String?>? label,
-    Value<String?>? note,
-    Value<String?>? receipt,
-    Value<int?>? recurringItemId,
-    Value<DateTime>? createdAt,
-  }) {
-    return EntriesCompanion(
-      id: id ?? this.id,
-      occurredOn: occurredOn ?? this.occurredOn,
-      kind: kind ?? this.kind,
-      amount: amount ?? this.amount,
-      categoryKey: categoryKey ?? this.categoryKey,
-      label: label ?? this.label,
-      note: note ?? this.note,
-      receipt: receipt ?? this.receipt,
-      recurringItemId: recurringItemId ?? this.recurringItemId,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (occurredOn.present) {
-      map['occurred_on'] = Variable<String>(
-        $EntriesTable.$converteroccurredOn.toSql(occurredOn.value),
-      );
-    }
-    if (kind.present) {
-      map['kind'] = Variable<String>(
-        $EntriesTable.$converterkind.toSql(kind.value),
-      );
-    }
-    if (amount.present) {
-      map['amount'] = Variable<int>(amount.value);
-    }
-    if (categoryKey.present) {
-      map['category_key'] = Variable<String>(categoryKey.value);
-    }
-    if (label.present) {
-      map['label'] = Variable<String>(label.value);
-    }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
-    if (receipt.present) {
-      map['receipt'] = Variable<String>(receipt.value);
-    }
-    if (recurringItemId.present) {
-      map['recurring_item_id'] = Variable<int>(recurringItemId.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('EntriesCompanion(')
-          ..write('id: $id, ')
-          ..write('occurredOn: $occurredOn, ')
-          ..write('kind: $kind, ')
-          ..write('amount: $amount, ')
-          ..write('categoryKey: $categoryKey, ')
-          ..write('label: $label, ')
-          ..write('note: $note, ')
-          ..write('receipt: $receipt, ')
-          ..write('recurringItemId: $recurringItemId, ')
-          ..write('createdAt: $createdAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $WeeklyRulesTable extends WeeklyRules
-    with TableInfo<$WeeklyRulesTable, WeeklyRule> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $WeeklyRulesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _weekdayMeta = const VerificationMeta(
-    'weekday',
-  );
-  @override
-  late final GeneratedColumn<int> weekday = GeneratedColumn<int>(
-    'weekday',
-    aliasedName,
-    false,
-    check: () => ComparableExpr(weekday).isBetweenValues(1, 7),
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _labelMeta = const VerificationMeta('label');
-  @override
-  late final GeneratedColumn<String> label = GeneratedColumn<String>(
-    'label',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<RhythmDayType, String> dayType =
-      GeneratedColumn<String>(
-        'day_type',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<RhythmDayType>($WeeklyRulesTable.$converterdayType);
-  static const VerificationMeta _plannedSpendMeta = const VerificationMeta(
-    'plannedSpend',
-  );
-  @override
-  late final GeneratedColumn<int> plannedSpend = GeneratedColumn<int>(
-    'planned_spend',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  static const VerificationMeta _isFastingDayMeta = const VerificationMeta(
-    'isFastingDay',
-  );
-  @override
-  late final GeneratedColumn<bool> isFastingDay = GeneratedColumn<bool>(
-    'is_fasting_day',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_fasting_day" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    weekday,
-    label,
-    dayType,
-    plannedSpend,
-    isFastingDay,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'weekly_rules';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<WeeklyRule> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('weekday')) {
-      context.handle(
-        _weekdayMeta,
-        weekday.isAcceptableOrUnknown(data['weekday']!, _weekdayMeta),
-      );
-    }
-    if (data.containsKey('label')) {
-      context.handle(
-        _labelMeta,
-        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_labelMeta);
-    }
-    if (data.containsKey('planned_spend')) {
-      context.handle(
-        _plannedSpendMeta,
-        plannedSpend.isAcceptableOrUnknown(
-          data['planned_spend']!,
-          _plannedSpendMeta,
-        ),
-      );
-    }
-    if (data.containsKey('is_fasting_day')) {
-      context.handle(
-        _isFastingDayMeta,
-        isFastingDay.isAcceptableOrUnknown(
-          data['is_fasting_day']!,
-          _isFastingDayMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {weekday};
-  @override
-  WeeklyRule map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return WeeklyRule(
-      weekday: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}weekday'],
-      )!,
-      label: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}label'],
-      )!,
-      dayType: $WeeklyRulesTable.$converterdayType.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}day_type'],
-        )!,
-      ),
-      plannedSpend: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}planned_spend'],
-      )!,
-      isFastingDay: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_fasting_day'],
-      )!,
-    );
-  }
-
-  @override
-  $WeeklyRulesTable createAlias(String alias) {
-    return $WeeklyRulesTable(attachedDatabase, alias);
-  }
-
-  static JsonTypeConverter2<RhythmDayType, String, String> $converterdayType =
-      const EnumNameConverter<RhythmDayType>(RhythmDayType.values);
-}
-
-class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
-  /// 1 is Monday, matching DateTime.weekday.
-  final int weekday;
-  final String label;
-  final RhythmDayType dayType;
-  final int plannedSpend;
-  final bool isFastingDay;
-  const WeeklyRule({
-    required this.weekday,
-    required this.label,
-    required this.dayType,
-    required this.plannedSpend,
-    required this.isFastingDay,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['weekday'] = Variable<int>(weekday);
-    map['label'] = Variable<String>(label);
-    {
-      map['day_type'] = Variable<String>(
-        $WeeklyRulesTable.$converterdayType.toSql(dayType),
-      );
-    }
-    map['planned_spend'] = Variable<int>(plannedSpend);
-    map['is_fasting_day'] = Variable<bool>(isFastingDay);
-    return map;
-  }
-
-  WeeklyRulesCompanion toCompanion(bool nullToAbsent) {
-    return WeeklyRulesCompanion(
-      weekday: Value(weekday),
-      label: Value(label),
-      dayType: Value(dayType),
-      plannedSpend: Value(plannedSpend),
-      isFastingDay: Value(isFastingDay),
-    );
-  }
-
-  factory WeeklyRule.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return WeeklyRule(
-      weekday: serializer.fromJson<int>(json['weekday']),
-      label: serializer.fromJson<String>(json['label']),
-      dayType: $WeeklyRulesTable.$converterdayType.fromJson(
-        serializer.fromJson<String>(json['dayType']),
-      ),
-      plannedSpend: serializer.fromJson<int>(json['plannedSpend']),
-      isFastingDay: serializer.fromJson<bool>(json['isFastingDay']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'weekday': serializer.toJson<int>(weekday),
-      'label': serializer.toJson<String>(label),
-      'dayType': serializer.toJson<String>(
-        $WeeklyRulesTable.$converterdayType.toJson(dayType),
-      ),
-      'plannedSpend': serializer.toJson<int>(plannedSpend),
-      'isFastingDay': serializer.toJson<bool>(isFastingDay),
-    };
-  }
-
-  WeeklyRule copyWith({
-    int? weekday,
-    String? label,
-    RhythmDayType? dayType,
-    int? plannedSpend,
-    bool? isFastingDay,
-  }) => WeeklyRule(
-    weekday: weekday ?? this.weekday,
-    label: label ?? this.label,
-    dayType: dayType ?? this.dayType,
-    plannedSpend: plannedSpend ?? this.plannedSpend,
-    isFastingDay: isFastingDay ?? this.isFastingDay,
-  );
-  WeeklyRule copyWithCompanion(WeeklyRulesCompanion data) {
-    return WeeklyRule(
-      weekday: data.weekday.present ? data.weekday.value : this.weekday,
-      label: data.label.present ? data.label.value : this.label,
-      dayType: data.dayType.present ? data.dayType.value : this.dayType,
-      plannedSpend: data.plannedSpend.present
-          ? data.plannedSpend.value
-          : this.plannedSpend,
-      isFastingDay: data.isFastingDay.present
-          ? data.isFastingDay.value
-          : this.isFastingDay,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('WeeklyRule(')
-          ..write('weekday: $weekday, ')
-          ..write('label: $label, ')
-          ..write('dayType: $dayType, ')
-          ..write('plannedSpend: $plannedSpend, ')
-          ..write('isFastingDay: $isFastingDay')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(weekday, label, dayType, plannedSpend, isFastingDay);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is WeeklyRule &&
-          other.weekday == this.weekday &&
-          other.label == this.label &&
-          other.dayType == this.dayType &&
-          other.plannedSpend == this.plannedSpend &&
-          other.isFastingDay == this.isFastingDay);
-}
-
-class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
-  final Value<int> weekday;
-  final Value<String> label;
-  final Value<RhythmDayType> dayType;
-  final Value<int> plannedSpend;
-  final Value<bool> isFastingDay;
-  const WeeklyRulesCompanion({
-    this.weekday = const Value.absent(),
-    this.label = const Value.absent(),
-    this.dayType = const Value.absent(),
-    this.plannedSpend = const Value.absent(),
-    this.isFastingDay = const Value.absent(),
-  });
-  WeeklyRulesCompanion.insert({
-    this.weekday = const Value.absent(),
-    required String label,
-    required RhythmDayType dayType,
-    this.plannedSpend = const Value.absent(),
-    this.isFastingDay = const Value.absent(),
-  }) : label = Value(label),
-       dayType = Value(dayType);
-  static Insertable<WeeklyRule> custom({
-    Expression<int>? weekday,
-    Expression<String>? label,
-    Expression<String>? dayType,
-    Expression<int>? plannedSpend,
-    Expression<bool>? isFastingDay,
-  }) {
-    return RawValuesInsertable({
-      if (weekday != null) 'weekday': weekday,
-      if (label != null) 'label': label,
-      if (dayType != null) 'day_type': dayType,
-      if (plannedSpend != null) 'planned_spend': plannedSpend,
-      if (isFastingDay != null) 'is_fasting_day': isFastingDay,
-    });
-  }
-
-  WeeklyRulesCompanion copyWith({
-    Value<int>? weekday,
-    Value<String>? label,
-    Value<RhythmDayType>? dayType,
-    Value<int>? plannedSpend,
-    Value<bool>? isFastingDay,
-  }) {
-    return WeeklyRulesCompanion(
-      weekday: weekday ?? this.weekday,
-      label: label ?? this.label,
-      dayType: dayType ?? this.dayType,
-      plannedSpend: plannedSpend ?? this.plannedSpend,
-      isFastingDay: isFastingDay ?? this.isFastingDay,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (weekday.present) {
-      map['weekday'] = Variable<int>(weekday.value);
-    }
-    if (label.present) {
-      map['label'] = Variable<String>(label.value);
-    }
-    if (dayType.present) {
-      map['day_type'] = Variable<String>(
-        $WeeklyRulesTable.$converterdayType.toSql(dayType.value),
-      );
-    }
-    if (plannedSpend.present) {
-      map['planned_spend'] = Variable<int>(plannedSpend.value);
-    }
-    if (isFastingDay.present) {
-      map['is_fasting_day'] = Variable<bool>(isFastingDay.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('WeeklyRulesCompanion(')
-          ..write('weekday: $weekday, ')
-          ..write('label: $label, ')
-          ..write('dayType: $dayType, ')
-          ..write('plannedSpend: $plannedSpend, ')
-          ..write('isFastingDay: $isFastingDay')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $PlannedEventsTable extends PlannedEvents
     with TableInfo<$PlannedEventsTable, PlannedEvent> {
   @override
@@ -3014,6 +2025,1113 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
           ..write('done: $done, ')
           ..write('countInProjection: $countInProjection, ')
           ..write('repeatsYearly: $repeatsYearly')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime, String> occurredOn =
+      GeneratedColumn<String>(
+        'occurred_on',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<DateTime>($EntriesTable.$converteroccurredOn);
+  @override
+  late final GeneratedColumnWithTypeConverter<EntryKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<EntryKind>($EntriesTable.$converterkind);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(amount).isBiggerThanValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryKeyMeta = const VerificationMeta(
+    'categoryKey',
+  );
+  @override
+  late final GeneratedColumn<String> categoryKey = GeneratedColumn<String>(
+    'category_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES categories ("key")',
+    ),
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _receiptMeta = const VerificationMeta(
+    'receipt',
+  );
+  @override
+  late final GeneratedColumn<String> receipt = GeneratedColumn<String>(
+    'receipt',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _recurringItemIdMeta = const VerificationMeta(
+    'recurringItemId',
+  );
+  @override
+  late final GeneratedColumn<int> recurringItemId = GeneratedColumn<int>(
+    'recurring_item_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES recurring_items (id)',
+    ),
+  );
+  static const VerificationMeta _plannedEventIdMeta = const VerificationMeta(
+    'plannedEventId',
+  );
+  @override
+  late final GeneratedColumn<int> plannedEventId = GeneratedColumn<int>(
+    'planned_event_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES planned_events (id)',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, String>
+  plannedEventOn = GeneratedColumn<String>(
+    'planned_event_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<DateTime?>($EntriesTable.$converterplannedEventOnn);
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    occurredOn,
+    kind,
+    amount,
+    categoryKey,
+    label,
+    note,
+    receipt,
+    recurringItemId,
+    plannedEventId,
+    plannedEventOn,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Entry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('category_key')) {
+      context.handle(
+        _categoryKeyMeta,
+        categoryKey.isAcceptableOrUnknown(
+          data['category_key']!,
+          _categoryKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_categoryKeyMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('receipt')) {
+      context.handle(
+        _receiptMeta,
+        receipt.isAcceptableOrUnknown(data['receipt']!, _receiptMeta),
+      );
+    }
+    if (data.containsKey('recurring_item_id')) {
+      context.handle(
+        _recurringItemIdMeta,
+        recurringItemId.isAcceptableOrUnknown(
+          data['recurring_item_id']!,
+          _recurringItemIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('planned_event_id')) {
+      context.handle(
+        _plannedEventIdMeta,
+        plannedEventId.isAcceptableOrUnknown(
+          data['planned_event_id']!,
+          _plannedEventIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Entry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Entry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      occurredOn: $EntriesTable.$converteroccurredOn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}occurred_on'],
+        )!,
+      ),
+      kind: $EntriesTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      categoryKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_key'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      receipt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt'],
+      ),
+      recurringItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recurring_item_id'],
+      ),
+      plannedEventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}planned_event_id'],
+      ),
+      plannedEventOn: $EntriesTable.$converterplannedEventOnn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}planned_event_on'],
+        ),
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $EntriesTable createAlias(String alias) {
+    return $EntriesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, String> $converteroccurredOn =
+      const DayConverter();
+  static JsonTypeConverter2<EntryKind, String, String> $converterkind =
+      const EnumNameConverter<EntryKind>(EntryKind.values);
+  static TypeConverter<DateTime, String> $converterplannedEventOn =
+      const DayConverter();
+  static TypeConverter<DateTime?, String?> $converterplannedEventOnn =
+      NullAwareTypeConverter.wrap($converterplannedEventOn);
+}
+
+class Entry extends DataClass implements Insertable<Entry> {
+  final int id;
+  final DateTime occurredOn;
+  final EntryKind kind;
+  final int amount;
+  final String categoryKey;
+
+  /// A short name such as "Coffee", used for per-item stats like average cost.
+  final String? label;
+  final String? note;
+
+  /// File name of an attached receipt image in the app's receipts folder.
+  final String? receipt;
+
+  /// Set when the entry confirms a recurring item.
+  final int? recurringItemId;
+
+  /// Set when the entry was spent on a planned event, such as a birthday,
+  /// with the date of the occurrence it was for, so a yearly event's
+  /// spending stays with its own year.
+  final int? plannedEventId;
+  final DateTime? plannedEventOn;
+  final DateTime createdAt;
+  const Entry({
+    required this.id,
+    required this.occurredOn,
+    required this.kind,
+    required this.amount,
+    required this.categoryKey,
+    this.label,
+    this.note,
+    this.receipt,
+    this.recurringItemId,
+    this.plannedEventId,
+    this.plannedEventOn,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    {
+      map['occurred_on'] = Variable<String>(
+        $EntriesTable.$converteroccurredOn.toSql(occurredOn),
+      );
+    }
+    {
+      map['kind'] = Variable<String>($EntriesTable.$converterkind.toSql(kind));
+    }
+    map['amount'] = Variable<int>(amount);
+    map['category_key'] = Variable<String>(categoryKey);
+    if (!nullToAbsent || label != null) {
+      map['label'] = Variable<String>(label);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || receipt != null) {
+      map['receipt'] = Variable<String>(receipt);
+    }
+    if (!nullToAbsent || recurringItemId != null) {
+      map['recurring_item_id'] = Variable<int>(recurringItemId);
+    }
+    if (!nullToAbsent || plannedEventId != null) {
+      map['planned_event_id'] = Variable<int>(plannedEventId);
+    }
+    if (!nullToAbsent || plannedEventOn != null) {
+      map['planned_event_on'] = Variable<String>(
+        $EntriesTable.$converterplannedEventOnn.toSql(plannedEventOn),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  EntriesCompanion toCompanion(bool nullToAbsent) {
+    return EntriesCompanion(
+      id: Value(id),
+      occurredOn: Value(occurredOn),
+      kind: Value(kind),
+      amount: Value(amount),
+      categoryKey: Value(categoryKey),
+      label: label == null && nullToAbsent
+          ? const Value.absent()
+          : Value(label),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      receipt: receipt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receipt),
+      recurringItemId: recurringItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurringItemId),
+      plannedEventId: plannedEventId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plannedEventId),
+      plannedEventOn: plannedEventOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(plannedEventOn),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Entry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Entry(
+      id: serializer.fromJson<int>(json['id']),
+      occurredOn: serializer.fromJson<DateTime>(json['occurredOn']),
+      kind: $EntriesTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
+      amount: serializer.fromJson<int>(json['amount']),
+      categoryKey: serializer.fromJson<String>(json['categoryKey']),
+      label: serializer.fromJson<String?>(json['label']),
+      note: serializer.fromJson<String?>(json['note']),
+      receipt: serializer.fromJson<String?>(json['receipt']),
+      recurringItemId: serializer.fromJson<int?>(json['recurringItemId']),
+      plannedEventId: serializer.fromJson<int?>(json['plannedEventId']),
+      plannedEventOn: serializer.fromJson<DateTime?>(json['plannedEventOn']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'occurredOn': serializer.toJson<DateTime>(occurredOn),
+      'kind': serializer.toJson<String>(
+        $EntriesTable.$converterkind.toJson(kind),
+      ),
+      'amount': serializer.toJson<int>(amount),
+      'categoryKey': serializer.toJson<String>(categoryKey),
+      'label': serializer.toJson<String?>(label),
+      'note': serializer.toJson<String?>(note),
+      'receipt': serializer.toJson<String?>(receipt),
+      'recurringItemId': serializer.toJson<int?>(recurringItemId),
+      'plannedEventId': serializer.toJson<int?>(plannedEventId),
+      'plannedEventOn': serializer.toJson<DateTime?>(plannedEventOn),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Entry copyWith({
+    int? id,
+    DateTime? occurredOn,
+    EntryKind? kind,
+    int? amount,
+    String? categoryKey,
+    Value<String?> label = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    Value<String?> receipt = const Value.absent(),
+    Value<int?> recurringItemId = const Value.absent(),
+    Value<int?> plannedEventId = const Value.absent(),
+    Value<DateTime?> plannedEventOn = const Value.absent(),
+    DateTime? createdAt,
+  }) => Entry(
+    id: id ?? this.id,
+    occurredOn: occurredOn ?? this.occurredOn,
+    kind: kind ?? this.kind,
+    amount: amount ?? this.amount,
+    categoryKey: categoryKey ?? this.categoryKey,
+    label: label.present ? label.value : this.label,
+    note: note.present ? note.value : this.note,
+    receipt: receipt.present ? receipt.value : this.receipt,
+    recurringItemId: recurringItemId.present
+        ? recurringItemId.value
+        : this.recurringItemId,
+    plannedEventId: plannedEventId.present
+        ? plannedEventId.value
+        : this.plannedEventId,
+    plannedEventOn: plannedEventOn.present
+        ? plannedEventOn.value
+        : this.plannedEventOn,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Entry copyWithCompanion(EntriesCompanion data) {
+    return Entry(
+      id: data.id.present ? data.id.value : this.id,
+      occurredOn: data.occurredOn.present
+          ? data.occurredOn.value
+          : this.occurredOn,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      categoryKey: data.categoryKey.present
+          ? data.categoryKey.value
+          : this.categoryKey,
+      label: data.label.present ? data.label.value : this.label,
+      note: data.note.present ? data.note.value : this.note,
+      receipt: data.receipt.present ? data.receipt.value : this.receipt,
+      recurringItemId: data.recurringItemId.present
+          ? data.recurringItemId.value
+          : this.recurringItemId,
+      plannedEventId: data.plannedEventId.present
+          ? data.plannedEventId.value
+          : this.plannedEventId,
+      plannedEventOn: data.plannedEventOn.present
+          ? data.plannedEventOn.value
+          : this.plannedEventOn,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Entry(')
+          ..write('id: $id, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('kind: $kind, ')
+          ..write('amount: $amount, ')
+          ..write('categoryKey: $categoryKey, ')
+          ..write('label: $label, ')
+          ..write('note: $note, ')
+          ..write('receipt: $receipt, ')
+          ..write('recurringItemId: $recurringItemId, ')
+          ..write('plannedEventId: $plannedEventId, ')
+          ..write('plannedEventOn: $plannedEventOn, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    occurredOn,
+    kind,
+    amount,
+    categoryKey,
+    label,
+    note,
+    receipt,
+    recurringItemId,
+    plannedEventId,
+    plannedEventOn,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Entry &&
+          other.id == this.id &&
+          other.occurredOn == this.occurredOn &&
+          other.kind == this.kind &&
+          other.amount == this.amount &&
+          other.categoryKey == this.categoryKey &&
+          other.label == this.label &&
+          other.note == this.note &&
+          other.receipt == this.receipt &&
+          other.recurringItemId == this.recurringItemId &&
+          other.plannedEventId == this.plannedEventId &&
+          other.plannedEventOn == this.plannedEventOn &&
+          other.createdAt == this.createdAt);
+}
+
+class EntriesCompanion extends UpdateCompanion<Entry> {
+  final Value<int> id;
+  final Value<DateTime> occurredOn;
+  final Value<EntryKind> kind;
+  final Value<int> amount;
+  final Value<String> categoryKey;
+  final Value<String?> label;
+  final Value<String?> note;
+  final Value<String?> receipt;
+  final Value<int?> recurringItemId;
+  final Value<int?> plannedEventId;
+  final Value<DateTime?> plannedEventOn;
+  final Value<DateTime> createdAt;
+  const EntriesCompanion({
+    this.id = const Value.absent(),
+    this.occurredOn = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.categoryKey = const Value.absent(),
+    this.label = const Value.absent(),
+    this.note = const Value.absent(),
+    this.receipt = const Value.absent(),
+    this.recurringItemId = const Value.absent(),
+    this.plannedEventId = const Value.absent(),
+    this.plannedEventOn = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  EntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime occurredOn,
+    required EntryKind kind,
+    required int amount,
+    required String categoryKey,
+    this.label = const Value.absent(),
+    this.note = const Value.absent(),
+    this.receipt = const Value.absent(),
+    this.recurringItemId = const Value.absent(),
+    this.plannedEventId = const Value.absent(),
+    this.plannedEventOn = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : occurredOn = Value(occurredOn),
+       kind = Value(kind),
+       amount = Value(amount),
+       categoryKey = Value(categoryKey);
+  static Insertable<Entry> custom({
+    Expression<int>? id,
+    Expression<String>? occurredOn,
+    Expression<String>? kind,
+    Expression<int>? amount,
+    Expression<String>? categoryKey,
+    Expression<String>? label,
+    Expression<String>? note,
+    Expression<String>? receipt,
+    Expression<int>? recurringItemId,
+    Expression<int>? plannedEventId,
+    Expression<String>? plannedEventOn,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (occurredOn != null) 'occurred_on': occurredOn,
+      if (kind != null) 'kind': kind,
+      if (amount != null) 'amount': amount,
+      if (categoryKey != null) 'category_key': categoryKey,
+      if (label != null) 'label': label,
+      if (note != null) 'note': note,
+      if (receipt != null) 'receipt': receipt,
+      if (recurringItemId != null) 'recurring_item_id': recurringItemId,
+      if (plannedEventId != null) 'planned_event_id': plannedEventId,
+      if (plannedEventOn != null) 'planned_event_on': plannedEventOn,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  EntriesCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? occurredOn,
+    Value<EntryKind>? kind,
+    Value<int>? amount,
+    Value<String>? categoryKey,
+    Value<String?>? label,
+    Value<String?>? note,
+    Value<String?>? receipt,
+    Value<int?>? recurringItemId,
+    Value<int?>? plannedEventId,
+    Value<DateTime?>? plannedEventOn,
+    Value<DateTime>? createdAt,
+  }) {
+    return EntriesCompanion(
+      id: id ?? this.id,
+      occurredOn: occurredOn ?? this.occurredOn,
+      kind: kind ?? this.kind,
+      amount: amount ?? this.amount,
+      categoryKey: categoryKey ?? this.categoryKey,
+      label: label ?? this.label,
+      note: note ?? this.note,
+      receipt: receipt ?? this.receipt,
+      recurringItemId: recurringItemId ?? this.recurringItemId,
+      plannedEventId: plannedEventId ?? this.plannedEventId,
+      plannedEventOn: plannedEventOn ?? this.plannedEventOn,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (occurredOn.present) {
+      map['occurred_on'] = Variable<String>(
+        $EntriesTable.$converteroccurredOn.toSql(occurredOn.value),
+      );
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $EntriesTable.$converterkind.toSql(kind.value),
+      );
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (categoryKey.present) {
+      map['category_key'] = Variable<String>(categoryKey.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (receipt.present) {
+      map['receipt'] = Variable<String>(receipt.value);
+    }
+    if (recurringItemId.present) {
+      map['recurring_item_id'] = Variable<int>(recurringItemId.value);
+    }
+    if (plannedEventId.present) {
+      map['planned_event_id'] = Variable<int>(plannedEventId.value);
+    }
+    if (plannedEventOn.present) {
+      map['planned_event_on'] = Variable<String>(
+        $EntriesTable.$converterplannedEventOnn.toSql(plannedEventOn.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('kind: $kind, ')
+          ..write('amount: $amount, ')
+          ..write('categoryKey: $categoryKey, ')
+          ..write('label: $label, ')
+          ..write('note: $note, ')
+          ..write('receipt: $receipt, ')
+          ..write('recurringItemId: $recurringItemId, ')
+          ..write('plannedEventId: $plannedEventId, ')
+          ..write('plannedEventOn: $plannedEventOn, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WeeklyRulesTable extends WeeklyRules
+    with TableInfo<$WeeklyRulesTable, WeeklyRule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeeklyRulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _weekdayMeta = const VerificationMeta(
+    'weekday',
+  );
+  @override
+  late final GeneratedColumn<int> weekday = GeneratedColumn<int>(
+    'weekday',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(weekday).isBetweenValues(1, 7),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<RhythmDayType, String> dayType =
+      GeneratedColumn<String>(
+        'day_type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<RhythmDayType>($WeeklyRulesTable.$converterdayType);
+  static const VerificationMeta _plannedSpendMeta = const VerificationMeta(
+    'plannedSpend',
+  );
+  @override
+  late final GeneratedColumn<int> plannedSpend = GeneratedColumn<int>(
+    'planned_spend',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isFastingDayMeta = const VerificationMeta(
+    'isFastingDay',
+  );
+  @override
+  late final GeneratedColumn<bool> isFastingDay = GeneratedColumn<bool>(
+    'is_fasting_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_fasting_day" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    weekday,
+    label,
+    dayType,
+    plannedSpend,
+    isFastingDay,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weekly_rules';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WeeklyRule> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('weekday')) {
+      context.handle(
+        _weekdayMeta,
+        weekday.isAcceptableOrUnknown(data['weekday']!, _weekdayMeta),
+      );
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('planned_spend')) {
+      context.handle(
+        _plannedSpendMeta,
+        plannedSpend.isAcceptableOrUnknown(
+          data['planned_spend']!,
+          _plannedSpendMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_fasting_day')) {
+      context.handle(
+        _isFastingDayMeta,
+        isFastingDay.isAcceptableOrUnknown(
+          data['is_fasting_day']!,
+          _isFastingDayMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {weekday};
+  @override
+  WeeklyRule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeeklyRule(
+      weekday: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}weekday'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      dayType: $WeeklyRulesTable.$converterdayType.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}day_type'],
+        )!,
+      ),
+      plannedSpend: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}planned_spend'],
+      )!,
+      isFastingDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_fasting_day'],
+      )!,
+    );
+  }
+
+  @override
+  $WeeklyRulesTable createAlias(String alias) {
+    return $WeeklyRulesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<RhythmDayType, String, String> $converterdayType =
+      const EnumNameConverter<RhythmDayType>(RhythmDayType.values);
+}
+
+class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
+  /// 1 is Monday, matching DateTime.weekday.
+  final int weekday;
+  final String label;
+  final RhythmDayType dayType;
+  final int plannedSpend;
+  final bool isFastingDay;
+  const WeeklyRule({
+    required this.weekday,
+    required this.label,
+    required this.dayType,
+    required this.plannedSpend,
+    required this.isFastingDay,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['weekday'] = Variable<int>(weekday);
+    map['label'] = Variable<String>(label);
+    {
+      map['day_type'] = Variable<String>(
+        $WeeklyRulesTable.$converterdayType.toSql(dayType),
+      );
+    }
+    map['planned_spend'] = Variable<int>(plannedSpend);
+    map['is_fasting_day'] = Variable<bool>(isFastingDay);
+    return map;
+  }
+
+  WeeklyRulesCompanion toCompanion(bool nullToAbsent) {
+    return WeeklyRulesCompanion(
+      weekday: Value(weekday),
+      label: Value(label),
+      dayType: Value(dayType),
+      plannedSpend: Value(plannedSpend),
+      isFastingDay: Value(isFastingDay),
+    );
+  }
+
+  factory WeeklyRule.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeeklyRule(
+      weekday: serializer.fromJson<int>(json['weekday']),
+      label: serializer.fromJson<String>(json['label']),
+      dayType: $WeeklyRulesTable.$converterdayType.fromJson(
+        serializer.fromJson<String>(json['dayType']),
+      ),
+      plannedSpend: serializer.fromJson<int>(json['plannedSpend']),
+      isFastingDay: serializer.fromJson<bool>(json['isFastingDay']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'weekday': serializer.toJson<int>(weekday),
+      'label': serializer.toJson<String>(label),
+      'dayType': serializer.toJson<String>(
+        $WeeklyRulesTable.$converterdayType.toJson(dayType),
+      ),
+      'plannedSpend': serializer.toJson<int>(plannedSpend),
+      'isFastingDay': serializer.toJson<bool>(isFastingDay),
+    };
+  }
+
+  WeeklyRule copyWith({
+    int? weekday,
+    String? label,
+    RhythmDayType? dayType,
+    int? plannedSpend,
+    bool? isFastingDay,
+  }) => WeeklyRule(
+    weekday: weekday ?? this.weekday,
+    label: label ?? this.label,
+    dayType: dayType ?? this.dayType,
+    plannedSpend: plannedSpend ?? this.plannedSpend,
+    isFastingDay: isFastingDay ?? this.isFastingDay,
+  );
+  WeeklyRule copyWithCompanion(WeeklyRulesCompanion data) {
+    return WeeklyRule(
+      weekday: data.weekday.present ? data.weekday.value : this.weekday,
+      label: data.label.present ? data.label.value : this.label,
+      dayType: data.dayType.present ? data.dayType.value : this.dayType,
+      plannedSpend: data.plannedSpend.present
+          ? data.plannedSpend.value
+          : this.plannedSpend,
+      isFastingDay: data.isFastingDay.present
+          ? data.isFastingDay.value
+          : this.isFastingDay,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeeklyRule(')
+          ..write('weekday: $weekday, ')
+          ..write('label: $label, ')
+          ..write('dayType: $dayType, ')
+          ..write('plannedSpend: $plannedSpend, ')
+          ..write('isFastingDay: $isFastingDay')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(weekday, label, dayType, plannedSpend, isFastingDay);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeeklyRule &&
+          other.weekday == this.weekday &&
+          other.label == this.label &&
+          other.dayType == this.dayType &&
+          other.plannedSpend == this.plannedSpend &&
+          other.isFastingDay == this.isFastingDay);
+}
+
+class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
+  final Value<int> weekday;
+  final Value<String> label;
+  final Value<RhythmDayType> dayType;
+  final Value<int> plannedSpend;
+  final Value<bool> isFastingDay;
+  const WeeklyRulesCompanion({
+    this.weekday = const Value.absent(),
+    this.label = const Value.absent(),
+    this.dayType = const Value.absent(),
+    this.plannedSpend = const Value.absent(),
+    this.isFastingDay = const Value.absent(),
+  });
+  WeeklyRulesCompanion.insert({
+    this.weekday = const Value.absent(),
+    required String label,
+    required RhythmDayType dayType,
+    this.plannedSpend = const Value.absent(),
+    this.isFastingDay = const Value.absent(),
+  }) : label = Value(label),
+       dayType = Value(dayType);
+  static Insertable<WeeklyRule> custom({
+    Expression<int>? weekday,
+    Expression<String>? label,
+    Expression<String>? dayType,
+    Expression<int>? plannedSpend,
+    Expression<bool>? isFastingDay,
+  }) {
+    return RawValuesInsertable({
+      if (weekday != null) 'weekday': weekday,
+      if (label != null) 'label': label,
+      if (dayType != null) 'day_type': dayType,
+      if (plannedSpend != null) 'planned_spend': plannedSpend,
+      if (isFastingDay != null) 'is_fasting_day': isFastingDay,
+    });
+  }
+
+  WeeklyRulesCompanion copyWith({
+    Value<int>? weekday,
+    Value<String>? label,
+    Value<RhythmDayType>? dayType,
+    Value<int>? plannedSpend,
+    Value<bool>? isFastingDay,
+  }) {
+    return WeeklyRulesCompanion(
+      weekday: weekday ?? this.weekday,
+      label: label ?? this.label,
+      dayType: dayType ?? this.dayType,
+      plannedSpend: plannedSpend ?? this.plannedSpend,
+      isFastingDay: isFastingDay ?? this.isFastingDay,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (weekday.present) {
+      map['weekday'] = Variable<int>(weekday.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (dayType.present) {
+      map['day_type'] = Variable<String>(
+        $WeeklyRulesTable.$converterdayType.toSql(dayType.value),
+      );
+    }
+    if (plannedSpend.present) {
+      map['planned_spend'] = Variable<int>(plannedSpend.value);
+    }
+    if (isFastingDay.present) {
+      map['is_fasting_day'] = Variable<bool>(isFastingDay.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeeklyRulesCompanion(')
+          ..write('weekday: $weekday, ')
+          ..write('label: $label, ')
+          ..write('dayType: $dayType, ')
+          ..write('plannedSpend: $plannedSpend, ')
+          ..write('isFastingDay: $isFastingDay')
           ..write(')'))
         .toString();
   }
@@ -3891,9 +4009,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $RecurringItemsTable recurringItems = $RecurringItemsTable(this);
+  late final $PlannedEventsTable plannedEvents = $PlannedEventsTable(this);
   late final $EntriesTable entries = $EntriesTable(this);
   late final $WeeklyRulesTable weeklyRules = $WeeklyRulesTable(this);
-  late final $PlannedEventsTable plannedEvents = $PlannedEventsTable(this);
   late final $GoalsTable goals = $GoalsTable(this);
   late final $FavouritesTable favourites = $FavouritesTable(this);
   @override
@@ -3904,9 +4022,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     appSettings,
     categories,
     recurringItems,
+    plannedEvents,
     entries,
     weeklyRules,
-    plannedEvents,
     goals,
     favourites,
   ];
@@ -4168,6 +4286,24 @@ final class $$CategoriesTableReferences
     );
   }
 
+  static MultiTypedResultKey<$PlannedEventsTable, List<PlannedEvent>>
+  _plannedEventsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.plannedEvents,
+    aliasName: 'categories__key__planned_events__category_key',
+  );
+
+  $$PlannedEventsTableProcessedTableManager get plannedEventsRefs {
+    final manager = $$PlannedEventsTableTableManager(
+      $_db,
+      $_db.plannedEvents,
+    ).filter((f) => f.categoryKey.key.sqlEquals($_itemColumn<String>('key')!));
+
+    final cache = $_typedResult.readTableOrNull(_plannedEventsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$EntriesTable, List<Entry>> _entriesRefsTable(
     _$AppDatabase db,
   ) => MultiTypedResultKey.fromTable(
@@ -4182,24 +4318,6 @@ final class $$CategoriesTableReferences
     ).filter((f) => f.categoryKey.key.sqlEquals($_itemColumn<String>('key')!));
 
     final cache = $_typedResult.readTableOrNull(_entriesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-
-  static MultiTypedResultKey<$PlannedEventsTable, List<PlannedEvent>>
-  _plannedEventsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.plannedEvents,
-    aliasName: 'categories__key__planned_events__category_key',
-  );
-
-  $$PlannedEventsTableProcessedTableManager get plannedEventsRefs {
-    final manager = $$PlannedEventsTableTableManager(
-      $_db,
-      $_db.plannedEvents,
-    ).filter((f) => f.categoryKey.key.sqlEquals($_itemColumn<String>('key')!));
-
-    final cache = $_typedResult.readTableOrNull(_plannedEventsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4299,31 +4417,6 @@ class $$CategoriesTableFilterComposer
     return f(composer);
   }
 
-  Expression<bool> entriesRefs(
-    Expression<bool> Function($$EntriesTableFilterComposer f) f,
-  ) {
-    final $$EntriesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.key,
-      referencedTable: $db.entries,
-      getReferencedColumn: (t) => t.categoryKey,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$EntriesTableFilterComposer(
-            $db: $db,
-            $table: $db.entries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<bool> plannedEventsRefs(
     Expression<bool> Function($$PlannedEventsTableFilterComposer f) f,
   ) {
@@ -4340,6 +4433,31 @@ class $$CategoriesTableFilterComposer
           }) => $$PlannedEventsTableFilterComposer(
             $db: $db,
             $table: $db.plannedEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> entriesRefs(
+    Expression<bool> Function($$EntriesTableFilterComposer f) f,
+  ) {
+    final $$EntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.key,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.categoryKey,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.entries,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4485,31 +4603,6 @@ class $$CategoriesTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> entriesRefs<T extends Object>(
-    Expression<T> Function($$EntriesTableAnnotationComposer a) f,
-  ) {
-    final $$EntriesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.key,
-      referencedTable: $db.entries,
-      getReferencedColumn: (t) => t.categoryKey,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$EntriesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.entries,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-
   Expression<T> plannedEventsRefs<T extends Object>(
     Expression<T> Function($$PlannedEventsTableAnnotationComposer a) f,
   ) {
@@ -4526,6 +4619,31 @@ class $$CategoriesTableAnnotationComposer
           }) => $$PlannedEventsTableAnnotationComposer(
             $db: $db,
             $table: $db.plannedEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> entriesRefs<T extends Object>(
+    Expression<T> Function($$EntriesTableAnnotationComposer a) f,
+  ) {
+    final $$EntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.key,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.categoryKey,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entries,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4576,8 +4694,8 @@ class $$CategoriesTableTableManager
           Category,
           PrefetchHooks Function({
             bool recurringItemsRefs,
-            bool entriesRefs,
             bool plannedEventsRefs,
+            bool entriesRefs,
             bool favouritesRefs,
           })
         > {
@@ -4647,16 +4765,16 @@ class $$CategoriesTableTableManager
           prefetchHooksCallback:
               ({
                 recurringItemsRefs = false,
-                entriesRefs = false,
                 plannedEventsRefs = false,
+                entriesRefs = false,
                 favouritesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (recurringItemsRefs) db.recurringItems,
-                    if (entriesRefs) db.entries,
                     if (plannedEventsRefs) db.plannedEvents,
+                    if (entriesRefs) db.entries,
                     if (favouritesRefs) db.favourites,
                   ],
                   addJoins: null,
@@ -4683,27 +4801,6 @@ class $$CategoriesTableTableManager
                               ),
                           typedResults: items,
                         ),
-                      if (entriesRefs)
-                        await $_getPrefetchedData<
-                          Category,
-                          $CategoriesTable,
-                          Entry
-                        >(
-                          currentTable: table,
-                          referencedTable: $$CategoriesTableReferences
-                              ._entriesRefsTable(db),
-                          managerFromTypedResult: (p0) =>
-                              $$CategoriesTableReferences(
-                                db,
-                                table,
-                                p0,
-                              ).entriesRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.categoryKey == item.key,
-                              ),
-                          typedResults: items,
-                        ),
                       if (plannedEventsRefs)
                         await $_getPrefetchedData<
                           Category,
@@ -4719,6 +4816,27 @@ class $$CategoriesTableTableManager
                                 table,
                                 p0,
                               ).plannedEventsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.categoryKey == item.key,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (entriesRefs)
+                        await $_getPrefetchedData<
+                          Category,
+                          $CategoriesTable,
+                          Entry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$CategoriesTableReferences
+                              ._entriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CategoriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).entriesRefs,
                           referencedItemsForCurrentItem:
                               (item, referencedItems) => referencedItems.where(
                                 (e) => e.categoryKey == item.key,
@@ -4768,8 +4886,8 @@ typedef $$CategoriesTableProcessedTableManager =
       Category,
       PrefetchHooks Function({
         bool recurringItemsRefs,
-        bool entriesRefs,
         bool plannedEventsRefs,
+        bool entriesRefs,
         bool favouritesRefs,
       })
     >;
@@ -5264,6 +5382,494 @@ typedef $$RecurringItemsTableProcessedTableManager =
       RecurringItem,
       PrefetchHooks Function({bool categoryKey, bool entriesRefs})
     >;
+typedef $$PlannedEventsTableCreateCompanionBuilder =
+    PlannedEventsCompanion Function({
+      Value<int> id,
+      required String name,
+      required EntryKind kind,
+      required int amount,
+      required String categoryKey,
+      required DateTime dueOn,
+      Value<bool> done,
+      Value<bool> countInProjection,
+      Value<bool> repeatsYearly,
+    });
+typedef $$PlannedEventsTableUpdateCompanionBuilder =
+    PlannedEventsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<EntryKind> kind,
+      Value<int> amount,
+      Value<String> categoryKey,
+      Value<DateTime> dueOn,
+      Value<bool> done,
+      Value<bool> countInProjection,
+      Value<bool> repeatsYearly,
+    });
+
+final class $$PlannedEventsTableReferences
+    extends BaseReferences<_$AppDatabase, $PlannedEventsTable, PlannedEvent> {
+  $$PlannedEventsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CategoriesTable _categoryKeyTable(_$AppDatabase db) => db.categories
+      .createAlias('planned_events__category_key__categories__key');
+
+  $$CategoriesTableProcessedTableManager get categoryKey {
+    final $_column = $_itemColumn<String>('category_key')!;
+
+    final manager = $$CategoriesTableTableManager(
+      $_db,
+      $_db.categories,
+    ).filter((f) => f.key.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_categoryKeyTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$EntriesTable, List<Entry>> _entriesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.entries,
+    aliasName: 'planned_events__id__entries__planned_event_id',
+  );
+
+  $$EntriesTableProcessedTableManager get entriesRefs {
+    final manager = $$EntriesTableTableManager(
+      $_db,
+      $_db.entries,
+    ).filter((f) => f.plannedEventId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_entriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$PlannedEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $PlannedEventsTable> {
+  $$PlannedEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<EntryKind, EntryKind, String> get kind =>
+      $composableBuilder(
+        column: $table.kind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime, DateTime, String> get dueOn =>
+      $composableBuilder(
+        column: $table.dueOn,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<bool> get done => $composableBuilder(
+    column: $table.done,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get countInProjection => $composableBuilder(
+    column: $table.countInProjection,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get repeatsYearly => $composableBuilder(
+    column: $table.repeatsYearly,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CategoriesTableFilterComposer get categoryKey {
+    final $$CategoriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.categoryKey,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.key,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableFilterComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<bool> entriesRefs(
+    Expression<bool> Function($$EntriesTableFilterComposer f) f,
+  ) {
+    final $$EntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.plannedEventId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.entries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PlannedEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlannedEventsTable> {
+  $$PlannedEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dueOn => $composableBuilder(
+    column: $table.dueOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get done => $composableBuilder(
+    column: $table.done,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get countInProjection => $composableBuilder(
+    column: $table.countInProjection,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get repeatsYearly => $composableBuilder(
+    column: $table.repeatsYearly,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CategoriesTableOrderingComposer get categoryKey {
+    final $$CategoriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.categoryKey,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.key,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PlannedEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlannedEventsTable> {
+  $$PlannedEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<EntryKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime, String> get dueOn =>
+      $composableBuilder(column: $table.dueOn, builder: (column) => column);
+
+  GeneratedColumn<bool> get done =>
+      $composableBuilder(column: $table.done, builder: (column) => column);
+
+  GeneratedColumn<bool> get countInProjection => $composableBuilder(
+    column: $table.countInProjection,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get repeatsYearly => $composableBuilder(
+    column: $table.repeatsYearly,
+    builder: (column) => column,
+  );
+
+  $$CategoriesTableAnnotationComposer get categoryKey {
+    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.categoryKey,
+      referencedTable: $db.categories,
+      getReferencedColumn: (t) => t.key,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CategoriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.categories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  Expression<T> entriesRefs<T extends Object>(
+    Expression<T> Function($$EntriesTableAnnotationComposer a) f,
+  ) {
+    final $$EntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.plannedEventId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PlannedEventsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PlannedEventsTable,
+          PlannedEvent,
+          $$PlannedEventsTableFilterComposer,
+          $$PlannedEventsTableOrderingComposer,
+          $$PlannedEventsTableAnnotationComposer,
+          $$PlannedEventsTableCreateCompanionBuilder,
+          $$PlannedEventsTableUpdateCompanionBuilder,
+          (PlannedEvent, $$PlannedEventsTableReferences),
+          PlannedEvent,
+          PrefetchHooks Function({bool categoryKey, bool entriesRefs})
+        > {
+  $$PlannedEventsTableTableManager(_$AppDatabase db, $PlannedEventsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlannedEventsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlannedEventsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlannedEventsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<EntryKind> kind = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<String> categoryKey = const Value.absent(),
+                Value<DateTime> dueOn = const Value.absent(),
+                Value<bool> done = const Value.absent(),
+                Value<bool> countInProjection = const Value.absent(),
+                Value<bool> repeatsYearly = const Value.absent(),
+              }) => PlannedEventsCompanion(
+                id: id,
+                name: name,
+                kind: kind,
+                amount: amount,
+                categoryKey: categoryKey,
+                dueOn: dueOn,
+                done: done,
+                countInProjection: countInProjection,
+                repeatsYearly: repeatsYearly,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required EntryKind kind,
+                required int amount,
+                required String categoryKey,
+                required DateTime dueOn,
+                Value<bool> done = const Value.absent(),
+                Value<bool> countInProjection = const Value.absent(),
+                Value<bool> repeatsYearly = const Value.absent(),
+              }) => PlannedEventsCompanion.insert(
+                id: id,
+                name: name,
+                kind: kind,
+                amount: amount,
+                categoryKey: categoryKey,
+                dueOn: dueOn,
+                done: done,
+                countInProjection: countInProjection,
+                repeatsYearly: repeatsYearly,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PlannedEventsTable, PlannedEvent>(table),
+                  $$PlannedEventsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({categoryKey = false, entriesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (entriesRefs) db.entries],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (categoryKey) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.categoryKey,
+                                referencedTable: $$PlannedEventsTableReferences
+                                    ._categoryKeyTable(db),
+                                referencedColumn: $$PlannedEventsTableReferences
+                                    ._categoryKeyTable(db)
+                                    .key,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (entriesRefs)
+                    await $_getPrefetchedData<
+                      PlannedEvent,
+                      $PlannedEventsTable,
+                      Entry
+                    >(
+                      currentTable: table,
+                      referencedTable: $$PlannedEventsTableReferences
+                          ._entriesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$PlannedEventsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).entriesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.plannedEventId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PlannedEventsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PlannedEventsTable,
+      PlannedEvent,
+      $$PlannedEventsTableFilterComposer,
+      $$PlannedEventsTableOrderingComposer,
+      $$PlannedEventsTableAnnotationComposer,
+      $$PlannedEventsTableCreateCompanionBuilder,
+      $$PlannedEventsTableUpdateCompanionBuilder,
+      (PlannedEvent, $$PlannedEventsTableReferences),
+      PlannedEvent,
+      PrefetchHooks Function({bool categoryKey, bool entriesRefs})
+    >;
 typedef $$EntriesTableCreateCompanionBuilder =
     EntriesCompanion Function({
       Value<int> id,
@@ -5275,6 +5881,8 @@ typedef $$EntriesTableCreateCompanionBuilder =
       Value<String?> note,
       Value<String?> receipt,
       Value<int?> recurringItemId,
+      Value<int?> plannedEventId,
+      Value<DateTime?> plannedEventOn,
       Value<DateTime> createdAt,
     });
 typedef $$EntriesTableUpdateCompanionBuilder =
@@ -5288,6 +5896,8 @@ typedef $$EntriesTableUpdateCompanionBuilder =
       Value<String?> note,
       Value<String?> receipt,
       Value<int?> recurringItemId,
+      Value<int?> plannedEventId,
+      Value<DateTime?> plannedEventOn,
       Value<DateTime> createdAt,
     });
 
@@ -5324,6 +5934,24 @@ final class $$EntriesTableReferences
       $_db.recurringItems,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_recurringItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $PlannedEventsTable _plannedEventIdTable(_$AppDatabase db) => db
+      .plannedEvents
+      .createAlias('entries__planned_event_id__planned_events__id');
+
+  $$PlannedEventsTableProcessedTableManager? get plannedEventId {
+    final $_column = $_itemColumn<int>('planned_event_id');
+    if ($_column == null) return null;
+    final manager = $$PlannedEventsTableTableManager(
+      $_db,
+      $_db.plannedEvents,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_plannedEventIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -5377,6 +6005,12 @@ class $$EntriesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, String>
+  get plannedEventOn => $composableBuilder(
+    column: $table.plannedEventOn,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -5419,6 +6053,29 @@ class $$EntriesTableFilterComposer
           }) => $$RecurringItemsTableFilterComposer(
             $db: $db,
             $table: $db.recurringItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$PlannedEventsTableFilterComposer get plannedEventId {
+    final $$PlannedEventsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.plannedEventId,
+      referencedTable: $db.plannedEvents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PlannedEventsTableFilterComposer(
+            $db: $db,
+            $table: $db.plannedEvents,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5473,6 +6130,11 @@ class $$EntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get plannedEventOn => $composableBuilder(
+    column: $table.plannedEventOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5523,6 +6185,29 @@ class $$EntriesTableOrderingComposer
     );
     return composer;
   }
+
+  $$PlannedEventsTableOrderingComposer get plannedEventId {
+    final $$PlannedEventsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.plannedEventId,
+      referencedTable: $db.plannedEvents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PlannedEventsTableOrderingComposer(
+            $db: $db,
+            $table: $db.plannedEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EntriesTableAnnotationComposer
@@ -5557,6 +6242,12 @@ class $$EntriesTableAnnotationComposer
 
   GeneratedColumn<String> get receipt =>
       $composableBuilder(column: $table.receipt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime?, String> get plannedEventOn =>
+      $composableBuilder(
+        column: $table.plannedEventOn,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -5606,6 +6297,29 @@ class $$EntriesTableAnnotationComposer
     );
     return composer;
   }
+
+  $$PlannedEventsTableAnnotationComposer get plannedEventId {
+    final $$PlannedEventsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.plannedEventId,
+      referencedTable: $db.plannedEvents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PlannedEventsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.plannedEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EntriesTableTableManager
@@ -5621,7 +6335,11 @@ class $$EntriesTableTableManager
           $$EntriesTableUpdateCompanionBuilder,
           (Entry, $$EntriesTableReferences),
           Entry,
-          PrefetchHooks Function({bool categoryKey, bool recurringItemId})
+          PrefetchHooks Function({
+            bool categoryKey,
+            bool recurringItemId,
+            bool plannedEventId,
+          })
         > {
   $$EntriesTableTableManager(_$AppDatabase db, $EntriesTable table)
     : super(
@@ -5645,6 +6363,8 @@ class $$EntriesTableTableManager
                 Value<String?> note = const Value.absent(),
                 Value<String?> receipt = const Value.absent(),
                 Value<int?> recurringItemId = const Value.absent(),
+                Value<int?> plannedEventId = const Value.absent(),
+                Value<DateTime?> plannedEventOn = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => EntriesCompanion(
                 id: id,
@@ -5656,6 +6376,8 @@ class $$EntriesTableTableManager
                 note: note,
                 receipt: receipt,
                 recurringItemId: recurringItemId,
+                plannedEventId: plannedEventId,
+                plannedEventOn: plannedEventOn,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -5669,6 +6391,8 @@ class $$EntriesTableTableManager
                 Value<String?> note = const Value.absent(),
                 Value<String?> receipt = const Value.absent(),
                 Value<int?> recurringItemId = const Value.absent(),
+                Value<int?> plannedEventId = const Value.absent(),
+                Value<DateTime?> plannedEventOn = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => EntriesCompanion.insert(
                 id: id,
@@ -5680,6 +6404,8 @@ class $$EntriesTableTableManager
                 note: note,
                 receipt: receipt,
                 recurringItemId: recurringItemId,
+                plannedEventId: plannedEventId,
+                plannedEventOn: plannedEventOn,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -5691,7 +6417,11 @@ class $$EntriesTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({categoryKey = false, recurringItemId = false}) {
+              ({
+                categoryKey = false,
+                recurringItemId = false,
+                plannedEventId = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [],
@@ -5737,6 +6467,19 @@ class $$EntriesTableTableManager
                                   )
                                   as T;
                         }
+                        if (plannedEventId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.plannedEventId,
+                                    referencedTable: $$EntriesTableReferences
+                                        ._plannedEventIdTable(db),
+                                    referencedColumn: $$EntriesTableReferences
+                                        ._plannedEventIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
 
                         return state;
                       },
@@ -5761,7 +6504,11 @@ typedef $$EntriesTableProcessedTableManager =
       $$EntriesTableUpdateCompanionBuilder,
       (Entry, $$EntriesTableReferences),
       Entry,
-      PrefetchHooks Function({bool categoryKey, bool recurringItemId})
+      PrefetchHooks Function({
+        bool categoryKey,
+        bool recurringItemId,
+        bool plannedEventId,
+      })
     >;
 typedef $$WeeklyRulesTableCreateCompanionBuilder =
     WeeklyRulesCompanion Function({
@@ -5970,403 +6717,6 @@ typedef $$WeeklyRulesTableProcessedTableManager =
       ),
       WeeklyRule,
       PrefetchHooks Function()
-    >;
-typedef $$PlannedEventsTableCreateCompanionBuilder =
-    PlannedEventsCompanion Function({
-      Value<int> id,
-      required String name,
-      required EntryKind kind,
-      required int amount,
-      required String categoryKey,
-      required DateTime dueOn,
-      Value<bool> done,
-      Value<bool> countInProjection,
-      Value<bool> repeatsYearly,
-    });
-typedef $$PlannedEventsTableUpdateCompanionBuilder =
-    PlannedEventsCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<EntryKind> kind,
-      Value<int> amount,
-      Value<String> categoryKey,
-      Value<DateTime> dueOn,
-      Value<bool> done,
-      Value<bool> countInProjection,
-      Value<bool> repeatsYearly,
-    });
-
-final class $$PlannedEventsTableReferences
-    extends BaseReferences<_$AppDatabase, $PlannedEventsTable, PlannedEvent> {
-  $$PlannedEventsTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $CategoriesTable _categoryKeyTable(_$AppDatabase db) => db.categories
-      .createAlias('planned_events__category_key__categories__key');
-
-  $$CategoriesTableProcessedTableManager get categoryKey {
-    final $_column = $_itemColumn<String>('category_key')!;
-
-    final manager = $$CategoriesTableTableManager(
-      $_db,
-      $_db.categories,
-    ).filter((f) => f.key.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_categoryKeyTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$PlannedEventsTableFilterComposer
-    extends Composer<_$AppDatabase, $PlannedEventsTable> {
-  $$PlannedEventsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<EntryKind, EntryKind, String> get kind =>
-      $composableBuilder(
-        column: $table.kind,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<int> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<DateTime, DateTime, String> get dueOn =>
-      $composableBuilder(
-        column: $table.dueOn,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<bool> get done => $composableBuilder(
-    column: $table.done,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get countInProjection => $composableBuilder(
-    column: $table.countInProjection,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get repeatsYearly => $composableBuilder(
-    column: $table.repeatsYearly,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$CategoriesTableFilterComposer get categoryKey {
-    final $$CategoriesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.categoryKey,
-      referencedTable: $db.categories,
-      getReferencedColumn: (t) => t.key,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CategoriesTableFilterComposer(
-            $db: $db,
-            $table: $db.categories,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PlannedEventsTableOrderingComposer
-    extends Composer<_$AppDatabase, $PlannedEventsTable> {
-  $$PlannedEventsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get kind => $composableBuilder(
-    column: $table.kind,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get dueOn => $composableBuilder(
-    column: $table.dueOn,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get done => $composableBuilder(
-    column: $table.done,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get countInProjection => $composableBuilder(
-    column: $table.countInProjection,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get repeatsYearly => $composableBuilder(
-    column: $table.repeatsYearly,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$CategoriesTableOrderingComposer get categoryKey {
-    final $$CategoriesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.categoryKey,
-      referencedTable: $db.categories,
-      getReferencedColumn: (t) => t.key,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CategoriesTableOrderingComposer(
-            $db: $db,
-            $table: $db.categories,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PlannedEventsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PlannedEventsTable> {
-  $$PlannedEventsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<EntryKind, String> get kind =>
-      $composableBuilder(column: $table.kind, builder: (column) => column);
-
-  GeneratedColumn<int> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<DateTime, String> get dueOn =>
-      $composableBuilder(column: $table.dueOn, builder: (column) => column);
-
-  GeneratedColumn<bool> get done =>
-      $composableBuilder(column: $table.done, builder: (column) => column);
-
-  GeneratedColumn<bool> get countInProjection => $composableBuilder(
-    column: $table.countInProjection,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get repeatsYearly => $composableBuilder(
-    column: $table.repeatsYearly,
-    builder: (column) => column,
-  );
-
-  $$CategoriesTableAnnotationComposer get categoryKey {
-    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.categoryKey,
-      referencedTable: $db.categories,
-      getReferencedColumn: (t) => t.key,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$CategoriesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.categories,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$PlannedEventsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $PlannedEventsTable,
-          PlannedEvent,
-          $$PlannedEventsTableFilterComposer,
-          $$PlannedEventsTableOrderingComposer,
-          $$PlannedEventsTableAnnotationComposer,
-          $$PlannedEventsTableCreateCompanionBuilder,
-          $$PlannedEventsTableUpdateCompanionBuilder,
-          (PlannedEvent, $$PlannedEventsTableReferences),
-          PlannedEvent,
-          PrefetchHooks Function({bool categoryKey})
-        > {
-  $$PlannedEventsTableTableManager(_$AppDatabase db, $PlannedEventsTable table)
-    : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$PlannedEventsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$PlannedEventsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$PlannedEventsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<EntryKind> kind = const Value.absent(),
-                Value<int> amount = const Value.absent(),
-                Value<String> categoryKey = const Value.absent(),
-                Value<DateTime> dueOn = const Value.absent(),
-                Value<bool> done = const Value.absent(),
-                Value<bool> countInProjection = const Value.absent(),
-                Value<bool> repeatsYearly = const Value.absent(),
-              }) => PlannedEventsCompanion(
-                id: id,
-                name: name,
-                kind: kind,
-                amount: amount,
-                categoryKey: categoryKey,
-                dueOn: dueOn,
-                done: done,
-                countInProjection: countInProjection,
-                repeatsYearly: repeatsYearly,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String name,
-                required EntryKind kind,
-                required int amount,
-                required String categoryKey,
-                required DateTime dueOn,
-                Value<bool> done = const Value.absent(),
-                Value<bool> countInProjection = const Value.absent(),
-                Value<bool> repeatsYearly = const Value.absent(),
-              }) => PlannedEventsCompanion.insert(
-                id: id,
-                name: name,
-                kind: kind,
-                amount: amount,
-                categoryKey: categoryKey,
-                dueOn: dueOn,
-                done: done,
-                countInProjection: countInProjection,
-                repeatsYearly: repeatsYearly,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$PlannedEventsTable, PlannedEvent>(table),
-                  $$PlannedEventsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({categoryKey = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (categoryKey) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.categoryKey,
-                                referencedTable: $$PlannedEventsTableReferences
-                                    ._categoryKeyTable(db),
-                                referencedColumn: $$PlannedEventsTableReferences
-                                    ._categoryKeyTable(db)
-                                    .key,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$PlannedEventsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $PlannedEventsTable,
-      PlannedEvent,
-      $$PlannedEventsTableFilterComposer,
-      $$PlannedEventsTableOrderingComposer,
-      $$PlannedEventsTableAnnotationComposer,
-      $$PlannedEventsTableCreateCompanionBuilder,
-      $$PlannedEventsTableUpdateCompanionBuilder,
-      (PlannedEvent, $$PlannedEventsTableReferences),
-      PlannedEvent,
-      PrefetchHooks Function({bool categoryKey})
     >;
 typedef $$GoalsTableCreateCompanionBuilder =
     GoalsCompanion Function({
@@ -6953,12 +7303,12 @@ class $AppDatabaseManager {
       $$CategoriesTableTableManager(_db, _db.categories);
   $$RecurringItemsTableTableManager get recurringItems =>
       $$RecurringItemsTableTableManager(_db, _db.recurringItems);
+  $$PlannedEventsTableTableManager get plannedEvents =>
+      $$PlannedEventsTableTableManager(_db, _db.plannedEvents);
   $$EntriesTableTableManager get entries =>
       $$EntriesTableTableManager(_db, _db.entries);
   $$WeeklyRulesTableTableManager get weeklyRules =>
       $$WeeklyRulesTableTableManager(_db, _db.weeklyRules);
-  $$PlannedEventsTableTableManager get plannedEvents =>
-      $$PlannedEventsTableTableManager(_db, _db.plannedEvents);
   $$GoalsTableTableManager get goals =>
       $$GoalsTableTableManager(_db, _db.goals);
   $$FavouritesTableTableManager get favourites =>

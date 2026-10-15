@@ -11,6 +11,7 @@ erDiagram
   categories ||--o{ planned_events : ""
   categories ||--o{ favourites : ""
   recurring_items ||--o{ entries : "confirmed by"
+  planned_events ||--o{ entries : "spent on"
 ```
 
 ## Tables
@@ -53,6 +54,8 @@ entries on or after `opening_date`.
 | `note`              | text? | Free text, never used in statistics         |
 | `receipt`           | text? | File name of an attached image, see below   |
 | `recurring_item_id` | int?  | Set when the entry confirms a recurring item|
+| `planned_event_id`  | int?  | Set when the entry was spent on a planned event |
+| `planned_event_on`  | day?  | Which occurrence of that event it was for   |
 | `created_at`        | time  |                                             |
 
 ### `weekly_rules`
@@ -181,7 +184,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 4. Any change to a table bumps it and adds a step to
+`schemaVersion` is 5. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -191,3 +194,4 @@ data on the phone is left as it was.
 | 2       | `entries.receipt`, for attached receipts |
 | 3       | `recurring_items.window_days`, for pay and bills that move around |
 | 4       | `planned_events.repeats_yearly`, for birthdays and other yearly events |
+| 5       | `entries.planned_event_id` and `planned_event_on`, for spending against an event |

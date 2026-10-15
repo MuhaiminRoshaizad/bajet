@@ -15,7 +15,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -28,6 +28,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) await m.addColumn(entries, entries.receipt);
           if (from < 3) await m.addColumn(recurringItems, recurringItems.windowDays);
           if (from < 4) await m.addColumn(plannedEvents, plannedEvents.repeatsYearly);
+          if (from < 5) {
+            await m.addColumn(entries, entries.plannedEventId);
+            await m.addColumn(entries, entries.plannedEventOn);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
