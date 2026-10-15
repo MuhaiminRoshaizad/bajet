@@ -147,7 +147,12 @@ class _UpcomingRow extends StatelessWidget {
     final income = item.signedAmount > 0;
     final tint = item.isGoal ? Tint.apricot : categoryTint(category);
     final icon = item.isGoal ? Icons.flag_outlined : item.categoryKey == null ? Icons.event_outlined : categoryIcon(item.categoryKey!);
-    final note = [if (item.isGoal) 'buy day', if (item.yearly) 'every year', if (!item.counted) 'not counted'].join(' · ');
+    final note = [
+      if (item.budget case final budget?) '${Money.format(item.spent)} of ${Money.format(budget)} spent',
+      if (item.isGoal) 'buy day',
+      if (item.yearly) 'every year',
+      if (!item.counted) 'not counted',
+    ].join(' · ');
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
       child: Row(

@@ -60,6 +60,8 @@ class DriftLedgerRepository implements LedgerRepository {
           label: Value(_blankToNull(d.label)),
           note: Value(_blankToNull(d.note)),
           receipt: Value(d.receipt),
+          plannedEventId: Value(d.event?.eventId),
+          plannedEventOn: Value(d.event?.on),
         ),
       );
 
@@ -74,6 +76,8 @@ class DriftLedgerRepository implements LedgerRepository {
         label: Value(_blankToNull(e.label)),
         note: Value(_blankToNull(e.note)),
         receipt: Value(e.receipt),
+        plannedEventId: Value(e.event?.eventId),
+        plannedEventOn: Value(e.event?.on),
       ),
     );
   }
@@ -92,6 +96,8 @@ class DriftLedgerRepository implements LedgerRepository {
           label: Value(e.label),
           note: Value(e.note),
           receipt: Value(e.receipt),
+          plannedEventId: Value(e.event?.eventId),
+          plannedEventOn: Value(e.event?.on),
         ),
       );
 
@@ -104,6 +110,7 @@ class DriftLedgerRepository implements LedgerRepository {
         label: r.label,
         note: r.note,
         receipt: r.receipt,
+        event: r.plannedEventId == null || r.plannedEventOn == null ? null : domain.EventLink(r.plannedEventId!, r.plannedEventOn!),
       );
 }
 

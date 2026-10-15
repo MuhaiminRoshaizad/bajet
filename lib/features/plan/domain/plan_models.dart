@@ -87,6 +87,15 @@ class RecurringRemoval {
   final List<int> linkedEntryIds;
 }
 
+/// What [PlanRepository.deleteEvent] took away, kept so it can be put back:
+/// the event, and the entries that were spent on it.
+class EventRemoval {
+  const EventRemoval(this.event, this.linkedEntryIds);
+
+  final PlannedEvent event;
+  final List<int> linkedEntryIds;
+}
+
 /// A one-off future income or expense, such as a birthday or a payment.
 class PlannedEvent {
   const PlannedEvent({
@@ -99,6 +108,7 @@ class PlannedEvent {
     this.countInProjection = true,
     this.done = false,
     this.repeatsYearly = false,
+    this.spent = 0,
   });
 
   final int id;
@@ -117,7 +127,17 @@ class PlannedEvent {
   /// Comes back on the same date every year, such as a birthday.
   final bool repeatsYearly;
 
+  /// What has been logged against this occurrence. For an expense, [amount]
+  /// is a budget and this is how much of it is used.
+  final int spent;
+
   int get signedAmount => isIncome ? amount : -amount;
+
+  /// What is still to come for this occurrence: an expense's budget less
+  /// what is already logged against it, which has left the balance already.
+  int get outstanding => isIncome ? amount : (amount - spent).clamp(0, amount);
+
+  int get signedOutstanding => isIncome ? outstanding : -outstanding;
 
   /// The days it happens from [from] to [to] inclusive: once, or every year
   /// from [date] on. A 29 February falls on 1 March in other years.
@@ -137,6 +157,7 @@ class PlannedEvent {
         countInProjection: countInProjection ?? this.countInProjection,
         done: done ?? this.done,
         repeatsYearly: repeatsYearly ?? this.repeatsYearly,
+        spent: spent,
       );
 }
 

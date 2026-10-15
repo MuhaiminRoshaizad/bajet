@@ -100,6 +100,8 @@ class DriftBackupRepository implements BackupRepository {
             'note': e.note,
             'receipt': e.receipt,
             'recurringItemId': e.recurringItemId,
+            'plannedEventId': e.plannedEventId,
+            'plannedEventOn': e.plannedEventOn == null ? null : _day.toSql(e.plannedEventOn!),
           },
       ],
     };
@@ -211,6 +213,8 @@ class DriftBackupRepository implements BackupRepository {
                 note: Value(e['note'] as String?),
                 receipt: Value(e['receipt'] as String?),
                 recurringItemId: Value(e['recurringItemId'] as int?),
+                plannedEventId: Value(e['plannedEventId'] as int?),
+                plannedEventOn: Value(e['plannedEventOn'] == null ? null : _day.fromSql(e['plannedEventOn']! as String)),
               ),
           ]);
         });

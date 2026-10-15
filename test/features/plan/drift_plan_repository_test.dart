@@ -1,4 +1,6 @@
 import 'package:bajet/core/database/app_database.dart';
+import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/data/drift_plan_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,9 +73,9 @@ void main() {
     final edited = (await plan.watchEvents().first).single;
     expect((edited.amount, edited.categoryKey, edited.countInProjection), (30000, 'transport', false));
 
-    await plan.deleteEvent(id);
+    final removal = await plan.deleteEvent(id);
     expect(await plan.watchEvents().first, isEmpty);
-    await plan.restoreEvent(edited);
+    await plan.restoreEvent(removal);
     final back = (await plan.watchEvents().first).single;
     expect((back.id, back.amount, back.countInProjection), (id, 30000, false));
   });
@@ -101,5 +103,51 @@ void main() {
     final events = {for (final e in await plan.watchEvents().first) e.id: e};
     expect((events[yearly]!.done, events[yearly]!.date, events[yearly]!.repeatsYearly), (false, d(2027, 10, 30), true));
     expect(events[once]!.done, isTrue);
+  });
+
+  group('spending against an event', () {
+    late DriftLedgerRepository ledger;
+    setUp(() => ledger = DriftLedgerRepository(db));
+
+    Future<int> spend(int amount, EventLink link) =>
+        ledger.add(EntryDraft(day: d(2026, 10, 25), isIncome: false, amount: amount, categoryKey: 'food', event: link));
+
+    test('counts against the occurrence it was for, and only that one', () async {
+      final id = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30), repeatsYearly: true);
+      await spend(4500, EventLink(id, d(2026, 10, 30)));
+      await spend(2800, EventLink(id, d(2026, 10, 30)));
+      var birthday = (await plan.watchEvents().first).single;
+      expect((birthday.spent, birthday.outstanding), (7300, 2700));
+
+      // Done moves it to next year, with a fresh budget.
+      await plan.setEventDone(id, done: true);
+      birthday = (await plan.watchEvents().first).single;
+      expect((birthday.date, birthday.spent, birthday.outstanding), (d(2027, 10, 30), 0, 10000));
+    });
+
+    test('going over the budget leaves nothing still to come', () async {
+      final id = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30));
+      await spend(12000, EventLink(id, d(2026, 10, 30)));
+      final birthday = (await plan.watchEvents().first).single;
+      expect((birthday.spent, birthday.outstanding), (12000, 0));
+    });
+
+    test('moving the date keeps what was spent on it', () async {
+      final id = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30));
+      await spend(4500, EventLink(id, d(2026, 10, 30)));
+      final birthday = (await plan.watchEvents().first).single;
+      await plan.updateEvent(birthday.copyWith(date: d(2026, 11, 1)));
+      expect((await plan.watchEvents().first).single.spent, 4500);
+    });
+
+    test('deleting the event keeps its entries, and undo links them again', () async {
+      final id = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30));
+      await spend(4500, EventLink(id, d(2026, 10, 30)));
+      final removal = await plan.deleteEvent(id);
+      expect((await db.select(db.entries).getSingle()).plannedEventId, isNull);
+
+      await plan.restoreEvent(removal);
+      expect((await plan.watchEvents().first).single.spent, 4500);
+    });
   });
 }

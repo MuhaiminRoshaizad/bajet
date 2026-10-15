@@ -26,6 +26,21 @@ class Category {
   bool get isAutomatic => key == goalCategoryKey || key == untrackedCategoryKey;
 }
 
+/// What an entry was spent on, when it was for a planned event: the event
+/// and the date of the occurrence, so a yearly event's years stay apart.
+class EventLink {
+  const EventLink(this.eventId, this.on);
+
+  final int eventId;
+  final DateTime on;
+
+  @override
+  bool operator ==(Object other) => other is EventLink && other.eventId == eventId && other.on == on;
+
+  @override
+  int get hashCode => Object.hash(eventId, on);
+}
+
 class Entry {
   const Entry({
     required this.id,
@@ -36,6 +51,7 @@ class Entry {
     this.label,
     this.note,
     this.receipt,
+    this.event,
   });
 
   final int id;
@@ -48,6 +64,9 @@ class Entry {
 
   /// File name of an attached receipt image, if any.
   final String? receipt;
+
+  /// The planned event it was spent on, if any.
+  final EventLink? event;
 
   int get signedAmount => isIncome ? amount : -amount;
 }
@@ -62,6 +81,7 @@ class EntryDraft {
     this.label,
     this.note,
     this.receipt,
+    this.event,
   });
 
   final DateTime day;
@@ -71,6 +91,7 @@ class EntryDraft {
   final String? label;
   final String? note;
   final String? receipt;
+  final EventLink? event;
 }
 
 class Favourite {

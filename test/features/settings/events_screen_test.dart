@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 
 import '../../helpers/app_harness.dart';
 
@@ -97,5 +98,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.events.single.date, d(2027, 10, 30));
     expect(find.text('−RM100.00 · 30/10/2027 · every year'), findsOneWidget);
+  });
+
+  testWidgets('an event shows how much of its budget is spent', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 7, 20));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 7300, categoryKey: 'food', event: EventLink(w.events.single.id, d(2026, 7, 20))));
+    });
+    await openEvents(tester);
+    expect(find.text('RM73.00 of RM100.00 spent · 20/07/2026'), findsOneWidget);
   });
 }

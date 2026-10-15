@@ -53,6 +53,8 @@ abstract interface class PlanRepository {
   /// moves the item's next due date forward one month, in one transaction.
   Future<void> confirmRecurring(int id, {required DateTime paidOn});
 
+  /// Every event, each with what has been spent against its next
+  /// occurrence.
   Stream<List<PlannedEvent>> watchEvents();
   Future<int> addEvent({
     required String name,
@@ -74,10 +76,13 @@ abstract interface class PlanRepository {
   /// It stays an expense or an income.
   Future<void> updateEvent(PlannedEvent event);
 
-  Future<void> deleteEvent(int id);
+  /// Removes an event. Entries spent on it stay in History, no longer
+  /// linked to it.
+  Future<EventRemoval> deleteEvent(int id);
 
-  /// Puts back an event exactly as it was before [deleteEvent], for undo.
-  Future<void> restoreEvent(PlannedEvent event);
+  /// Undoes [deleteEvent]: the event comes back with its id, and the
+  /// entries spent on it point at it again.
+  Future<void> restoreEvent(EventRemoval removal);
 
   /// Active goals, highest priority first.
   Stream<List<Goal>> watchActiveGoals();

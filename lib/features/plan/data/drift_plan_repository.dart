@@ -3,7 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 import '../../ledger/domain/ledger_models.dart' show goalCategoryKey;
 import '../domain/plan_models.dart' as domain;
-import '../domain/plan_models.dart' show RecurringRemoval;
+import '../domain/plan_models.dart' show EventRemoval, RecurringRemoval;
 import '../domain/plan_repository.dart';
 
 class DriftPlanRepository implements PlanRepository {
@@ -150,20 +150,35 @@ class DriftPlanRepository implements PlanRepository {
       });
 
   @override
-  Stream<List<domain.PlannedEvent>> watchEvents() => _db.select(_db.plannedEvents).watch().map((rows) => [
-        for (final r in rows)
-          domain.PlannedEvent(
-            id: r.id,
-            name: r.name,
-            amount: r.amount,
-            categoryKey: r.categoryKey,
-            isIncome: r.kind == EntryKind.income,
-            date: r.dueOn,
-            countInProjection: r.countInProjection,
-            done: r.done,
-            repeatsYearly: r.repeatsYearly,
-          ),
-      ]);
+  Stream<List<domain.PlannedEvent>> watchEvents() {
+    // Spending counts against an event only for the occurrence it was for.
+    final spent = _db.entries.amount.sum();
+    final query = _db.select(_db.plannedEvents).join([
+      leftOuterJoin(
+        _db.entries,
+        _db.entries.plannedEventId.equalsExp(_db.plannedEvents.id) & _db.entries.plannedEventOn.equalsExp(_db.plannedEvents.dueOn),
+        useColumns: false,
+      ),
+    ])
+      ..addColumns([spent])
+      ..groupBy([_db.plannedEvents.id]);
+    return query.watch().map((rows) => [
+          for (final row in rows)
+            if (row.readTable(_db.plannedEvents) case final r)
+              domain.PlannedEvent(
+                id: r.id,
+                name: r.name,
+                amount: r.amount,
+                categoryKey: r.categoryKey,
+                isIncome: r.kind == EntryKind.income,
+                date: r.dueOn,
+                countInProjection: r.countInProjection,
+                done: r.done,
+                repeatsYearly: r.repeatsYearly,
+                spent: row.read(spent) ?? 0,
+              ),
+        ]);
+  }
 
   @override
   Future<int> addEvent({
@@ -196,8 +211,12 @@ class DriftPlanRepository implements PlanRepository {
       });
 
   @override
-  Future<void> updateEvent(domain.PlannedEvent event) async {
-    await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(event.id))).write(PlannedEventsCompanion(
+  Future<void> updateEvent(domain.PlannedEvent event) => _db.transaction(() async {
+        final before = await (_db.select(_db.plannedEvents)..where((e) => e.id.equals(event.id))).getSingle();
+        // Moving the date keeps what was already spent on this occurrence.
+        await (_db.update(_db.entries)..where((x) => x.plannedEventId.equals(event.id) & x.plannedEventOn.equalsValue(before.dueOn)))
+            .write(EntriesCompanion(plannedEventOn: Value(event.date)));
+        await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(event.id))).write(PlannedEventsCompanion(
           name: Value(event.name.trim()),
           amount: Value(event.amount),
           categoryKey: Value(event.categoryKey),
@@ -205,16 +224,22 @@ class DriftPlanRepository implements PlanRepository {
           countInProjection: Value(event.countInProjection),
           repeatsYearly: Value(event.repeatsYearly),
         ));
-  }
+      });
 
   @override
-  Future<void> deleteEvent(int id) async {
-    await (_db.delete(_db.plannedEvents)..where((e) => e.id.equals(id))).go();
-  }
+  Future<EventRemoval> deleteEvent(int id) => _db.transaction(() async {
+        final event = (await watchEvents().first).firstWhere((e) => e.id == id);
+        final linked = await (_db.select(_db.entries)..where((e) => e.plannedEventId.equals(id))).get();
+        await (_db.update(_db.entries)..where((e) => e.plannedEventId.equals(id)))
+            .write(const EntriesCompanion(plannedEventId: Value(null), plannedEventOn: Value(null)));
+        await (_db.delete(_db.plannedEvents)..where((e) => e.id.equals(id))).go();
+        return EventRemoval(event, [for (final e in linked) e.id]);
+      });
 
   @override
-  Future<void> restoreEvent(domain.PlannedEvent event) async {
-    await _db.into(_db.plannedEvents).insert(PlannedEventsCompanion.insert(
+  Future<void> restoreEvent(EventRemoval removal) => _db.transaction(() async {
+        final event = removal.event;
+        await _db.into(_db.plannedEvents).insert(PlannedEventsCompanion.insert(
           id: Value(event.id),
           name: event.name,
           kind: event.isIncome ? EntryKind.income : EntryKind.expense,
@@ -225,7 +250,9 @@ class DriftPlanRepository implements PlanRepository {
           done: Value(event.done),
           repeatsYearly: Value(event.repeatsYearly),
         ));
-  }
+        await (_db.update(_db.entries)..where((e) => e.id.isIn(removal.linkedEntryIds)))
+            .write(EntriesCompanion(plannedEventId: Value(event.id), plannedEventOn: Value(event.date)));
+      });
 
   @override
   Stream<List<domain.Goal>> watchActiveGoals() {

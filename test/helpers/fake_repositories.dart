@@ -106,19 +106,39 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     final id = _nextId++;
     _entries.value = [
       ..._entries.value,
-      Entry(id: id, day: d.day, isIncome: d.isIncome, amount: d.amount, categoryKey: d.categoryKey, label: _blank(d.label), note: _blank(d.note), receipt: d.receipt),
+      Entry(
+        id: id,
+        day: d.day,
+        isIncome: d.isIncome,
+        amount: d.amount,
+        categoryKey: d.categoryKey,
+        label: _blank(d.label),
+        note: _blank(d.note),
+        receipt: d.receipt,
+        event: d.event,
+      ),
     ];
+    _entriesChanged();
     return id;
   }
 
   @override
-  Future<void> update(Entry e) async => _entries.value = [for (final x in _entries.value) x.id == e.id ? e : x];
+  Future<void> update(Entry e) async {
+    _entries.value = [for (final x in _entries.value) x.id == e.id ? e : x];
+    _entriesChanged();
+  }
 
   @override
-  Future<void> delete(int id) async => _entries.value = [..._entries.value.where((e) => e.id != id)];
+  Future<void> delete(int id) async {
+    _entries.value = [..._entries.value.where((e) => e.id != id)];
+    _entriesChanged();
+  }
 
   @override
-  Future<void> restore(Entry e) async => _entries.value = [..._entries.value, e];
+  Future<void> restore(Entry e) async {
+    _entries.value = [..._entries.value, e];
+    _entriesChanged();
+  }
 
   // Plan
 
@@ -182,7 +202,27 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   }
 
   @override
-  Stream<List<PlannedEvent>> watchEvents() => _events.stream;
+  Stream<List<PlannedEvent>> watchEvents() => _events.stream.map((all) => [for (final e in all) _withSpent(e)]);
+
+  PlannedEvent _withSpent(PlannedEvent e) {
+    final link = EventLink(e.id, e.date);
+    final spent = _entries.value.where((x) => x.event == link).fold(0, (s, x) => s + x.amount);
+    return PlannedEvent(
+      id: e.id,
+      name: e.name,
+      amount: e.amount,
+      categoryKey: e.categoryKey,
+      isIncome: e.isIncome,
+      date: e.date,
+      countInProjection: e.countInProjection,
+      done: e.done,
+      repeatsYearly: e.repeatsYearly,
+      spent: spent,
+    );
+  }
+
+  /// Events show what is spent on them, so they change when entries do.
+  void _entriesChanged() => _events.value = _events.value;
 
   @override
   Future<int> addEvent({
@@ -236,10 +276,14 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   Future<void> updateEvent(PlannedEvent event) async => _events.value = [for (final e in _events.value) e.id == event.id ? event : e];
 
   @override
-  Future<void> deleteEvent(int id) async => _events.value = [..._events.value.where((e) => e.id != id)];
+  Future<EventRemoval> deleteEvent(int id) async {
+    final event = _withSpent(_events.value.firstWhere((e) => e.id == id));
+    _events.value = [..._events.value.where((e) => e.id != id)];
+    return EventRemoval(event, const []);
+  }
 
   @override
-  Future<void> restoreEvent(PlannedEvent event) async => _events.value = [..._events.value, event];
+  Future<void> restoreEvent(EventRemoval removal) async => _events.value = [..._events.value, removal.event];
 
   @override
   Stream<List<Goal>> watchAchievedGoals() => _achieved.stream;

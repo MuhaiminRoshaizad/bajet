@@ -1,5 +1,6 @@
 import 'package:bajet/features/plan/presentation/runway_chart.dart';
 import 'package:bajet/features/plan/presentation/runway_sums.dart';
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -201,5 +202,16 @@ void main() {
     expect(find.text('Monday 3 August'), findsOneWidget);
     // July is still there to look back at.
     expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_left_rounded)).onPressed, isNotNull);
+  });
+
+  testWidgets('Coming up counts only what is left of an event budget', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 7, 20));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 7300, categoryKey: 'food', event: EventLink(w.events.single.id, d(2026, 7, 20))));
+    });
+    await openRunway(tester);
+    await tester.dragUntilVisible(find.text('Birthday'), find.byType(ListView).first, const Offset(0, -200));
+    expect(find.text('RM73.00 of RM100.00 spent'), findsOneWidget);
+    expect(find.text('−RM27.00'), findsOneWidget);
   });
 }

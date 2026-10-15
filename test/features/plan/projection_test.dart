@@ -101,6 +101,21 @@ void main() {
     expect(p.goals.single.sums.costs, 20000);
   });
 
+  test('only what is left of an event budget is still to come', () {
+    Projection run(int spent) => project(
+          balance: 100000,
+          today: d(2026, 7, 1),
+          rules: const [],
+          recurring: const [],
+          events: [PlannedEvent(id: 1, name: 'Birthday', amount: 10000, categoryKey: 'gifts', isIncome: false, date: d(2026, 10, 30), repeatsYearly: true, spent: spent)],
+          goals: [Goal(id: 1, name: 'Laptop', price: 1000, targetDate: d(2028, 1, 1))],
+          buffer: 0,
+        );
+    // RM73 of RM100 spent: RM27 left this year, the full RM100 next year.
+    expect(run(7300).goals.single.sums.costs, 2700 + 10000);
+    expect(run(15000).goals.single.sums.costs, 10000);
+  });
+
   test('today only counts the part of the plan not yet logged', () {
     final p = run(flexSpentToday: 1200);
     expect(balanceOn(p, d(2026, 10, 14)), 180000);

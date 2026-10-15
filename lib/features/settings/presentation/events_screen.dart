@@ -42,7 +42,10 @@ class EventsScreen extends ConsumerWidget {
                     title: Text(e.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       [
-                        '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}',
+                        if (e.spent > 0 && !e.isIncome)
+                          '${Money.format(e.spent)} of ${Money.format(e.amount)} spent'
+                        else
+                          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}',
                         Dates.full(e.date),
                         if (e.repeatsYearly) 'every year',
                         if (!e.countInProjection) 'not counted',
@@ -139,13 +142,13 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final event = widget.event!;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    if (!await confirmDelete(context, title: 'Delete ${event.name}?', message: 'It comes off Runway and Coming up. Anything you have logged for it stays.')) return;
+    if (!await confirmDelete(context, title: 'Delete ${event.name}?', message: 'It comes off Runway and Coming up. Anything you have logged for it stays in History.')) return;
     final repo = ref.read(planRepositoryProvider);
-    await repo.deleteEvent(event.id);
+    final removal = await repo.deleteEvent(event.id);
     navigator.pop();
     messenger
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text('Deleted ${event.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreEvent(event))));
+      ..showSnackBar(SnackBar(content: Text('Deleted ${event.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreEvent(removal))));
   }
 
   @override

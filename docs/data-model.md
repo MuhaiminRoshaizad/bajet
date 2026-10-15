@@ -103,6 +103,12 @@ Future income or expenses, once or every year.
 | `count_in_projection` | bool | False for money that may not arrive      |
 | `repeats_yearly`      | bool | Same date each year; done moves `due_on` on a year |
 
+An expense event's `amount` is a budget. Entries spent on it carry its id and
+the `due_on` of the occurrence they were for; what they add up to is what is
+spent, and only what is left of the budget is still projected. Moving the
+date carries that spending along; a yearly event marked done starts its next
+year with nothing spent.
+
 ### `goals`
 | Column        | Type   | Notes                                           |
 |---------------|--------|-------------------------------------------------|
@@ -157,7 +163,7 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 4,
+  "format": 5,
   "settings": { "openingBalance": 150000, "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000 },
   "categories": [], "weeklyRules": [], "recurringItems": [],
   "plannedEvents": [], "goals": [], "favourites": [], "entries": []
@@ -176,6 +182,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 2      | Each entry carries `receipt`, the file name of its image |
 | 3      | Each recurring item carries `windowDays`; older files get 0 |
 | 4      | Each planned event carries `repeatsYearly`; older files get false |
+| 5      | Each entry carries `plannedEventId` and `plannedEventOn`; older files get null |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that

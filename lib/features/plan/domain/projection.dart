@@ -131,8 +131,10 @@ Projection project({
   final eventsOn = <DateTime, List<int>>{};
   for (final e in events) {
     if (e.done || !(e.countInProjection || whatIf.countUnconfirmed)) continue;
+    // Spending already logged against this occurrence has left the
+    // balance; only what is left of its budget is still to come.
     for (final day in e.occurrences(start, end)) {
-      (eventsOn[day] ??= []).add(e.signedAmount);
+      (eventsOn[day] ??= []).add(day == calendarDay(e.date) ? e.signedOutstanding : e.signedAmount);
     }
   }
 
