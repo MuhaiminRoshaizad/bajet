@@ -13,7 +13,6 @@ import '../../../core/widgets/soft.dart';
 import '../../accounts/domain/account_models.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_stack.dart';
-import '../../accounts/presentation/accounts_screen.dart';
 import '../../accounts/presentation/card_face.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
@@ -107,19 +106,15 @@ class _AccountsStack extends ConsumerWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => context.push(Routes.accounts),
-        child: Hero(
-          tag: AccountsScreen.heroTag,
-          child: AccountStack(
+        child: AccountStack(
+          accounts: accounts,
+          total: TotalCard(
+            look: look,
+            balance: balance,
             accounts: accounts,
-            spread: 0,
-            total: TotalCard(
-              look: look,
-              balance: balance,
-              accounts: accounts,
-              countUp: true,
-              hint: 'tap to see them',
-              below: rule == null ? null : _PlanPill(rule: rule!),
-            ),
+            countUp: true,
+            hint: 'tap to see them',
+            below: rule == null ? null : _PlanPill(rule: rule!),
           ),
         ),
       ),

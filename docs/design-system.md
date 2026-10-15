@@ -149,10 +149,14 @@ all of it is skipped and content appears in place.
 ### Account cards in motion
 
 The one place the app bounces. Today stacks the total with at most two
-accounts peeking out behind it; opening Your accounts flies the stack up
-(a shared `Hero`) and springs the cards apart with `Curves.easeOutBack`, each
-a little after the one above, folding back without a bounce on the way out.
-Tapping a card opens the account view over 700 ms: for the first 300 ms the
+accounts peeking out behind it. Your accounts leaves the total on Today and
+shows every account overlapped like a wallet, each with a strip for its name
+and balance (wider above a cash wallet, so its bills never cover a balance);
+arriving, the cards spring from one pile into their strips, each a little
+after the one above (`Curves.easeOutBack`). Scrolling opens them downward:
+the first 220 px of scroll are held, so the top card stays put while the
+cards below drop away until each is whole with a 14 px gap, and only then
+does the page scroll (`AccountListLayout`). Tapping a card opens the account view over 700 ms: for the first 300 ms the
 card flies from its place and turns from flat to upright (90°, growing to
 the upright size, `fastOutSlowIn`, no overshoot) while the page washes over;
 neighbours fade in from 50 ms, the name and balance from 300 ms and the dots

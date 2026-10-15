@@ -1,4 +1,5 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
+import 'package:bajet/features/accounts/presentation/account_list.dart';
 import 'package:bajet/features/accounts/presentation/account_stack.dart';
 import 'package:bajet/features/accounts/presentation/card_face.dart';
 import 'package:flutter/material.dart';
@@ -67,5 +68,28 @@ void main() {
     double top(String name) => tester.getRect(find.ancestor(of: find.text(name).first, matching: find.byType(AccountCard))).top;
     expect(total - top('Main account'), AccountStack.peek);
     expect(top('Main account') - top('Wallet 0'), AccountStack.peek);
+  });
+
+  testWidgets('Your accounts leaves the total on Today, and scrolling opens the cards downward', (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 3));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+    expect(find.byType(TotalCard), findsNothing);
+
+    double top(String name) => tester.getRect(find.ancestor(of: find.text(name).first, matching: find.byType(AccountCard))).top;
+    final first = top('Main account'), second = top('Wallet 0');
+    expect(second - first, AccountListLayout.strip);
+
+    // Scrolling part of the way: the top card holds, the next drops away.
+    await tester.drag(find.byType(ListView), const Offset(0, -110));
+    await tester.pumpAndSettle();
+    expect(top('Main account'), first);
+    expect(top('Wallet 0'), greaterThan(second));
+
+    // Fully open, every card is whole with a gap beneath it.
+    await tester.drag(find.byType(ListView), const Offset(0, -200));
+    await tester.pumpAndSettle();
+    final height = tester.getSize(find.byType(AccountCard).first).height;
+    expect(top('Wallet 0') - top('Main account'), height + AccountListLayout.gap);
   });
 }

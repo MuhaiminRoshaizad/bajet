@@ -41,19 +41,25 @@ void main() {
     expect(find.text('Brushed metal'), findsNothing);
   });
 
-  testWidgets('tapping the total card restyles it, and Match the app puts it back', (tester) async {
+  testWidgets('the total card is restyled from Settings, and Match the app puts it back', (tester) async {
     final world = await pumpApp(tester);
-    await openAccounts(tester);
-    await tester.tap(find.text('Total balance'));
+    Future<void> openTotal() async {
+      await tester.tap(find.text('Total card'));
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Accounts'));
+    await tester.pumpAndSettle();
+    await openTotal();
     await tester.tap(find.bySemanticsLabel('Champagne'));
     await tester.ensureVisible(find.text('Save total card'));
     await tester.tap(find.text('Save total card'));
     await tester.pumpAndSettle();
     expect(world.totalLook, const TotalCardLook(color: 0xFFCDB88A));
 
-    await tester.tap(find.text('Total balance'));
-    await tester.pumpAndSettle();
+    await openTotal();
     await tester.tap(find.bySemanticsLabel('Match the app'));
     await tester.ensureVisible(find.text('Save total card'));
     await tester.tap(find.text('Save total card'));
