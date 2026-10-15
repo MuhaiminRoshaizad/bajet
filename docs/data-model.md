@@ -200,8 +200,9 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 5,
-  "settings": { "openingBalance": 150000, "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000 },
+  "format": 6,
+  "settings": { "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000, "totalCardColor": null, "totalCardFinish": "brushed" },
+  "accounts": [], "transfers": [],
   "categories": [], "weeklyRules": [], "recurringItems": [],
   "plannedEvents": [], "goals": [], "favourites": [], "entries": []
 }
@@ -220,10 +221,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 3      | Each recurring item carries `windowDays`; older files get 0 |
 | 4      | Each planned event carries `repeatsYearly`; older files get false |
 | 5      | Each entry carries `plannedEventId` and `plannedEventOn`; older files get null |
-
-Until backups carry accounts of their own, `settings.openingBalance` holds the
-accounts' opening balances together, and a restore puts everything in one
-account.
+| 6      | `accounts` and `transfers`; each entry and recurring item carries `accountId`; settings carry `totalCardColor` and `totalCardFinish` in place of `openingBalance`, which older files turn into one account, "Main account", that every entry and item belongs to |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that

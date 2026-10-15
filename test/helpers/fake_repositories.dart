@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 
-import 'package:bajet/core/database/app_database.dart' show firstAccountColor, firstAccountName;
 import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';

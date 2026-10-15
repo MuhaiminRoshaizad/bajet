@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:bajet/core/database/app_database.dart';
+import 'package:bajet/features/accounts/data/drift_account_repository.dart';
+import 'package:bajet/features/accounts/domain/account_models.dart' as domain;
 import 'package:bajet/features/backup/data/drift_backup_repository.dart';
 import 'package:bajet/features/backup/domain/backup_repository.dart';
 import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
@@ -162,6 +164,48 @@ void main() {
     await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
     final birthday = (await DriftPlanRepository(target).watchEvents().first).firstWhere((e) => e.name == 'Birthday');
     expect(birthday.spent, 4500);
+  });
+
+  test('a format 5 backup, from before accounts, restores into one account holding its balance', () async {
+    await fill(source);
+    final v6 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    final settings = v6['settings']! as Map<String, Object?>;
+    final v5 = {
+      ...v6,
+      'format': 5,
+      'settings': {...settings, 'openingBalance': 150000}..remove('totalCardColor')..remove('totalCardFinish'),
+      'entries': [for (final e in v6['entries']! as List) {...(e as Map<String, Object?>)}..remove('accountId')],
+      'recurringItems': [for (final r in v6['recurringItems']! as List) {...(r as Map<String, Object?>)}..remove('accountId')],
+    }
+      ..remove('accounts')
+      ..remove('transfers');
+    await DriftBackupRepository(target).restore(v5);
+
+    final accounts = await DriftAccountRepository(target).watchAccounts().first;
+    expect([for (final a in accounts) (a.name, a.openingBalance)], [(domain.firstAccountName, 150000)]);
+    expect(await DriftLedgerRepository(target).watchBalance().first, 150000 - 50000 - 450);
+  });
+
+  test('accounts, the money moved between them and the total card survive a round trip', () async {
+    await fill(source);
+    final accounts = DriftAccountRepository(source);
+    final cash = await accounts.addAccount(const domain.AccountDraft(
+      kind: domain.AccountKind.cash,
+      name: 'Cash',
+      nickname: 'Wallet',
+      balance: 8450,
+      look: domain.CardLook(color: 0xFF6B3F24, finish: domain.CardFinish.leather),
+    ));
+    await accounts.transfer(fromId: 1, toId: cash, amount: 5000, day: d(2026, 7, 3), note: 'ATM');
+    await accounts.saveTotalLook(const domain.TotalCardLook(color: 0xFFCDB88A, finish: domain.CardFinish.gloss));
+    await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 570, categoryKey: 'food', accountId: cash));
+
+    final backup = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    await DriftBackupRepository(target).restore(backup);
+    expect(await DriftBackupRepository(target).export(), backup);
+    final restored = {for (final a in await DriftAccountRepository(target).watchAccounts().first) a.name: a.balance};
+    expect(restored, {domain.firstAccountName: 150000 - 50000 - 450 - 5000, 'Cash': 8450 + 5000 - 570});
+    expect(await DriftAccountRepository(target).watchTotalLook().first, const domain.TotalCardLook(color: 0xFFCDB88A, finish: domain.CardFinish.gloss));
   });
 
   test('receipts survive a round trip by file name', () async {

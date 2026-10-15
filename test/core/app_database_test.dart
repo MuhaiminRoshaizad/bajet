@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bajet/core/database/app_database.dart';
+import 'package:bajet/features/accounts/domain/account_models.dart' show firstAccountName;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 

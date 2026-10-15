@@ -4,6 +4,11 @@ library;
 
 enum AccountKind { cash, bank, ewallet }
 
+/// What an upgraded install's balance, or an older backup's, is filed under
+/// until the owner says where it really is: a neutral slate card.
+const firstAccountName = 'Main account';
+const firstAccountColor = 0xFF4A5866;
+
 /// How a card is drawn. Leather is the cash wallet's.
 enum CardFinish { brushed, matte, gloss, leather }
 

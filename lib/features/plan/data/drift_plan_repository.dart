@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../accounts/domain/account_models.dart' show firstAccountColor, firstAccountName;
 import '../../ledger/domain/ledger_models.dart' show goalCategoryKey;
 import '../domain/plan_models.dart' as domain;
 import '../domain/plan_models.dart' show EventRemoval, RecurringRemoval;

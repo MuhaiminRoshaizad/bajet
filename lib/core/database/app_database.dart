@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../../features/accounts/domain/account_models.dart' show firstAccountColor, firstAccountName;
 import '../../features/plan/domain/plan_models.dart' show maxWindowDays;
 import 'tables.dart';
 
@@ -113,11 +114,6 @@ class AppDatabase extends _$AppDatabase {
 }
 
 const _builtIn = {'goal', 'untracked'};
-
-/// What an upgraded install's balance is filed under until the owner says
-/// where it really is: a neutral slate card.
-const firstAccountName = 'Main account';
-const firstAccountColor = 0xFF4A5866;
 
 const _defaultCategories = [
   ('food', 'Food', EntryKind.expense, 'apricot', false),

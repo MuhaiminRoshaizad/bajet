@@ -1,10 +1,15 @@
+import '../../accounts/domain/account_models.dart' show firstAccountColor, firstAccountName;
+
 /// The version written into every backup file. Bump it, and add a step to
 /// [upgradeBackup], whenever the format changes.
 ///
 /// 1: first release. 2: entries carry `receipt`, an image file name.
 /// 3: recurring items carry `windowDays`. 4: planned events carry
 /// `repeatsYearly`. 5: entries carry `plannedEventId` and `plannedEventOn`.
-const backupFormatVersion = 5;
+/// 6: `accounts` and `transfers`; entries and recurring items carry
+/// `accountId`; settings carry the total card's look instead of
+/// `openingBalance`, which becomes the first account's.
+const backupFormatVersion = 6;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -46,6 +51,35 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
       'entries': [for (final e in (b['entries'] as List<Object?>? ?? const [])) {...e! as Map<String, Object?>, 'plannedEventId': null, 'plannedEventOn': null}],
     };
     format = 5;
+  }
+  if (format == 5) {
+    // Everything so far was one balance: it becomes one account, which every
+    // entry and recurring item belongs to.
+    final settings = b['settings'] as Map<String, Object?>?;
+    b = {
+      ...b,
+      'format': 6,
+      'settings': settings == null
+          ? null
+          : ({...settings, 'totalCardColor': null, 'totalCardFinish': 'brushed'}..remove('openingBalance')),
+      'accounts': [
+        {
+          'id': 1,
+          'kind': 'bank',
+          'name': firstAccountName,
+          'nickname': null,
+          'openingBalance': settings?['openingBalance'] ?? 0,
+          'color': firstAccountColor,
+          'inkColor': null,
+          'finish': 'brushed',
+          'sortOrder': 0,
+        },
+      ],
+      'transfers': const <Object?>[],
+      'entries': [for (final e in (b['entries'] as List<Object?>? ?? const [])) {...e! as Map<String, Object?>, 'accountId': 1}],
+      'recurringItems': [for (final r in (b['recurringItems'] as List<Object?>? ?? const [])) {...r! as Map<String, Object?>, 'accountId': 1}],
+    };
+    format = 6;
   }
   return b;
 }
