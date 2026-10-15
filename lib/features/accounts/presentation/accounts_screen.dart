@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/theme/app_spacing.dart';
+import '../../ledger/presentation/ledger_providers.dart';
+import '../domain/account_models.dart';
+import 'account_providers.dart';
+import 'account_stack.dart';
+import 'card_face.dart';
+
+/// Where the stack on Today opens: every account fanned out below the total.
+/// Arriving, the stack springs apart with a small bounce; leaving, it folds
+/// back up before the page goes.
+class AccountsScreen extends ConsumerStatefulWidget {
+  const AccountsScreen({super.key});
+
+  /// Shared with Today's stack, so the stack flies up to the top of this page.
+  static const heroTag = 'account-stack';
+
+  @override
+  ConsumerState<AccountsScreen> createState() => _AccountsScreenState();
+}
+
+class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTickerProviderStateMixin {
+  late final _spread = AnimationController(vsync: this, duration: const Duration(milliseconds: 650), reverseDuration: const Duration(milliseconds: 380));
+  var _leaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Starts once the page has faded in and the stack has landed.
+    Future.delayed(const Duration(milliseconds: 220), () {
+      if (mounted) _spread.forward();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) _spread.value = 1;
+  }
+
+  @override
+  void dispose() {
+    _spread.dispose();
+    super.dispose();
+  }
+
+  Future<void> _leave() async {
+    if (_leaving) return;
+    _leaving = true;
+    await _spread.reverse();
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accounts = ref.watch(accountsProvider).value ?? const [];
+    final look = ref.watch(totalCardLookProvider).value;
+    final balance = ref.watch(balanceProvider).value;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Your accounts'), leading: BackButton(onPressed: _leave)),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.xxl, AppSpacing.l, AppSpacing.xxl),
+          children: [
+            Hero(
+              tag: AccountsScreen.heroTag,
+              child: AnimatedBuilder(
+                animation: _spread,
+                builder: (context, _) => AccountStack(
+                  accounts: accounts,
+                  // Out with a bounce past the resting place, back in without one.
+                  spread: _leaving ? Curves.easeInCubic.transform(_spread.value) : Curves.easeOutBack.transform(_spread.value),
+                  total: TotalCard(look: look ?? const TotalCardLook(), balance: balance, accounts: accounts),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

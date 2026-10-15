@@ -12,7 +12,7 @@ void main() {
     await pumpApp(tester, seed: (w) {
       w.add(EntryDraft(day: testToday, isIncome: false, amount: 1250, categoryKey: 'food', label: 'Coffee'));
     });
-    expect(find.text('RM1,487.50'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp(r'Total balance RM1,487.50')), findsOneWidget);
     expect(find.text('Coffee'), findsOneWidget);
   });
 

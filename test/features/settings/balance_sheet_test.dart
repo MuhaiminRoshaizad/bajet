@@ -4,9 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/app_harness.dart';
 
 void main() {
-  testWidgets("tapping Today's balance offers to match the bank", (tester) async {
+  Future<void> openBalance(WidgetTester tester) async {
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Balance'));
+  }
+
+  testWidgets('Settings → Balance offers to match the bank', (tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('RM1,500.00'));
+    await openBalance(tester);
     await tester.pumpAndSettle();
     expect(find.text('Your balance'), findsOneWidget);
     expect(find.text('bajet has RM1,500.00 from your entries.'), findsOneWidget);
@@ -18,7 +24,7 @@ void main() {
 
   testWidgets('the starting balance can be fixed, moving every figure since', (tester) async {
     final world = await pumpApp(tester);
-    await tester.tap(find.text('RM1,500.00'));
+    await openBalance(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Fix the starting balance instead'));
     await tester.pumpAndSettle();
@@ -30,6 +36,6 @@ void main() {
 
     expect(world.settings!.openingBalance, 160000);
     expect(world.entries, isEmpty);
-    expect(find.text('RM1,600.00'), findsOneWidget);
+    expect(find.text('RM1,600.00'), findsWidgets);
   });
 }

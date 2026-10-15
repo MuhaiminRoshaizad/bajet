@@ -9,6 +9,9 @@ DateTime d(int y, int m, int day) => DateTime.utc(y, m, day);
 void main() {
   testWidgets("Today's empty goal card leads to adding one", (tester) async {
     await pumpApp(tester);
+    // The goal card sits below the account stack; bring it clear of the bottom bar.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Add a goal'));
     await tester.pumpAndSettle();
     expect(find.text('Goals'), findsOneWidget);
@@ -52,6 +55,9 @@ void main() {
 
   testWidgets('a new goal needs a name, price and buy day', (tester) async {
     final world = await pumpApp(tester);
+    // The goal card sits below the account stack; bring it clear of the bottom bar.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -300));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Add a goal'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Add a goal'));

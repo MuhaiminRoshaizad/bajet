@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/routes.dart';
+import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/backup/presentation/backup_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
@@ -65,6 +66,19 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (context, state) => const TodayScreen(),
               routes: [
                 page('history', const HistoryScreen()),
+                // Fades in rather than sliding, so the stack can fly up from
+                // Today and spread out where it lands.
+                GoRoute(
+                  path: 'accounts',
+                  parentNavigatorKey: root,
+                  pageBuilder: (context, state) => CustomTransitionPage(
+                    key: state.pageKey,
+                    transitionDuration: const Duration(milliseconds: 300),
+                    reverseTransitionDuration: const Duration(milliseconds: 260),
+                    transitionsBuilder: (context, animation, _, child) => FadeTransition(opacity: animation, child: child),
+                    child: const AccountsScreen(),
+                  ),
+                ),
                 page('checkin', const CheckinScreen()),
                 page('settings', const SettingsScreen(), routes: [
                   page('favourites', const FavouritesScreen()),

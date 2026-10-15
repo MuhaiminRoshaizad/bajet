@@ -7,16 +7,19 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
+import '../../accounts/domain/account_models.dart';
+import '../../accounts/presentation/account_providers.dart';
+import '../../accounts/presentation/account_stack.dart';
+import '../../accounts/presentation/accounts_screen.dart';
+import '../../accounts/presentation/card_face.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
-import '../../settings/presentation/balance_sheet.dart';
 import 'today_providers.dart';
 import 'week_strip.dart';
 
@@ -48,7 +51,7 @@ class TodayScreen extends ConsumerWidget {
           RiseIn(
             spacing: AppSpacing.l,
             children: [
-              _BalanceCard(balance: balance.value, rule: rule),
+              _AccountsStack(balance: balance.value, rule: rule),
               if (today.weekday == DateTime.sunday) const _CheckinCard(),
               for (final item in due) _DueCard(item: item),
               if (days != null && weekSpent != null && settings != null)
@@ -87,63 +90,57 @@ class _Header extends StatelessWidget {
       );
 }
 
-class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({required this.balance, required this.rule});
+/// The total with the accounts stacked behind it. Tapping it opens them all.
+class _AccountsStack extends ConsumerWidget {
+  const _AccountsStack({required this.balance, required this.rule});
 
   final int? balance;
   final WeeklyRule? rule;
 
   @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final animate = !MediaQuery.disableAnimationsOf(context);
-    // Tapping the balance is where anyone looks to correct it.
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accounts = ref.watch(accountsProvider).value ?? const [];
+    final look = ref.watch(totalCardLookProvider).value ?? const TotalCardLook();
     return Semantics(
       button: true,
-      hint: 'Change the balance',
+      hint: 'See your accounts',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => showBalanceSheet(context),
-        child: SoftCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text('Balance', style: TextStyle(color: c.muted, fontWeight: FontWeight.w500))),
-                  Icon(Icons.edit_outlined, size: 18, color: c.muted),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              // Counts to a new balance after a log, so the change is visible.
-              TweenAnimationBuilder<double>(
-                tween: Tween(end: (balance ?? 0).toDouble()),
-                duration: animate ? AppMotion.enter : Duration.zero,
-                curve: AppMotion.ease,
-                builder: (context, value, _) => FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    balance == null ? '—' : Money.format(value.round()),
-                    semanticsLabel: balance == null ? 'Balance loading' : 'Balance ${Money.format(balance!)}',
-                    style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w700, letterSpacing: -1.5, fontFeatures: [FontFeature.tabularFigures()]),
-                  ),
-                ),
-              ),
-              if (rule != null) ...[
-                const SizedBox(height: AppSpacing.m),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-                  decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-                  child: Text(
-                    rule!.plannedSpend > 0 ? '${rule!.label} · up to ${Money.format(rule!.plannedSpend)}' : '${rule!.label} · no spending planned',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ],
+        onTap: () => context.push(Routes.accounts),
+        child: Hero(
+          tag: AccountsScreen.heroTag,
+          child: AccountStack(
+            accounts: accounts,
+            spread: 0,
+            total: TotalCard(
+              look: look,
+              balance: balance,
+              accounts: accounts,
+              countUp: true,
+              hint: 'tap to see them',
+              below: rule == null ? null : _PlanPill(rule: rule!),
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PlanPill extends StatelessWidget {
+  const _PlanPill({required this.rule});
+
+  final WeeklyRule rule;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+      decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
+      child: Text(
+        rule.plannedSpend > 0 ? '${rule.label} · up to ${Money.format(rule.plannedSpend)}' : '${rule.label} · no spending planned',
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.primary),
       ),
     );
   }

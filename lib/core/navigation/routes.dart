@@ -6,6 +6,7 @@ abstract final class Routes {
   static const today = '/today';
   static const history = '/today/history';
   static const checkin = '/today/checkin';
+  static const accounts = '/today/accounts';
   static const settings = '/today/settings';
   static const favourites = '/today/settings/favourites';
   static const rhythm = '/today/settings/rhythm';

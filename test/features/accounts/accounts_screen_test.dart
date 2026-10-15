@@ -1,0 +1,42 @@
+import 'package:bajet/features/accounts/domain/account_models.dart';
+import 'package:bajet/features/accounts/presentation/account_stack.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../helpers/app_harness.dart';
+import '../../helpers/fake_repositories.dart';
+
+void addAccounts(FakeWorld w, int count) {
+  for (var i = 0; i < count; i++) {
+    w.addAccount(AccountDraft(kind: AccountKind.ewallet, name: 'Wallet $i', balance: 1000 * (i + 1), look: const CardLook(color: 0xFF00877F)));
+  }
+}
+
+void main() {
+  testWidgets("Today's stack stays the same height however many accounts there are", (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 1));
+    final two = tester.getSize(find.byType(AccountStack)).height;
+
+    await pumpApp(tester, seed: (w) => addAccounts(w, 6));
+    expect(tester.getSize(find.byType(AccountStack)).height, two);
+    expect(find.text('7 accounts · tap to see them'), findsOneWidget);
+  });
+
+  testWidgets('the stack opens Your accounts, fanned out with no bottom bar, and back folds it away', (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 3));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your accounts'), findsOneWidget);
+    expect(find.byKey(const ValueKey('tab-Today')), findsNothing);
+    // Fanned out, every account's name shows in its strip.
+    for (final name in ['Main account', 'Wallet 0', 'Wallet 1', 'Wallet 2']) {
+      expect(find.text(name).hitTestable(), findsWidgets, reason: name);
+    }
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Your accounts'), findsNothing);
+    expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget);
+  });
+}

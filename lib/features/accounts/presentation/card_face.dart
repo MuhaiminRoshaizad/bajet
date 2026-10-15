@@ -311,10 +311,12 @@ class _LeatherPainter extends CustomPainter {
 /// The front of the stack: every account together. With no colour of its
 /// own it takes the app's surface, light or dark.
 class TotalCard extends StatelessWidget {
-  const TotalCard({super.key, required this.look, required this.balance, required this.accounts, this.below, this.hint});
+  const TotalCard({super.key, required this.look, required this.balance, required this.accounts, this.below, this.hint, this.countUp = false});
 
   final TotalCardLook look;
-  final int balance;
+
+  /// Null while it loads.
+  final int? balance;
   final List<Account> accounts;
 
   /// Under the balance, such as today's plan.
@@ -322,6 +324,9 @@ class TotalCard extends StatelessWidget {
 
   /// After the number of accounts, such as how to open them.
   final String? hint;
+
+  /// Count up to the balance, as Today does when it opens.
+  final bool countUp;
 
   static const _dots = 6;
 
@@ -345,11 +350,24 @@ class TotalCard extends StatelessWidget {
               right: inset,
               top: box.maxHeight * 0.09,
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Total balance', style: TextStyle(color: ink.withValues(alpha: 0.75), fontSize: 13 * k)),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(Money.format(balance), style: TextStyle(color: ink, fontSize: 38 * k, fontWeight: FontWeight.w800, letterSpacing: -0.5, height: 1.15)),
+                ExcludeSemantics(child: Text('Total balance', style: TextStyle(color: ink.withValues(alpha: 0.75), fontSize: 13 * k))),
+                // Counts up from three quarters on arrival, and to each new
+                // balance after a log, so a change is seen happening.
+                TweenAnimationBuilder<double>(
+                  // Starts afresh once the balance has loaded.
+                  key: ValueKey(balance == null),
+                  tween: Tween(begin: (balance ?? 0) * (countUp ? 0.75 : 1), end: (balance ?? 0).toDouble()),
+                  duration: !countUp || MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 1400),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, _) => FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      balance == null ? '—' : Money.format(value.round()),
+                      semanticsLabel: balance == null ? 'Total balance loading' : 'Total balance ${Money.format(balance!)}',
+                      style: TextStyle(color: ink, fontSize: 38 * k, fontWeight: FontWeight.w800, letterSpacing: -0.5, height: 1.15, fontFeatures: const [FontFeature.tabularFigures()]),
+                    ),
+                  ),
                 ),
                 if (below != null) ...[SizedBox(height: 6 * k), below!],
               ]),
