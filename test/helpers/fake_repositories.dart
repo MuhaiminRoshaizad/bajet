@@ -173,6 +173,8 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final _totalLook = _Live(const TotalCardLook());
   var _nextAccountId = 1;
 
+  TotalCardLook get totalLook => _totalLook.value;
+
   void _openFirstAccount(int opening) => _accountRows.value = [
         Account(
           id: _nextAccountId++,

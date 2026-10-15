@@ -98,7 +98,10 @@ the owner picked its colour, such as gold on black. The provider's name is
 plain text, at the top and again as the wordmark; there are no logos or
 issuers' card designs, which are trademarks. Cash is a stitched leather
 wallet instead, with one to five plain green bills sticking out of the top
-as the balance grows (`billsFor`) and none when it is empty. These card
+as the balance grows (`billsFor`) and none when it is empty. The colours come from the app's own palette (`card_palette.dart`): sixteen
+for cards, eight leathers for the wallet, and "Match the app" for the total
+card. A card's look is changed from the pencil on its account view, the
+total card's by tapping it on Your accounts. These card
 colours are the owner's data, so they are the one place colours do not come
 from the theme; the total card, with no colour of its own, takes the app's
 surface.

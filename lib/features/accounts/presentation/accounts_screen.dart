@@ -8,6 +8,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/account_models.dart';
 import 'account_providers.dart';
 import 'account_stack.dart';
+import 'card_designer.dart';
 import 'card_face.dart';
 
 /// Where the stack on Today opens: every account fanned out below the total.
@@ -89,9 +90,10 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTick
                   key: _stack,
                   accounts: accounts,
                   onAccountTap: _spread.isCompleted ? (a) => context.push(Routes.account(a.id), extra: _placeOf) : null,
+                  onTotalTap: _spread.isCompleted ? () => showTotalCardDesigner(context) : null,
                   // Out with a bounce past the resting place, back in without one.
                   spread: _leaving ? Curves.easeInCubic.transform(_spread.value) : Curves.easeOutBack.transform(_spread.value),
-                  total: TotalCard(look: look ?? const TotalCardLook(), balance: balance, accounts: accounts),
+                  total: TotalCard(look: look ?? const TotalCardLook(), balance: balance, accounts: accounts, hint: 'tap to restyle'),
                 ),
               ),
             ),

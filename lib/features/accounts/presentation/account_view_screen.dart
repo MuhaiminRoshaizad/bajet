@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../domain/account_models.dart';
 import 'account_providers.dart';
+import 'card_designer.dart';
 import 'card_face.dart';
 
 /// Where each account's card sits on the page it was opened from, so the card
@@ -86,7 +87,15 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
               opacity: part(0.43, 0.71),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.s, AppSpacing.s, 0),
-                child: Row(children: [BackButton(onPressed: () => Navigator.of(context).maybePop())]),
+                child: Row(children: [
+                  BackButton(onPressed: () => Navigator.of(context).maybePop()),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Edit this card',
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => showCardDesigner(context, accounts[_index.clamp(0, accounts.length - 1)]),
+                  ),
+                ]),
               ),
             ),
             FadeTransition(opacity: part(0.43, 0.71), child: _Titles(pages: _pages!, accounts: accounts)),
