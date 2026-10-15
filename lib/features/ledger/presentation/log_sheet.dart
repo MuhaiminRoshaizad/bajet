@@ -269,7 +269,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                   const SizedBox(height: AppSpacing.s),
                   Center(
                     child: _event == null
-                        ? _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day)
+                        ? _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day, editing: widget.editing)
                         : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
                   ),
                 ],
@@ -474,19 +474,22 @@ class _EventHint extends ConsumerWidget {
 /// Says whether the amount fits the day's planned spend, and by how much it
 /// would set the goal back if not. Fixed costs and income get no hint.
 class _PlanHint extends ConsumerWidget {
-  const _PlanHint({required this.amount, required this.isIncome, required this.categoryKey, required this.day});
+  const _PlanHint({required this.amount, required this.isIncome, required this.categoryKey, required this.day, required this.editing});
 
   final int amount;
   final bool isIncome;
   final String? categoryKey;
   final DateTime day;
+  final Entry? editing;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final categories = ref.watch(categoriesProvider).value;
     final rules = ref.watch(rulesProvider).value;
-    final entries = ref.watch(recentEntriesProvider).value;
+    // An entry being edited is already logged; leave it out so it is not
+    // counted twice, once as logged and once as the amount typed.
+    final entries = ref.watch(recentEntriesProvider).value?.where((e) => e.id != editing?.id);
     final category = categories?.where((x) => x.key == categoryKey).firstOrNull;
     if (isIncome || amount == 0 || category == null || category.isFixed || rules == null || entries == null) {
       return const SizedBox(height: 28);

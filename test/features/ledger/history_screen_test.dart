@@ -1,4 +1,5 @@
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
+import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/core/navigation/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -49,6 +50,18 @@ void main() {
 
     expect(world.entries.firstWhere((e) => e.label == 'Coffee').amount, 4500);
     expect(find.text('Saved changes'), findsOneWidget);
+  });
+
+  testWidgets('editing an entry does not count it against the day twice', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.saveRule(WeeklyRule(weekday: testToday.weekday, label: 'Weekday', type: DayType.spend, plannedSpend: 1000));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 570, categoryKey: 'food', label: 'Lunch'));
+    });
+    await openHistory(tester);
+
+    await tester.tap(find.text('Lunch'));
+    await tester.pumpAndSettle();
+    expect(find.text("Within today's plan"), findsOneWidget);
   });
 
   testWidgets('swiping asks before deleting, and Keep leaves the entry', (tester) async {
