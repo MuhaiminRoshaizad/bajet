@@ -113,8 +113,10 @@ class AppColors extends ThemeExtension<AppColors> {
     background: Color(0xFF1D2329),
     card: Color(0xFF1D2329),
     well: Color(0xFF161B20),
-    highlight: Color(0x1FFFFFFF),
-    shade: Color(0xB3080A0C),
+    // On a dark surface a white glow reads as fog, not light, so the lit
+    // edge stays faint and the shadowed edge does most of the moulding.
+    highlight: Color(0x0DFFFFFF),
+    shade: Color(0xE6050709),
     onBad: Color(0xFF2A0D0E),
     ink: Color(0xFFE3E9EE),
     muted: Color(0xFFA3ACB4),

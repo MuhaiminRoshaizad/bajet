@@ -24,8 +24,8 @@ Every text colour passes WCAG AA against both `background` and `well`.
 | `background`   | `#E3E9EF`   | `#1D2329`   | The one surface: screens, cards, sheets |
 | `card`         | `#E3E9EF`   | `#1D2329`   | Cards; equal to `background` by design |
 | `well`         | `#D7DFE7`   | `#161B20`   | Inputs, tracks, notices, selected keys |
-| `highlight`    | white 90%   | white 12%   | Lit edge of a soft surface            |
-| `shade`        | `#A3B1C0` 60% | black 70% | Shadowed edge of a soft surface       |
+| `highlight`    | white 90%   | white 5%    | Lit edge of a soft surface            |
+| `shade`        | `#A3B1C0` 60% | black 90% | Shadowed edge of a soft surface       |
 | `ink`          | `#1E2830`   | `#E3E9EE`   | Primary text                          |
 | `muted`        | `#545E68`   | `#A3ACB4`   | Secondary text, labels                |
 | `line`         | `#D0D9E2`   | `#2B333B`   | Dividers inside cards                 |
