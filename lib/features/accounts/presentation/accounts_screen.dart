@@ -10,6 +10,7 @@ import 'account_providers.dart';
 import 'account_stack.dart';
 import 'card_designer.dart';
 import 'card_face.dart';
+import 'move_money_sheet.dart';
 
 /// Where the stack on Today opens: every account fanned out below the total.
 /// Arriving, the stack springs apart with a small bounce; leaving, it folds
@@ -98,6 +99,14 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTick
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
+            if (accounts.length > 1) ...[
+              FilledButton.icon(
+                onPressed: () => showMoveMoney(context, fromId: accounts.first.id),
+                icon: const Icon(Icons.swap_horiz_rounded),
+                label: const Text('Move money'),
+              ),
+              const SizedBox(height: AppSpacing.s),
+            ],
             FilledButton.tonalIcon(onPressed: () => showAddAccount(context), icon: const Icon(Icons.add), label: const Text('Add an account')),
           ],
         ),

@@ -171,7 +171,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   // Accounts
 
   final _accountRows = _Live<List<Account>>([]);
-  final _transfers = _Live<List<({int from, int to, int amount, DateTime day})>>([]);
+  final _transfers = _Live<List<({int id, int from, int to, int amount, DateTime day})>>([]);
   final _totalLook = _Live(const TotalCardLook());
   var _nextAccountId = 1;
 
@@ -239,9 +239,15 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
 
   @override
   Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note}) async {
-    _transfers.value = [..._transfers.value, (from: fromId, to: toId, amount: amount, day: day)];
-    return _transfers.value.length;
+    final id = _transfers.value.length + 1;
+    _transfers.value = [..._transfers.value, (id: id, from: fromId, to: toId, amount: amount, day: day)];
+    return id;
   }
+
+  @override
+  Future<void> deleteTransfer(int id) async => _transfers.value = [..._transfers.value.where((t) => t.id != id)];
+
+  int get transferCount => _transfers.value.length;
 
   @override
   Stream<TotalCardLook> watchTotalLook() => _totalLook.stream;

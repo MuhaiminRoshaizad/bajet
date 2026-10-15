@@ -75,6 +75,9 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
           );
 
   @override
+  Future<void> deleteTransfer(int id) => (_db.delete(_db.transfers)..where((t) => t.id.equals(id))).go();
+
+  @override
   Stream<domain.TotalCardLook> watchTotalLook() => _db.select(_db.appSettings).watchSingleOrNull().map((s) => s == null
       ? const domain.TotalCardLook()
       : domain.TotalCardLook(color: s.totalCardColor, finish: domain.CardFinish.values.byName(s.totalCardFinish.name)));

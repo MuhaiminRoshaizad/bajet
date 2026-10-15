@@ -11,6 +11,7 @@ import '../domain/account_models.dart';
 import 'account_providers.dart';
 import 'card_designer.dart';
 import 'card_face.dart';
+import 'move_money_sheet.dart';
 
 /// Where each account's card sits on the page it was opened from, so the card
 /// can fly out of its place and back into it, whichever account is showing
@@ -125,7 +126,28 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
                 ),
               ),
             ),
-            FadeTransition(opacity: part(0.57, 1), child: _Dots(pages: _pages!, count: accounts.length)),
+            FadeTransition(
+              opacity: part(0.57, 1),
+              child: Column(children: [
+                _Dots(pages: _pages!, count: accounts.length),
+                // Moving money needs somewhere to move it to.
+                if (accounts.length > 1)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.l, AppSpacing.l, 0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: FilledButton(
+                          key: ValueKey(accounts[_index.clamp(0, accounts.length - 1)].id),
+                          onPressed: () => showMoveMoney(context, fromId: accounts[_index.clamp(0, accounts.length - 1)].id),
+                          child: Text('Move money from ${accounts[_index.clamp(0, accounts.length - 1)].name}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
+                    ),
+                  ),
+              ]),
+            ),
             const SizedBox(height: AppSpacing.xxl),
           ]),
         ),

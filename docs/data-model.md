@@ -50,7 +50,8 @@ plus its entries and the transfers into it, less those out of it, since.
 ### `transfers`
 Money moved from one account to another. Neither spending nor income, so it is
 kept apart from `entries`: the total balance, the weekly allowance, Insights
-and Runway never see it.
+and Runway never see it. Moving money (from an account view, or Your accounts)
+writes one row dated today and offers to undo it, which deletes the row.
 
 | Column            | Type  | Notes                                |
 |-------------------|-------|--------------------------------------|
