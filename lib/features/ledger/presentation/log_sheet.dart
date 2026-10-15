@@ -12,6 +12,7 @@ import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/soft.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
@@ -150,6 +151,26 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     widget.messenger
       ..clearSnackBars()
       ..showSnackBar(SnackBar(content: Text(message), action: SnackBarAction(label: 'Undo', onPressed: undo)));
+  }
+
+  /// Removes the entry being edited, after asking, with Undo on the page.
+  Future<void> _delete() async {
+    final entry = widget.editing!;
+    final name = entry.label ?? _categoryLabel(entry.categoryKey);
+    final confirmed = await confirmDelete(
+      context,
+      title: 'Delete this entry?',
+      message: '$name ${Money.format(entry.amount)} on ${Dates.full(entry.day)}. '
+          'Your balance will change by ${entry.isIncome ? '−' : '+'}${Money.format(entry.amount)}.',
+    );
+    if (!confirmed || !mounted) return;
+    final repo = ref.read(ledgerRepositoryProvider);
+    await repo.delete(entry.id);
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    widget.messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text('Deleted $name'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restore(entry))));
   }
 
   void _manageFavourites() {
@@ -318,6 +339,11 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     const SizedBox(height: AppSpacing.s),
                     ReceiptField(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r)),
                     const SizedBox(height: AppSpacing.s),
+                    if (widget.editing != null) ...[
+                      const SizedBox(height: AppSpacing.s),
+                      DeleteButton(label: 'Delete entry', onPressed: _delete),
+                      const SizedBox(height: AppSpacing.s),
+                    ],
                   ],
                 ),
               ),

@@ -98,4 +98,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(FilledButton, 'Type the amount'), findsOneWidget);
   });
+
+  testWidgets('an entry can be deleted from its edit sheet too, with undo', (tester) async {
+    final world = await pumpApp(tester, seed: seedTwoDays);
+    await openHistory(tester);
+    final before = world.entries.length;
+    await tester.tap(find.text('Coffee'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Delete entry'));
+    await tester.tap(find.text('Delete entry'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(world.entries.length, before - 1);
+    expect(find.text('Save changes'), findsNothing);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.entries.length, before);
+  });
 }
