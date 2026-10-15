@@ -45,4 +45,14 @@ void main() {
     expect(RinggitCentsFormatter.parse('1,250.00'), 125000);
     expect(RinggitCentsFormatter.parse(''), 0);
   });
+
+  test('a prefix is written in front and ignored when reading back', () {
+    const f = RinggitCentsFormatter(prefix: 'RM');
+    TextEditingValue type(String text) => f.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: text));
+    expect(type('570').text, 'RM5.70');
+    expect(type('RM5.705').text, 'RM57.05');
+    expect(type('RM5.7').text, 'RM0.57');
+    expect(type('RM').text, '');
+    expect(RinggitCentsFormatter.parse('RM1,250.00'), 125000);
+  });
 }
