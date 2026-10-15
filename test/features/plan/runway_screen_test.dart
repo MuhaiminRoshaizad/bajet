@@ -71,12 +71,42 @@ void main() {
       w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 8, 20));
     });
     await openRunway(tester);
-    final rent = tester.getTopLeft(find.text('Rent').first).dy;
-    final laptop = tester.getTopLeft(find.text('Laptop')).dy;
+    await tester.dragUntilVisible(find.text('Sun 05/07/2026'), find.byType(ListView).first, const Offset(0, -200));
+    // The next 30 days first; later dates open on request.
+    expect(find.text('Wed 05/08/2026'), findsNothing);
+    await tester.dragUntilVisible(find.textContaining('Show all until buy day'), find.byType(ListView).first, const Offset(0, -200));
+    await tester.ensureVisible(find.textContaining('Show all until buy day'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Show all until buy day'));
+    await tester.pumpAndSettle();
+
+    await tester.dragUntilVisible(find.text('Thu 20/08/2026'), find.byType(ListView).first, const Offset(0, -200));
+    await tester.ensureVisible(find.text('Thu 20/08/2026'));
+    await tester.pumpAndSettle();
+    final rent = tester.getTopLeft(find.text('Rent').last).dy;
+    final laptop = tester.getTopLeft(find.text('Thu 20/08/2026')).dy;
     expect(rent, lessThan(laptop));
-    expect(find.text('05/07/2026'), findsOneWidget);
-    expect(find.text('05/08/2026'), findsOneWidget);
-    expect(find.text('20/08/2026 · buy day'), findsOneWidget);
+    expect(find.text('Wed 05/08/2026'), findsOneWidget);
+    expect(find.text('Thu 20/08/2026'), findsOneWidget);
+    expect(find.text('buy day'), findsOneWidget);
+  });
+
+  testWidgets('bills on the same day share one heading with the day\'s total', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 5));
+      w.addRecurring(name: 'Phone', isIncome: false, amount: 4800, categoryKey: 'bills', nextDue: d(2026, 7, 5));
+    });
+    await openRunway(tester);
+    await tester.dragUntilVisible(find.text('Phone'), find.byType(ListView).first, const Offset(0, -200));
+    expect(find.text('Sun 05/07/2026'), findsOneWidget);
+    expect(find.text('−RM548.00'), findsOneWidget);
+  });
+
+  testWidgets('a date with one item does not repeat its amount in the heading', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 5)));
+    await openRunway(tester);
+    await tester.dragUntilVisible(find.text('Sun 05/07/2026'), find.byType(ListView).first, const Offset(0, -200));
+    expect(find.text('−RM500.00'), findsOneWidget);
   });
 
   testWidgets('a what-if moves buy day without changing the plan, and resets', (tester) async {

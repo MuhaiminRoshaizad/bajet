@@ -1,12 +1,23 @@
 import 'plan_models.dart';
 
 class UpcomingItem {
-  const UpcomingItem({required this.date, required this.name, required this.signedAmount, this.lastDate, this.counted = true, this.isGoal = false});
+  const UpcomingItem({
+    required this.date,
+    required this.name,
+    required this.signedAmount,
+    this.lastDate,
+    this.categoryKey,
+    this.counted = true,
+    this.isGoal = false,
+  });
 
   final DateTime date;
 
   /// The last day it may land, for a bill or income that moves around.
   final DateTime? lastDate;
+
+  /// A bill's or income's category; null for one-off events and goals.
+  final String? categoryKey;
   final String name;
   final int signedAmount;
 
@@ -33,6 +44,7 @@ List<UpcomingItem> upcoming({
             lastDate: r.windowDays == 0 ? null : DateTime.utc(due.year, due.month, due.day + r.windowDays),
             name: r.name,
             signedAmount: r.signedAmount,
+            categoryKey: r.categoryKey,
           ),
     for (final e in events.where((e) => !e.done && !calendarDay(e.date).isBefore(from) && !calendarDay(e.date).isAfter(to)))
       UpcomingItem(date: calendarDay(e.date), name: e.name, signedAmount: e.signedAmount, counted: e.countInProjection),

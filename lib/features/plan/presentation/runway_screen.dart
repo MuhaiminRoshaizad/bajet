@@ -12,6 +12,7 @@ import '../domain/upcoming.dart';
 import 'plan_providers.dart';
 import 'runway_chart.dart';
 import 'runway_sums.dart';
+import 'runway_upcoming.dart';
 import 'what_if_panel.dart';
 
 final upcomingProvider = Provider<List<UpcomingItem>?>((ref) {
@@ -112,55 +113,9 @@ class RunwayScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(left: AppSpacing.xs, top: AppSpacing.s),
                   child: Text('Coming up', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
                 ),
-                SoftCard(
-                  child: items.isEmpty
-                      ? Text('No bills, income or events planned yet.', style: TextStyle(color: c.muted))
-                      : Column(
-                          children: [
-                            for (final (i, item) in items.take(10).indexed) ...[
-                              if (i > 0) Divider(color: c.line),
-                              _UpcomingRow(item: item),
-                            ],
-                          ],
-                        ),
-                ),
+                UpcomingCard(items: items),
               ],
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UpcomingRow extends StatelessWidget {
-  const _UpcomingRow({required this.item});
-
-  final UpcomingItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final income = item.signedAmount > 0;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 48),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
-                Text(
-                  [Dates.span(item.date, item.lastDate ?? item.date), if (!item.counted) 'not counted', if (item.isGoal) 'buy day'].join(' · '),
-                  style: TextStyle(color: c.muted, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${income ? '+' : '−'}${Money.format(item.signedAmount.abs())}',
-            style: TextStyle(fontWeight: FontWeight.w700, color: income ? c.good : c.ink, fontFeatures: const [FontFeature.tabularFigures()]),
-          ),
         ],
       ),
     );
