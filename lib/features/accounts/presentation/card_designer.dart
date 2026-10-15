@@ -24,8 +24,11 @@ Future<void> showTotalCardDesigner(BuildContext context) => _open(context, const
 /// it holds now.
 Future<void> showAddAccount(BuildContext context) async {
   final kind = await showModalBottomSheet<AccountKind>(context: context, useSafeArea: true, builder: (_) => const _KindChooser());
-  if (kind != null && context.mounted) await _open(context, _CardDesigner(newKind: kind));
+  if (kind != null && context.mounted) await showNewAccount(context, kind);
 }
+
+/// Opens a new account of [kind] in the designer.
+Future<void> showNewAccount(BuildContext context, AccountKind kind) => _open(context, _CardDesigner(newKind: kind));
 
 class _KindChooser extends StatelessWidget {
   const _KindChooser();
@@ -36,24 +39,34 @@ class _KindChooser extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('Add an account', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: AppSpacing.l),
-          Row(children: [
-            for (final (kind, label, icon) in const [
-              (AccountKind.cash, 'Cash', Icons.payments_outlined),
-              (AccountKind.bank, 'Bank account', Icons.account_balance_outlined),
-              (AccountKind.ewallet, 'E-wallet', Icons.phone_iphone_outlined),
-            ]) ...[
-              if (kind != AccountKind.cash) const SizedBox(width: AppSpacing.s),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(kind),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 96), padding: const EdgeInsets.all(AppSpacing.s)),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon), const SizedBox(height: AppSpacing.xs), Text(label, textAlign: TextAlign.center)]),
-                ),
-              ),
-            ],
-          ]),
+          AccountKindTiles(onPick: (kind) => Navigator.of(context).pop(kind)),
         ]),
       );
+}
+
+/// Cash, a bank account or an e-wallet, as three large tiles.
+class AccountKindTiles extends StatelessWidget {
+  const AccountKindTiles({super.key, required this.onPick});
+
+  final ValueChanged<AccountKind> onPick;
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        for (final (kind, label, icon) in const [
+          (AccountKind.cash, 'Cash', Icons.payments_outlined),
+          (AccountKind.bank, 'Bank account', Icons.account_balance_outlined),
+          (AccountKind.ewallet, 'E-wallet', Icons.phone_iphone_outlined),
+        ]) ...[
+          if (kind != AccountKind.cash) const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => onPick(kind),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 96), padding: const EdgeInsets.all(AppSpacing.s)),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon), const SizedBox(height: AppSpacing.xs), Text(label, textAlign: TextAlign.center)]),
+            ),
+          ),
+        ],
+      ]);
 }
 
 Future<void> _open(BuildContext context, Widget sheet) =>

@@ -58,9 +58,9 @@ const demoCategories = [
 
 /// The ledger, plan and accounts of one test, held in memory.
 class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
-  FakeWorld({PlanSettings? settings}) : _settings = _Live(settings) {
-    // As after an upgrade: the whole opening balance in one first account.
-    if (settings != null) _openFirstAccount(settings.openingBalance);
+  FakeWorld({PlanSettings? settings, int openingBalance = 150000}) : _settings = _Live(settings) {
+    // Set up already: everything in one first account, as after an upgrade.
+    if (settings != null) _openFirstAccount(openingBalance);
   }
 
   final _Live<PlanSettings?> _settings;
@@ -155,19 +155,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   Stream<PlanSettings?> watchSettings() => _settings.stream;
 
   @override
-  Future<void> saveSettings(PlanSettings s) async {
-    // As the real repository does until setup opens accounts itself: the
-    // first account carries any change to the opening balance.
-    final rows = _accountRows.value;
-    if (rows.isEmpty) {
-      _openFirstAccount(s.openingBalance);
-    } else {
-      final now = rows.fold(0, (sum, a) => sum + a.openingBalance);
-      final first = rows.first;
-      _accountRows.value = [_withOpening(first, first.openingBalance + s.openingBalance - now), ...rows.skip(1)];
-    }
-    _settings.value = s;
-  }
+  Future<void> saveSettings(PlanSettings s) async => _settings.value = s;
 
   // Accounts
 

@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:bajet/core/database/app_database.dart';
 import 'package:bajet/features/accounts/data/drift_account_repository.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart' as domain;
+import 'package:bajet/features/accounts/domain/account_models.dart' show firstAccountName;
 import 'package:bajet/features/backup/data/drift_backup_repository.dart';
 import 'package:bajet/features/backup/domain/backup_repository.dart';
 import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/data/drift_plan_repository.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -34,7 +36,8 @@ void main() {
   Future<void> fill(AppDatabase db) async {
     final plan = DriftPlanRepository(db);
     final ledger = DriftLedgerRepository(db);
-    await plan.saveSettings(PlanSettings(openingBalance: 150000, openingDate: d(2026, 7, 1), weeklyCap: 5000, buffer: 50000));
+    await plan.saveSettings(PlanSettings(openingDate: d(2026, 7, 1), weeklyCap: 5000, buffer: 50000));
+    await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: firstAccountName, openingBalance: const Value(150000), color: 0xFF4A5866));
     final rent = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1));
     await plan.confirmRecurring(rent, paidOn: d(2026, 7, 1));
     await plan.addEvent(name: 'Bonus', isIncome: true, amount: 30000, categoryKey: 'salary', date: d(2026, 9, 1), countInProjection: false);

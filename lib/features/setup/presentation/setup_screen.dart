@@ -3,17 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
+import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../accounts/presentation/account_providers.dart';
+import '../../accounts/presentation/card_designer.dart';
 import '../../backup/presentation/restore_flow.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
 
-/// First run: the starting balance and weekly allowance, then an optional
-/// first goal. Saving settings is what lets the router leave this screen.
+/// First run: where money is kept, with what each place holds now; the
+/// weekly allowance; then an optional first goal. Saving settings is what
+/// lets the router leave this screen.
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -24,7 +28,6 @@ class SetupScreen extends ConsumerStatefulWidget {
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _moneyForm = GlobalKey<FormState>();
   final _goalForm = GlobalKey<FormState>();
-  final _balance = TextEditingController();
   final _cap = TextEditingController();
   final _buffer = TextEditingController();
   final _goalName = TextEditingController();
@@ -36,14 +39,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   @override
   void dispose() {
-    for (final c in [_balance, _cap, _buffer, _goalName, _goalPrice]) {
+    for (final c in [_cap, _buffer, _goalName, _goalPrice]) {
       c.dispose();
     }
     super.dispose();
   }
 
   void _next() {
-    if (_moneyForm.currentState!.validate()) setState(() => _step = 1);
+    if (_moneyForm.currentState!.validate()) setState(() => _step = 2);
   }
 
   bool get _goalStarted => _goalName.text.trim().isNotEmpty || _goalPrice.text.isNotEmpty || _goalDate != null;
@@ -68,7 +71,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     }
     // Saved last: settings existing is what moves the router on to Today.
     await repo.saveSettings(PlanSettings(
-      openingBalance: RinggitCentsFormatter.parse(_balance.text),
       openingDate: ref.read(todayProvider),
       weeklyCap: cap,
       buffer: RinggitCentsFormatter.parse(_buffer.text),
@@ -101,10 +103,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        appBar: _step == 1
+        appBar: _step > 0
             ? AppBar(
                 backgroundColor: c.background,
-                leading: BackButton(onPressed: () => setState(() => _step = 0)),
+                leading: BackButton(onPressed: () => setState(() => _step--)),
               )
             : null,
         body: SafeArea(
@@ -114,18 +116,23 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 children: [
-                  Text('Step ${_step + 1} of 2', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: AppSpacing.s),
-                  Text(_step == 0 ? 'Your money' : 'Your first goal', style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  Text('Step ${_step + 1} of 3', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
                   const SizedBox(height: AppSpacing.s),
                   Text(
-                    _step == 0
-                        ? 'Where you are today and what you allow yourself each week. You can change all of it later in Settings.'
-                        : 'Something you are saving for. bajet works out whether you will get there with money to spare. You can skip this.',
+                    switch (_step) { 0 => 'Where do you keep your money?', 1 => 'Your week', _ => 'Your first goal' },
+                    style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: AppSpacing.s),
+                  Text(
+                    switch (_step) {
+                      0 => "Add every place you hold money, with what's in it right now: your wallet, banks and e-wallets. You need at least one, and can add more later.",
+                      1 => 'What you allow yourself each week. You can change it later in Settings.',
+                      _ => 'Something you are saving for. bajet works out whether you will get there with money to spare. You can skip this.',
+                    },
                     style: TextStyle(color: c.muted, height: 1.45),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  if (_step == 0) _moneyStep() else _goalStep(),
+                  switch (_step) { 0 => _accountsStep(), 1 => _moneyStep(), _ => _goalStep() },
                 ],
               ),
             ),
@@ -135,19 +142,51 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     );
   }
 
+  Widget _accountsStep() {
+    final c = context.colors;
+    final accounts = ref.watch(accountsProvider).value ?? const [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final a in accounts)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.m),
+              decoration: BoxDecoration(color: c.well, borderRadius: BorderRadius.circular(AppRadii.small)),
+              child: Row(children: [
+                CircleAvatar(backgroundColor: Color(a.look.color), radius: 8),
+                const SizedBox(width: AppSpacing.m),
+                Expanded(child: Text(a.nickname == null ? a.name : '${a.name} · ${a.nickname}', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Text(Money.format(a.balance), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
+              ]),
+            ),
+          ),
+        if (accounts.isNotEmpty) const SizedBox(height: AppSpacing.s),
+        AccountKindTiles(onPick: (kind) => showNewAccount(context, kind)),
+        const SizedBox(height: AppSpacing.xxl),
+        FilledButton(
+          onPressed: accounts.isEmpty ? null : () => setState(() => _step = 1),
+          style: _buttonStyle(),
+          child: Text(accounts.isEmpty ? 'Add an account to continue' : 'Continue'),
+        ),
+        const SizedBox(height: AppSpacing.s),
+        // A restore saves settings too, which moves the router on to Today.
+        TextButton.icon(
+          onPressed: () => pickAndRestore(context, ref, replacing: false),
+          icon: const Icon(Icons.restore_rounded),
+          label: const Text('Restore from a backup file instead'),
+          style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+        ),
+      ],
+    );
+  }
+
   Widget _moneyStep() => Form(
         key: _moneyForm,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            MoneyField(
-              controller: _balance,
-              label: 'Balance today',
-              hint: 'e.g. 2,500.00',
-              helper: 'Everything you have across your accounts right now.',
-              validator: (sen) => sen > 0 ? null : 'Enter your balance today',
-            ),
-            const SizedBox(height: AppSpacing.l),
             MoneyField(
               controller: _cap,
               label: 'Weekly allowance',
@@ -168,14 +207,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               onPressed: _next,
               style: _buttonStyle(),
               child: const Text('Continue'),
-            ),
-            const SizedBox(height: AppSpacing.s),
-            // A restore saves settings too, which moves the router on to Today.
-            TextButton.icon(
-              onPressed: () => pickAndRestore(context, ref, replacing: false),
-              icon: const Icon(Icons.restore_rounded),
-              label: const Text('Restore from a backup file instead'),
-              style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
             ),
           ],
         ),

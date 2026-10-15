@@ -1,10 +1,11 @@
-import 'package:bajet/core/database/app_database.dart' show AppDatabase, GoalStatus;
+import 'package:bajet/core/database/app_database.dart' show AccountKind, AccountsCompanion, AppDatabase, GoalStatus;
 import 'package:bajet/core/database/database_provider.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/ledger/presentation/ledger_providers.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/presentation/plan_providers.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
@@ -31,6 +32,9 @@ void main() {
 
   PlanRepository plan() => container.read(planRepositoryProvider);
 
+  Future<void> openAccount(int balance) =>
+      db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: 'Bank', openingBalance: Value(balance), color: 0xFF4A5866));
+
   /// Keeps every input subscribed, waits until each stream has delivered,
   /// then reads [provider].
   Future<T> settle<T>(ProviderListenable<T> provider) async {
@@ -52,7 +56,8 @@ void main() {
   });
 
   test('projection uses the stored balance, rhythm, bills and goal', () async {
-    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: today, weeklyCap: 5000, buffer: 10000));
+    await openAccount(100000);
+    await plan().saveSettings(PlanSettings(openingDate: today, weeklyCap: 5000, buffer: 10000));
     await plan().saveRule(const WeeklyRule(weekday: 3, label: 'Weekday', type: DayType.spend, plannedSpend: 1000));
     await plan().addRecurring(name: 'Rent', isIncome: false, amount: 30000, categoryKey: 'bills', nextDue: d(2026, 10, 16));
     await plan().addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 10, 17));
@@ -64,7 +69,8 @@ void main() {
   });
 
   test('spending logged today reduces what the projection still subtracts', () async {
-    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: today, weeklyCap: 5000, buffer: 0));
+    await openAccount(100000);
+    await plan().saveSettings(PlanSettings(openingDate: today, weeklyCap: 5000, buffer: 0));
     await plan().saveRule(const WeeklyRule(weekday: 3, label: 'Weekday', type: DayType.spend, plannedSpend: 1000));
     await plan().addGoal(name: 'Laptop', price: 10000, targetDate: today);
     await container
@@ -78,7 +84,8 @@ void main() {
   });
 
   test('confirming a recurring item logs it and moves it to next month', () async {
-    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
+    await openAccount(100000);
+    await plan().saveSettings(PlanSettings(openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
     final id = await plan().addRecurring(name: 'Internet', isIncome: false, amount: 12900, categoryKey: 'bills', nextDue: d(2026, 10, 10));
 
     expect((await settle(dueRecurringProvider)).map((r) => r.id), [id]);
@@ -97,7 +104,8 @@ void main() {
   });
 
   test('a paused recurring item is neither due nor projected', () async {
-    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
+    await openAccount(100000);
+    await plan().saveSettings(PlanSettings(openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
     final id = await plan().addRecurring(name: 'Gym', isIncome: false, amount: 9000, categoryKey: 'bills', nextDue: d(2026, 10, 10));
     await plan().addGoal(name: 'Laptop', price: 10000, targetDate: d(2026, 11, 30));
     await plan().setRecurringActive(id, active: false);
@@ -108,7 +116,8 @@ void main() {
   });
 
   test('marking a goal bought logs it and removes it from the active goals', () async {
-    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
+    await openAccount(100000);
+    await plan().saveSettings(PlanSettings(openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
     final id = await plan().addGoal(name: 'Laptop', price: 45000, targetDate: d(2026, 12, 1));
     await plan().markGoalBought(id, on: today);
 
@@ -120,7 +129,8 @@ void main() {
   });
 
   test('a finished event stops counting in the projection', () async {
-    await plan().saveSettings(PlanSettings(openingBalance: 100000, openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
+    await openAccount(100000);
+    await plan().saveSettings(PlanSettings(openingDate: d(2026, 10, 1), weeklyCap: 5000, buffer: 0));
     final id = await plan().addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 10, 20));
     await plan().addGoal(name: 'Laptop', price: 10000, targetDate: d(2026, 10, 31));
     expect((await settle(projectionProvider))!.goals.single.leftAfterBuying, 100000 - 25000 - 10000);

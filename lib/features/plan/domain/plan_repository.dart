@@ -1,14 +1,13 @@
 import 'plan_models.dart';
 
+/// How the plan runs. Balances are the accounts', each as of [openingDate].
 class PlanSettings {
   const PlanSettings({
-    required this.openingBalance,
     required this.openingDate,
     required this.weeklyCap,
     required this.buffer,
   });
 
-  final int openingBalance;
   final DateTime openingDate;
   final int weeklyCap;
   final int buffer;

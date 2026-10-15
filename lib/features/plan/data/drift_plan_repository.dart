@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../accounts/domain/account_models.dart' show firstAccountColor, firstAccountName;
 import '../../ledger/domain/ledger_models.dart' show goalCategoryKey;
 import '../domain/plan_models.dart' as domain;
 import '../domain/plan_models.dart' show EventRemoval, RecurringRemoval;
@@ -12,42 +11,17 @@ class DriftPlanRepository implements PlanRepository {
 
   final AppDatabase _db;
 
-  // The starting balance is the accounts' together. Until each account can
-  // be set up on its own, saving one adjusts the first account by the
-  // difference, or opens it on a new install.
   @override
-  Stream<PlanSettings?> watchSettings() => _db
-      .customSelect(
-        'SELECT s.opening_date, s.weekly_cap, s.buffer, (SELECT COALESCE(SUM(opening_balance), 0) FROM accounts) AS opening FROM app_settings s',
-        readsFrom: {_db.appSettings, _db.accounts},
-      )
-      .watchSingleOrNull()
-      .map((r) => r == null
-          ? null
-          : PlanSettings(
-              openingBalance: r.read<int>('opening'),
-              openingDate: const DayConverter().fromSql(r.read<String>('opening_date')),
-              weeklyCap: r.read<int>('weekly_cap'),
-              buffer: r.read<int>('buffer'),
-            ));
+  Stream<PlanSettings?> watchSettings() => _db.select(_db.appSettings).watchSingleOrNull().map(
+        (r) => r == null ? null : PlanSettings(openingDate: r.openingDate, weeklyCap: r.weeklyCap, buffer: r.buffer),
+      );
 
+  /// Keeps the total card's look, which only the accounts change.
   @override
-  Future<void> saveSettings(PlanSettings s) => _db.transaction(() async {
-        await _db.into(_db.appSettings).insertOnConflictUpdate(
-              AppSettingsCompanion.insert(id: const Value(1), openingDate: s.openingDate, weeklyCap: s.weeklyCap, buffer: s.buffer),
-            );
-        final accounts = await (_db.select(_db.accounts)..orderBy([(a) => OrderingTerm(expression: a.sortOrder), (a) => OrderingTerm(expression: a.id)])).get();
-        if (accounts.isEmpty) {
-          await _db.into(_db.accounts).insert(
-                AccountsCompanion.insert(kind: AccountKind.bank, name: firstAccountName, openingBalance: Value(s.openingBalance), color: firstAccountColor),
-              );
-          return;
-        }
-        final now = accounts.fold(0, (sum, a) => sum + a.openingBalance);
-        final first = accounts.first;
-        await (_db.update(_db.accounts)..where((a) => a.id.equals(first.id)))
-            .write(AccountsCompanion(openingBalance: Value(first.openingBalance + s.openingBalance - now)));
-      });
+  Future<void> saveSettings(PlanSettings s) => _db.into(_db.appSettings).insert(
+        AppSettingsCompanion.insert(id: const Value(1), openingDate: s.openingDate, weeklyCap: s.weeklyCap, buffer: s.buffer),
+        onConflict: DoUpdate((_) => AppSettingsCompanion(openingDate: Value(s.openingDate), weeklyCap: Value(s.weeklyCap), buffer: Value(s.buffer))),
+      );
 
   @override
   Stream<List<domain.WeeklyRule>> watchRules() {

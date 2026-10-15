@@ -196,9 +196,10 @@ inline line of text where it is.
   event, bill, income, favourite or entry opens its form, with Delete at the
   foot (`DeleteButton`). Deleting always asks first (`confirmDelete`) and
   then offers Undo.
-- Tapping Today's balance opens the balance sheet. *Match what you really
-  have* goes to the check-in, which logs the difference; *Fix the starting
-  balance* rewrites the opening balance for a mistake at setup.
+- Tapping Today's stack opens Your accounts. Settings → Balance opens the
+  balance sheet: *Match what you really have* goes to the check-in, which
+  logs any difference to its account; *Fix the starting balance* rewrites
+  one account's opening balance for a figure given wrongly.
 - Nothing logs on a single tap or a hold. Favourites fill in the logger; the
   entry is saved only when Log is pressed. The same applies to widget and
   launcher shortcuts: long-pressing the icon offers Log a spend and up to

@@ -234,7 +234,6 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
     if (!_form.currentState!.validate()) return;
     final s = widget.settings;
     await ref.read(planRepositoryProvider).saveSettings(PlanSettings(
-          openingBalance: s.openingBalance,
           openingDate: s.openingDate,
           weeklyCap: RinggitCentsFormatter.parse(_cap.text),
           buffer: RinggitCentsFormatter.parse(_buffer.text),

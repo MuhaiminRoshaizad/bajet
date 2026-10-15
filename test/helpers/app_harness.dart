@@ -17,7 +17,8 @@ import 'fake_repositories.dart';
 /// Wednesday, used as "today" in widget tests so weekday rules are stable.
 final testToday = DateTime.utc(2026, 7, 1);
 
-final demoSettings = PlanSettings(openingBalance: 150000, openingDate: testToday, weeklyCap: 5000, buffer: 50000);
+/// With these, the world also holds one account of RM1,500.00.
+final demoSettings = PlanSettings(openingDate: testToday, weeklyCap: 5000, buffer: 50000);
 
 /// Pumps the whole app over in-memory fake repositories and returns them so
 /// the test can seed and inspect data; [overrides] adds any others. Without

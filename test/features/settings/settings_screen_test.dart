@@ -29,7 +29,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect((world.settings!.weeklyCap, world.settings!.buffer), (7500, 0));
-    expect(world.settings!.openingBalance, demoSettings.openingBalance);
+    expect(world.settings!.openingDate, demoSettings.openingDate);
     expect(find.text('RM75 a week'), findsOneWidget, reason: 'no buffer, so no keep');
   });
 

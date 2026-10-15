@@ -170,7 +170,7 @@ void main() {
   });
 
   testWidgets('the day is today unless another is picked from the calendar', (tester) async {
-    final world = await pumpApp(tester, setUpDone: false, seed: (w) => w.saveSettings(PlanSettings(openingBalance: 150000, openingDate: DateTime.utc(2026, 6, 1), weeklyCap: 5000, buffer: 0)));
+    final world = await pumpApp(tester, setUpDone: false, seed: (w) => w.saveSettings(PlanSettings(openingDate: DateTime.utc(2026, 6, 1), weeklyCap: 5000, buffer: 0)));
     await openLogger(tester);
     await typeKeys(tester, '500');
     await tester.tap(find.bySemanticsLabel('Food'));

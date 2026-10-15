@@ -83,7 +83,7 @@ A folder under `core/` appears only once two features need it.
 | `launch` | Launcher shortcuts and the home-screen widget: one `bajet://log` link format, a pending launch held until the shell can open the logger, and syncing what the widget shows |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
 | `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day, given the week and month as context; the week's summary can still be copied |
-| `setup`  | First-run setup: balance, weekly allowance, buffer, optional first goal, or a backup restore instead |
+| `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
 
 Shared providers live beside what they provide: `databaseProvider` and
 `todayProvider` in `core/database/database_provider.dart`. Tests override both,
@@ -104,7 +104,7 @@ stack on Today flies up to its top (a shared `Hero`) and spreads out there. The 
 (`Routes.report`) sits above the tabs, so it opens the same way from Settings,
 Insights and the check-in, and takes the period as `?period=week|month|all`.
 
-Until setup has stored an opening balance, every route redirects to
+Until setup has saved its settings, every route redirects to
 `/setup`; once settings exist, `/setup` redirects to Today. The router listens
 to `settingsProvider`, so finishing setup moves on without the setup screen
 navigating itself. Restoring a backup from setup works the same way: the

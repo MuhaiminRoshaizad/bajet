@@ -30,9 +30,29 @@ class _RestoreInto implements BackupRepository {
 
 Finder field(String label) => find.widgetWithText(TextFormField, label);
 
+/// Adds cash holding [sen] on the first step.
+Future<void> addCash(WidgetTester tester, String sen) async {
+  await tester.tap(find.text('Cash'));
+  await tester.pumpAndSettle();
+  await tester.enterText(field('How much is in it now'), sen);
+  await tester.ensureVisible(find.text('Add account'));
+  await tester.tap(find.text('Add account'));
+  await tester.pumpAndSettle();
+}
+
+/// Adds an account, then gives the weekly allowance, landing on the goal.
 Future<void> fillMoneyStep(WidgetTester tester) async {
-  await tester.enterText(field('Balance today'), '250000');
+  await addCash(tester, '250000');
+  await tester.tap(find.text('Continue'));
+  await tester.pumpAndSettle();
   await tester.enterText(field('Weekly allowance'), '5000');
+  await tester.tap(find.text('Continue'));
+  await tester.pumpAndSettle();
+}
+
+/// Past the accounts, on the allowance.
+Future<void> toWeekStep(WidgetTester tester) async {
+  await addCash(tester, '250000');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 }
@@ -40,29 +60,40 @@ Future<void> fillMoneyStep(WidgetTester tester) async {
 void main() {
   testWidgets('a new install opens on setup, not Today', (tester) async {
     await pumpApp(tester, setUpDone: false);
-    expect(find.text('Your money'), findsOneWidget);
+    expect(find.text('Where do you keep your money?'), findsOneWidget);
     expect(find.byKey(const ValueKey('tab-Today')), findsNothing);
+  });
+
+  testWidgets('setup cannot go on until there is somewhere money is kept', (tester) async {
+    final world = await pumpApp(tester, setUpDone: false);
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Add an account to continue')).onPressed, isNull);
+
+    await addCash(tester, '8450');
+    expect(world.accounts.single.balance, 8450);
+    expect(find.text('RM84.50'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
   });
 
   testWidgets('required fields are flagged only when Continue is pressed', (tester) async {
     await pumpApp(tester, setUpDone: false);
-    expect(find.text('Enter your balance today'), findsNothing);
+    await toWeekStep(tester);
+    expect(find.text('Enter how much you allow each week'), findsNothing);
 
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(find.text('Enter your balance today'), findsOneWidget);
     expect(find.text('Enter how much you allow each week'), findsOneWidget);
   });
 
   testWidgets('an error clears as soon as the value becomes valid', (tester) async {
     await pumpApp(tester, setUpDone: false);
+    await toWeekStep(tester);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(field('Balance today'), '250000');
+    await tester.enterText(field('Weekly allowance'), '5000');
     await tester.pumpAndSettle();
-    expect(find.text('Enter your balance today'), findsNothing);
-    expect(find.text('2,500.00'), findsOneWidget);
+    expect(find.text('Enter how much you allow each week'), findsNothing);
+    expect(find.text('50.00'), findsOneWidget);
   });
 
   testWidgets('skipping the goal saves settings and lands on Today', (tester) async {
@@ -75,7 +106,8 @@ void main() {
 
     expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget);
     final s = world.settings!;
-    expect((s.openingBalance, s.weeklyCap, s.buffer, s.openingDate), (250000, 5000, 0, testToday));
+    expect((s.weeklyCap, s.buffer, s.openingDate), (5000, 0, testToday));
+    expect(world.accounts.single.balance, 250000);
     expect(world.goals, isEmpty);
   });
 
@@ -106,11 +138,12 @@ void main() {
 
   testWidgets('RM sits beside an amount, never in front of the hint', (tester) async {
     await pumpApp(tester, setUpDone: false);
+    await toWeekStep(tester);
     InputDecoration decoration() =>
-        tester.widget<TextField>(find.descendant(of: field('Balance today'), matching: find.byType(TextField))).decoration!;
-    expect((decoration().prefixText, decoration().hintText), (null, 'e.g. 2,500.00'));
+        tester.widget<TextField>(find.descendant(of: field('Weekly allowance'), matching: find.byType(TextField))).decoration!;
+    expect((decoration().prefixText, decoration().hintText), (null, 'e.g. 50.00'));
 
-    await tester.enterText(field('Balance today'), '250000');
+    await tester.enterText(field('Weekly allowance'), '5000');
     await tester.pump();
     expect(decoration().prefixText, 'RM');
   });
