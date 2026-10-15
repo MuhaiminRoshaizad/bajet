@@ -9,6 +9,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/soft.dart';
+import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
@@ -24,35 +26,47 @@ class RecurringScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final items = [...?ref.watch(recurringProvider).value]..sort((a, b) => a.active == b.active ? a.nextDue.compareTo(b.nextDue) : (a.active ? -1 : 1));
+    final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
+    final income = items.where((r) => r.isIncome).toList();
+    final bills = items.where((r) => !r.isIncome).toList();
+    int monthly(List<RecurringItem> list) => list.where((r) => r.active).fold(0, (s, r) => s + r.amount);
+    final left = monthly(income) - monthly(bills);
+
+    Widget group(String label, List<RecurringItem> list, {required bool isIncome}) => CardGroup(
+          label: label,
+          labelTrailing: Text(
+            '${isIncome ? '+' : '−'}${Money.format(monthly(list))} a month',
+            style: TextStyle(color: isIncome ? c.good : c.muted, fontWeight: FontWeight.w700, fontSize: 13, fontFeatures: const [FontFeature.tabularFigures()]),
+          ),
+          children: [for (final item in list) _RecurringRow(item: item, category: categories[item.categoryKey])],
+        );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Bills and income')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
-            child: Text('Each one repeats monthly. Tap one to change it, or switch it off to pause it; its past payments stay in History.', style: TextStyle(color: c.muted)),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.xl),
+            child: Text('Each one repeats monthly. Tap one to change or pause it; its past payments stay in History.', style: TextStyle(color: c.muted)),
           ),
-          if (items.isNotEmpty)
-            CardGroup(
-              children: [
-                for (final item in items)
-                  ListTile(
-                    minTileHeight: 64,
-                    onTap: () => _openForm(context, item),
-                    title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(
-                      '${item.isIncome ? '+' : '−'}${Money.format(item.amount)} · '
-                      '${item.active ? 'next ${Dates.span(item.nextDue, item.windowEnd)}' : 'paused'}',
-                    ),
-                    trailing: Switch(
-                      value: item.active,
-                      onChanged: (v) => ref.read(planRepositoryProvider).setRecurringActive(item.id, active: v),
-                    ),
+          if (income.isNotEmpty) ...[group('Income', income, isIncome: true), const SizedBox(height: AppSpacing.xxl)],
+          if (bills.isNotEmpty) ...[group('Bills', bills, isIncome: false), const SizedBox(height: AppSpacing.l)],
+          if (income.isNotEmpty && bills.isNotEmpty) ...[
+            SoftWell(
+              radius: AppRadii.control,
+              child: Row(
+                children: [
+                  const Expanded(child: Text('Left after bills', style: TextStyle(fontWeight: FontWeight.w700))),
+                  Text(
+                    '${left < 0 ? '−' : ''}${Money.format(left.abs())} a month',
+                    style: TextStyle(fontWeight: FontWeight.w700, color: left < 0 ? c.bad : c.ink, fontFeatures: const [FontFeature.tabularFigures()]),
                   ),
-              ],
+                ],
+              ),
             ),
-          const SizedBox(height: AppSpacing.l),
+            const SizedBox(height: AppSpacing.l),
+          ],
           FilledButton.icon(
             onPressed: () => _openForm(context, null),
             icon: const Icon(Icons.add_rounded),
@@ -60,6 +74,41 @@ class RecurringScreen extends ConsumerWidget {
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// One bill or income: its category, name and when it next lands, with the
+/// amount on the right. A paused one is dimmed and says so.
+class _RecurringRow extends StatelessWidget {
+  const _RecurringRow({required this.item, required this.category});
+
+  final RecurringItem item;
+  final Category? category;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final tint = categoryTint(category);
+    return Opacity(
+      opacity: item.active ? 1 : 0.55,
+      child: ListTile(
+        minTileHeight: 68,
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+        onTap: () => _openForm(context, item),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(color: c.tintFill(tint), borderRadius: BorderRadius.circular(AppRadii.small)),
+          child: Icon(categoryIcon(item.categoryKey), size: 22, color: c.tintInk(tint)),
+        ),
+        title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(item.active ? 'Next ${Dates.span(item.nextDue, item.windowEnd)}' : 'Paused', style: TextStyle(color: c.muted)),
+        trailing: Text(
+          '${item.isIncome ? '+' : '−'}${Money.format(item.amount)}',
+          style: TextStyle(fontWeight: FontWeight.w700, color: item.isIncome ? c.good : c.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+        ),
       ),
     );
   }
@@ -89,6 +138,7 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
   /// The last day it may land when [_varies]; null for a fixed day.
   late DateTime? _lastDay = (widget.item?.windowDays ?? 0) > 0 ? widget.item!.windowEnd : null;
   late bool _varies = _lastDay != null;
+  late bool _active = widget.item?.active ?? true;
   bool _tried = false;
 
   @override
@@ -151,6 +201,7 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
       await repo.addRecurring(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, nextDue: _nextDue!, windowDays: window);
     } else {
       await repo.updateRecurring(item.copyWith(name: _name.text, amount: amount, categoryKey: _category, nextDue: _nextDue, windowDays: window));
+      if (_active != item.active) await repo.setRecurringActive(item.id, active: _active);
     }
     if (mounted) Navigator.of(context).pop();
   }
@@ -258,6 +309,14 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xs, left: AppSpacing.l),
                   child: Text(_varies ? 'Pick the days it can land on' : 'Pick when it is next due', style: TextStyle(color: c.bad, fontSize: 12)),
+                ),
+              if (widget.item != null)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Counted each month'),
+                  subtitle: const Text('Switch off to pause it. Runway leaves it out until it is back on.'),
+                  value: _active,
+                  onChanged: (v) => setState(() => _active = v),
                 ),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save')),
