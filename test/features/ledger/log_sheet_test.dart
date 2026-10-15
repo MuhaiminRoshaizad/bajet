@@ -12,6 +12,7 @@ Future<void> openLogger(WidgetTester tester) async {
 }
 
 final amountField = find.byKey(const ValueKey('amount'));
+final receiptTile = find.byKey(const ValueKey('receipt-tile'));
 
 /// Types [keys] on the number pad after whatever the amount already holds,
 /// as the owner does: each digit fills in from the right.
@@ -123,12 +124,13 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Food'));
     await tester.pump();
 
-    await tester.ensureVisible(find.text('Attach a receipt (optional)'));
-    await tester.tap(find.text('Attach a receipt (optional)'));
+    await tester.ensureVisible(receiptTile);
+    await tester.tap(receiptTile);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Choose a photo or screenshot'));
+    expect(find.text('Add a receipt'), findsOneWidget);
+    await tester.tap(find.text('Photos'));
     await tester.pumpAndSettle();
-    expect(find.text('Receipt attached'), findsOneWidget);
+    expect(find.descendant(of: receiptTile, matching: find.text('Attached')), findsOneWidget);
 
     await tester.tap(find.text('Log RM12.50'));
     await tester.pumpAndSettle();
@@ -142,14 +144,17 @@ void main() {
     await typeKeys(tester, '500');
     await tester.tap(find.bySemanticsLabel('Food'));
     await tester.pump();
-    await tester.ensureVisible(find.text('Attach a receipt (optional)'));
-    await tester.tap(find.text('Attach a receipt (optional)'));
+    await tester.ensureVisible(receiptTile);
+    await tester.tap(receiptTile);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Take a photo'));
+    await tester.tap(find.text('Camera'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Remove receipt'));
-    await tester.pump();
+    await tester.tap(receiptTile);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove receipt'));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: receiptTile, matching: find.text('None')), findsOneWidget);
     await tester.tap(find.text('Log RM5.00'));
     await tester.pumpAndSettle();
     expect(world.entries.single.receipt, isNull);
@@ -170,8 +175,8 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Food'));
     await tester.pump();
 
-    // The bottom bar has a Today too, so find the day button itself.
-    final dayButton = find.widgetWithText(OutlinedButton, 'Today');
+    // The bottom bar has a Today too, so find the day tile itself.
+    final dayButton = find.byKey(const ValueKey('day-tile'));
     await tester.ensureVisible(dayButton);
     await tester.tap(dayButton);
     await tester.pumpAndSettle();
@@ -180,7 +185,7 @@ void main() {
     await tester.tap(find.text('28'));
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
-    expect(find.text('Sun 28/06/2026'), findsOneWidget);
+    expect(find.descendant(of: dayButton, matching: find.text('Sun 28/06')), findsOneWidget);
 
     await tester.tap(find.text('Log RM5.00'));
     await tester.pumpAndSettle();

@@ -136,7 +136,10 @@ inline line of text where it is.
   focused on the phone's number pad, filling from the right; the amount and
   the Log button stay in view above it, and only favourites, categories,
   note and day scroll between them. Every money field uses the same number
-  pad. The day is today unless the owner taps it and picks another
+  pad. Under the note, the day and the receipt sit as a matched pair of
+  raised tiles (`DetailTile`); the receipt tile opens a sheet with Camera and
+  Photos as large tiles, and once one is attached, a look at it and Remove.
+  The day is today unless the owner taps it and picks another
   in the calendar, from the opening date up to today.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.

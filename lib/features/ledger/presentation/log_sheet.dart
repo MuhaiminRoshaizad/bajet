@@ -17,6 +17,7 @@ import '../../../core/widgets/soft.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
+import 'detail_tile.dart';
 import 'ledger_providers.dart';
 import 'receipt_widgets.dart';
 
@@ -331,13 +332,19 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       textCapitalization: TextCapitalization.sentences,
                       decoration: const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
                     ),
-                    const SizedBox(height: AppSpacing.s),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _DayPicker(day: _day, onChanged: (d) => setState(() => _day = d)),
+                    const SizedBox(height: AppSpacing.m),
+                    // The day and the receipt as a matched pair; padded for
+                    // the tiles' shadows.
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xs),
+                      child: Row(
+                        children: [
+                          Expanded(child: _DayTile(day: _day, onChanged: (d) => setState(() => _day = d))),
+                          const SizedBox(width: AppSpacing.m),
+                          Expanded(child: ReceiptTile(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r))),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.s),
-                    ReceiptField(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r)),
                     const SizedBox(height: AppSpacing.s),
                     if (widget.editing != null) ...[
                       const SizedBox(height: AppSpacing.s),
@@ -442,8 +449,8 @@ class _KindToggle extends StatelessWidget {
 
 /// Today unless changed. One tap opens the calendar for any day from the
 /// opening date, the first day the balance counts, up to today.
-class _DayPicker extends ConsumerWidget {
-  const _DayPicker({required this.day, required this.onChanged});
+class _DayTile extends ConsumerWidget {
+  const _DayTile({required this.day, required this.onChanged});
 
   final DateTime day;
   final ValueChanged<DateTime> onChanged;
@@ -455,10 +462,14 @@ class _DayPicker extends ConsumerWidget {
     final label = day == today
         ? 'Today'
         : day == DateTime.utc(today.year, today.month, today.day - 1)
-            ? 'Yesterday, ${Dates.short(day)}'
-            : '${Dates.weekday(day)} ${Dates.full(day)}';
-    return OutlinedButton.icon(
-      onPressed: () async {
+            ? 'Yesterday'
+            : '${Dates.weekday(day)} ${Dates.short(day)}';
+    return DetailTile(
+      key: const ValueKey('day-tile'),
+      label: 'Day',
+      value: label,
+      leading: Icon(Icons.event_outlined, color: context.colors.primary),
+      onTap: () async {
         final picked = await showDatePicker(
           context: context,
           initialDate: day,
@@ -468,9 +479,6 @@ class _DayPicker extends ConsumerWidget {
         );
         if (picked != null) onChanged(DateTime.utc(picked.year, picked.month, picked.day));
       },
-      icon: const Icon(Icons.event_outlined),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
     );
   }
 }
