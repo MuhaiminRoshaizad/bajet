@@ -101,7 +101,8 @@ wallet instead, with one to five plain green bills sticking out of the top
 as the balance grows (`billsFor`) and none when it is empty. The colours come from the app's own palette (`card_palette.dart`): sixteen
 for cards, eight leathers for the wallet, and "Match the app" for the total
 card. A card's look is changed from the pencil on its account view, the
-total card's by tapping it on Your accounts. Adding an account (Your accounts → Add an account) asks
+total card's by tapping it on Your accounts, and every card's from
+Settings → Accounts, which lists them with the total card first. Adding an account (Your accounts → Add an account) asks
 whether it is cash, a bank account or an e-wallet, then which bank or
 e-wallet from Bank Negara Malaysia's lists (`known_providers.dart`), or any
 name typed; a well-known one starts on a swatch near its colour

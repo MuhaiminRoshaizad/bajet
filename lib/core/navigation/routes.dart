@@ -11,6 +11,7 @@ abstract final class Routes {
   /// One account, upright, among the others to swipe through.
   static String account(int id) => '/today/accounts/$id';
   static const settings = '/today/settings';
+  static const accountSettings = '/today/settings/accounts';
   static const favourites = '/today/settings/favourites';
   static const rhythm = '/today/settings/rhythm';
   static const recurring = '/today/settings/recurring';

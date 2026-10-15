@@ -10,6 +10,7 @@ import '../../../core/theme/theme_mode.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
@@ -26,6 +27,7 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).value;
     final balance = ref.watch(balanceProvider).value;
     final favourites = ref.watch(favouritesProvider).value?.length ?? 0;
+    final accounts = ref.watch(accountsProvider).value?.length ?? 0;
     final weekPlan = ref.watch(rulesProvider).value?.fold(0, (s, r) => s + r.plannedSpend);
     final active = [...?ref.watch(recurringProvider).value?.where((r) => r.active)];
     final income = active.where((r) => r.isIncome).length;
@@ -47,6 +49,13 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Balance',
                 value: balance == null ? '' : Money.format(balance),
                 onTap: () => showBalanceSheet(context),
+              ),
+              SettingsRow(
+                icon: Icons.credit_card_outlined,
+                tint: Tint.apricot,
+                title: 'Accounts',
+                value: accounts == 0 ? '' : '$accounts ${accounts == 1 ? 'account' : 'accounts'} · cards and colours',
+                onTap: () => context.push(Routes.accountSettings),
               ),
               SettingsRow(
                 icon: Icons.savings_outlined,

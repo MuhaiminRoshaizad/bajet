@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/routes.dart';
+import '../features/accounts/presentation/account_settings_screen.dart';
 import '../features/accounts/presentation/account_view_screen.dart';
 import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/plan/presentation/plan_providers.dart';
@@ -98,6 +99,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
                 page('checkin', const CheckinScreen()),
                 page('settings', const SettingsScreen(), routes: [
+                  page('accounts', const AccountSettingsScreen()),
                   page('favourites', const FavouritesScreen()),
                   page('rhythm', const RhythmScreen()),
                   page('recurring', const RecurringScreen()),
