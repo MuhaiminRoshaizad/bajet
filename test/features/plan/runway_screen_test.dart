@@ -71,24 +71,42 @@ void main() {
       w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 8, 20));
     });
     await openRunway(tester);
-    await tester.dragUntilVisible(find.text('Sun 05/07/2026'), find.byType(ListView).first, const Offset(0, -200));
-    // The next 30 days first; later dates open on request.
-    expect(find.text('Wed 05/08/2026'), findsNothing);
-    await tester.dragUntilVisible(find.textContaining('Show all until buy day'), find.byType(ListView).first, const Offset(0, -200));
-    await tester.ensureVisible(find.textContaining('Show all until buy day'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.textContaining('Show all until buy day'));
-    await tester.pumpAndSettle();
-
     await tester.dragUntilVisible(find.text('Thu 20/08/2026'), find.byType(ListView).first, const Offset(0, -200));
     await tester.ensureVisible(find.text('Thu 20/08/2026'));
     await tester.pumpAndSettle();
-    final rent = tester.getTopLeft(find.text('Rent').last).dy;
+    final rent = tester.getTopLeft(find.text('Sun 05/07/2026')).dy;
     final laptop = tester.getTopLeft(find.text('Thu 20/08/2026')).dy;
     expect(rent, lessThan(laptop));
     expect(find.text('Wed 05/08/2026'), findsOneWidget);
-    expect(find.text('Thu 20/08/2026'), findsOneWidget);
     expect(find.text('buy day'), findsOneWidget);
+    // Three items fit, so there is nothing to open.
+    expect(find.textContaining(RegExp(r'^Show \d+ more$')), findsNothing);
+  });
+
+  testWidgets('only four items show until opened, and Show less closes them again', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      for (final (i, name) in ['Rent', 'Phone', 'Internet', 'Water', 'Power', 'Gym'].indexed) {
+        w.addRecurring(name: name, isIncome: false, amount: 1000 + i, categoryKey: 'bills', nextDue: d(2026, 7, 5 + i));
+      }
+    });
+    await openRunway(tester);
+    final more = find.text('Show 2 more');
+    await tester.dragUntilVisible(more, find.byType(ListView).first, const Offset(0, -200));
+    await tester.ensureVisible(more);
+    await tester.pumpAndSettle();
+    expect(find.text('Power'), findsNothing);
+
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    expect(find.text('Power'), findsOneWidget);
+    expect(find.text('Gym'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Show less'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Show less'));
+    await tester.pumpAndSettle();
+    expect(find.text('Power'), findsNothing);
+    expect(find.text('Show 2 more'), findsOneWidget);
   });
 
   testWidgets('bills on the same day share one heading with the day\'s total', (tester) async {

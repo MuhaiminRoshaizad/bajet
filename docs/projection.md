@@ -83,8 +83,8 @@ step from the balance before buying to what is left. Below it sit what is
 left after buying against the buffer, a "How it adds up" card listing those
 sums (with a prompt to add monthly income when none is planned, since then
 none is counted), and `upcoming()`'s bills, income, events and purchases
-due before then, under one heading per date with that day's net. The next
-30 days show first and the rest open on request.
+due before then, under one heading per date with that day's net. The
+first four items show, and Show more and Show less open and close the rest.
 
 ## Tests
 
