@@ -95,7 +95,9 @@ one bottom bar, each keeping its own stack and scroll position. Routes are
 declared once in `lib/app/router.dart`; their paths live in
 `lib/core/navigation/routes.dart` so a feature can link to another without
 importing the router. History (`Routes.history`), the check-in (`Routes.checkin`)
-and Settings (`Routes.settings`) sit under Today's branch. The report
+and Settings (`Routes.settings`) sit under Today's branch but open on the root
+navigator (`parentNavigatorKey`), so they and every page under them fill the
+screen without the bottom bar, which belongs to the four tabs alone. The report
 (`Routes.report`) sits above the tabs, so it opens the same way from Settings,
 Insights and the check-in, and takes the period as `?period=week|month|all`.
 

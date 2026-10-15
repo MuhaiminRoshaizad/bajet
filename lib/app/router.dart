@@ -29,7 +29,14 @@ final routerProvider = Provider<GoRouter>((ref) {
   final settingsChanged = ValueNotifier(0);
   ref.listen(settingsProvider, (_, _) => settingsChanged.value++);
 
+  // Pages opened from a tab go on this navigator, above the shell, so they
+  // fill the screen without the bottom bar. Only the four tabs show it.
+  final root = GlobalKey<NavigatorState>();
+  GoRoute page(String path, Widget screen, {List<RouteBase> routes = const []}) =>
+      GoRoute(path: path, parentNavigatorKey: root, builder: (context, state) => screen, routes: routes);
+
   final router = GoRouter(
+    navigatorKey: root,
     initialLocation: Routes.today,
     refreshListenable: settingsChanged,
     redirect: (context, state) {
@@ -57,21 +64,17 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: Routes.today,
               builder: (context, state) => const TodayScreen(),
               routes: [
-                GoRoute(path: 'history', builder: (context, state) => const HistoryScreen()),
-                GoRoute(path: 'checkin', builder: (context, state) => const CheckinScreen()),
-                GoRoute(
-                  path: 'settings',
-                  builder: (context, state) => const SettingsScreen(),
-                  routes: [
-                    GoRoute(path: 'favourites', builder: (context, state) => const FavouritesScreen()),
-                    GoRoute(path: 'rhythm', builder: (context, state) => const RhythmScreen()),
-                    GoRoute(path: 'recurring', builder: (context, state) => const RecurringScreen()),
-                    GoRoute(path: 'goals', builder: (context, state) => const GoalsScreen()),
-                    GoRoute(path: 'events', builder: (context, state) => const EventsScreen()),
-                    GoRoute(path: 'backup', builder: (context, state) => const BackupScreen()),
-                    GoRoute(path: 'coach', builder: (context, state) => const CoachKeyScreen()),
-                  ],
-                ),
+                page('history', const HistoryScreen()),
+                page('checkin', const CheckinScreen()),
+                page('settings', const SettingsScreen(), routes: [
+                  page('favourites', const FavouritesScreen()),
+                  page('rhythm', const RhythmScreen()),
+                  page('recurring', const RecurringScreen()),
+                  page('goals', const GoalsScreen()),
+                  page('events', const EventsScreen()),
+                  page('backup', const BackupScreen()),
+                  page('coach', const CoachKeyScreen()),
+                ]),
               ],
             ),
           ]),

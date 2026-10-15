@@ -47,6 +47,9 @@ void main() {
     // The key field has a Scrollable of its own, so name the list's.
     final list = find.descendant(of: find.byType(ListView).last, matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(find.text('Remove the key'), 200, scrollable: list);
+    // Built is not on screen: bring it fully into view before tapping.
+    await tester.ensureVisible(find.text('Remove the key'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Remove the key'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Keep it'));
