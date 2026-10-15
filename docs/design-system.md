@@ -96,7 +96,9 @@ moves: brushed metal (fine vertical streaks), matte or gloss (a fixed
 diagonal sheen). Text is dark on light cards and white on dark ones unless
 the owner picked its colour, such as gold on black. The provider's name is
 plain text, at the top and again as the wordmark; there are no logos or
-issuers' card designs, which are trademarks. These card
+issuers' card designs, which are trademarks. Cash is a stitched leather
+wallet instead, with one to five plain green bills sticking out of the top
+as the balance grows (`billsFor`) and none when it is empty. These card
 colours are the owner's data, so they are the one place colours do not come
 from the theme; the total card, with no colour of its own, takes the app's
 surface.

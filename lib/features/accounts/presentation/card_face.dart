@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/money/money.dart';
@@ -104,8 +106,8 @@ class _FinishPainter extends CustomPainter {
   bool shouldRepaint(_FinishPainter old) => old.finish != finish;
 }
 
-/// One account drawn as a card. [back] shows the plain reverse, for a card
-/// turning over.
+/// One account drawn as a card: a bank or e-wallet as a card, cash as a
+/// leather wallet. [back] shows the plain reverse, for a card turning over.
 class AccountCard extends StatelessWidget {
   const AccountCard({super.key, required this.account, this.back = false});
 
@@ -118,7 +120,7 @@ class AccountCard extends StatelessWidget {
         child: Semantics(
           label: '${account.name}${account.nickname == null ? '' : ', ${account.nickname}'}, ${Money.format(account.balance)}',
           excludeSemantics: true,
-          child: _BankCard(account: account, back: back),
+          child: account.kind == AccountKind.cash ? CashWallet(account: account, back: back) : _BankCard(account: account, back: back),
         ),
       );
 }
@@ -151,10 +153,13 @@ class _MagneticStrip extends StatelessWidget {
 /// the top left, the nickname where the holder's name goes, and the
 /// provider again as the wordmark.
 class _CardText extends StatelessWidget {
-  const _CardText({required this.account, required this.contactless});
+  const _CardText({required this.account, required this.contactless, this.top = 0.09});
 
   final Account account;
   final bool contactless;
+
+  /// How far down the balance sits, as a share of the card's height.
+  final double top;
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +178,7 @@ class _CardText extends StatelessWidget {
       return Stack(children: [
         Positioned(
           left: inset,
-          top: box.maxHeight * 0.09,
+          top: box.maxHeight * top,
           right: inset * 3,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(account.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: style(12, FontWeight.w600, opacity: 0.85)),
@@ -201,6 +206,106 @@ class _CardText extends StatelessWidget {
       ]);
     });
   }
+}
+
+/// More money, a thicker wad: one to five bills, none when it is empty.
+int billsFor(int balance) => balance <= 0 ? 0 : math.max(1, math.min(5, (math.log(balance / 100 + 1) / math.ln10 * 2).ceil()));
+
+/// Cash: a stitched leather wallet with plain green bills sticking out of
+/// the top. The bills carry no amount or artwork; they only say it is full.
+class CashWallet extends StatelessWidget {
+  const CashWallet({super.key, required this.account, this.back = false});
+
+  final Account account;
+  final bool back;
+
+  static const _billLight = Color(0xFF67C473);
+  static const _billDark = Color(0xFF2F8A40);
+
+  @override
+  Widget build(BuildContext context) {
+    final leather = Color(account.look.color);
+    return LayoutBuilder(builder: (context, box) {
+      final k = box.maxWidth / _designWidth;
+      final bills = back ? 0 : billsFor(account.balance);
+      return Stack(clipBehavior: Clip.none, children: [
+        for (var i = 0; i < bills; i++)
+          Positioned(
+            key: ValueKey('bill-$i'),
+            top: -(5 + 4.5 * i) * k,
+            left: box.maxWidth * [0.10, 0.14, 0.08, 0.12, 0.09][i],
+            right: box.maxWidth * [0.13, 0.08, 0.14, 0.10, 0.12][i],
+            child: Transform.rotate(
+              angle: [-1.2, 1.6, -0.6, 1.0, -1.8][i] * math.pi / 180,
+              child: Container(
+                height: 30 * k,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(3 * k),
+                  gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [_billLight, _billDark]),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                  boxShadow: const [BoxShadow(color: Color(0x59000000), offset: Offset(0, 1))],
+                ),
+              ),
+            ),
+          ),
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: _radius,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color.lerp(leather, Colors.white, 0.10)!, Color.lerp(leather, Colors.black, 0.30)!],
+              ),
+              boxShadow: const [BoxShadow(color: Color(0xA6000000), blurRadius: 24, offset: Offset(0, 12), spreadRadius: -12)],
+            ),
+            child: CustomPaint(painter: _LeatherPainter(seed: account.id), child: const SizedBox.expand()),
+          ),
+        ),
+        if (!back) Positioned.fill(child: _CardText(account: account, contactless: false, top: 0.17)),
+      ]);
+    });
+  }
+}
+
+/// Leather grain, the darker lip of the pocket the bills come out of, and
+/// the stitching round the edge. The grain is seeded, so it never shimmers.
+class _LeatherPainter extends CustomPainter {
+  const _LeatherPainter({required this.seed});
+
+  final int seed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = math.Random(seed);
+    final grain = Paint();
+    for (var i = 0; i < (size.width * size.height / 60).round(); i++) {
+      grain.color = (random.nextBool() ? Colors.white : Colors.black).withValues(alpha: 0.035 + random.nextDouble() * 0.03);
+      canvas.drawCircle(Offset(random.nextDouble() * size.width, random.nextDouble() * size.height), 0.6 + random.nextDouble(), grain);
+    }
+    final lip = Rect.fromLTWH(0, 0, size.width, size.height * 0.11);
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(lip, topLeft: const Radius.circular(16), topRight: const Radius.circular(16)),
+      Paint()
+        ..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x47000000), Color(0x14000000)])
+            .createShader(lip),
+    );
+    canvas.drawLine(lip.bottomLeft, lip.bottomRight, Paint()..color = const Color(0x1AFFFFFF));
+
+    final stitch = Paint()
+      ..color = const Color(0x42FFFFFF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    final path = Path()..addRRect(RRect.fromRectAndRadius((Offset.zero & size).deflate(7), const Radius.circular(11)));
+    for (final metric in path.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += 8) {
+        canvas.drawPath(metric.extractPath(d, d + 4), stitch);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_LeatherPainter old) => old.seed != seed;
 }
 
 /// The front of the stack: every account together. With no colour of its
