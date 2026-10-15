@@ -16,6 +16,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
+import '../../settings/presentation/balance_sheet.dart';
 import 'today_providers.dart';
 import 'week_strip.dart';
 
@@ -96,39 +97,53 @@ class _BalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final animate = !MediaQuery.disableAnimationsOf(context);
-    return SoftCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Balance', style: TextStyle(color: c.muted, fontWeight: FontWeight.w500)),
-          const SizedBox(height: AppSpacing.xs),
-          // Counts to a new balance after a log, so the change is visible.
-          TweenAnimationBuilder<double>(
-            tween: Tween(end: (balance ?? 0).toDouble()),
-            duration: animate ? AppMotion.enter : Duration.zero,
-            curve: AppMotion.ease,
-            builder: (context, value, _) => FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                balance == null ? '—' : Money.format(value.round()),
-                semanticsLabel: balance == null ? 'Balance loading' : 'Balance ${Money.format(balance!)}',
-                style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w700, letterSpacing: -1.5, fontFeatures: [FontFeature.tabularFigures()]),
+    // Tapping the balance is where anyone looks to correct it.
+    return Semantics(
+      button: true,
+      hint: 'Change the balance',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showBalanceSheet(context),
+        child: SoftCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text('Balance', style: TextStyle(color: c.muted, fontWeight: FontWeight.w500))),
+                  Icon(Icons.edit_outlined, size: 18, color: c.muted),
+                ],
               ),
-            ),
+              const SizedBox(height: AppSpacing.xs),
+              // Counts to a new balance after a log, so the change is visible.
+              TweenAnimationBuilder<double>(
+                tween: Tween(end: (balance ?? 0).toDouble()),
+                duration: animate ? AppMotion.enter : Duration.zero,
+                curve: AppMotion.ease,
+                builder: (context, value, _) => FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    balance == null ? '—' : Money.format(value.round()),
+                    semanticsLabel: balance == null ? 'Balance loading' : 'Balance ${Money.format(balance!)}',
+                    style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w700, letterSpacing: -1.5, fontFeatures: [FontFeature.tabularFigures()]),
+                  ),
+                ),
+              ),
+              if (rule != null) ...[
+                const SizedBox(height: AppSpacing.m),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+                  decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
+                  child: Text(
+                    rule!.plannedSpend > 0 ? '${rule!.label} · up to ${Money.format(rule!.plannedSpend)}' : '${rule!.label} · no spending planned',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ],
           ),
-          if (rule != null) ...[
-            const SizedBox(height: AppSpacing.m),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-              decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-              child: Text(
-                rule!.plannedSpend > 0 ? '${rule!.label} · up to ${Money.format(rule!.plannedSpend)}' : '${rule!.label} · no spending planned',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

@@ -15,6 +15,7 @@ import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../coach/presentation/coach_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
+import 'balance_sheet.dart';
 
 /// Every amount and rule the app works from, so none of it is fixed in code.
 class SettingsScreen extends ConsumerWidget {
@@ -23,6 +24,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider).value;
+    final balance = ref.watch(balanceProvider).value;
     final favourites = ref.watch(favouritesProvider).value?.length ?? 0;
     final weekPlan = ref.watch(rulesProvider).value?.fold(0, (s, r) => s + r.plannedSpend);
     final active = [...?ref.watch(recurringProvider).value?.where((r) => r.active)];
@@ -39,6 +41,13 @@ class SettingsScreen extends ConsumerWidget {
           CardGroup(
             label: 'Your plan',
             children: [
+              SettingsRow(
+                icon: Icons.account_balance_wallet_outlined,
+                tint: Tint.sage,
+                title: 'Balance',
+                value: balance == null ? '' : Money.format(balance),
+                onTap: () => showBalanceSheet(context),
+              ),
               SettingsRow(
                 icon: Icons.savings_outlined,
                 tint: Tint.sky,

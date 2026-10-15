@@ -141,6 +141,13 @@ inline line of text where it is.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
 - Saving gives a light haptic and a snackbar with Undo.
+- Anything that can be added can be changed and removed: tapping a goal,
+  event, bill, income, favourite or entry opens its form, with Delete at the
+  foot (`DeleteButton`). Deleting always asks first (`confirmDelete`) and
+  then offers Undo.
+- Tapping Today's balance opens the balance sheet. *Match what you really
+  have* goes to the check-in, which logs the difference; *Fix the starting
+  balance* rewrites the opening balance for a mistake at setup.
 - Nothing logs on a single tap or a hold. Favourites fill in the logger; the
   entry is saved only when Log is pressed. The same applies to widget and
   launcher shortcuts: long-pressing the icon offers Log a spend and up to
