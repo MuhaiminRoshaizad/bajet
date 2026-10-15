@@ -57,8 +57,9 @@ class AccountStack extends StatelessWidget {
         final t = spread;
         double between(double a, double b, double k) => a + (b - a) * k;
 
-        // Each card follows a little after the one above it.
-        double cardT(int i) => ((t * (1 + 0.06 * n)) - 0.06 * i).clamp(-0.2, 1.2);
+        // Each card follows a little after the one above it. Never below 0,
+        // or a card waiting its turn would sit above its resting place.
+        double cardT(int i) => ((t * (1 + 0.06 * n)) - 0.06 * i).clamp(0.0, 1.2);
 
         final placed = <Widget>[];
         for (var i = 0; i < n; i++) {

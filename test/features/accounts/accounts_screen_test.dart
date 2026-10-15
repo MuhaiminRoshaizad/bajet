@@ -1,5 +1,6 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/presentation/account_stack.dart';
+import 'package:bajet/features/accounts/presentation/card_face.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -58,5 +59,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PageView), findsNothing);
     expect(find.text('Your accounts'), findsOneWidget);
+  });
+
+  testWidgets("the two cards behind Today's total peek out by the same amount", (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 2));
+    final total = tester.getRect(find.byType(TotalCard)).top;
+    double top(String name) => tester.getRect(find.ancestor(of: find.text(name).first, matching: find.byType(AccountCard))).top;
+    expect(total - top('Main account'), AccountStack.peek);
+    expect(top('Main account') - top('Wallet 0'), AccountStack.peek);
   });
 }
