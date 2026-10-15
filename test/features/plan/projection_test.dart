@@ -63,6 +63,15 @@ void main() {
     expect(p.goals.single.onTrack, isTrue);
   });
 
+  test('the outcome carries the sums that add up to what is left', () {
+    // 109 days from Wed 14 Oct: 15 weeks at RM65 plus Wed to Sat at RM45;
+    // four salaries; three rents and internet bills, four phone bills and
+    // the car service; the bonus is not counted.
+    final sums = run().goals.single.sums;
+    expect((sums.balanceNow, sums.dailySpending, sums.income, sums.costs, sums.earlierGoals), (180000, 102000, 1200000, 237700, 0));
+    expect(sums.balanceNow - sums.dailySpending + sums.income - sums.costs - goal.price, 590300);
+  });
+
   test('today only counts the part of the plan not yet logged', () {
     final p = run(flexSpentToday: 1200);
     expect(balanceOn(p, d(2026, 10, 14)), 180000);

@@ -14,13 +14,39 @@ class ProjectedDay {
 }
 
 class GoalOutcome {
-  const GoalOutcome(this.goal, this.leftAfterBuying, this.onTrack);
+  const GoalOutcome(this.goal, this.leftAfterBuying, this.onTrack, {this.sums = RunwaySums.none});
 
   final Goal goal;
   final int leftAfterBuying;
 
   /// True when what is left after buying is at least the buffer.
   final bool onTrack;
+
+  /// How [leftAfterBuying] was reached, from today to buy day.
+  final RunwaySums sums;
+}
+
+/// The parts of a goal's outcome, all in sen and all positive: what is left
+/// after buying is [balanceNow] − [dailySpending] + [income] − [costs] −
+/// [earlierGoals] − the goal's price.
+class RunwaySums {
+  const RunwaySums({this.balanceNow = 0, this.dailySpending = 0, this.income = 0, this.costs = 0, this.earlierGoals = 0});
+
+  final int balanceNow;
+
+  /// The weekly rhythm's planned spending, day by day.
+  final int dailySpending;
+
+  /// Recurring and planned income that falls before or on buy day.
+  final int income;
+
+  /// Recurring bills, planned expenses and any what-if monthly cost.
+  final int costs;
+
+  /// Goals bought earlier on the way, or earlier the same day.
+  final int earlierGoals;
+
+  static const none = RunwaySums();
 }
 
 /// "What if" changes to the plan, tried out on Runway without being saved.
@@ -91,26 +117,38 @@ Projection project({
   final days = <ProjectedDay>[];
   final outcomes = <GoalOutcome>[];
   var running = balance;
+  var spent = 0, income = 0, costs = 0, bought = 0;
+  void move(int signed) {
+    running += signed;
+    if (signed > 0) {
+      income += signed;
+    } else {
+      costs -= signed;
+    }
+  }
 
   for (var day = start; !day.isAfter(end); day = DateTime.utc(day.year, day.month, day.day + 1)) {
     var spend = planned[day.weekday] ?? 0;
     // Today's logs already left the balance; only the unspent part of the plan remains.
     if (day == start) spend = (spend - flexSpentToday).clamp(0, spend);
     running -= spend;
+    spent += spend;
 
     for (final item in recurring) {
-      if (item.active && _dueOn(item, day)) running += item.signedAmount;
+      if (item.active && _dueOn(item, day)) move(item.signedAmount);
     }
     for (final e in events) {
-      if (!e.done && (e.countInProjection || whatIf.countUnconfirmed) && calendarDay(e.date) == day) running += e.signedAmount;
+      if (!e.done && (e.countInProjection || whatIf.countUnconfirmed) && calendarDay(e.date) == day) move(e.signedAmount);
     }
-    if (day != start && day.day == 1) running -= whatIf.monthlyCost;
+    if (day != start && day.day == 1) move(-whatIf.monthlyCost);
 
     final beforeGoals = running;
     for (final g in sortedGoals) {
       if (calendarDay(g.targetDate) == day) {
         running -= g.price;
-        outcomes.add(GoalOutcome(g, running, running >= buffer));
+        final sums = RunwaySums(balanceNow: balance, dailySpending: spent, income: income, costs: costs, earlierGoals: bought);
+        outcomes.add(GoalOutcome(g, running, running >= buffer, sums: sums));
+        bought += g.price;
       }
     }
     days.add(ProjectedDay(day, running, beforeGoals));

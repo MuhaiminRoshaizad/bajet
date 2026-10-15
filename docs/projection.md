@@ -35,6 +35,9 @@ for each day:
    priority order and record what is left.
 
 A goal is **on track** when what is left after buying is at least the buffer.
+Each outcome also carries its `RunwaySums`: the balance today, the planned
+day-to-day spending, income, and bills and costs up to buy day, and goals
+bought before it, which with the price add up exactly to what is left.
 
 ## What if
 
@@ -75,8 +78,10 @@ is never counted twice.
 The Runway tab draws the projected series with `RunwayChart`: the balance
 line from today, the buffer as a dotted line across, and buy day as a dotted
 step from the balance before buying to what is left. Below it sit what is
-left after buying against the buffer, and `upcoming()`'s list of bills,
-income, events and purchases due before then.
+left after buying against the buffer, a "How it adds up" card listing those
+sums (with a prompt to add monthly income when none is planned, since then
+none is counted), and `upcoming()`'s list of bills, income, events and
+purchases due before then.
 
 ## Tests
 
