@@ -127,6 +127,15 @@ Projection project({
     }
   }
 
+  // Each event on every day it happens in the window, yearly ones each year.
+  final eventsOn = <DateTime, List<int>>{};
+  for (final e in events) {
+    if (e.done || !(e.countInProjection || whatIf.countUnconfirmed)) continue;
+    for (final day in e.occurrences(start, end)) {
+      (eventsOn[day] ??= []).add(e.signedAmount);
+    }
+  }
+
   for (var day = start; !day.isAfter(end); day = DateTime.utc(day.year, day.month, day.day + 1)) {
     var spend = planned[day.weekday] ?? 0;
     // Today's logs already left the balance; only the unspent part of the plan remains.
@@ -137,8 +146,8 @@ Projection project({
     for (final item in recurring) {
       if (item.active && _dueOn(item, day)) move(item.signedAmount);
     }
-    for (final e in events) {
-      if (!e.done && (e.countInProjection || whatIf.countUnconfirmed) && calendarDay(e.date) == day) move(e.signedAmount);
+    for (final amount in eventsOn[day] ?? const <int>[]) {
+      move(amount);
     }
     if (day != start && day.day == 1) move(-whatIf.monthlyCost);
 

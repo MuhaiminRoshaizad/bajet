@@ -30,7 +30,7 @@ class EventsScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
-            child: Text('Mark one done when it happens, and log the money as usual. Tap one to change or delete it.', style: TextStyle(color: c.muted)),
+            child: Text('Mark one done when it happens, and log the money as usual; a yearly one moves on to next year. Tap one to change or delete it.', style: TextStyle(color: c.muted)),
           ),
           if (events.isNotEmpty)
             CardGroup(
@@ -41,7 +41,12 @@ class EventsScreen extends ConsumerWidget {
                     onTap: () => _openForm(context, e),
                     title: Text(e.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
-                      '${e.isIncome ? '+' : '−'}${Money.format(e.amount)} · ${Dates.full(e.date)}${e.countInProjection ? '' : ' · not counted'}',
+                      [
+                        '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}',
+                        Dates.full(e.date),
+                        if (e.repeatsYearly) 'every year',
+                        if (!e.countInProjection) 'not counted',
+                      ].join(' · '),
                     ),
                     trailing: TextButton(
                       onPressed: () => ref.read(planRepositoryProvider).setEventDone(e.id, done: true),
@@ -84,6 +89,7 @@ class _EventFormState extends ConsumerState<_EventForm> {
   late bool _counted = widget.event?.countInProjection ?? true;
   late String? _category = widget.event?.categoryKey;
   late DateTime? _date = widget.event?.date;
+  late bool _yearly = widget.event?.repeatsYearly ?? false;
   bool _tried = false;
 
   @override
@@ -114,9 +120,17 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final repo = ref.read(planRepositoryProvider);
     final amount = RinggitCentsFormatter.parse(_amount.text);
     if (widget.event case final event?) {
-      await repo.updateEvent(event.copyWith(name: _name.text, amount: amount, categoryKey: _category, date: _date, countInProjection: _counted));
+      await repo.updateEvent(event.copyWith(name: _name.text, amount: amount, categoryKey: _category, date: _date, countInProjection: _counted, repeatsYearly: _yearly));
     } else {
-      await repo.addEvent(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, date: _date!, countInProjection: _counted);
+      await repo.addEvent(
+        name: _name.text,
+        isIncome: _isIncome,
+        amount: amount,
+        categoryKey: _category!,
+        date: _date!,
+        countInProjection: _counted,
+        repeatsYearly: _yearly,
+      );
     }
     if (mounted) Navigator.of(context).pop();
   }
@@ -219,6 +233,22 @@ class _EventFormState extends ConsumerState<_EventForm> {
                   padding: const EdgeInsets.only(top: AppSpacing.xs, left: AppSpacing.l),
                   child: Text('Pick when it happens', style: TextStyle(color: c.bad, fontSize: 12)),
                 ),
+              const SizedBox(height: AppSpacing.m),
+              SegmentedButton<bool>(
+                segments: const [ButtonSegment(value: false, label: Text('Once')), ButtonSegment(value: true, label: Text('Every year'))],
+                selected: {_yearly},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setState(() => _yearly = s.single),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.xs, AppSpacing.xs, 0),
+                child: Text(
+                  _yearly
+                      ? 'Comes back on this date each year, like a birthday. Marking it done moves it to next year.'
+                      : 'Happens once. Marking it done takes it out of the plan.',
+                  style: TextStyle(color: c.muted, fontSize: 12, height: 1.4),
+                ),
+              ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Count it in the plan'),

@@ -56,7 +56,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 3);
+    expect(db.schemaVersion, 4);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -82,5 +82,17 @@ void main() {
     addTearDown(old.close);
     final rent = await old.select(old.recurringItems).getSingle();
     expect((rent.name, rent.windowDays), ('Rent', 0));
+  });
+
+  test('a version 3 database gains the yearly flag and keeps its events', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v3.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('gifts', 'Gifts', 'expense', 'pink')");
+      raw.execute("INSERT INTO planned_events (name, kind, amount, category_key, due_on) VALUES ('Birthday', 'expense', 10000, 'gifts', '2026-10-30')");
+      raw.execute('PRAGMA user_version = 3');
+    }));
+    addTearDown(old.close);
+    final e = await old.select(old.plannedEvents).getSingle();
+    expect((e.name, e.repeatsYearly), ('Birthday', false));
   });
 }

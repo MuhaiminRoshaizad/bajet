@@ -192,11 +192,21 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     required String categoryKey,
     required DateTime date,
     bool countInProjection = true,
+    bool repeatsYearly = false,
   }) async {
     final id = _nextId++;
     _events.value = [
       ..._events.value,
-      PlannedEvent(id: id, name: name.trim(), amount: amount, categoryKey: categoryKey, isIncome: isIncome, date: date, countInProjection: countInProjection),
+      PlannedEvent(
+        id: id,
+        name: name.trim(),
+        amount: amount,
+        categoryKey: categoryKey,
+        isIncome: isIncome,
+        date: date,
+        countInProjection: countInProjection,
+        repeatsYearly: repeatsYearly,
+      ),
     ];
     return id;
   }
@@ -205,7 +215,9 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   Future<void> setEventDone(int id, {required bool done}) async => _events.value = [
         for (final e in _events.value)
           e.id == id
-              ? e.copyWith(done: done)
+              ? done && e.repeatsYearly
+                  ? e.copyWith(date: DateTime.utc(e.date.year + 1, e.date.month, e.date.day))
+                  : e.copyWith(done: done)
               : e,
       ];
 

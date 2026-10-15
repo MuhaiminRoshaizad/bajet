@@ -9,6 +9,7 @@ class UpcomingItem {
     this.categoryKey,
     this.counted = true,
     this.isGoal = false,
+    this.yearly = false,
   });
 
   final DateTime date;
@@ -24,6 +25,9 @@ class UpcomingItem {
   /// False for money the projection leaves out, such as an unconfirmed bonus.
   final bool counted;
   final bool isGoal;
+
+  /// An event that comes back every year.
+  final bool yearly;
 }
 
 /// Everything planned from [from] to [to] inclusive, soonest first: each
@@ -46,8 +50,9 @@ List<UpcomingItem> upcoming({
             signedAmount: r.signedAmount,
             categoryKey: r.categoryKey,
           ),
-    for (final e in events.where((e) => !e.done && !calendarDay(e.date).isBefore(from) && !calendarDay(e.date).isAfter(to)))
-      UpcomingItem(date: calendarDay(e.date), name: e.name, signedAmount: e.signedAmount, counted: e.countInProjection),
+    for (final e in events.where((e) => !e.done))
+      for (final day in e.occurrences(from, to))
+        UpcomingItem(date: day, name: e.name, signedAmount: e.signedAmount, counted: e.countInProjection, yearly: e.repeatsYearly),
     for (final g in goals.where((g) => !calendarDay(g.targetDate).isBefore(from) && !calendarDay(g.targetDate).isAfter(to)))
       UpcomingItem(date: calendarDay(g.targetDate), name: g.name, signedAmount: -g.price, isGoal: true),
   ];

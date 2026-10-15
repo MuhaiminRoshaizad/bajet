@@ -2542,6 +2542,21 @@ class $PlannedEventsTable extends PlannedEvents
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _repeatsYearlyMeta = const VerificationMeta(
+    'repeatsYearly',
+  );
+  @override
+  late final GeneratedColumn<bool> repeatsYearly = GeneratedColumn<bool>(
+    'repeats_yearly',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("repeats_yearly" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2552,6 +2567,7 @@ class $PlannedEventsTable extends PlannedEvents
     dueOn,
     done,
     countInProjection,
+    repeatsYearly,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2610,6 +2626,15 @@ class $PlannedEventsTable extends PlannedEvents
         ),
       );
     }
+    if (data.containsKey('repeats_yearly')) {
+      context.handle(
+        _repeatsYearlyMeta,
+        repeatsYearly.isAcceptableOrUnknown(
+          data['repeats_yearly']!,
+          _repeatsYearlyMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2655,6 +2680,10 @@ class $PlannedEventsTable extends PlannedEvents
         DriftSqlType.bool,
         data['${effectivePrefix}count_in_projection'],
       )!,
+      repeatsYearly: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}repeats_yearly'],
+      )!,
     );
   }
 
@@ -2679,6 +2708,10 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
 
   /// False for money that may not arrive, such as an unconfirmed bonus.
   final bool countInProjection;
+
+  /// Comes back on the same date every year, such as a birthday; [dueOn] is
+  /// the next one, and marking it done moves it on a year.
+  final bool repeatsYearly;
   const PlannedEvent({
     required this.id,
     required this.name,
@@ -2688,6 +2721,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
     required this.dueOn,
     required this.done,
     required this.countInProjection,
+    required this.repeatsYearly,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2708,6 +2742,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
     }
     map['done'] = Variable<bool>(done);
     map['count_in_projection'] = Variable<bool>(countInProjection);
+    map['repeats_yearly'] = Variable<bool>(repeatsYearly);
     return map;
   }
 
@@ -2721,6 +2756,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
       dueOn: Value(dueOn),
       done: Value(done),
       countInProjection: Value(countInProjection),
+      repeatsYearly: Value(repeatsYearly),
     );
   }
 
@@ -2740,6 +2776,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
       dueOn: serializer.fromJson<DateTime>(json['dueOn']),
       done: serializer.fromJson<bool>(json['done']),
       countInProjection: serializer.fromJson<bool>(json['countInProjection']),
+      repeatsYearly: serializer.fromJson<bool>(json['repeatsYearly']),
     );
   }
   @override
@@ -2756,6 +2793,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
       'dueOn': serializer.toJson<DateTime>(dueOn),
       'done': serializer.toJson<bool>(done),
       'countInProjection': serializer.toJson<bool>(countInProjection),
+      'repeatsYearly': serializer.toJson<bool>(repeatsYearly),
     };
   }
 
@@ -2768,6 +2806,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
     DateTime? dueOn,
     bool? done,
     bool? countInProjection,
+    bool? repeatsYearly,
   }) => PlannedEvent(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -2777,6 +2816,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
     dueOn: dueOn ?? this.dueOn,
     done: done ?? this.done,
     countInProjection: countInProjection ?? this.countInProjection,
+    repeatsYearly: repeatsYearly ?? this.repeatsYearly,
   );
   PlannedEvent copyWithCompanion(PlannedEventsCompanion data) {
     return PlannedEvent(
@@ -2792,6 +2832,9 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
       countInProjection: data.countInProjection.present
           ? data.countInProjection.value
           : this.countInProjection,
+      repeatsYearly: data.repeatsYearly.present
+          ? data.repeatsYearly.value
+          : this.repeatsYearly,
     );
   }
 
@@ -2805,7 +2848,8 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
           ..write('categoryKey: $categoryKey, ')
           ..write('dueOn: $dueOn, ')
           ..write('done: $done, ')
-          ..write('countInProjection: $countInProjection')
+          ..write('countInProjection: $countInProjection, ')
+          ..write('repeatsYearly: $repeatsYearly')
           ..write(')'))
         .toString();
   }
@@ -2820,6 +2864,7 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
     dueOn,
     done,
     countInProjection,
+    repeatsYearly,
   );
   @override
   bool operator ==(Object other) =>
@@ -2832,7 +2877,8 @@ class PlannedEvent extends DataClass implements Insertable<PlannedEvent> {
           other.categoryKey == this.categoryKey &&
           other.dueOn == this.dueOn &&
           other.done == this.done &&
-          other.countInProjection == this.countInProjection);
+          other.countInProjection == this.countInProjection &&
+          other.repeatsYearly == this.repeatsYearly);
 }
 
 class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
@@ -2844,6 +2890,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
   final Value<DateTime> dueOn;
   final Value<bool> done;
   final Value<bool> countInProjection;
+  final Value<bool> repeatsYearly;
   const PlannedEventsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -2853,6 +2900,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
     this.dueOn = const Value.absent(),
     this.done = const Value.absent(),
     this.countInProjection = const Value.absent(),
+    this.repeatsYearly = const Value.absent(),
   });
   PlannedEventsCompanion.insert({
     this.id = const Value.absent(),
@@ -2863,6 +2911,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
     required DateTime dueOn,
     this.done = const Value.absent(),
     this.countInProjection = const Value.absent(),
+    this.repeatsYearly = const Value.absent(),
   }) : name = Value(name),
        kind = Value(kind),
        amount = Value(amount),
@@ -2877,6 +2926,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
     Expression<String>? dueOn,
     Expression<bool>? done,
     Expression<bool>? countInProjection,
+    Expression<bool>? repeatsYearly,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2887,6 +2937,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
       if (dueOn != null) 'due_on': dueOn,
       if (done != null) 'done': done,
       if (countInProjection != null) 'count_in_projection': countInProjection,
+      if (repeatsYearly != null) 'repeats_yearly': repeatsYearly,
     });
   }
 
@@ -2899,6 +2950,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
     Value<DateTime>? dueOn,
     Value<bool>? done,
     Value<bool>? countInProjection,
+    Value<bool>? repeatsYearly,
   }) {
     return PlannedEventsCompanion(
       id: id ?? this.id,
@@ -2909,6 +2961,7 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
       dueOn: dueOn ?? this.dueOn,
       done: done ?? this.done,
       countInProjection: countInProjection ?? this.countInProjection,
+      repeatsYearly: repeatsYearly ?? this.repeatsYearly,
     );
   }
 
@@ -2943,6 +2996,9 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
     if (countInProjection.present) {
       map['count_in_projection'] = Variable<bool>(countInProjection.value);
     }
+    if (repeatsYearly.present) {
+      map['repeats_yearly'] = Variable<bool>(repeatsYearly.value);
+    }
     return map;
   }
 
@@ -2956,7 +3012,8 @@ class PlannedEventsCompanion extends UpdateCompanion<PlannedEvent> {
           ..write('categoryKey: $categoryKey, ')
           ..write('dueOn: $dueOn, ')
           ..write('done: $done, ')
-          ..write('countInProjection: $countInProjection')
+          ..write('countInProjection: $countInProjection, ')
+          ..write('repeatsYearly: $repeatsYearly')
           ..write(')'))
         .toString();
   }
@@ -5924,6 +5981,7 @@ typedef $$PlannedEventsTableCreateCompanionBuilder =
       required DateTime dueOn,
       Value<bool> done,
       Value<bool> countInProjection,
+      Value<bool> repeatsYearly,
     });
 typedef $$PlannedEventsTableUpdateCompanionBuilder =
     PlannedEventsCompanion Function({
@@ -5935,6 +5993,7 @@ typedef $$PlannedEventsTableUpdateCompanionBuilder =
       Value<DateTime> dueOn,
       Value<bool> done,
       Value<bool> countInProjection,
+      Value<bool> repeatsYearly,
     });
 
 final class $$PlannedEventsTableReferences
@@ -6009,6 +6068,11 @@ class $$PlannedEventsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get repeatsYearly => $composableBuilder(
+    column: $table.repeatsYearly,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CategoriesTableFilterComposer get categoryKey {
     final $$CategoriesTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -6077,6 +6141,11 @@ class $$PlannedEventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get repeatsYearly => $composableBuilder(
+    column: $table.repeatsYearly,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryKey {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6130,6 +6199,11 @@ class $$PlannedEventsTableAnnotationComposer
 
   GeneratedColumn<bool> get countInProjection => $composableBuilder(
     column: $table.countInProjection,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get repeatsYearly => $composableBuilder(
+    column: $table.repeatsYearly,
     builder: (column) => column,
   );
 
@@ -6193,6 +6267,7 @@ class $$PlannedEventsTableTableManager
                 Value<DateTime> dueOn = const Value.absent(),
                 Value<bool> done = const Value.absent(),
                 Value<bool> countInProjection = const Value.absent(),
+                Value<bool> repeatsYearly = const Value.absent(),
               }) => PlannedEventsCompanion(
                 id: id,
                 name: name,
@@ -6202,6 +6277,7 @@ class $$PlannedEventsTableTableManager
                 dueOn: dueOn,
                 done: done,
                 countInProjection: countInProjection,
+                repeatsYearly: repeatsYearly,
               ),
           createCompanionCallback:
               ({
@@ -6213,6 +6289,7 @@ class $$PlannedEventsTableTableManager
                 required DateTime dueOn,
                 Value<bool> done = const Value.absent(),
                 Value<bool> countInProjection = const Value.absent(),
+                Value<bool> repeatsYearly = const Value.absent(),
               }) => PlannedEventsCompanion.insert(
                 id: id,
                 name: name,
@@ -6222,6 +6299,7 @@ class $$PlannedEventsTableTableManager
                 dueOn: dueOn,
                 done: done,
                 countInProjection: countInProjection,
+                repeatsYearly: repeatsYearly,
               ),
           withReferenceMapper: (p0) => p0
               .map(

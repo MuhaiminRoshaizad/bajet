@@ -32,7 +32,8 @@ for each day:
    `nextDue` date onward. An item with a window (`windowDays`) counts on the
    window's last day if it is income and its first day if it is a bill, so
    the plan never relies on pay arriving early or a bill going out late.
-3. Apply planned events that are not done and are counted in the projection.
+3. Apply planned events that are not done and are counted in the projection,
+   a yearly one on its date in every year up to the end of the window.
 4. Record the balance before goals, then subtract each goal due that day in
    priority order and record what is left.
 

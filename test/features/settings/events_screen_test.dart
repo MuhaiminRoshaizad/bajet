@@ -78,4 +78,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.events.single.name, 'Car service');
   });
+
+  testWidgets('a birthday can be added as yearly, and Done moves it to next year', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30)));
+    await openEvents(tester);
+    await tester.tap(find.text('Birthday'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Every year'));
+    await tester.tap(find.text('Every year'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Comes back on this date each year'), findsOneWidget);
+    await tester.ensureVisible(find.text('Save event'));
+    await tester.tap(find.text('Save event'));
+    await tester.pumpAndSettle();
+    expect(find.text('−RM100.00 · 30/10/2026 · every year'), findsOneWidget);
+
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(world.events.single.date, d(2027, 10, 30));
+    expect(find.text('−RM100.00 · 30/10/2027 · every year'), findsOneWidget);
+  });
 }

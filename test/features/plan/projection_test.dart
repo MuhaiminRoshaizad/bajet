@@ -87,6 +87,20 @@ void main() {
     expect(p.goals.single.leftAfterBuying, 590300);
   });
 
+  test('a yearly event is counted every year it falls before buy day', () {
+    final p = project(
+      balance: 100000,
+      today: d(2026, 7, 1),
+      rules: const [],
+      recurring: const [],
+      events: [PlannedEvent(id: 1, name: 'Birthday', amount: 10000, categoryKey: 'gifts', isIncome: false, date: d(2026, 10, 30), repeatsYearly: true)],
+      goals: [Goal(id: 1, name: 'Laptop', price: 1000, targetDate: d(2028, 1, 1))],
+      buffer: 0,
+    );
+    // Two birthdays, 2026 and 2027, before the goal on 01/01/2028.
+    expect(p.goals.single.sums.costs, 20000);
+  });
+
   test('today only counts the part of the plan not yet logged', () {
     final p = run(flexSpentToday: 1200);
     expect(balanceOn(p, d(2026, 10, 14)), 180000);

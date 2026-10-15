@@ -61,4 +61,15 @@ void main() {
       (DateTime.utc(2026, 8, 25), DateTime.utc(2026, 8, 28)),
     ]);
   });
+
+  test('a yearly event is listed for each year in range, marked as yearly', () {
+    final items = upcoming(
+      recurring: const [],
+      events: [PlannedEvent(id: 1, name: 'Birthday', amount: 10000, categoryKey: 'gifts', isIncome: false, date: DateTime.utc(2026, 10, 30), repeatsYearly: true)],
+      goals: const [],
+      from: DateTime.utc(2026, 7, 1),
+      to: DateTime.utc(2027, 12, 31),
+    );
+    expect([for (final i in items) (i.date, i.yearly)], [(DateTime.utc(2026, 10, 30), true), (DateTime.utc(2027, 10, 30), true)]);
+  });
 }

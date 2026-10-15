@@ -161,6 +161,7 @@ class DriftPlanRepository implements PlanRepository {
             date: r.dueOn,
             countInProjection: r.countInProjection,
             done: r.done,
+            repeatsYearly: r.repeatsYearly,
           ),
       ]);
 
@@ -172,6 +173,7 @@ class DriftPlanRepository implements PlanRepository {
     required String categoryKey,
     required DateTime date,
     bool countInProjection = true,
+    bool repeatsYearly = false,
   }) =>
       _db.into(_db.plannedEvents).insert(
             PlannedEventsCompanion.insert(
@@ -181,13 +183,17 @@ class DriftPlanRepository implements PlanRepository {
               categoryKey: categoryKey,
               dueOn: date,
               countInProjection: Value(countInProjection),
+              repeatsYearly: Value(repeatsYearly),
             ),
           );
 
   @override
-  Future<void> setEventDone(int id, {required bool done}) async {
-    await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(id))).write(PlannedEventsCompanion(done: Value(done)));
-  }
+  Future<void> setEventDone(int id, {required bool done}) => _db.transaction(() async {
+        final event = await (_db.select(_db.plannedEvents)..where((e) => e.id.equals(id))).getSingle();
+        final next = DateTime.utc(event.dueOn.year + 1, event.dueOn.month, event.dueOn.day);
+        await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(id)))
+            .write(done && event.repeatsYearly ? PlannedEventsCompanion(dueOn: Value(next)) : PlannedEventsCompanion(done: Value(done)));
+      });
 
   @override
   Future<void> updateEvent(domain.PlannedEvent event) async {
@@ -197,6 +203,7 @@ class DriftPlanRepository implements PlanRepository {
           categoryKey: Value(event.categoryKey),
           dueOn: Value(event.date),
           countInProjection: Value(event.countInProjection),
+          repeatsYearly: Value(event.repeatsYearly),
         ));
   }
 
@@ -216,6 +223,7 @@ class DriftPlanRepository implements PlanRepository {
           dueOn: event.date,
           countInProjection: Value(event.countInProjection),
           done: Value(event.done),
+          repeatsYearly: Value(event.repeatsYearly),
         ));
   }
 

@@ -89,15 +89,16 @@ Monthly bills and income.
 | `window_days`  | int  | 0–27 days after `next_due` it may still land; 0 for a fixed day (decision 015) |
 
 ### `planned_events`
-One-off future income or expenses.
+Future income or expenses, once or every year.
 
 | Column                | Type | Notes                                    |
 |-----------------------|------|------------------------------------------|
 | `id`                  | int  | Primary key                              |
 | `name`, `kind`, `amount`, `category_key` | | As above                  |
-| `due_on`              | day  |                                          |
-| `done`                | bool |                                          |
+| `due_on`              | day  | The next time it happens                 |
+| `done`                | bool | Set only for a one-off event             |
 | `count_in_projection` | bool | False for money that may not arrive      |
+| `repeats_yearly`      | bool | Same date each year; done moves `due_on` on a year |
 
 ### `goals`
 | Column        | Type   | Notes                                           |
@@ -153,7 +154,7 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 3,
+  "format": 4,
   "settings": { "openingBalance": 150000, "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000 },
   "categories": [], "weeklyRules": [], "recurringItems": [],
   "plannedEvents": [], "goals": [], "favourites": [], "entries": []
@@ -171,6 +172,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 1      | First release                                           |
 | 2      | Each entry carries `receipt`, the file name of its image |
 | 3      | Each recurring item carries `windowDays`; older files get 0 |
+| 4      | Each planned event carries `repeatsYearly`; older files get false |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
@@ -179,7 +181,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 3. Any change to a table bumps it and adds a step to
+`schemaVersion` is 4. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -188,3 +190,4 @@ data on the phone is left as it was.
 | 1       | First release                           |
 | 2       | `entries.receipt`, for attached receipts |
 | 3       | `recurring_items.window_days`, for pay and bills that move around |
+| 4       | `planned_events.repeats_yearly`, for birthdays and other yearly events |

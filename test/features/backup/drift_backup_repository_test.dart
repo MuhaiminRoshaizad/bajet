@@ -115,6 +115,26 @@ void main() {
     expect(restored.firstWhere((r) => r.name == 'Salary').windowDays, 3);
   });
 
+  test('a format 3 backup, from before yearly events, restores them as one-off', () async {
+    await fill(source);
+    final v4 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    final v3 = {
+      ...v4,
+      'format': 3,
+      'plannedEvents': [for (final e in v4['plannedEvents']! as List) {...(e as Map<String, Object?>)}..remove('repeatsYearly')],
+    };
+    await DriftBackupRepository(target).restore(v3);
+    expect([for (final e in await DriftPlanRepository(target).watchEvents().first) e.repeatsYearly], [false]);
+  });
+
+  test('a yearly event survives a round trip', () async {
+    await fill(source);
+    await DriftPlanRepository(source).addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30), repeatsYearly: true);
+    await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
+    final birthday = (await DriftPlanRepository(target).watchEvents().first).firstWhere((e) => e.name == 'Birthday');
+    expect(birthday.repeatsYearly, isTrue);
+  });
+
   test('receipts survive a round trip by file name', () async {
     await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1200, categoryKey: 'food', receipt: 'r1.jpg'));
     await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);

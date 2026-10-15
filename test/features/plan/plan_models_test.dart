@@ -60,4 +60,16 @@ void main() {
     final rules = week([1500, 500, 500, 500, 500, 0, 0], zero: {6, 7});
     expect(amounts(withRule(rules, noSpending(5))), [1625, 625, 625, 625, 0, 0, 0]);
   });
+
+  test('a yearly event happens on its date every year in the window, a one-off once', () {
+    final birthday = PlannedEvent(id: 1, name: 'Birthday', amount: 10000, categoryKey: 'gifts', isIncome: false, date: DateTime.utc(2026, 10, 30), repeatsYearly: true);
+    expect(birthday.occurrences(DateTime.utc(2026, 7, 1), DateTime.utc(2028, 12, 31)), [DateTime.utc(2026, 10, 30), DateTime.utc(2027, 10, 30), DateTime.utc(2028, 10, 30)]);
+    expect(birthday.copyWith(repeatsYearly: false).occurrences(DateTime.utc(2026, 7, 1), DateTime.utc(2028, 12, 31)), [DateTime.utc(2026, 10, 30)]);
+    expect(birthday.occurrences(DateTime.utc(2026, 11, 1), DateTime.utc(2027, 10, 29)), isEmpty);
+  });
+
+  test('a yearly event on 29 February falls on 1 March in other years', () {
+    final leap = PlannedEvent(id: 1, name: 'Leap', amount: 100, categoryKey: 'gifts', isIncome: false, date: DateTime.utc(2028, 2, 29), repeatsYearly: true);
+    expect(leap.occurrences(DateTime.utc(2028, 1, 1), DateTime.utc(2029, 12, 31)), [DateTime.utc(2028, 2, 29), DateTime.utc(2029, 3, 1)]);
+  });
 }

@@ -117,6 +117,10 @@ class PlannedEvents extends Table {
 
   /// False for money that may not arrive, such as an unconfirmed bonus.
   BoolColumn get countInProjection => boolean().withDefault(const Constant(true))();
+
+  /// Comes back on the same date every year, such as a birthday; [dueOn] is
+  /// the next one, and marking it done moves it on a year.
+  BoolColumn get repeatsYearly => boolean().withDefault(const Constant(false))();
 }
 
 class Goals extends Table {

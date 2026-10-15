@@ -61,13 +61,16 @@ abstract interface class PlanRepository {
     required String categoryKey,
     required DateTime date,
     bool countInProjection = true,
+    bool repeatsYearly = false,
   });
 
-  /// Marks a one-off event as having happened, so the projection stops
-  /// counting it. Logging the money itself stays a normal entry.
+  /// Marks an event as having happened. A one-off one stops being counted;
+  /// a yearly one moves on to next year's date. Logging the money itself
+  /// stays a normal entry.
   Future<void> setEventDone(int id, {required bool done});
 
-  /// Changes an event's name, amount, category, date and whether it counts.
+  /// Changes an event's name, amount, category, date, whether it counts and
+  /// whether it repeats.
   /// It stays an expense or an income.
   Future<void> updateEvent(PlannedEvent event);
 

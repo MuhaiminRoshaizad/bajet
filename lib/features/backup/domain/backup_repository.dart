@@ -2,8 +2,9 @@
 /// [upgradeBackup], whenever the format changes.
 ///
 /// 1: first release. 2: entries carry `receipt`, an image file name.
-/// 3: recurring items carry `windowDays`.
-const backupFormatVersion = 3;
+/// 3: recurring items carry `windowDays`. 4: planned events carry
+/// `repeatsYearly`.
+const backupFormatVersion = 4;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -29,6 +30,14 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
       'recurringItems': [for (final r in (b['recurringItems'] as List<Object?>? ?? const [])) {...r! as Map<String, Object?>, 'windowDays': 0}],
     };
     format = 3;
+  }
+  if (format == 3) {
+    b = {
+      ...b,
+      'format': 4,
+      'plannedEvents': [for (final e in (b['plannedEvents'] as List<Object?>? ?? const [])) {...e! as Map<String, Object?>, 'repeatsYearly': false}],
+    };
+    format = 4;
   }
   return b;
 }

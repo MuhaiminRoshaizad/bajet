@@ -68,6 +68,7 @@ class DriftBackupRepository implements BackupRepository {
             'dueOn': _day.toSql(e.dueOn),
             'done': e.done,
             'countInProjection': e.countInProjection,
+            'repeatsYearly': e.repeatsYearly,
           },
       ],
       'goals': [
@@ -172,6 +173,7 @@ class DriftBackupRepository implements BackupRepository {
                 dueOn: _day.fromSql(e['dueOn']! as String),
                 done: Value(e['done']! as bool),
                 countInProjection: Value(e['countInProjection']! as bool),
+                repeatsYearly: Value(e['repeatsYearly']! as bool),
               ),
           ]);
           b.insertAll(_db.goals, [

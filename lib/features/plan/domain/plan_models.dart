@@ -98,6 +98,7 @@ class PlannedEvent {
     required this.date,
     this.countInProjection = true,
     this.done = false,
+    this.repeatsYearly = false,
   });
 
   final int id;
@@ -105,15 +106,28 @@ class PlannedEvent {
   final int amount;
   final String categoryKey;
   final bool isIncome;
+
+  /// The next time it happens; for a yearly event, the next year's date.
   final DateTime date;
 
   /// False for money that may not arrive, such as an unconfirmed bonus.
   final bool countInProjection;
   final bool done;
 
+  /// Comes back on the same date every year, such as a birthday.
+  final bool repeatsYearly;
+
   int get signedAmount => isIncome ? amount : -amount;
 
-  PlannedEvent copyWith({String? name, int? amount, String? categoryKey, DateTime? date, bool? countInProjection, bool? done}) => PlannedEvent(
+  /// The days it happens from [from] to [to] inclusive: once, or every year
+  /// from [date] on. A 29 February falls on 1 March in other years.
+  List<DateTime> occurrences(DateTime from, DateTime to) {
+    final first = calendarDay(date);
+    final days = repeatsYearly ? [for (var y = 0; !DateTime.utc(first.year + y, first.month, first.day).isAfter(to); y++) DateTime.utc(first.year + y, first.month, first.day)] : [first];
+    return [for (final d in days) if (!d.isBefore(from) && !d.isAfter(to)) d];
+  }
+
+  PlannedEvent copyWith({String? name, int? amount, String? categoryKey, DateTime? date, bool? countInProjection, bool? done, bool? repeatsYearly}) => PlannedEvent(
         id: id,
         name: name ?? this.name,
         amount: amount ?? this.amount,
@@ -122,6 +136,7 @@ class PlannedEvent {
         date: date ?? this.date,
         countInProjection: countInProjection ?? this.countInProjection,
         done: done ?? this.done,
+        repeatsYearly: repeatsYearly ?? this.repeatsYearly,
       );
 }
 

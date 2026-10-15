@@ -92,4 +92,14 @@ void main() {
     expect((back.id, back.windowDays, back.nextDue), (id, 2, d(2026, 8, 1)));
     expect((await db.select(db.entries).getSingle()).recurringItemId, id);
   });
+
+  test('marking a yearly event done moves it on a year; a one-off one is done', () async {
+    final yearly = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30), repeatsYearly: true);
+    final once = await plan.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 11, 20));
+    await plan.setEventDone(yearly, done: true);
+    await plan.setEventDone(once, done: true);
+    final events = {for (final e in await plan.watchEvents().first) e.id: e};
+    expect((events[yearly]!.done, events[yearly]!.date, events[yearly]!.repeatsYearly), (false, d(2027, 10, 30), true));
+    expect(events[once]!.done, isTrue);
+  });
 }
