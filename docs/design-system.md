@@ -87,6 +87,20 @@ background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
   `primary` on focus and in `bad` on error.
 - The main action of a screen stays a solid `primary` button.
 
+## Account cards
+
+Each account is drawn as a card at a real bank card's shape, 85.60 by 53.98
+mm (`cardAspectRatio`), with a 16 px radius (`card_face.dart`). A card is one
+colour the owner picked, lit from the top left, under a finish that never
+moves: brushed metal (fine vertical streaks), matte or gloss (a fixed
+diagonal sheen). Text is dark on light cards and white on dark ones unless
+the owner picked its colour, such as gold on black. The provider's name is
+plain text, at the top and again as the wordmark; there are no logos or
+issuers' card designs, which are trademarks. These card
+colours are the owner's data, so they are the one place colours do not come
+from the theme; the total card, with no colour of its own, takes the app's
+surface.
+
 ## Type
 
 Figtree, one family, weights 400 to 800, bundled under `assets/fonts/` (SIL OFL
