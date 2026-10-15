@@ -105,4 +105,25 @@ void main() {
     await tester.pumpAndSettle();
     expect((world.accounts.last.name, world.accounts.last.balance), ('Office card', 0));
   });
+
+  testWidgets('Match my card takes the colour from a photo and keeps only the colour', (tester) async {
+    final world = await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.tap(find.text('Main account').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Edit this card'));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Match my card'));
+    await tester.tap(find.text('Match my card'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose a photo'));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('Colour 2 from your photo'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Save card'));
+    await tester.tap(find.text('Save card'));
+    await tester.pumpAndSettle();
+    expect(world.accounts.single.look, const CardLook(color: 0xFF7A1F2B));
+  });
 }

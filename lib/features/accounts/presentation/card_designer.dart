@@ -8,6 +8,7 @@ import '../../../core/widgets/money_field.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/account_models.dart';
 import '../domain/known_providers.dart';
+import '../domain/photo_colours.dart';
 import 'account_providers.dart';
 import 'card_face.dart';
 import 'card_palette.dart';
@@ -83,6 +84,9 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   final _provider = TextEditingController();
   final _balance = TextEditingController();
   late String _name = _newKind == AccountKind.cash ? 'Cash' : '';
+
+  /// Colours taken from a photo of the real card, to pick from.
+  List<int> _fromPhoto = const [];
   bool _tried = false;
 
   AccountKind? get _kind => _account?.kind ?? _newKind;
@@ -119,6 +123,18 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
         _color = swatch?.color;
         _ink = swatch?.ink;
       });
+
+  Future<void> _match(PhotoSource source) async {
+    final colours = await ref.read(photoColoursProvider).pick(source);
+    if (colours == null || !mounted) return;
+    setState(() {
+      _fromPhoto = colours;
+      if (colours.isNotEmpty) {
+        _color = colours.first;
+        _ink = null;
+      }
+    });
+  }
 
   Future<void> _save() async {
     final repo = ref.read(accountRepositoryProvider);
@@ -204,6 +220,17 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
               if (_isTotal) _Swatch(name: 'Match the app', selected: _color == null, onTap: () => _pick(null)),
               for (final s in swatches) _Swatch(name: s.name, color: Color(s.color), selected: _color == s.color && _ink == s.ink, onTap: () => _pick(s)),
             ]),
+            const SizedBox(height: AppSpacing.s),
+            _PhotoMatch(
+              label: _isTotal ? 'Match a photo' : _isCash ? 'Match my wallet' : 'Match my card',
+              colours: _fromPhoto,
+              selected: _color,
+              onSource: _match,
+              onPick: (c) => setState(() {
+                _color = c;
+                _ink = null;
+              }),
+            ),
             if (!_isTotal) ...[
               const SizedBox(height: AppSpacing.l),
               TextField(
@@ -252,6 +279,44 @@ class _ProviderList extends StatelessWidget {
     return Column(children: [
       for (final p in matches.take(5)) ListTile(dense: true, title: Text(p), onTap: () => onChoose(p)),
       if (typed.isNotEmpty && !exact) ListTile(dense: true, leading: const Icon(Icons.add), title: Text('Use “$typed”'), onTap: () => onChoose(typed)),
+    ]);
+  }
+}
+
+/// Takes up to five colours from a photo of the real card and offers them as
+/// swatches. Only the colour picked is saved; the photo is gone at once.
+class _PhotoMatch extends StatelessWidget {
+  const _PhotoMatch({required this.label, required this.colours, required this.selected, required this.onSource, required this.onPick});
+
+  final String label;
+  final List<int> colours;
+  final int? selected;
+  final ValueChanged<PhotoSource> onSource;
+  final ValueChanged<int> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        MenuAnchor(
+          menuChildren: [
+            MenuItemButton(leadingIcon: const Icon(Icons.photo_camera_outlined), onPressed: () => onSource(PhotoSource.camera), child: const Text('Take a photo')),
+            MenuItemButton(leadingIcon: const Icon(Icons.photo_library_outlined), onPressed: () => onSource(PhotoSource.gallery), child: const Text('Choose a photo')),
+          ],
+          builder: (context, menu, _) => TextButton.icon(
+            onPressed: () => menu.isOpen ? menu.close() : menu.open(),
+            icon: const Icon(Icons.colorize_outlined),
+            label: Text(label),
+          ),
+        ),
+        Expanded(child: Text("The photo isn't kept.", style: TextStyle(color: c.muted, fontSize: 12))),
+      ]),
+      if (colours.isNotEmpty)
+        Wrap(spacing: AppSpacing.xs, children: [
+          for (final (i, colour) in colours.indexed)
+            _Swatch(name: 'Colour ${i + 1} from your photo', color: Color(colour), selected: selected == colour, onTap: () => onPick(colour)),
+        ]),
     ]);
   }
 }

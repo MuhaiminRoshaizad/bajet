@@ -105,7 +105,10 @@ total card's by tapping it on Your accounts. Adding an account (Your accounts â†
 whether it is cash, a bank account or an e-wallet, then which bank or
 e-wallet from Bank Negara Malaysia's lists (`known_providers.dart`), or any
 name typed; a well-known one starts on a swatch near its colour
-(`startingSwatch`). These card
+(`startingSwatch`). "Match my card" takes up to five colours
+from a photo of the owner's real card (`commonColours`) to pick from; the
+photo is read small, only the chosen colour is saved, and the picker's copy
+is deleted at once, so no card number is ever kept. These card
 colours are the owner's data, so they are the one place colours do not come
 from the theme; the total card, with no colour of its own, takes the app's
 surface.

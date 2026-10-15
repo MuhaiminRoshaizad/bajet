@@ -48,6 +48,7 @@ Future<FakeWorld> pumpApp(
       coachClientProvider.overrideWithValue(world.coach),
       planRepositoryProvider.overrideWithValue(world),
       accountRepositoryProvider.overrideWithValue(world),
+      photoColoursProvider.overrideWithValue(world.photos),
       themeModeStoreProvider.overrideWithValue(world.themeModes),
       ...?overrides?.call(world),
     ],

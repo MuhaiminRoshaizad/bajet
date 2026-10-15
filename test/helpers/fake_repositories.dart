@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';
+import 'package:bajet/features/accounts/domain/photo_colours.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
@@ -77,6 +78,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final coachKeys = FakeCoachKeys();
   final coach = FakeCoach();
   final themeModes = FakeThemeModes();
+  final photos = FakePhotoColours();
   var _nextId = 1;
 
   PlanSettings? get settings => _settings.value;
@@ -472,6 +474,14 @@ class FakeReceipts implements ReceiptStore {
 
   @override
   Future<void> keepOnly(Set<String> names) async => kept = names;
+}
+
+/// A camera that always sees the same card: [next] is what a photo yields.
+class FakePhotoColours implements PhotoColours {
+  List<int>? next = const [0xFF7A1F2B, 0xFFE8E8E8];
+
+  @override
+  Future<List<int>?> pick(PhotoSource source) async => next;
 }
 
 /// The home screen without a launcher: records what bajet sends it, and
