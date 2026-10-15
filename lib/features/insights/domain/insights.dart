@@ -108,7 +108,7 @@ Insights insights({
   bool inRange(DateTime d) => !d.isBefore(from) && !d.isAfter(to);
   final inPeriod = entries.where((e) => inRange(e.day)).toList();
   final out = inPeriod.where((e) => !e.isIncome).toList();
-  final flexible = out.where((e) => !fixed.contains(e.categoryKey)).toList();
+  final flexible = out.where((e) => e.isFlexible(fixed)).toList();
 
   int sum(Iterable<Entry> es) => es.fold(0, (s, e) => s + e.amount);
 
@@ -146,7 +146,8 @@ Insights insights({
     to: to,
     moneyIn: sum(inPeriod.where((e) => e.isIncome)),
     moneyOut: sum(out),
-    fixedOut: sum(out.where((e) => fixed.contains(e.categoryKey) && e.categoryKey != untrackedCategoryKey)),
+    // Planned money: bills, goals, and anything spent on a planned event.
+    fixedOut: sum(out.where((e) => !e.isFlexible(fixed) && e.categoryKey != untrackedCategoryKey)),
     flexibleOut: sum(flexible),
     untrackedOut: sum(out.where((e) => e.categoryKey == untrackedCategoryKey)),
     flexibleByCategory: byCategory.entries.map((e) => (e.key, e.value)).toList()..sort((a, b) => b.$2.compareTo(a.$2)),

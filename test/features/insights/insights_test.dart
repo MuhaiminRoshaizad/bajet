@@ -85,4 +85,21 @@ void main() {
     expect(early.where((x) => x.date.isBefore(d(7, 1))).every((x) => x.planned == 0 && x.spent == 0), isTrue);
     expect(early.last.planned, 1000);
   });
+
+  test('spending on a planned event is planned money, not the weekly allowance', () {
+    final gift = Entry(id: ++_id, day: d(7, 15), isIncome: false, amount: 4500, categoryKey: 'food', event: EventLink(1, d(7, 20)));
+    final i = insights(
+      period: InsightsPeriod.week,
+      today: d(7, 15),
+      openingDate: d(7, 1),
+      weeklyCap: 5000,
+      entries: [...entries, gift],
+      categories: demoCategories,
+      rules: rules,
+    );
+    final without = run(InsightsPeriod.week);
+    expect(i.flexibleOut, without.flexibleOut);
+    expect(i.fixedOut, without.fixedOut + 4500);
+    expect(flexibleSpent([gift], const {}, d(7, 15), d(7, 15)), 0);
+  });
 }

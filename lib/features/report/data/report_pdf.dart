@@ -72,7 +72,7 @@ Future<Uint8List> reportPdf({
       heading('Money out by kind'),
       _table(
         [
-          ['Fixed (bills, goals)', Money.format(i.fixedOut)],
+          ['Fixed (bills, goals, events)', Money.format(i.fixedOut)],
           ['Flexible (day to day)', Money.format(i.flexibleOut)],
           if (i.untrackedOut > 0) ['Untracked', Money.format(i.untrackedOut)],
         ],

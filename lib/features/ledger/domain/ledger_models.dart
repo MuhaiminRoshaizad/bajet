@@ -69,6 +69,11 @@ class Entry {
   final EventLink? event;
 
   int get signedAmount => isIncome ? amount : -amount;
+
+  /// Spending that comes out of the weekly allowance: not income, not a
+  /// fixed category, and not spent on a planned event, whose own budget
+  /// already plans for it.
+  bool isFlexible(Set<String> fixedKeys) => !isIncome && !fixedKeys.contains(categoryKey) && event == null;
 }
 
 /// An entry not yet saved, as the logger builds it.
@@ -115,7 +120,7 @@ const untrackedCategoryKey = 'untracked';
 /// Spending that counts toward the weekly cap: expenses outside fixed
 /// categories, from [from] to [to] inclusive.
 int flexibleSpent(Iterable<Entry> entries, Set<String> fixedKeys, DateTime from, DateTime to) => entries
-    .where((e) => !e.isIncome && !fixedKeys.contains(e.categoryKey) && !e.day.isBefore(from) && !e.day.isAfter(to))
+    .where((e) => e.isFlexible(fixedKeys) && !e.day.isBefore(from) && !e.day.isAfter(to))
     .fold(0, (sum, e) => sum + e.amount);
 
 /// Monday of the week containing [day].

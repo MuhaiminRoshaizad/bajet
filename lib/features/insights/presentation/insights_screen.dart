@@ -202,7 +202,7 @@ class _Split extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final parts = [
-      ('Fixed', 'bills, goals', i.fixedOut, c.tintInk(Tint.teal)),
+      ('Fixed', 'bills, goals, events', i.fixedOut, c.tintInk(Tint.teal)),
       ('Flexible', 'day to day', i.flexibleOut, c.tintInk(Tint.apricot)),
       if (i.untrackedOut > 0) ('Untracked', 'not logged', i.untrackedOut, c.bad),
     ];
