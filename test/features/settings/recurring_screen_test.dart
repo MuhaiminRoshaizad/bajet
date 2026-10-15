@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
-import '../../helpers/money_input.dart';
 
 DateTime d(int y, int m, int day) => DateTime.utc(y, m, day);
 
@@ -75,7 +74,7 @@ void main() {
     await tester.tap(find.text('Income').last);
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Salary');
-    await enterAmount(tester, find.widgetWithText(TextFormField, 'Amount each month'), '300000');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Amount each month'), '300000');
     await tester.tap(find.widgetWithText(ChoiceChip, 'Salary'));
     await tester.pump();
     await tester.ensureVisible(find.text('The day changes each month'));

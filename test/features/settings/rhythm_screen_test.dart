@@ -2,7 +2,6 @@ import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/money_input.dart';
 import '../../helpers/app_harness.dart';
 import '../../helpers/fake_repositories.dart';
 
@@ -50,7 +49,7 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Office day');
     await tester.tap(find.text('Flexible'));
-    await enterAmount(tester, find.widgetWithText(TextFormField, 'Planned spend'), '1200');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Planned spend'), '1200');
     await save(tester);
 
     expect(find.textContaining('Planned in total: RM12.00 a week.'), findsOneWidget);

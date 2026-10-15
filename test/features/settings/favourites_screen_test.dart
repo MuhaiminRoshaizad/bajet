@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/money_input.dart';
 import '../../helpers/app_harness.dart';
 
 Future<void> openFavourites(WidgetTester tester) async {
@@ -19,7 +18,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Coffee');
-    await enterAmount(tester, find.widgetWithText(TextFormField, 'Usual amount'), '450');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Usual amount'), '450');
     await tester.tap(find.widgetWithText(ChoiceChip, 'Food'));
     await tester.tap(find.text('Save favourite'));
     await tester.pumpAndSettle();
@@ -35,7 +34,7 @@ void main() {
     await tester.tap(find.text('Add a favourite'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Coffee');
-    await enterAmount(tester, find.widgetWithText(TextFormField, 'Usual amount'), '450');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Usual amount'), '450');
     await tester.tap(find.text('Save favourite'));
     await tester.pumpAndSettle();
     expect(find.text('Pick a category'), findsOneWidget);
