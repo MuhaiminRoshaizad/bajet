@@ -88,7 +88,9 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final today = ref.read(todayProvider);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _date ?? DateTime(today.year, today.month, today.day + 7),
+      // Nothing is preselected until a day is chosen, so the calendar never
+      // suggests a date the owner did not pick.
+      initialDate: _date,
       firstDate: DateTime(today.year, today.month, today.day),
       lastDate: DateTime(today.year + 5),
       helpText: 'When',

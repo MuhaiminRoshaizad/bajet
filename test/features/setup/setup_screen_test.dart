@@ -104,6 +104,20 @@ void main() {
     expect(find.text('Pick the day you plan to buy it'), findsOneWidget);
   });
 
+  testWidgets('the buy day calendar opens with no day chosen for the owner', (tester) async {
+    await pumpApp(tester, setUpDone: false);
+    await fillMoneyStep(tester);
+
+    await tester.tap(find.text('Pick a buy day'));
+    await tester.pumpAndSettle();
+    // The header reads like "Fri, Jan 15" once a day is chosen, and is empty until then.
+    expect(find.text('Buy day'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^\w{3}, \w{3} \d+$')), findsNothing);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pick a buy day'), findsOneWidget);
+  });
+
   testWidgets('a new phone can start from a backup instead of setup', (tester) async {
     final world = await pumpApp(
       tester,

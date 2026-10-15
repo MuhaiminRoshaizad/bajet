@@ -79,7 +79,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final today = ref.read(todayProvider);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _goalDate ?? DateTime(today.year, today.month + 3, today.day),
+      // Nothing is preselected until a day is chosen, so the calendar never
+      // suggests a date the owner did not pick.
+      initialDate: _goalDate,
       firstDate: DateTime(today.year, today.month, today.day + 1),
       lastDate: DateTime(today.year + 10),
       helpText: 'Buy day',
