@@ -6,6 +6,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../domain/ledger_models.dart';
 import 'entry_tile.dart';
@@ -123,28 +124,12 @@ class _HistoryList extends ConsumerWidget {
     return '${Dates.weekday(day)} ${Dates.full(day)}';
   }
 
-  Future<bool> _confirmDelete(BuildContext context, Entry entry) async {
-    final c = context.colors;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete this entry?'),
-        content: Text(
-          '${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey} ${Money.format(entry.amount)} on ${Dates.full(entry.day)}. '
-          'Your balance will change by ${entry.isIncome ? '−' : '+'}${Money.format(entry.amount)}.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Keep')),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.onBad),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    return confirmed ?? false;
-  }
+  Future<bool> _confirmDelete(BuildContext context, Entry entry) => confirmDelete(
+        context,
+        title: 'Delete this entry?',
+        message: '${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey} ${Money.format(entry.amount)} on ${Dates.full(entry.day)}. '
+            'Your balance will change by ${entry.isIncome ? '−' : '+'}${Money.format(entry.amount)}.',
+      );
 
   Future<void> _delete(BuildContext context, WidgetRef ref, Entry entry) async {
     final repo = ref.read(ledgerRepositoryProvider);

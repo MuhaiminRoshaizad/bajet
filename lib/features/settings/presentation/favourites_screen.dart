@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
@@ -104,23 +105,8 @@ class _FavouriteFormState extends ConsumerState<_FavouriteForm> {
 
   Future<void> _remove() async {
     final f = widget.editing!;
-    final c = context.colors;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Remove ${f.label}?'),
-        content: const Text('Past entries stay as they are. Only the shortcut goes.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Keep')),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: c.bad, foregroundColor: c.onBad),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
+    final confirmed = await confirmDelete(context, title: 'Remove ${f.label}?', message: 'Past entries stay as they are. Only the shortcut goes.', action: 'Remove');
+    if (!confirmed) return;
     final repo = ref.read(favouriteRepositoryProvider);
     await repo.delete(f.id);
     if (!mounted) return;
