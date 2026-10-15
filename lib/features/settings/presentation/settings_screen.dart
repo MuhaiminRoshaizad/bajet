@@ -6,6 +6,7 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/theme_mode.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
@@ -68,6 +69,16 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.m),
+          CardGroup(
+            children: [
+              SettingsRow(
+                title: 'Appearance',
+                value: _themeNames[ref.watch(themeModeProvider)]!,
+                onTap: () => showModalBottomSheet<void>(context: context, useSafeArea: true, builder: (_) => const _AppearanceSheet()),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.m),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Text('Every amount and rule bajet works from is set here.', style: TextStyle(color: c.muted)),
@@ -82,6 +93,43 @@ class SettingsScreen extends ConsumerWidget {
         isScrollControlled: true,
         useSafeArea: true,
         builder: (_) => _AllowanceSheet(settings: settings),
+      );
+}
+
+const _themeNames = {ThemeMode.system: 'Match the phone', ThemeMode.light: 'Light', ThemeMode.dark: 'Dark'};
+
+class _AppearanceSheet extends ConsumerWidget {
+  const _AppearanceSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.s, 0, AppSpacing.s, AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+              child: Text('Appearance', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(height: AppSpacing.s),
+            RadioGroup<ThemeMode>(
+              groupValue: ref.watch(themeModeProvider),
+              onChanged: (mode) {
+                if (mode == null) return;
+                ref.read(themeModeProvider.notifier).choose(mode);
+                Navigator.of(context).pop();
+              },
+              child: const Column(
+                children: [
+                  RadioListTile(value: ThemeMode.system, title: Text('Match the phone'), subtitle: Text('Light or dark as the phone is set')),
+                  RadioListTile(value: ThemeMode.light, title: Text('Light')),
+                  RadioListTile(value: ThemeMode.dark, title: Text('Dark')),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 }
 

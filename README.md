@@ -31,7 +31,8 @@ without a key, nothing leaves the phone.
   figures, using your own Anthropic key, up to ten a day. The week's summary
   can also be copied to paste anywhere.
 - **Settings** holds every amount and rule: allowance and buffer, goals, bills
-  and income, one-off events, the weekly rhythm, favourites, and backups.
+  and income, one-off events, the weekly rhythm, favourites, backups, and a
+  light or dark appearance that otherwise follows the phone.
 
 ## Status
 

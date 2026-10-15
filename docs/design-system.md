@@ -14,6 +14,9 @@ word or an icon, never used alone.
 Everything sits on one blue-grey surface (see [Surfaces](#surfaces)). Dark
 mode uses a dark slate rather than black, so shadows still have somewhere
 darker to go, and off-white text, following Material's dark theme guidance.
+The app follows the phone's setting unless Settings → Appearance picks light
+or dark; that choice is a device preference kept in a file of its own
+(`theme_mode.dart`), outside the database and backups.
 Every text colour passes WCAG AA against both `background` and `well`.
 
 | Token          | Light       | Dark        | Use                                   |

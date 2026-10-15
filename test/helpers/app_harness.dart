@@ -1,5 +1,6 @@
 import 'package:bajet/app/app.dart';
 import 'package:bajet/core/database/database_provider.dart';
+import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/coach/presentation/coach_providers.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/ledger/presentation/ledger_providers.dart';
@@ -45,6 +46,7 @@ Future<FakeWorld> pumpApp(
       coachKeyStoreProvider.overrideWithValue(world.coachKeys),
       coachClientProvider.overrideWithValue(world.coach),
       planRepositoryProvider.overrideWithValue(world),
+      themeModeStoreProvider.overrideWithValue(world.themeModes),
       ...?overrides?.call(world),
     ],
     child: const BajetApp(),

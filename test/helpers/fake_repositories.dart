@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 
+import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
@@ -69,6 +71,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   final home = FakeHomeSurface();
   final coachKeys = FakeCoachKeys();
   final coach = FakeCoach();
+  final themeModes = FakeThemeModes();
   var _nextId = 1;
 
   PlanSettings? get settings => _settings.value;
@@ -321,4 +324,14 @@ class FakeCoach implements CoachClient {
     if (failWith != null) throw CoachException(failWith!);
     return reply;
   }
+}
+
+class FakeThemeModes implements ThemeModeStore {
+  ThemeMode saved = ThemeMode.system;
+
+  @override
+  Future<ThemeMode> read() async => saved;
+
+  @override
+  Future<void> write(ThemeMode mode) async => saved = mode;
 }

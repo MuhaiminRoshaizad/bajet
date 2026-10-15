@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_theme.dart';
+import '../core/theme/theme_mode.dart';
 import '../features/launch/presentation/launch_providers.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
 import 'router.dart';
@@ -22,6 +23,7 @@ class BajetApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
     );
   }

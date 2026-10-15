@@ -45,4 +45,22 @@ void main() {
     expect(find.text('Enter how much you allow each week'), findsOneWidget);
     expect(world.settings!.weeklyCap, demoSettings.weeklyCap);
   });
+
+  testWidgets('the app can be set to light or dark instead of following the phone', (tester) async {
+    final world = await pumpApp(tester);
+    await openSettings(tester);
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(find.text('Match the phone'), findsOneWidget);
+
+    await tester.tap(find.text('Appearance'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(world.themeModes.saved, ThemeMode.dark);
+    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.dark);
+    expect(Theme.of(tester.element(find.text('Appearance'))).brightness, Brightness.dark);
+    expect(find.text('Dark'), findsOneWidget);
+  });
 }
