@@ -7,7 +7,7 @@ DateTime d(int y, int m, int day) => DateTime.utc(y, m, day);
 void main() {
   test('repeats recurring items monthly and lists everything soonest first', () {
     final list = upcoming(
-      recurring: [RecurringItem(id: 1, name: 'Rent', amount: 50000, isIncome: false, nextDue: d(2026, 8, 1))],
+      recurring: [RecurringItem(id: 1, name: 'Rent', amount: 50000, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 8, 1))],
       events: [PlannedEvent(id: 1, name: 'Car service', amount: 25000, isIncome: false, date: d(2026, 8, 20))],
       goals: [Goal(id: 1, name: 'Laptop', price: 450000, targetDate: d(2026, 9, 15))],
       from: d(2026, 7, 1),
@@ -25,7 +25,7 @@ void main() {
 
   test('leaves out inactive items, finished events and anything outside the range', () {
     final list = upcoming(
-      recurring: [RecurringItem(id: 1, name: 'Old plan', amount: 100, isIncome: false, nextDue: d(2026, 7, 5), active: false)],
+      recurring: [RecurringItem(id: 1, name: 'Old plan', amount: 100, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 7, 5), active: false)],
       events: [
         PlannedEvent(id: 1, name: 'Done', amount: 100, isIncome: false, date: d(2026, 7, 5), done: true),
         PlannedEvent(id: 2, name: 'Too late', amount: 100, isIncome: false, date: d(2026, 12, 1)),
@@ -50,7 +50,7 @@ void main() {
 
   test('an item that moves around carries the last day it may land', () {
     final items = upcoming(
-      recurring: [RecurringItem(id: 1, name: 'Salary', amount: 300000, isIncome: true, nextDue: DateTime.utc(2026, 7, 25), windowDays: 3)],
+      recurring: [RecurringItem(id: 1, name: 'Salary', amount: 300000, categoryKey: 'salary', isIncome: true, nextDue: DateTime.utc(2026, 7, 25), windowDays: 3)],
       events: const [],
       goals: const [],
       from: DateTime.utc(2026, 7, 1),

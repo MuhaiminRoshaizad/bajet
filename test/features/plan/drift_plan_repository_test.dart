@@ -29,4 +29,14 @@ void main() {
     final done = (await plan.watchAchievedGoals().first).single;
     expect((done.name, done.achievedOn), ('Laptop', d(2026, 11, 20)));
   });
+
+  test('editing a bill or income changes it in place and keeps its kind', () async {
+    final id = await plan.addRecurring(name: 'Pay', isIncome: true, amount: 300000, categoryKey: 'salary', nextDue: DateTime.utc(2026, 7, 25));
+    final pay = (await plan.watchRecurring().first).single;
+    await plan.updateRecurring(pay.copyWith(name: 'Salary', amount: 320000, nextDue: DateTime.utc(2026, 7, 24), windowDays: 4));
+
+    final saved = (await plan.watchRecurring().first).single;
+    expect((saved.id, saved.name, saved.amount, saved.categoryKey, saved.isIncome, saved.nextDue, saved.windowDays),
+        (id, 'Salary', 320000, 'salary', true, DateTime.utc(2026, 7, 24), 4));
+  });
 }

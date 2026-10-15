@@ -32,6 +32,10 @@ abstract interface class PlanRepository {
     int windowDays = 0,
   });
 
+  /// Changes an item's name, amount, category and when it next lands. Bill
+  /// or income stays as it was, since confirmed entries were logged as one.
+  Future<void> updateRecurring(RecurringItem item);
+
   /// Pausing keeps the item and its history but stops it being projected or
   /// offered for confirmation. Items are paused rather than deleted because
   /// confirmed entries refer to them.

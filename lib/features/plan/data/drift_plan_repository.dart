@@ -61,6 +61,7 @@ class DriftPlanRepository implements PlanRepository {
             id: r.id,
             name: r.name,
             amount: r.amount,
+            categoryKey: r.categoryKey,
             isIncome: r.kind == EntryKind.income,
             nextDue: r.nextDue,
             windowDays: r.windowDays,
@@ -87,6 +88,17 @@ class DriftPlanRepository implements PlanRepository {
               windowDays: Value(windowDays),
             ),
           );
+
+  @override
+  Future<void> updateRecurring(domain.RecurringItem item) async {
+    await (_db.update(_db.recurringItems)..where((r) => r.id.equals(item.id))).write(RecurringItemsCompanion(
+          name: Value(item.name.trim()),
+          amount: Value(item.amount),
+          categoryKey: Value(item.categoryKey),
+          nextDue: Value(item.nextDue),
+          windowDays: Value(item.windowDays),
+        ));
+  }
 
   @override
   Future<void> setRecurringActive(int id, {required bool active}) async {

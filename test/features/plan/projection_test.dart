@@ -16,10 +16,10 @@ const rules = [
 ];
 
 final recurring = [
-  RecurringItem(id: 1, name: 'Salary', amount: 300000, isIncome: true, nextDue: d(2026, 10, 25)),
-  RecurringItem(id: 2, name: 'Rent', amount: 50000, isIncome: false, nextDue: d(2026, 11, 1)),
-  RecurringItem(id: 3, name: 'Internet', amount: 12900, isIncome: false, nextDue: d(2026, 11, 10)),
-  RecurringItem(id: 4, name: 'Phone', amount: 6000, isIncome: false, nextDue: d(2026, 10, 20)),
+  RecurringItem(id: 1, name: 'Salary', amount: 300000, categoryKey: 'salary', isIncome: true, nextDue: d(2026, 10, 25)),
+  RecurringItem(id: 2, name: 'Rent', amount: 50000, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 11, 1)),
+  RecurringItem(id: 3, name: 'Internet', amount: 12900, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 11, 10)),
+  RecurringItem(id: 4, name: 'Phone', amount: 6000, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 10, 20)),
 ];
 
 final events = [
@@ -76,7 +76,7 @@ void main() {
     // Salary between the 25th and 28th; rent between the 1st and the 6th.
     final varying = [
       for (final r in recurring)
-        RecurringItem(id: r.id, name: r.name, amount: r.amount, isIncome: r.isIncome, nextDue: r.nextDue, windowDays: switch (r.name) { 'Salary' => 3, 'Rent' => 5, _ => 0 }),
+        RecurringItem(id: r.id, name: r.name, amount: r.amount, categoryKey: r.categoryKey, isIncome: r.isIncome, nextDue: r.nextDue, windowDays: switch (r.name) { 'Salary' => 3, 'Rent' => 5, _ => 0 }),
     ];
     final p = run(items: varying);
     // Sun 25 Oct is a rest day, so the balance only drops by the next three
@@ -96,7 +96,7 @@ void main() {
   test('a recurring item starts at its next due date, not before', () {
     final paidEarly = [
       for (final r in recurring)
-        r.id == 4 ? RecurringItem(id: 4, name: 'Phone', amount: 6000, isIncome: false, nextDue: d(2026, 11, 20)) : r,
+        r.id == 4 ? RecurringItem(id: 4, name: 'Phone', amount: 6000, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 11, 20)) : r,
     ];
     expect(balanceOn(run(items: paidEarly), d(2026, 10, 20)), 173500);
   });

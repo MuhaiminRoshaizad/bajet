@@ -36,6 +36,7 @@ class RecurringItem {
     required this.id,
     required this.name,
     required this.amount,
+    required this.categoryKey,
     required this.isIncome,
     required this.nextDue,
     this.windowDays = 0,
@@ -45,6 +46,7 @@ class RecurringItem {
   final int id;
   final String name;
   final int amount;
+  final String categoryKey;
   final bool isIncome;
   final DateTime nextDue;
 
@@ -62,8 +64,16 @@ class RecurringItem {
   /// the plan never leans on money coming early or a bill coming late.
   int get countedAfter => isIncome ? windowDays : 0;
 
-  RecurringItem copyWith({DateTime? nextDue, bool? active}) =>
-      RecurringItem(id: id, name: name, amount: amount, isIncome: isIncome, nextDue: nextDue ?? this.nextDue, windowDays: windowDays, active: active ?? this.active);
+  RecurringItem copyWith({String? name, int? amount, String? categoryKey, DateTime? nextDue, int? windowDays, bool? active}) => RecurringItem(
+        id: id,
+        name: name ?? this.name,
+        amount: amount ?? this.amount,
+        categoryKey: categoryKey ?? this.categoryKey,
+        isIncome: isIncome,
+        nextDue: nextDue ?? this.nextDue,
+        windowDays: windowDays ?? this.windowDays,
+        active: active ?? this.active,
+      );
 }
 
 /// A one-off future income or expense, such as a birthday or a payment.

@@ -31,26 +31,30 @@ class RecurringScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
-            child: Text('Each one repeats monthly. Switch one off to pause it; its past payments stay in History.', style: TextStyle(color: c.muted)),
+            child: Text('Each one repeats monthly. Tap one to change it, or switch it off to pause it; its past payments stay in History.', style: TextStyle(color: c.muted)),
           ),
           if (items.isNotEmpty)
             CardGroup(
               children: [
                 for (final item in items)
-                  SwitchListTile(
-                    value: item.active,
-                    onChanged: (v) => ref.read(planRepositoryProvider).setRecurringActive(item.id, active: v),
+                  ListTile(
+                    minTileHeight: 64,
+                    onTap: () => _openForm(context, item),
                     title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       '${item.isIncome ? '+' : '−'}${Money.format(item.amount)} · '
                       '${item.active ? 'next ${Dates.span(item.nextDue, item.windowEnd)}' : 'paused'}',
+                    ),
+                    trailing: Switch(
+                      value: item.active,
+                      onChanged: (v) => ref.read(planRepositoryProvider).setRecurringActive(item.id, active: v),
                     ),
                   ),
               ],
             ),
           const SizedBox(height: AppSpacing.l),
           FilledButton.icon(
-            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _RecurringForm()),
+            onPressed: () => _openForm(context, null),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Add a bill or income'),
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
@@ -61,8 +65,14 @@ class RecurringScreen extends ConsumerWidget {
   }
 }
 
+void _openForm(BuildContext context, RecurringItem? item) =>
+    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _RecurringForm(item: item));
+
+/// Adds a new item, or changes [item] when one is given.
 class _RecurringForm extends ConsumerStatefulWidget {
-  const _RecurringForm();
+  const _RecurringForm({this.item});
+
+  final RecurringItem? item;
 
   @override
   ConsumerState<_RecurringForm> createState() => _RecurringFormState();
@@ -70,15 +80,15 @@ class _RecurringForm extends ConsumerStatefulWidget {
 
 class _RecurringFormState extends ConsumerState<_RecurringForm> {
   final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _amount = TextEditingController();
-  bool _isIncome = false;
-  String? _category;
-  DateTime? _nextDue;
+  late final _name = TextEditingController(text: widget.item?.name);
+  late final _amount = TextEditingController(text: widget.item == null ? '' : RinggitCentsFormatter.format(widget.item!.amount));
+  late bool _isIncome = widget.item?.isIncome ?? false;
+  late String? _category = widget.item?.categoryKey;
+  late DateTime? _nextDue = widget.item?.nextDue;
 
   /// The last day it may land when [_varies]; null for a fixed day.
-  DateTime? _lastDay;
-  bool _varies = false;
+  late DateTime? _lastDay = (widget.item?.windowDays ?? 0) > 0 ? widget.item!.windowEnd : null;
+  late bool _varies = _lastDay != null;
   bool _tried = false;
 
   @override
@@ -133,14 +143,15 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
     if (!ok || _category == null || _whenMissing) return;
-    await ref.read(planRepositoryProvider).addRecurring(
-          name: _name.text,
-          isIncome: _isIncome,
-          amount: RinggitCentsFormatter.parse(_amount.text),
-          categoryKey: _category!,
-          nextDue: _nextDue!,
-          windowDays: _varies ? _lastDay!.difference(_nextDue!).inDays : 0,
-        );
+    final repo = ref.read(planRepositoryProvider);
+    final amount = RinggitCentsFormatter.parse(_amount.text);
+    final window = _varies ? _lastDay!.difference(_nextDue!).inDays : 0;
+    final item = widget.item;
+    if (item == null) {
+      await repo.addRecurring(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, nextDue: _nextDue!, windowDays: window);
+    } else {
+      await repo.updateRecurring(item.copyWith(name: _name.text, amount: amount, categoryKey: _category, nextDue: _nextDue, windowDays: window));
+    }
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -157,18 +168,23 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('New bill or income', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: AppSpacing.l),
-              SegmentedButton<bool>(
-                segments: const [ButtonSegment(value: false, label: Text('Bill')), ButtonSegment(value: true, label: Text('Income'))],
-                selected: {_isIncome},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() {
-                  _isIncome = s.single;
-                  _category = null;
-                }),
+              Text(
+                switch (widget.item?.isIncome) { null => 'New bill or income', true => 'Edit income', false => 'Edit bill' },
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: AppSpacing.m),
+              const SizedBox(height: AppSpacing.l),
+              if (widget.item == null) ...[
+                SegmentedButton<bool>(
+                  segments: const [ButtonSegment(value: false, label: Text('Bill')), ButtonSegment(value: true, label: Text('Income'))],
+                  selected: {_isIncome},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setState(() {
+                    _isIncome = s.single;
+                    _category = null;
+                  }),
+                ),
+                const SizedBox(height: AppSpacing.m),
+              ],
               TextFormField(
                 controller: _name,
                 maxLength: 32,

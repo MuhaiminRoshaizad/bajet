@@ -99,4 +99,34 @@ void main() {
     final salary = world.recurring.single;
     expect((salary.isIncome, salary.nextDue, salary.windowDays), (true, d(2026, 7, 25), 3));
   });
+
+  testWidgets('tapping an item edits it, so a fixed payday can become a window', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Salary', isIncome: true, amount: 300000, categoryKey: 'salary', nextDue: d(2026, 7, 25)));
+    tester.view.physicalSize = const Size(1440, 2340);
+    await openRecurring(tester);
+    await tester.tap(find.text('Salary'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit income'), findsOneWidget);
+    expect(find.text('Bill'), findsNothing);
+    expect(find.text('3,000.00'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('The day changes each month'));
+    await tester.tap(find.text('The day changes each month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pick the earliest and latest day'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('25').first);
+    await tester.pump();
+    await tester.tap(find.text('28').first);
+    await tester.pump();
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    final salary = world.recurring.single;
+    expect((salary.name, salary.amount, salary.windowDays), ('Salary', 300000, 3));
+    expect(find.text('+RM3,000.00 · next 25/07 to 28/07/2026'), findsOneWidget);
+  });
 }
