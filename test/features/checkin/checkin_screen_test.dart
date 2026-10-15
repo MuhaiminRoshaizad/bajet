@@ -7,6 +7,8 @@ import '../../helpers/app_harness.dart';
 Future<void> openCheckin(WidgetTester tester) async {
   await tester.tap(find.byTooltip('Settings'));
   await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(find.text('Sunday check-in'), 200);
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Sunday check-in'));
   await tester.pumpAndSettle();
 }

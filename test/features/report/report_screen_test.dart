@@ -30,6 +30,8 @@ Future<RecordingSharer> openReport(WidgetTester tester) async {
   );
   await tester.tap(find.byTooltip('Settings'));
   await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(find.text('Share a report'), 200);
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Share a report'));
   await tester.pumpAndSettle();
   return sharer;

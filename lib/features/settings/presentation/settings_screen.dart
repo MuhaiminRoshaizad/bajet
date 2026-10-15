@@ -11,6 +11,7 @@ import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../coach/presentation/coach_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -21,11 +22,13 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
     final settings = ref.watch(settingsProvider).value;
     final favourites = ref.watch(favouritesProvider).value?.length ?? 0;
     final weekPlan = ref.watch(rulesProvider).value?.fold(0, (s, r) => s + r.plannedSpend);
-    final recurring = ref.watch(recurringProvider).value?.where((r) => r.active).length ?? 0;
+    final active = [...?ref.watch(recurringProvider).value?.where((r) => r.active)];
+    final income = active.where((r) => r.isIncome).length;
+    final bills = active.length - income;
+    final spendingDays = ref.watch(rulesProvider).value?.where((r) => r.type != DayType.zero).length;
     final goals = ref.watch(goalsProvider).value?.length ?? 0;
     final events = ref.watch(eventsProvider).value?.where((e) => !e.done).length ?? 0;
     return Scaffold(
@@ -34,54 +37,86 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
           CardGroup(
+            label: 'Your plan',
             children: [
               SettingsRow(
-                title: 'Weekly allowance and buffer',
-                value: settings == null ? '' : '${Money.formatWhole(settings.weeklyCap)} a week',
+                icon: Icons.savings_outlined,
+                tint: Tint.sky,
+                title: 'Allowance and buffer',
+                value: settings == null
+                    ? ''
+                    : '${Money.formatWhole(settings.weeklyCap)} a week${settings.buffer == 0 ? '' : ' · keep ${Money.formatWhole(settings.buffer)}'}',
                 onTap: settings == null ? null : () => _editAllowance(context, settings),
               ),
               SettingsRow(
+                icon: Icons.calendar_view_week_rounded,
+                tint: Tint.teal,
                 title: 'Weekly rhythm',
-                value: weekPlan == null ? '' : '${Money.formatWhole(weekPlan)} planned',
+                value: weekPlan == null || spendingDays == null
+                    ? ''
+                    : '${Money.formatWhole(weekPlan)} over $spendingDays ${spendingDays == 1 ? 'day' : 'days'}',
                 onTap: () => context.push(Routes.rhythm),
               ),
-              SettingsRow(title: 'Goals', value: goals == 0 ? 'None yet' : '$goals active', onTap: () => context.push(Routes.goals)),
               SettingsRow(
+                icon: Icons.flag_outlined,
+                tint: Tint.apricot,
+                title: 'Goals',
+                value: goals == 0 ? 'None yet' : '$goals active',
+                onTap: () => context.push(Routes.goals),
+              ),
+              SettingsRow(
+                icon: Icons.autorenew_rounded,
+                tint: Tint.sage,
                 title: 'Bills and income',
-                value: recurring == 0 ? 'None yet' : '$recurring active',
+                value: active.isEmpty
+                    ? 'None yet'
+                    : [if (bills > 0) '$bills ${bills == 1 ? 'bill' : 'bills'}', if (income > 0) '$income income'].join(' · '),
                 onTap: () => context.push(Routes.recurring),
               ),
-              SettingsRow(title: 'Planned events', value: events == 0 ? 'None yet' : '$events coming', onTap: () => context.push(Routes.events)),
-              SettingsRow(title: 'Favourites', value: favourites == 0 ? 'None yet' : '$favourites saved', onTap: () => context.push(Routes.favourites)),
+              SettingsRow(
+                icon: Icons.event_outlined,
+                tint: Tint.rose,
+                title: 'Planned events',
+                value: events == 0 ? 'None yet' : '$events coming',
+                onTap: () => context.push(Routes.events),
+              ),
+              SettingsRow(
+                icon: Icons.star_outline_rounded,
+                tint: Tint.olive,
+                title: 'Favourites',
+                value: favourites == 0 ? 'None yet' : '$favourites saved',
+                onTap: () => context.push(Routes.favourites),
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.m),
+          const SizedBox(height: AppSpacing.xxl),
           CardGroup(
+            label: 'Keeping track',
             children: [
-              SettingsRow(title: 'Sunday check-in', value: 'Match your bank', onTap: () => context.push(Routes.checkin)),
-              SettingsRow(title: 'Share a report', value: 'Text, PDF or CSV', onTap: () => context.push(Routes.report)),
-              SettingsRow(title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup)),
+              SettingsRow(icon: Icons.fact_check_outlined, tint: Tint.sky, title: 'Sunday check-in', value: 'Match your bank', onTap: () => context.push(Routes.checkin)),
+              SettingsRow(icon: Icons.ios_share_rounded, tint: Tint.teal, title: 'Share a report', value: 'Text, PDF or CSV', onTap: () => context.push(Routes.report)),
+              SettingsRow(icon: Icons.backup_outlined, tint: Tint.neutral, title: 'Backup', value: 'Export or restore', onTap: () => context.push(Routes.backup)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          CardGroup(
+            label: 'App',
+            children: [
               SettingsRow(
+                icon: Icons.forum_outlined,
+                tint: Tint.pink,
                 title: 'Coach',
                 value: ref.watch(coachKeyProvider).value == null ? 'Add your key' : 'Key saved',
                 onTap: () => context.push(Routes.coachKey),
               ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.m),
-          CardGroup(
-            children: [
               SettingsRow(
+                icon: Icons.contrast_rounded,
+                tint: Tint.neutral,
                 title: 'Appearance',
                 value: _themeNames[ref.watch(themeModeProvider)]!,
                 onTap: () => showModalBottomSheet<void>(context: context, useSafeArea: true, builder: (_) => const _AppearanceSheet()),
               ),
             ],
-          ),
-          const SizedBox(height: AppSpacing.m),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-            child: Text('Every amount and rule bajet works from is set here.', style: TextStyle(color: c.muted)),
           ),
         ],
       ),
@@ -133,9 +168,14 @@ class _AppearanceSheet extends ConsumerWidget {
       );
 }
 
+/// One destination in Settings: a tinted icon, its name, and what it holds
+/// now on a second line, so the value has room and is not squeezed against
+/// the edge.
 class SettingsRow extends StatelessWidget {
-  const SettingsRow({super.key, required this.title, required this.value, this.onTap});
+  const SettingsRow({super.key, required this.icon, required this.tint, required this.title, required this.value, this.onTap});
 
+  final IconData icon;
+  final Tint tint;
   final String title;
   final String value;
   final VoidCallback? onTap;
@@ -144,16 +184,17 @@ class SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     return ListTile(
-      minTileHeight: 56,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(value, style: TextStyle(color: c.muted)),
-          const SizedBox(width: AppSpacing.xs),
-          Icon(Icons.chevron_right_rounded, color: c.muted),
-        ],
+      minTileHeight: 64,
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(color: c.tintFill(tint), borderRadius: BorderRadius.circular(AppRadii.small)),
+        child: Icon(icon, size: 22, color: c.tintInk(tint)),
       ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: value.isEmpty ? null : Text(value, style: TextStyle(color: c.muted)),
+      trailing: Icon(Icons.chevron_right_rounded, color: c.muted),
       onTap: onTap,
     );
   }
@@ -201,7 +242,7 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Weekly allowance and buffer', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              Text('Allowance and buffer', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: AppSpacing.l),
               MoneyField(
                 controller: _cap,

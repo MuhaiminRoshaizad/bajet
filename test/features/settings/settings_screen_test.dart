@@ -13,13 +13,14 @@ void main() {
     await pumpApp(tester);
     await openSettings(tester);
     expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('RM50 a week'), findsOneWidget);
+    expect(find.text('RM50 a week · keep RM500'), findsOneWidget);
+    expect(find.text('Your plan'), findsOneWidget);
   });
 
   testWidgets('changing the allowance and buffer saves both', (tester) async {
     final world = await pumpApp(tester);
     await openSettings(tester);
-    await tester.tap(find.text('Weekly allowance and buffer'));
+    await tester.tap(find.text('Allowance and buffer'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '7500');
@@ -29,13 +30,13 @@ void main() {
 
     expect((world.settings!.weeklyCap, world.settings!.buffer), (7500, 0));
     expect(world.settings!.openingBalance, demoSettings.openingBalance);
-    expect(find.text('RM75 a week'), findsOneWidget);
+    expect(find.text('RM75 a week'), findsOneWidget, reason: 'no buffer, so no keep');
   });
 
   testWidgets('an empty allowance is refused', (tester) async {
     final world = await pumpApp(tester);
     await openSettings(tester);
-    await tester.tap(find.text('Weekly allowance and buffer'));
+    await tester.tap(find.text('Allowance and buffer'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '');
@@ -49,7 +50,7 @@ void main() {
   testWidgets('the app can be set to light or dark instead of following the phone', (tester) async {
     final world = await pumpApp(tester);
     await openSettings(tester);
-    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.drag(find.byType(ListView), const Offset(0, -1500));
     await tester.pumpAndSettle();
     expect(find.text('Match the phone'), findsOneWidget);
 
