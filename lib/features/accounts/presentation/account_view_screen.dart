@@ -3,8 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/money/money.dart';
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../domain/account_models.dart';
@@ -146,9 +148,14 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
                       ),
                     ),
                   ),
+                TextButton(
+                  onPressed: () => context.push(Routes.checkin),
+                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                  child: const Text('Match what you really have'),
+                ),
               ]),
             ),
-            const SizedBox(height: AppSpacing.xxl),
+            const SizedBox(height: AppSpacing.l),
           ]),
         ),
         if (widget.places != null) _Flyer(account: accounts[_index.clamp(0, accounts.length - 1)], places: widget.places!, carousel: _carousel, route: route, size: _cardSize),

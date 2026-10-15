@@ -11,6 +11,8 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/soft.dart';
+import '../../accounts/domain/account_models.dart';
+import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
@@ -28,21 +30,20 @@ class CheckinScreen extends ConsumerStatefulWidget {
 }
 
 class _CheckinScreenState extends ConsumerState<CheckinScreen> {
-  final _bank = TextEditingController();
+  /// What each account really holds, as typed, by account id.
+  final _typed = <int, TextEditingController>{};
 
-  @override
-  void initState() {
-    super.initState();
-    _bank.addListener(() => setState(() {}));
-  }
+  TextEditingController _field(int accountId) => _typed.putIfAbsent(accountId, () => TextEditingController()..addListener(() => setState(() {})));
 
   @override
   void dispose() {
-    _bank.dispose();
+    for (final t in _typed.values) {
+      t.dispose();
+    }
     super.dispose();
   }
 
-  Future<void> _logMissing(int amount) async {
+  Future<void> _logMissing(int amount, int accountId) async {
     final repo = ref.read(ledgerRepositoryProvider);
     final id = await repo.add(EntryDraft(
       day: ref.read(todayProvider),
@@ -51,6 +52,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
       categoryKey: untrackedCategoryKey,
       label: 'Untracked',
       note: 'Found at check-in',
+      accountId: accountId,
     ));
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -66,11 +68,13 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     final c = context.colors;
     final today = ref.watch(todayProvider);
     final monday = weekStart(today);
-    final balance = ref.watch(balanceProvider).value;
+    final accounts = ref.watch(accountsProvider).value ?? const [];
     final days = ref.watch(weekDaysProvider);
     final spent = ref.watch(weekSpentProvider);
     final cap = ref.watch(settingsProvider).value?.weeklyCap;
-    final bank = _bank.text.isEmpty ? null : RinggitCentsFormatter.parse(_bank.text);
+    // One account compares with the bank app as a whole; several each
+    // compare with their own app or wallet.
+    final single = accounts.length == 1;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -90,32 +94,15 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Does it match your bank?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                  const SizedBox(height: AppSpacing.m),
-                  Row(
-                    children: [
-                      Text('bajet says', style: TextStyle(color: c.muted)),
-                      const SizedBox(width: AppSpacing.s),
-                      Expanded(
-                        child: Text(
-                          balance == null ? '—' : Money.format(balance),
-                          textAlign: TextAlign.end,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()]),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.m),
-                  MoneyField(
-                    controller: _bank,
-                    label: 'Bank app says',
-                    hint: 'e.g. 2,412.60',
-                    helper: 'Add up your accounts as your bank app shows them right now.',
-                    textInputAction: TextInputAction.done,
-                  ),
-                  if (bank != null && balance != null) ...[
-                    const SizedBox(height: AppSpacing.m),
-                    _Gap(difference: balance - bank, onLogMissing: _logMissing),
+                  Text(single ? 'Does it match your bank?' : 'Does each account match?', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  for (final a in accounts) ...[
+                    const SizedBox(height: AppSpacing.l),
+                    _AccountCheck(
+                      account: a,
+                      field: _field(a.id),
+                      single: single,
+                      onLogMissing: (amount) => _logMissing(amount, a.id),
+                    ),
                   ],
                 ],
               ),
@@ -136,12 +123,64 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
   }
 }
 
-/// What to do about a difference between bajet and the bank. Positive means
-/// bajet thinks there is more than the bank holds.
+/// One account: what bajet has, what it really holds, and the gap.
+class _AccountCheck extends StatelessWidget {
+  const _AccountCheck({required this.account, required this.field, required this.single, required this.onLogMissing});
+
+  final Account account;
+  final TextEditingController field;
+  final bool single;
+  final ValueChanged<int> onLogMissing;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final real = field.text.isEmpty ? null : RinggitCentsFormatter.parse(field.text);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // The name gives way and the figure shrinks before either runs off.
+      Row(children: [
+        if (!single) ...[
+          CircleAvatar(backgroundColor: Color(account.look.color), radius: 6),
+          const SizedBox(width: AppSpacing.s),
+        ],
+        Expanded(
+          child: Text(single ? 'bajet says' : account.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: single ? TextStyle(color: c.muted) : const TextStyle(fontWeight: FontWeight.w600)),
+        ),
+        const SizedBox(width: AppSpacing.s),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text.rich(TextSpan(children: [
+              if (!single) TextSpan(text: 'bajet has ', style: TextStyle(color: c.muted)),
+              TextSpan(text: Money.format(account.balance), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
+            ])),
+          ),
+        ),
+      ]),
+      const SizedBox(height: AppSpacing.s),
+      MoneyField(
+        controller: field,
+        label: single ? 'Bank app says' : account.kind == AccountKind.cash ? 'Counted in the wallet' : '${account.name} says',
+        hint: 'e.g. 2,412.60',
+        helper: single ? 'Add up your accounts as your bank app shows them right now.' : null,
+        textInputAction: TextInputAction.done,
+      ),
+      if (real != null) ...[
+        const SizedBox(height: AppSpacing.m),
+        _Gap(difference: account.balance - real, accountId: account.id, onLogMissing: onLogMissing),
+      ],
+    ]);
+  }
+}
+
+/// What to do about a difference between bajet and an account. Positive
+/// means bajet thinks there is more than the account holds.
 class _Gap extends StatelessWidget {
-  const _Gap({required this.difference, required this.onLogMissing});
+  const _Gap({required this.difference, required this.accountId, required this.onLogMissing});
 
   final int difference;
+  final int accountId;
   final ValueChanged<int> onLogMissing;
 
   @override
@@ -153,7 +192,7 @@ class _Gap extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Pill(text: missing ? '${Money.format(amount)} spent but not logged' : '${Money.format(amount)} more in the bank', good: false),
+        _Pill(text: missing ? '${Money.format(amount)} spent but not logged' : '${Money.format(amount)} more than bajet has', good: false),
         const SizedBox(height: AppSpacing.s),
         Text(
           missing
@@ -163,7 +202,7 @@ class _Gap extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s),
         FilledButton.tonal(
-          onPressed: missing ? () => onLogMissing(amount) : () => showLogSheet(context, prefill: LogPrefill(isIncome: true, amount: amount)),
+          onPressed: missing ? () => onLogMissing(amount) : () => showLogSheet(context, prefill: LogPrefill(isIncome: true, amount: amount, accountId: accountId)),
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           child: Text(missing ? 'Log ${Money.format(amount)} as untracked' : 'Log the income'),
         ),

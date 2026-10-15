@@ -27,12 +27,15 @@ import 'receipt_widgets.dart';
 /// What to fill the logger with when it opens from somewhere that already
 /// knows part of the entry. Nothing is saved until Log is pressed.
 class LogPrefill {
-  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label});
+  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label, this.accountId});
 
   final bool isIncome;
   final int? amount;
   final String? categoryKey;
   final String? label;
+
+  /// The account it belongs to, such as the one a check-in found short.
+  final int? accountId;
 }
 
 /// Opens the logger, with [prefill] filled in, or with [editing] the same
@@ -105,6 +108,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _setAmount(p.amount ?? 0);
       _categoryKey = p.categoryKey;
       _label = p.label;
+      _accountId = p.accountId ?? _accountId;
     }
   }
 

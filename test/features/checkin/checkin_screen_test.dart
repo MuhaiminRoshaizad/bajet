@@ -1,3 +1,4 @@
+import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,5 +59,24 @@ void main() {
   testWidgets('Today does not offer the check-in midweek', (tester) async {
     await pumpApp(tester);
     expect(find.text('Sunday check-in'), findsNothing);
+  });
+
+  testWidgets('with several accounts each is checked on its own, and a gap is logged to that account', (tester) async {
+    late int cash;
+    final world = await pumpApp(tester, seed: (w) async {
+      cash = await w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', balance: 8450, look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather)));
+    });
+    await openCheckin(tester);
+    expect(find.text('Does each account match?'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Counted in the wallet'), '8000');
+    await tester.pumpAndSettle();
+    expect(find.text('RM4.50 spent but not logged'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Log RM4.50 as untracked'));
+    await tester.tap(find.text('Log RM4.50 as untracked'));
+    await tester.pumpAndSettle();
+    final e = world.entries.single;
+    expect((e.amount, e.accountId), (450, cash));
+    expect(world.accounts.firstWhere((a) => a.id == cash).balance, 8000);
   });
 }
