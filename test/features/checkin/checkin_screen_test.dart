@@ -2,6 +2,7 @@ import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/money_input.dart';
 import '../../helpers/app_harness.dart';
 
 Future<void> openCheckin(WidgetTester tester) async {
@@ -19,7 +20,7 @@ void main() {
     await openCheckin(tester);
     expect(find.text('RM1,500.00'), findsOneWidget);
 
-    await tester.enterText(bankField(), '150000');
+    await enterAmount(tester, bankField(), '150000');
     await tester.pumpAndSettle();
     expect(find.text('Matches exactly'), findsOneWidget);
   });
@@ -27,7 +28,7 @@ void main() {
   testWidgets('money missing from the bank can be logged as untracked', (tester) async {
     final world = await pumpApp(tester);
     await openCheckin(tester);
-    await tester.enterText(bankField(), '148000');
+    await enterAmount(tester, bankField(), '148000');
     await tester.pumpAndSettle();
     expect(find.text('RM20.00 spent but not logged'), findsOneWidget);
 
@@ -43,7 +44,7 @@ void main() {
   testWidgets('extra money in the bank opens the logger as income, filled in', (tester) async {
     await pumpApp(tester);
     await openCheckin(tester);
-    await tester.enterText(bankField(), '151000');
+    await enterAmount(tester, bankField(), '151000');
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Log the income'));

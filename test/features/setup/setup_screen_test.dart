@@ -6,6 +6,7 @@ import 'package:bajet/features/backup/presentation/restore_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/money_input.dart';
 import '../../helpers/app_harness.dart';
 import '../../helpers/fake_repositories.dart';
 
@@ -31,8 +32,8 @@ class _RestoreInto implements BackupRepository {
 Finder field(String label) => find.widgetWithText(TextFormField, label);
 
 Future<void> fillMoneyStep(WidgetTester tester) async {
-  await tester.enterText(field('Balance today'), '250000');
-  await tester.enterText(field('Weekly allowance'), '5000');
+  await enterAmount(tester, field('Balance today'), '250000');
+  await enterAmount(tester, field('Weekly allowance'), '5000');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 }
@@ -59,7 +60,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(field('Balance today'), '250000');
+    await enterAmount(tester, field('Balance today'), '250000');
     await tester.pumpAndSettle();
     expect(find.text('Enter your balance today'), findsNothing);
     expect(find.text('2,500.00'), findsOneWidget);
@@ -102,6 +103,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Enter the price'), findsOneWidget);
     expect(find.text('Pick the day you plan to buy it'), findsOneWidget);
+  });
+
+  testWidgets('money fields open the app keypad, never the phone keyboard', (tester) async {
+    await pumpApp(tester, setUpDone: false);
+    final input = tester.widget<TextField>(find.descendant(of: field('Balance today'), matching: find.byType(TextField)));
+    expect((input.readOnly, input.keyboardType), (true, TextInputType.none));
+
+    await tester.tap(field('Balance today'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'Done'), findsOneWidget);
+    expect(tester.testTextInput.isVisible, isFalse);
   });
 
   testWidgets('the buy day calendar opens with no day chosen for the owner', (tester) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/money_input.dart';
 import '../../helpers/app_harness.dart';
 
 Future<void> openSettings(WidgetTester tester) async {
@@ -22,8 +23,8 @@ void main() {
     await tester.tap(find.text('Weekly allowance and buffer'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '7500');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Keep at least (optional)'), '');
+    await enterAmount(tester, find.widgetWithText(TextFormField, 'Weekly allowance'), '7500');
+    await enterAmount(tester, find.widgetWithText(TextFormField, 'Keep at least (optional)'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
 
@@ -38,7 +39,7 @@ void main() {
     await tester.tap(find.text('Weekly allowance and buffer'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '');
+    await enterAmount(tester, find.widgetWithText(TextFormField, 'Weekly allowance'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
 

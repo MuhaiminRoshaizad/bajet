@@ -127,6 +127,10 @@ all of it is skipped and content appears in place.
   between them. While the system keyboard is up for the note, the keypad
   steps aside. The day is today unless the owner taps it and picks another
   in the calendar, from the opening date up to today.
+- Every other money field (setup, allowance, rhythm, goals, bills, events,
+  check-in, favourites) opens the same keypad in a sheet, starting from the
+  field's value, with Clear and Done; the phone's own keyboard never opens
+  for an amount (`MoneyField`, `money_keypad.dart`).
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
 - Saving gives a light haptic and a snackbar with Undo.

@@ -11,6 +11,7 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/money_keypad.dart';
 import '../../../core/widgets/soft.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
@@ -330,7 +331,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
             if (MediaQuery.viewInsetsOf(context).bottom == 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
-                child: _Keypad(onKey: _key),
+                child: MoneyKeypad(onKey: _key),
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
@@ -519,39 +520,6 @@ class _CategoryTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Keypad extends StatelessWidget {
-  const _Keypad({required this.onKey});
-
-  final ValueChanged<String> onKey;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'];
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      // Room around each key for its shadow.
-      padding: const EdgeInsets.all(AppSpacing.xs),
-      mainAxisSpacing: AppSpacing.m,
-      crossAxisSpacing: AppSpacing.m,
-      childAspectRatio: 2.2,
-      children: [
-        for (final k in keys)
-          SoftButton(
-            onTap: () => onKey(k),
-            child: Center(
-              child: k == 'del'
-                  ? Icon(Icons.backspace_outlined, color: c.ink, semanticLabel: 'Delete digit')
-                  : Text(k, style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: c.ink)),
-            ),
-          ),
-      ],
     );
   }
 }
