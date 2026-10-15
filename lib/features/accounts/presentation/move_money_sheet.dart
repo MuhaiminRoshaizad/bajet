@@ -8,6 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../domain/account_models.dart';
+import 'account_choice.dart';
 import 'account_providers.dart';
 
 /// Moves money from one account to another, starting from [fromId]. It is
@@ -82,8 +83,10 @@ class _MoveMoneyState extends ConsumerState<_MoveMoney> {
           Text('Move money', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: AppSpacing.l),
           MoneyField(controller: _amount, label: 'Amount', hint: 'e.g. 100.00', textInputAction: TextInputAction.done),
-          _Accounts(label: 'From', accounts: accounts, selected: _from, other: to, onSelect: (id) => setState(() => _from = id)),
-          _Accounts(label: 'To', accounts: accounts, selected: to, other: _from, onSelect: (id) => setState(() => _to = id)),
+          const SizedBox(height: AppSpacing.l),
+          AccountChoice(label: 'From', accounts: accounts, selected: _from, unavailable: to, onSelect: (id) => setState(() => _from = id)),
+          const SizedBox(height: AppSpacing.l),
+          AccountChoice(label: 'To', accounts: accounts, selected: to, unavailable: _from, onSelect: (id) => setState(() => _to = id)),
           if (from != null && into != null) ...[
             const SizedBox(height: AppSpacing.l),
             Container(
@@ -109,35 +112,6 @@ class _MoveMoneyState extends ConsumerState<_MoveMoney> {
       ),
     );
   }
-}
-
-/// A row of accounts to choose from; [other] is the one on the other side,
-/// which cannot also be this side.
-class _Accounts extends StatelessWidget {
-  const _Accounts({required this.label, required this.accounts, required this.selected, required this.other, required this.onSelect});
-
-  final String label;
-  final List<Account> accounts;
-  final int? selected;
-  final int? other;
-  final ValueChanged<int> onSelect;
-
-  @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SizedBox(height: AppSpacing.l),
-        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.muted)),
-        const SizedBox(height: AppSpacing.s),
-        Wrap(spacing: AppSpacing.s, runSpacing: AppSpacing.s, children: [
-          for (final a in accounts)
-            ChoiceChip(
-              key: ValueKey('$label-${a.id}'),
-              avatar: CircleAvatar(backgroundColor: Color(a.look.color), radius: 8),
-              label: Text(a.name),
-              selected: a.id == selected,
-              onSelected: a.id == other ? null : (_) => onSelect(a.id),
-            ),
-        ]),
-      ]);
 }
 
 class _Change extends StatelessWidget {

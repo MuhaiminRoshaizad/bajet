@@ -1,3 +1,4 @@
+import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
@@ -223,5 +224,34 @@ void main() {
     await tester.tap(find.text('Income'));
     await tester.pumpAndSettle();
     expect(find.textContaining('For an event'), findsNothing);
+  });
+
+  testWidgets('a spend is paid from the account picked, and the next one starts there', (tester) async {
+    late int cash;
+    final world = await pumpApp(tester, seed: (w) async {
+      cash = await w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', balance: 8450, look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather)));
+    });
+    await openLogger(tester);
+    await typeKeys(tester, '570');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(ValueKey('Paid from-$cash')));
+    await tester.tap(find.byKey(ValueKey('Paid from-$cash')));
+    await tester.pump();
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Log RM5.70'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Log RM5.70'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.accountId, cash);
+    expect(world.accounts.firstWhere((a) => a.id == cash).balance, 8450 - 570);
+
+    await openLogger(tester);
+    await tester.ensureVisible(find.byKey(ValueKey('Paid from-$cash')));
+    expect(tester.widget<ChoiceChip>(find.byKey(ValueKey('Paid from-$cash'))).selected, isTrue);
+  });
+
+  testWidgets('with one account the logger does not ask where the money went', (tester) async {
+    await pumpApp(tester);
+    await openLogger(tester);
+    expect(find.text('Paid from'), findsNothing);
   });
 }

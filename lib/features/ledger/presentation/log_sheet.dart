@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../accounts/presentation/account_choice.dart';
+import '../../accounts/presentation/account_providers.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
@@ -67,6 +69,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   /// The planned event this spend is for, if any; its budget plans for it,
   /// so it stays out of the weekly allowance.
   EventLink? _event;
+
+  /// Where the money came from or went to; null until known means the
+  /// first account.
+  int? _accountId;
   final _note = TextEditingController();
   late DateTime _day = ref.read(todayProvider);
   bool _saving = false;
@@ -88,6 +94,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _day = e.day;
       _receipt = e.receipt;
       _event = e.event;
+      _accountId = e.accountId;
+    } else {
+      // Most money goes where the last of it went.
+      _accountId = ref.read(recentEntriesProvider).value?.firstOrNull?.accountId;
     }
     final p = widget.prefill;
     if (p != null) {
@@ -130,6 +140,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       note: _note.text,
       receipt: _receipt,
       event: _isIncome ? null : _event,
+      accountId: _accountId,
     );
     final repo = ref.read(ledgerRepositoryProvider);
     final before = widget.editing;
@@ -150,6 +161,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         note: draft.note,
         receipt: draft.receipt,
         event: draft.event,
+        accountId: draft.accountId,
       ));
       message = 'Saved changes';
       undo = () => repo.update(before);
@@ -196,6 +208,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final c = context.colors;
     final categories = [...?ref.watch(categoriesProvider).value?.where((cat) => cat.isIncome == _isIncome && !cat.isAutomatic)];
     final favourites = ref.watch(favouritesProvider).value ?? const [];
+    final accounts = ref.watch(accountsProvider).value ?? const [];
     final ready = _amount > 0 && _categoryKey != null && !_saving;
 
     return Padding(
@@ -338,6 +351,16 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       ],
                     ),
                     if (!_isIncome) _EventChoice(selected: _event, today: _day, onChanged: (link) => setState(() => _event = link)),
+                    // With one account there is nothing to choose.
+                    if (accounts.length > 1) ...[
+                      const SizedBox(height: AppSpacing.m),
+                      AccountChoice(
+                        label: _isIncome ? 'Paid into' : 'Paid from',
+                        accounts: accounts,
+                        selected: accounts.any((a) => a.id == _accountId) ? _accountId : accounts.first.id,
+                        onSelect: (id) => setState(() => _accountId = id),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.m),
                     // Full width, so the label is never cut short.
                     TextField(

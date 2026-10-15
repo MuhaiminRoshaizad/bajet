@@ -86,7 +86,7 @@ Every logged spend or income. The total balance is every account's
 | `kind`              | enum  | `income` or `expense`                       |
 | `amount`            | int   | Greater than zero                           |
 | `category_key`      | text  | References `categories.key`                 |
-| `account_id`        | int   | References `accounts.id`                    |
+| `account_id`        | int   | References `accounts.id`; the logger asks for it (Paid from / Paid into) once there are two accounts, starting on the latest entry's |
 | `label`             | text? | Short name, e.g. "Coffee", for item stats   |
 | `note`              | text? | Free text, never used in statistics         |
 | `receipt`           | text? | File name of an attached image, see below   |
