@@ -4,7 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 
+import 'package:bajet/core/database/app_database.dart' show firstAccountColor, firstAccountName;
 import 'package:bajet/core/theme/theme_mode.dart';
+import 'package:bajet/features/accounts/domain/account_models.dart';
+import 'package:bajet/features/accounts/domain/account_repository.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
@@ -53,9 +56,12 @@ const demoCategories = [
   Category(key: 'refund', label: 'Refund', isIncome: true, tint: 'sky', isFixed: false),
 ];
 
-/// The ledger and plan of one test, held in memory.
-class FakeWorld implements LedgerRepository, PlanRepository {
-  FakeWorld({PlanSettings? settings}) : _settings = _Live(settings);
+/// The ledger, plan and accounts of one test, held in memory.
+class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
+  FakeWorld({PlanSettings? settings}) : _settings = _Live(settings) {
+    // As after an upgrade: the whole opening balance in one first account.
+    if (settings != null) _openFirstAccount(settings.openingBalance);
+  }
 
   final _Live<PlanSettings?> _settings;
   final _entries = _Live<List<Entry>>([]);
@@ -116,6 +122,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
         note: _blank(d.note),
         receipt: d.receipt,
         event: d.event,
+        accountId: d.accountId,
       ),
     ];
     _entriesChanged();
@@ -146,7 +153,98 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   Stream<PlanSettings?> watchSettings() => _settings.stream;
 
   @override
-  Future<void> saveSettings(PlanSettings s) async => _settings.value = s;
+  Future<void> saveSettings(PlanSettings s) async {
+    // As the real repository does until setup opens accounts itself: the
+    // first account carries any change to the opening balance.
+    final rows = _accountRows.value;
+    if (rows.isEmpty) {
+      _openFirstAccount(s.openingBalance);
+    } else {
+      final now = rows.fold(0, (sum, a) => sum + a.openingBalance);
+      final first = rows.first;
+      _accountRows.value = [_withOpening(first, first.openingBalance + s.openingBalance - now), ...rows.skip(1)];
+    }
+    _settings.value = s;
+  }
+
+  // Accounts
+
+  final _accountRows = _Live<List<Account>>([]);
+  final _transfers = _Live<List<({int from, int to, int amount, DateTime day})>>([]);
+  final _totalLook = _Live(const TotalCardLook());
+  var _nextAccountId = 1;
+
+  void _openFirstAccount(int opening) => _accountRows.value = [
+        Account(
+          id: _nextAccountId++,
+          kind: AccountKind.bank,
+          name: firstAccountName,
+          openingBalance: opening,
+          balance: opening,
+          look: const CardLook(color: firstAccountColor),
+        ),
+      ];
+
+  static Account _withOpening(Account a, int opening) =>
+      Account(id: a.id, kind: a.kind, name: a.name, nickname: a.nickname, openingBalance: opening, balance: opening, look: a.look);
+
+  List<Account> get accounts {
+    final from = _settings.value?.openingDate;
+    final firstId = _accountRows.value.firstOrNull?.id;
+    bool counted(DateTime day) => from == null || !day.isBefore(from);
+    return [
+      for (final a in _accountRows.value)
+        Account(
+          id: a.id,
+          kind: a.kind,
+          name: a.name,
+          nickname: a.nickname,
+          openingBalance: a.openingBalance,
+          look: a.look,
+          balance: a.openingBalance +
+              _entries.value.where((e) => (e.accountId ?? firstId) == a.id && counted(e.day)).fold<int>(0, (sum, e) => sum + e.signedAmount) +
+              _transfers.value.where((t) => counted(t.day)).fold<int>(0, (sum, t) => sum + (t.to == a.id ? t.amount : 0) - (t.from == a.id ? t.amount : 0)),
+        ),
+    ];
+  }
+
+  @override
+  Stream<List<Account>> watchAccounts() => Stream.multi((c) {
+        final subs = [
+          for (final s in [_accountRows.stream, _entries.stream, _transfers.stream, _settings.stream]) s.listen((_) => c.add(accounts)),
+        ];
+        c.onCancel = () => Future.wait(subs.map((s) => s.cancel()));
+      });
+
+  @override
+  Future<int> addAccount(AccountDraft d) async {
+    final id = _nextAccountId++;
+    _accountRows.value = [
+      ..._accountRows.value,
+      Account(id: id, kind: d.kind, name: d.name.trim(), nickname: _blank(d.nickname), openingBalance: d.balance, balance: d.balance, look: d.look),
+    ];
+    return id;
+  }
+
+  @override
+  Future<void> updateAccount(Account a) async => _accountRows.value = [
+        for (final x in _accountRows.value)
+          x.id == a.id
+              ? Account(id: x.id, kind: x.kind, name: a.name.trim(), nickname: _blank(a.nickname), openingBalance: x.openingBalance, balance: 0, look: a.look)
+              : x,
+      ];
+
+  @override
+  Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note}) async {
+    _transfers.value = [..._transfers.value, (from: fromId, to: toId, amount: amount, day: day)];
+    return _transfers.value.length;
+  }
+
+  @override
+  Stream<TotalCardLook> watchTotalLook() => _totalLook.stream;
+
+  @override
+  Future<void> saveTotalLook(TotalCardLook look) async => _totalLook.value = look;
 
   @override
   Stream<List<WeeklyRule>> watchRules() => _rules.stream;

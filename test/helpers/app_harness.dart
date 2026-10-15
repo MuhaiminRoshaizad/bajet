@@ -1,3 +1,4 @@
+import 'package:bajet/features/accounts/presentation/account_providers.dart';
 import 'package:bajet/app/app.dart';
 import 'package:bajet/core/database/database_provider.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
@@ -46,6 +47,7 @@ Future<FakeWorld> pumpApp(
       coachKeyStoreProvider.overrideWithValue(world.coachKeys),
       coachClientProvider.overrideWithValue(world.coach),
       planRepositoryProvider.overrideWithValue(world),
+      accountRepositoryProvider.overrideWithValue(world),
       themeModeStoreProvider.overrideWithValue(world.themeModes),
       ...?overrides?.call(world),
     ],

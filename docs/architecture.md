@@ -72,6 +72,7 @@ A folder under `core/` appears only once two features need it.
 
 | Feature  | Owns                                                                  |
 |----------|-----------------------------------------------------------------------|
+| `accounts` | The places money is kept (cash, banks, e-wallets), each one's balance and card, and money moved between them |
 | `ledger` | Entries, categories and favourites, the log sheet, history, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, the week strip, goal, recent entries |
