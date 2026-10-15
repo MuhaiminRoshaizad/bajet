@@ -25,6 +25,10 @@ class WeeklyRule {
       WeeklyRule(weekday: weekday, label: label, type: type, plannedSpend: plannedSpend ?? this.plannedSpend, isFastingDay: isFastingDay);
 }
 
+/// The longest window a monthly item may land in: short enough that one
+/// month's window always ends before the next one opens.
+const maxWindowDays = 27;
+
 /// A monthly bill or income. [nextDue] is the next occurrence not yet paid;
 /// confirming one moves it forward a month.
 class RecurringItem {
@@ -34,6 +38,7 @@ class RecurringItem {
     required this.amount,
     required this.isIncome,
     required this.nextDue,
+    this.windowDays = 0,
     this.active = true,
   });
 
@@ -42,9 +47,23 @@ class RecurringItem {
   final int amount;
   final bool isIncome;
   final DateTime nextDue;
+
+  /// Days after [nextDue] it may still land; 0 for a fixed day.
+  final int windowDays;
   final bool active;
 
   int get signedAmount => isIncome ? amount : -amount;
+
+  /// The last day the next occurrence may land.
+  DateTime get windowEnd => DateTime.utc(nextDue.year, nextDue.month, nextDue.day + windowDays);
+
+  /// How many days after its due day the projection counts it: income on
+  /// the last day it may arrive and bills on the first day they may go, so
+  /// the plan never leans on money coming early or a bill coming late.
+  int get countedAfter => isIncome ? windowDays : 0;
+
+  RecurringItem copyWith({DateTime? nextDue, bool? active}) =>
+      RecurringItem(id: id, name: name, amount: amount, isIncome: isIncome, nextDue: nextDue ?? this.nextDue, windowDays: windowDays, active: active ?? this.active);
 }
 
 /// A one-off future income or expense, such as a birthday or a payment.

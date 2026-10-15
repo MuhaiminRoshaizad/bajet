@@ -63,6 +63,7 @@ class DriftPlanRepository implements PlanRepository {
             amount: r.amount,
             isIncome: r.kind == EntryKind.income,
             nextDue: r.nextDue,
+            windowDays: r.windowDays,
             active: r.active,
           ),
       ]);
@@ -74,6 +75,7 @@ class DriftPlanRepository implements PlanRepository {
     required int amount,
     required String categoryKey,
     required DateTime nextDue,
+    int windowDays = 0,
   }) =>
       _db.into(_db.recurringItems).insert(
             RecurringItemsCompanion.insert(
@@ -82,6 +84,7 @@ class DriftPlanRepository implements PlanRepository {
               amount: amount,
               categoryKey: categoryKey,
               nextDue: nextDue,
+              windowDays: Value(windowDays),
             ),
           );
 

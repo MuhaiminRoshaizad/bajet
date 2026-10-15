@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
+import '../../helpers/money_input.dart';
 
 DateTime d(int y, int m, int day) => DateTime.utc(y, m, day);
 
@@ -18,6 +19,12 @@ void main() {
     await openRecurring(tester);
     expect(find.text('Rent'), findsOneWidget);
     expect(find.text('−RM500.00 · next 01/08/2026'), findsOneWidget);
+  });
+
+  testWidgets('an item that moves around shows its window', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Salary', isIncome: true, amount: 300000, categoryKey: 'salary', nextDue: d(2026, 7, 25), windowDays: 3));
+    await openRecurring(tester);
+    expect(find.text('+RM3,000.00 · next 25/07 to 28/07/2026'), findsOneWidget);
   });
 
   testWidgets('switching an item off pauses it', (tester) async {
@@ -54,5 +61,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ChoiceChip, 'Salary'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Bills'), findsNothing);
+  });
+
+  testWidgets('pay that changes day is saved with its earliest and latest day', (tester) async {
+    final world = await pumpApp(tester);
+    // The range picker's own header sets both dates in one row; the test
+    // font draws every glyph as a full square, so give it a wider screen.
+    tester.view.physicalSize = const Size(1440, 2340);
+    await tester.pumpAndSettle();
+    await openRecurring(tester);
+    await tester.tap(find.text('Add a bill or income'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Income').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Salary');
+    await enterAmount(tester, find.widgetWithText(TextFormField, 'Amount each month'), '300000');
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Salary'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('The day changes each month'));
+    await tester.tap(find.text('The day changes each month'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Runway counts it on the latest'), findsOneWidget);
+
+    await tester.tap(find.text('Pick the earliest and latest day'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('25').first);
+    await tester.pump();
+    await tester.tap(find.text('28').first);
+    await tester.pump();
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Next between 25/07 to 28/07/2026'), findsOneWidget);
+
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    final salary = world.recurring.single;
+    expect((salary.isIncome, salary.nextDue, salary.windowDays), (true, d(2026, 7, 25), 3));
   });
 }

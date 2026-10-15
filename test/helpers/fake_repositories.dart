@@ -138,16 +138,23 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   Stream<List<RecurringItem>> watchRecurring() => _recurring.stream;
 
   @override
-  Future<int> addRecurring({required String name, required bool isIncome, required int amount, required String categoryKey, required DateTime nextDue}) async {
+  Future<int> addRecurring({
+    required String name,
+    required bool isIncome,
+    required int amount,
+    required String categoryKey,
+    required DateTime nextDue,
+    int windowDays = 0,
+  }) async {
     final id = _nextId++;
-    _recurring.value = [..._recurring.value, RecurringItem(id: id, name: name, amount: amount, isIncome: isIncome, nextDue: nextDue)];
+    _recurring.value = [..._recurring.value, RecurringItem(id: id, name: name, amount: amount, isIncome: isIncome, nextDue: nextDue, windowDays: windowDays)];
     return id;
   }
 
   @override
   Future<void> setRecurringActive(int id, {required bool active}) async => _recurring.value = [
         for (final r in _recurring.value)
-          r.id == id ? RecurringItem(id: r.id, name: r.name, amount: r.amount, isIncome: r.isIncome, nextDue: r.nextDue, active: active) : r,
+          r.id == id ? r.copyWith(active: active) : r,
       ];
 
   @override
@@ -157,9 +164,7 @@ class FakeWorld implements LedgerRepository, PlanRepository {
     final due = item.nextDue;
     _recurring.value = [
       for (final r in _recurring.value)
-        r.id == id
-            ? RecurringItem(id: r.id, name: r.name, amount: r.amount, isIncome: r.isIncome, nextDue: DateTime.utc(due.year, due.month + 1, due.day))
-            : r,
+        r.id == id ? r.copyWith(nextDue: DateTime.utc(due.year, due.month + 1, due.day)) : r,
     ];
   }
 

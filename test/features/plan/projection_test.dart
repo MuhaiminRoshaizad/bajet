@@ -72,6 +72,21 @@ void main() {
     expect(sums.balanceNow - sums.dailySpending + sums.income - sums.costs - goal.price, 590300);
   });
 
+  test('pay that lands within a window counts on its last day, a bill on its first', () {
+    // Salary between the 25th and 28th; rent between the 1st and the 6th.
+    final varying = [
+      for (final r in recurring)
+        RecurringItem(id: r.id, name: r.name, amount: r.amount, isIncome: r.isIncome, nextDue: r.nextDue, windowDays: switch (r.name) { 'Salary' => 3, 'Rent' => 5, _ => 0 }),
+    ];
+    final p = run(items: varying);
+    // Sun 25 Oct is a rest day, so the balance only drops by the next three
+    // workdays before the salary counts on Wed 28 Oct.
+    expect(balanceOn(p, d(2026, 10, 25)), 163000);
+    expect(balanceOn(p, d(2026, 10, 28)), 460000);
+    expect(balanceOn(p, d(2026, 11, 1)), 406500);
+    expect(p.goals.single.leftAfterBuying, 590300);
+  });
+
   test('today only counts the part of the plan not yet logged', () {
     final p = run(flexSpentToday: 1200);
     expect(balanceOn(p, d(2026, 10, 14)), 180000);

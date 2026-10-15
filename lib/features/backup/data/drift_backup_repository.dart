@@ -54,6 +54,7 @@ class DriftBackupRepository implements BackupRepository {
             'nextDue': _day.toSql(r.nextDue),
             'active': r.active,
             'isEstimate': r.isEstimate,
+            'windowDays': r.windowDays,
           },
       ],
       'plannedEvents': [
@@ -157,6 +158,7 @@ class DriftBackupRepository implements BackupRepository {
                 nextDue: _day.fromSql(r['nextDue']! as String),
                 active: Value(r['active']! as bool),
                 isEstimate: Value(r['isEstimate']! as bool),
+                windowDays: Value(r['windowDays']! as int),
               ),
           ]);
           b.insertAll(_db.plannedEvents, [

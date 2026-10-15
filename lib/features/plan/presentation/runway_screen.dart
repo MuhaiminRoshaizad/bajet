@@ -151,7 +151,7 @@ class _UpcomingRow extends StatelessWidget {
               children: [
                 Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis),
                 Text(
-                  [Dates.full(item.date), if (!item.counted) 'not counted', if (item.isGoal) 'buy day'].join(' · '),
+                  [Dates.span(item.date, item.lastDate ?? item.date), if (!item.counted) 'not counted', if (item.isGoal) 'buy day'].join(' · '),
                   style: TextStyle(color: c.muted, fontSize: 13),
                 ),
               ],

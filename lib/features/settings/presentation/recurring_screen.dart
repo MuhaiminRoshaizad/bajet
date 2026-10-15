@@ -11,10 +11,12 @@ import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 
-/// Monthly bills and income. Each falls due on the same day every month and
-/// appears on Today to be confirmed when it arrives.
+/// Monthly bills and income. Each falls due on the same day every month, or
+/// within a window of days for pay and bills that move around, and appears
+/// on Today to be confirmed when it arrives.
 class RecurringScreen extends ConsumerWidget {
   const RecurringScreen({super.key});
 
@@ -41,7 +43,7 @@ class RecurringScreen extends ConsumerWidget {
                     title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       '${item.isIncome ? '+' : '−'}${Money.format(item.amount)} · '
-                      '${item.active ? 'next ${Dates.full(item.nextDue)}' : 'paused'}',
+                      '${item.active ? 'next ${Dates.span(item.nextDue, item.windowEnd)}' : 'paused'}',
                     ),
                   ),
               ],
@@ -73,6 +75,10 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
   bool _isIncome = false;
   String? _category;
   DateTime? _nextDue;
+
+  /// The last day it may land when [_varies]; null for a fixed day.
+  DateTime? _lastDay;
+  bool _varies = false;
   bool _tried = false;
 
   @override
@@ -97,16 +103,43 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     if (picked != null) setState(() => _nextDue = DateTime.utc(picked.year, picked.month, picked.day));
   }
 
+  Future<void> _pickWindow() async {
+    final today = ref.read(todayProvider);
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(today.year, today.month, today.day),
+      lastDate: DateTime(today.year + 1, today.month, today.day),
+      currentDate: today,
+      helpText: 'Earliest and latest day',
+      saveText: 'Done',
+      // The first day repeats monthly, so it stays on days 1 to 28; the
+      // window closes before the next month's opens.
+      selectableDayPredicate: (day, start, end) {
+        if (start == null || end != null) return day.day <= 28;
+        return !day.isBefore(start) && day.difference(start).inDays <= maxWindowDays;
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _nextDue = DateTime.utc(picked.start.year, picked.start.month, picked.start.day);
+        _lastDay = DateTime.utc(picked.end.year, picked.end.month, picked.end.day);
+      });
+    }
+  }
+
+  bool get _whenMissing => _nextDue == null || (_varies && _lastDay == null);
+
   Future<void> _save() async {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
-    if (!ok || _category == null || _nextDue == null) return;
+    if (!ok || _category == null || _whenMissing) return;
     await ref.read(planRepositoryProvider).addRecurring(
           name: _name.text,
           isIncome: _isIncome,
           amount: RinggitCentsFormatter.parse(_amount.text),
           categoryKey: _category!,
           nextDue: _nextDue!,
+          windowDays: _varies ? _lastDay!.difference(_nextDue!).inDays : 0,
         );
     if (mounted) Navigator.of(context).pop();
   }
@@ -175,21 +208,40 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
               ),
               if (_tried && _category == null)
                 Padding(padding: const EdgeInsets.only(top: AppSpacing.xs), child: Text('Pick a category', style: TextStyle(color: c.bad, fontSize: 12))),
-              const SizedBox(height: AppSpacing.l),
+              const SizedBox(height: AppSpacing.s),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('The day changes each month'),
+                subtitle: Text(_isIncome
+                    ? 'Give the earliest and latest day it arrives. Runway counts it on the latest.'
+                    : 'Give the earliest and latest day it goes out. Runway counts it on the earliest.'),
+                value: _varies,
+                onChanged: (v) => setState(() {
+                  _varies = v;
+                  _nextDue = null;
+                  _lastDay = null;
+                }),
+              ),
+              const SizedBox(height: AppSpacing.s),
               OutlinedButton.icon(
-                onPressed: _pickDate,
-                icon: const Icon(Icons.event_outlined),
-                label: Text(_nextDue == null ? 'Pick the next due date' : 'Next due ${Dates.full(_nextDue!)}'),
+                onPressed: _varies ? _pickWindow : _pickDate,
+                icon: Icon(_varies ? Icons.date_range_outlined : Icons.event_outlined),
+                label: Text(switch ((_varies, _whenMissing)) {
+                  (false, true) => 'Pick the next due date',
+                  (false, false) => 'Next due ${Dates.full(_nextDue!)}',
+                  (true, true) => 'Pick the earliest and latest day',
+                  (true, false) => 'Next between ${Dates.span(_nextDue!, _lastDay!)}',
+                }),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
                   alignment: Alignment.centerLeft,
-                  side: BorderSide(color: _tried && _nextDue == null ? c.bad : c.muted),
+                  side: BorderSide(color: _tried && _whenMissing ? c.bad : c.muted),
                 ),
               ),
-              if (_tried && _nextDue == null)
+              if (_tried && _whenMissing)
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.xs, left: AppSpacing.l),
-                  child: Text('Pick when it is next due', style: TextStyle(color: c.bad, fontSize: 12)),
+                  child: Text(_varies ? 'Pick the days it can land on' : 'Pick when it is next due', style: TextStyle(color: c.bad, fontSize: 12)),
                 ),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save')),

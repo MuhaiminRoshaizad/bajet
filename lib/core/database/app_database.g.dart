@@ -985,6 +985,19 @@ class $RecurringItemsTable extends RecurringItems
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _windowDaysMeta = const VerificationMeta(
+    'windowDays',
+  );
+  @override
+  late final GeneratedColumn<int> windowDays = GeneratedColumn<int>(
+    'window_days',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(windowDays).isBetweenValues(0, maxWindowDays),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -995,6 +1008,7 @@ class $RecurringItemsTable extends RecurringItems
     nextDue,
     active,
     isEstimate,
+    windowDays,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1050,6 +1064,12 @@ class $RecurringItemsTable extends RecurringItems
         isEstimate.isAcceptableOrUnknown(data['is_estimate']!, _isEstimateMeta),
       );
     }
+    if (data.containsKey('window_days')) {
+      context.handle(
+        _windowDaysMeta,
+        windowDays.isAcceptableOrUnknown(data['window_days']!, _windowDaysMeta),
+      );
+    }
     return context;
   }
 
@@ -1095,6 +1115,10 @@ class $RecurringItemsTable extends RecurringItems
         DriftSqlType.bool,
         data['${effectivePrefix}is_estimate'],
       )!,
+      windowDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}window_days'],
+      )!,
     );
   }
 
@@ -1120,6 +1144,10 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
   final DateTime nextDue;
   final bool active;
   final bool isEstimate;
+
+  /// Days after [nextDue] it may still land, for pay or bills that move
+  /// around; 0 means on the day itself.
+  final int windowDays;
   const RecurringItem({
     required this.id,
     required this.name,
@@ -1129,6 +1157,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
     required this.nextDue,
     required this.active,
     required this.isEstimate,
+    required this.windowDays,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1149,6 +1178,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
     }
     map['active'] = Variable<bool>(active);
     map['is_estimate'] = Variable<bool>(isEstimate);
+    map['window_days'] = Variable<int>(windowDays);
     return map;
   }
 
@@ -1162,6 +1192,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
       nextDue: Value(nextDue),
       active: Value(active),
       isEstimate: Value(isEstimate),
+      windowDays: Value(windowDays),
     );
   }
 
@@ -1181,6 +1212,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
       nextDue: serializer.fromJson<DateTime>(json['nextDue']),
       active: serializer.fromJson<bool>(json['active']),
       isEstimate: serializer.fromJson<bool>(json['isEstimate']),
+      windowDays: serializer.fromJson<int>(json['windowDays']),
     );
   }
   @override
@@ -1197,6 +1229,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
       'nextDue': serializer.toJson<DateTime>(nextDue),
       'active': serializer.toJson<bool>(active),
       'isEstimate': serializer.toJson<bool>(isEstimate),
+      'windowDays': serializer.toJson<int>(windowDays),
     };
   }
 
@@ -1209,6 +1242,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
     DateTime? nextDue,
     bool? active,
     bool? isEstimate,
+    int? windowDays,
   }) => RecurringItem(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -1218,6 +1252,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
     nextDue: nextDue ?? this.nextDue,
     active: active ?? this.active,
     isEstimate: isEstimate ?? this.isEstimate,
+    windowDays: windowDays ?? this.windowDays,
   );
   RecurringItem copyWithCompanion(RecurringItemsCompanion data) {
     return RecurringItem(
@@ -1233,6 +1268,9 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
       isEstimate: data.isEstimate.present
           ? data.isEstimate.value
           : this.isEstimate,
+      windowDays: data.windowDays.present
+          ? data.windowDays.value
+          : this.windowDays,
     );
   }
 
@@ -1246,7 +1284,8 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
           ..write('categoryKey: $categoryKey, ')
           ..write('nextDue: $nextDue, ')
           ..write('active: $active, ')
-          ..write('isEstimate: $isEstimate')
+          ..write('isEstimate: $isEstimate, ')
+          ..write('windowDays: $windowDays')
           ..write(')'))
         .toString();
   }
@@ -1261,6 +1300,7 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
     nextDue,
     active,
     isEstimate,
+    windowDays,
   );
   @override
   bool operator ==(Object other) =>
@@ -1273,7 +1313,8 @@ class RecurringItem extends DataClass implements Insertable<RecurringItem> {
           other.categoryKey == this.categoryKey &&
           other.nextDue == this.nextDue &&
           other.active == this.active &&
-          other.isEstimate == this.isEstimate);
+          other.isEstimate == this.isEstimate &&
+          other.windowDays == this.windowDays);
 }
 
 class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
@@ -1285,6 +1326,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
   final Value<DateTime> nextDue;
   final Value<bool> active;
   final Value<bool> isEstimate;
+  final Value<int> windowDays;
   const RecurringItemsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1294,6 +1336,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
     this.nextDue = const Value.absent(),
     this.active = const Value.absent(),
     this.isEstimate = const Value.absent(),
+    this.windowDays = const Value.absent(),
   });
   RecurringItemsCompanion.insert({
     this.id = const Value.absent(),
@@ -1304,6 +1347,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
     required DateTime nextDue,
     this.active = const Value.absent(),
     this.isEstimate = const Value.absent(),
+    this.windowDays = const Value.absent(),
   }) : name = Value(name),
        kind = Value(kind),
        amount = Value(amount),
@@ -1318,6 +1362,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
     Expression<String>? nextDue,
     Expression<bool>? active,
     Expression<bool>? isEstimate,
+    Expression<int>? windowDays,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1328,6 +1373,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
       if (nextDue != null) 'next_due': nextDue,
       if (active != null) 'active': active,
       if (isEstimate != null) 'is_estimate': isEstimate,
+      if (windowDays != null) 'window_days': windowDays,
     });
   }
 
@@ -1340,6 +1386,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
     Value<DateTime>? nextDue,
     Value<bool>? active,
     Value<bool>? isEstimate,
+    Value<int>? windowDays,
   }) {
     return RecurringItemsCompanion(
       id: id ?? this.id,
@@ -1350,6 +1397,7 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
       nextDue: nextDue ?? this.nextDue,
       active: active ?? this.active,
       isEstimate: isEstimate ?? this.isEstimate,
+      windowDays: windowDays ?? this.windowDays,
     );
   }
 
@@ -1384,6 +1432,9 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
     if (isEstimate.present) {
       map['is_estimate'] = Variable<bool>(isEstimate.value);
     }
+    if (windowDays.present) {
+      map['window_days'] = Variable<int>(windowDays.value);
+    }
     return map;
   }
 
@@ -1397,7 +1448,8 @@ class RecurringItemsCompanion extends UpdateCompanion<RecurringItem> {
           ..write('categoryKey: $categoryKey, ')
           ..write('nextDue: $nextDue, ')
           ..write('active: $active, ')
-          ..write('isEstimate: $isEstimate')
+          ..write('isEstimate: $isEstimate, ')
+          ..write('windowDays: $windowDays')
           ..write(')'))
         .toString();
   }
@@ -4674,6 +4726,7 @@ typedef $$RecurringItemsTableCreateCompanionBuilder =
       required DateTime nextDue,
       Value<bool> active,
       Value<bool> isEstimate,
+      Value<int> windowDays,
     });
 typedef $$RecurringItemsTableUpdateCompanionBuilder =
     RecurringItemsCompanion Function({
@@ -4685,6 +4738,7 @@ typedef $$RecurringItemsTableUpdateCompanionBuilder =
       Value<DateTime> nextDue,
       Value<bool> active,
       Value<bool> isEstimate,
+      Value<int> windowDays,
     });
 
 final class $$RecurringItemsTableReferences
@@ -4775,6 +4829,11 @@ class $$RecurringItemsTableFilterComposer
 
   ColumnFilters<bool> get isEstimate => $composableBuilder(
     column: $table.isEstimate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get windowDays => $composableBuilder(
+    column: $table.windowDays,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4871,6 +4930,11 @@ class $$RecurringItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get windowDays => $composableBuilder(
+    column: $table.windowDays,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryKey {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4924,6 +4988,11 @@ class $$RecurringItemsTableAnnotationComposer
 
   GeneratedColumn<bool> get isEstimate => $composableBuilder(
     column: $table.isEstimate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get windowDays => $composableBuilder(
+    column: $table.windowDays,
     builder: (column) => column,
   );
 
@@ -5014,6 +5083,7 @@ class $$RecurringItemsTableTableManager
                 Value<DateTime> nextDue = const Value.absent(),
                 Value<bool> active = const Value.absent(),
                 Value<bool> isEstimate = const Value.absent(),
+                Value<int> windowDays = const Value.absent(),
               }) => RecurringItemsCompanion(
                 id: id,
                 name: name,
@@ -5023,6 +5093,7 @@ class $$RecurringItemsTableTableManager
                 nextDue: nextDue,
                 active: active,
                 isEstimate: isEstimate,
+                windowDays: windowDays,
               ),
           createCompanionCallback:
               ({
@@ -5034,6 +5105,7 @@ class $$RecurringItemsTableTableManager
                 required DateTime nextDue,
                 Value<bool> active = const Value.absent(),
                 Value<bool> isEstimate = const Value.absent(),
+                Value<int> windowDays = const Value.absent(),
               }) => RecurringItemsCompanion.insert(
                 id: id,
                 name: name,
@@ -5043,6 +5115,7 @@ class $$RecurringItemsTableTableManager
                 nextDue: nextDue,
                 active: active,
                 isEstimate: isEstimate,
+                windowDays: windowDays,
               ),
           withReferenceMapper: (p0) => p0
               .map(

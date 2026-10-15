@@ -47,4 +47,18 @@ void main() {
     );
     expect((list.single.counted, list.single.signedAmount), (false, 30000));
   });
+
+  test('an item that moves around carries the last day it may land', () {
+    final items = upcoming(
+      recurring: [RecurringItem(id: 1, name: 'Salary', amount: 300000, isIncome: true, nextDue: DateTime.utc(2026, 7, 25), windowDays: 3)],
+      events: const [],
+      goals: const [],
+      from: DateTime.utc(2026, 7, 1),
+      to: DateTime.utc(2026, 8, 31),
+    );
+    expect([for (final i in items) (i.date, i.lastDate)], [
+      (DateTime.utc(2026, 7, 25), DateTime.utc(2026, 7, 28)),
+      (DateTime.utc(2026, 8, 25), DateTime.utc(2026, 8, 28)),
+    ]);
+  });
 }

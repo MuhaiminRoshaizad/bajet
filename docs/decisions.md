@@ -172,3 +172,19 @@ questions.
 question plus a summary of the week and month) goes to Anthropic under the
 owner's account. The Coach screen says so before the first question. A
 backup does not carry the key, so it is entered again after a restore.
+
+## 015: Pay and bills that move around count cautiously
+
+**Decided:** a bill or income can land anywhere in a window of up to 27
+days, entered as its earliest and latest day. The projection counts income
+on the window's last day and a bill on its first. Today offers it for
+confirmation from the first day.
+
+**Why:** pay and some bills do not arrive on the same date each month.
+Counting each at its least convenient moment means Runway and the goal
+outcome can only be beaten, never undercut, by when money really moves.
+Twenty-seven days keeps one month's window closed before the next opens.
+
+**Costs:** a projection with a window dips lower between a window's start and
+end than the money usually does. Schema version 3 and backup format 3 add
+`window_days`; older databases and backups read as fixed days.

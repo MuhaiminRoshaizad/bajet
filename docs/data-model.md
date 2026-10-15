@@ -84,6 +84,7 @@ Monthly bills and income.
 | `next_due`     | day  | Next unpaid occurrence; see decision 008       |
 | `active`       | bool |                                                |
 | `is_estimate`  | bool | The amount varies month to month               |
+| `window_days`  | int  | 0–27 days after `next_due` it may still land; 0 for a fixed day (decision 015) |
 
 ### `planned_events`
 One-off future income or expenses.
@@ -150,7 +151,7 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 2,
+  "format": 3,
   "settings": { "openingBalance": 150000, "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000 },
   "categories": [], "weeklyRules": [], "recurringItems": [],
   "plannedEvents": [], "goals": [], "favourites": [], "entries": []
@@ -167,6 +168,7 @@ by hand rather than taken from drift, so the file format only changes when
 |--------|---------------------------------------------------------|
 | 1      | First release                                           |
 | 2      | Each entry carries `receipt`, the file name of its image |
+| 3      | Each recurring item carries `windowDays`; older files get 0 |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
@@ -175,7 +177,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 2. Any change to a table bumps it and adds a step to
+`schemaVersion` is 3. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -183,3 +185,4 @@ data on the phone is left as it was.
 |---------|-----------------------------------------|
 | 1       | First release                           |
 | 2       | `entries.receipt`, for attached receipts |
+| 3       | `recurring_items.window_days`, for pay and bills that move around |

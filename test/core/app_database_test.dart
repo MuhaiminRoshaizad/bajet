@@ -56,7 +56,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 2);
+    expect(db.schemaVersion, 3);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -70,5 +70,17 @@ void main() {
     addTearDown(old.close);
     final entry = await old.select(old.entries).getSingle();
     expect((entry.amount, entry.receipt), (450, null));
+  });
+
+  test('a version 2 database gains the window column and keeps its bills', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v2.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('bills', 'Bills', 'expense', 'sky')");
+      raw.execute("INSERT INTO recurring_items (name, kind, amount, category_key, next_due) VALUES ('Rent', 'expense', 50000, 'bills', '2026-08-01')");
+      raw.execute('PRAGMA user_version = 2');
+    }));
+    addTearDown(old.close);
+    final rent = await old.select(old.recurringItems).getSingle();
+    expect((rent.name, rent.windowDays), ('Rent', 0));
   });
 }

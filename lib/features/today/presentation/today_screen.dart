@@ -181,7 +181,7 @@ class _DueCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text('${item.isIncome ? 'Expected' : 'Due'} ${Dates.full(item.nextDue)} · ${Money.format(item.amount)}', style: TextStyle(color: c.muted, fontSize: 13)),
+                Text('${item.isIncome ? 'Expected' : 'Due'} ${Dates.span(item.nextDue, item.windowEnd)} · ${Money.format(item.amount)}', style: TextStyle(color: c.muted, fontSize: 13)),
               ],
             ),
           ),

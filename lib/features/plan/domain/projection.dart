@@ -157,8 +157,10 @@ Projection project({
 }
 
 /// Recurring items fall on the same day of each month from [RecurringItem.nextDue]
-/// onward. Days of month are capped at 28, so every month has the day.
+/// onward, moved to the end of their window when that is when they count.
+/// Days of month are capped at 28, so every month has the day.
 bool _dueOn(RecurringItem item, DateTime day) {
   final first = calendarDay(item.nextDue);
-  return !day.isBefore(first) && day.day == first.day;
+  final occurrence = DateTime.utc(day.year, day.month, day.day - item.countedAfter);
+  return !occurrence.isBefore(first) && occurrence.day == first.day;
 }

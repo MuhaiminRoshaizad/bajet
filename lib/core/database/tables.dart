@@ -4,6 +4,8 @@
 
 import 'package:drift/drift.dart';
 
+import '../../features/plan/domain/plan_models.dart' show maxWindowDays;
+
 /// Calendar days are stored as ISO `yyyy-mm-dd` text and read back as UTC
 /// midnight, so a day never shifts with the phone's time zone.
 class DayConverter extends TypeConverter<DateTime, String> {
@@ -98,6 +100,10 @@ class RecurringItems extends Table {
   TextColumn get nextDue => text().map(const DayConverter())();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
   BoolColumn get isEstimate => boolean().withDefault(const Constant(false))();
+
+  /// Days after [nextDue] it may still land, for pay or bills that move
+  /// around; 0 means on the day itself.
+  IntColumn get windowDays => integer().withDefault(const Constant(0)).check(windowDays.isBetweenValues(0, maxWindowDays))();
 }
 
 class PlannedEvents extends Table {

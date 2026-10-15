@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import '../../features/plan/domain/plan_models.dart' show maxWindowDays;
 import 'tables.dart';
 
 export 'tables.dart';
@@ -14,7 +15,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -25,6 +26,7 @@ class AppDatabase extends _$AppDatabase {
         // One step per version, so any older database climbs to the latest.
         onUpgrade: (m, from, to) async {
           if (from < 2) await m.addColumn(entries, entries.receipt);
+          if (from < 3) await m.addColumn(recurringItems, recurringItems.windowDays);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

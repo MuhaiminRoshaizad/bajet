@@ -29,7 +29,9 @@ for each day:
    is left of it after `flexSpentToday`, because logged spending is already in
    `balance`.
 2. Apply each active recurring item whose day of month matches, from its
-   `nextDue` date onward.
+   `nextDue` date onward. An item with a window (`windowDays`) counts on the
+   window's last day if it is income and its first day if it is a bill, so
+   the plan never relies on pay arriving early or a bill going out late.
 3. Apply planned events that are not done and are counted in the projection.
 4. Record the balance before goals, then subtract each goal due that day in
    priority order and record what is left.

@@ -94,6 +94,27 @@ void main() {
     expect(restored.firstWhere((e) => e.label == 'Coffee').receipt, isNull);
   });
 
+  test('a format 2 backup, from before pay windows, restores with fixed days', () async {
+    await fill(source);
+    final v3 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    final v2 = {
+      ...v3,
+      'format': 2,
+      'recurringItems': [for (final r in v3['recurringItems']! as List) {...(r as Map<String, Object?>)}..remove('windowDays')],
+    };
+    await DriftBackupRepository(target).restore(v2);
+    final restored = await DriftPlanRepository(target).watchRecurring().first;
+    expect([for (final r in restored) (r.name, r.windowDays)], [('Rent', 0)]);
+  });
+
+  test('a pay window survives a round trip', () async {
+    await fill(source);
+    await DriftPlanRepository(source).addRecurring(name: 'Salary', isIncome: true, amount: 300000, categoryKey: 'salary', nextDue: d(2026, 7, 25), windowDays: 3);
+    await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
+    final restored = await DriftPlanRepository(target).watchRecurring().first;
+    expect(restored.firstWhere((r) => r.name == 'Salary').windowDays, 3);
+  });
+
   test('receipts survive a round trip by file name', () async {
     await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1200, categoryKey: 'food', receipt: 'r1.jpg'));
     await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);

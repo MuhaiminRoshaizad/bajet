@@ -29,6 +29,7 @@ abstract interface class PlanRepository {
     required int amount,
     required String categoryKey,
     required DateTime nextDue,
+    int windowDays = 0,
   });
 
   /// Pausing keeps the item and its history but stops it being projected or
