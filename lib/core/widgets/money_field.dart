@@ -14,6 +14,7 @@ class MoneyField extends StatefulWidget {
     required this.hint,
     this.helper,
     this.validator,
+    this.enabled = true,
     this.textInputAction = TextInputAction.next,
   });
 
@@ -22,6 +23,7 @@ class MoneyField extends StatefulWidget {
   final String hint;
   final String? helper;
   final String? Function(int sen)? validator;
+  final bool enabled;
   final TextInputAction textInputAction;
 
   @override
@@ -41,6 +43,7 @@ class _MoneyFieldState extends State<MoneyField> {
       child: TextFormField(
         key: _fieldKey,
         controller: widget.controller,
+        enabled: widget.enabled,
         keyboardType: TextInputType.number,
         textInputAction: widget.textInputAction,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly, const RinggitCentsFormatter()],

@@ -63,8 +63,13 @@ The spending rhythm, one row per weekday (1 is Monday).
 | `weekday`        | int  | Primary key, 1–7                        |
 | `label`          | text | e.g. "Weekday"                          |
 | `day_type`       | enum | `zero`, `spend` or `flex`               |
-| `planned_spend`  | int  | Used by the projection                  |
-| `is_fasting_day` | bool | Marks the day with its own glyph        |
+| `planned_spend`  | int  | Used by the projection; 0 on `zero` days|
+| `is_fasting_day` | bool | Turning it on makes the day `zero`      |
+
+A day saved as `zero` (fasting days included) plans RM0.00, and whatever it
+had planned moves evenly onto the days that still spend (`withRule`), so the
+week keeps its total. Rhythm offers to spread the weekly allowance over the
+spending days again whenever their total and the allowance differ.
 
 ### `recurring_items`
 Monthly bills and income.

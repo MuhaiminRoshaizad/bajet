@@ -7,6 +7,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/soft.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 
@@ -14,7 +15,7 @@ const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 const _typeLabels = {DayType.zero: 'No spending', DayType.spend: 'Spending', DayType.flex: 'Flexible'};
 
 /// What each weekday usually costs. The projection subtracts these amounts
-/// day by day, and the weekly ring judges each day against them.
+/// day by day, and the week strip judges each day against them.
 class RhythmScreen extends ConsumerWidget {
   const RhythmScreen({super.key});
 
@@ -22,7 +23,9 @@ class RhythmScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final rules = ref.watch(rulesProvider).value ?? const <WeeklyRule>[];
+    final allowance = ref.watch(settingsProvider).value?.weeklyCap;
     final weekTotal = rules.fold(0, (s, r) => s + r.plannedSpend);
+    final spendingDays = rules.where((r) => r.type != DayType.zero).length;
     return Scaffold(
       appBar: AppBar(title: const Text('Weekly rhythm')),
       body: ListView(
@@ -32,6 +35,34 @@ class RhythmScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
             child: Text('What each day usually costs. Planned in total: ${Money.format(weekTotal)} a week.', style: TextStyle(color: c.muted)),
           ),
+          if (allowance != null && allowance != weekTotal && spendingDays > 0) ...[
+            SoftWell(
+              radius: AppRadii.card,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    weekTotal < allowance
+                        ? '${Money.format(allowance - weekTotal)} of your ${Money.format(allowance)} weekly allowance is not planned on any day.'
+                        : 'The days plan ${Money.format(weekTotal - allowance)} more than your ${Money.format(allowance)} weekly allowance.',
+                    style: TextStyle(color: c.ink, height: 1.4),
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                  FilledButton.tonal(
+                    onPressed: () async {
+                      final repo = ref.read(planRepositoryProvider);
+                      for (final r in spreadOverSpendingDays(rules, allowance)) {
+                        await repo.saveRule(r);
+                      }
+                    },
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                    child: Text('Spread ${Money.format(allowance)} over the $spendingDays spending ${spendingDays == 1 ? 'day' : 'days'}'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.l),
+          ],
           CardGroup(
             children: [
               for (final r in rules)
@@ -78,16 +109,49 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
     super.dispose();
   }
 
+  /// No-spending days, fasting ones included, plan nothing, so their amount
+  /// is fixed at RM0.
+  bool get _plansNothing => _type == DayType.zero;
+
+  void _setType(DayType type) => setState(() {
+        _type = type;
+        if (_plansNothing) _amount.clear();
+      });
+
+  void _setFasting(bool fasting) => setState(() {
+        _fasting = fasting;
+        if (fasting) {
+          _type = DayType.zero;
+          _amount.clear();
+        }
+      });
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    await ref.read(planRepositoryProvider).saveRule(WeeklyRule(
-          weekday: widget.rule.weekday,
-          label: _label.text.trim(),
-          type: _type,
-          plannedSpend: RinggitCentsFormatter.parse(_amount.text),
-          isFastingDay: _fasting,
-        ));
+    final changed = WeeklyRule(
+      weekday: widget.rule.weekday,
+      label: _label.text.trim(),
+      type: _type,
+      plannedSpend: RinggitCentsFormatter.parse(_amount.text),
+      isFastingDay: _fasting,
+    );
+    final rules = ref.read(rulesProvider).value ?? [widget.rule];
+    final repo = ref.read(planRepositoryProvider);
+    for (final r in withRule(rules, changed)) {
+      await repo.saveRule(r);
+    }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  /// Where this day's old plan goes once it stops spending.
+  String? _handOver() {
+    if (!_plansNothing || widget.rule.plannedSpend == 0) return null;
+    final rules = ref.read(rulesProvider).value ?? const <WeeklyRule>[];
+    final others = rules.where((r) => r.weekday != widget.rule.weekday && r.type != DayType.zero).length;
+    if (others == 0) return 'No other day spends, so the week plans ${Money.format(widget.rule.plannedSpend)} less.';
+    final total = rules.fold(0, (s, r) => s + r.plannedSpend);
+    return 'Its ${Money.format(widget.rule.plannedSpend)} moves to the other $others spending ${others == 1 ? 'day' : 'days'}, '
+        'so the week still plans ${Money.format(total)}.';
   }
 
   @override
@@ -120,23 +184,24 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
                 segments: [for (final t in DayType.values) ButtonSegment(value: t, label: Text(_typeLabels[t]!))],
                 selected: {_type},
                 showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() => _type = s.single),
+                onSelectionChanged: (s) => _setType(s.single),
               ),
               const SizedBox(height: AppSpacing.m),
               MoneyField(
                 controller: _amount,
                 label: 'Planned spend',
-                hint: 'e.g. 10.00',
-                helper: 'Leave empty for none. The projection subtracts this every week.',
+                hint: _plansNothing ? '0.00' : 'e.g. 10.00',
+                helper: _handOver() ?? (_plansNothing ? 'A no-spending day plans RM0.00.' : 'Leave empty for none. The projection subtracts this every week.'),
+                enabled: !_plansNothing,
                 textInputAction: TextInputAction.done,
               ),
               const SizedBox(height: AppSpacing.s),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Fasting day'),
-                subtitle: const Text('Shown with its own mark in the week.'),
+                subtitle: const Text('Makes it a no-spending day. Switch it to Spending to plan an amount anyway.'),
                 value: _fasting,
-                onChanged: (v) => setState(() => _fasting = v),
+                onChanged: _setFasting,
               ),
               const SizedBox(height: AppSpacing.l),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save')),
