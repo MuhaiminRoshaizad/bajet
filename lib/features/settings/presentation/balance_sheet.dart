@@ -9,14 +9,16 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../accounts/domain/account_models.dart';
+import '../../accounts/presentation/account_choice.dart';
+import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/presentation/ledger_providers.dart';
-import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
 
-/// Changing the balance means one of two things: the bank disagrees today,
-/// or setup was given the wrong figure. The first is a logged difference,
-/// which the check-in already records; the second rewrites the opening
-/// balance, so everything since moves with it.
+/// Changing the balance means one of two things: an account disagrees
+/// today, or it was given the wrong starting figure. The first is a logged
+/// difference, which the check-in records; the second rewrites that
+/// account's opening balance, so everything since moves with it.
 Future<void> showBalanceSheet(BuildContext context) =>
     showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _BalanceSheet());
 
@@ -32,6 +34,9 @@ class _BalanceSheetState extends ConsumerState<_BalanceSheet> {
   final _opening = TextEditingController();
   bool _fixing = false;
 
+  /// The account whose starting balance is being fixed.
+  Account? _account;
+
   @override
   void dispose() {
     _opening.dispose();
@@ -44,14 +49,16 @@ class _BalanceSheetState extends ConsumerState<_BalanceSheet> {
     router.push(Routes.checkin);
   }
 
-  Future<void> _saveOpening(PlanSettings s) async {
-    if (!_form.currentState!.validate()) return;
-    await ref.read(planRepositoryProvider).saveSettings(PlanSettings(
-          openingBalance: RinggitCentsFormatter.parse(_opening.text),
-          openingDate: s.openingDate,
-          weeklyCap: s.weeklyCap,
-          buffer: s.buffer,
-        ));
+  void _fix(Account account) => setState(() {
+        _fixing = true;
+        _account = account;
+        _opening.text = RinggitCentsFormatter.format(account.openingBalance);
+      });
+
+  Future<void> _saveOpening() async {
+    final account = _account;
+    if (account == null || !_form.currentState!.validate()) return;
+    await ref.read(accountRepositoryProvider).setOpeningBalance(account.id, RinggitCentsFormatter.parse(_opening.text));
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -60,6 +67,7 @@ class _BalanceSheetState extends ConsumerState<_BalanceSheet> {
     final c = context.colors;
     final balance = ref.watch(balanceProvider).value;
     final settings = ref.watch(settingsProvider).value;
+    final accounts = ref.watch(accountsProvider).value ?? const [];
     final title = Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700);
     return Padding(
       padding: EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl + MediaQuery.viewInsetsOf(context).bottom),
@@ -91,31 +99,36 @@ class _BalanceSheetState extends ConsumerState<_BalanceSheet> {
               ),
               const SizedBox(height: AppSpacing.l),
               TextButton(
-                onPressed: settings == null
-                    ? null
-                    : () => setState(() {
-                          _fixing = true;
-                          _opening.text = RinggitCentsFormatter.format(settings.openingBalance);
-                        }),
+                onPressed: accounts.isEmpty ? null : () => _fix(accounts.first),
                 style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                 child: const Text('Fix the starting balance instead'),
               ),
-            ] else if (settings != null) ...[
+            ] else if (settings != null && _account != null) ...[
               Text(
-                'For a wrong figure at setup. Every balance since ${Dates.full(settings.openingDate)} moves by the difference; nothing is logged.',
+                'For a wrong figure when an account was set up. Its every balance since ${Dates.full(settings.openingDate)} moves by the difference; nothing is logged.',
                 style: TextStyle(color: c.muted, height: 1.4),
               ),
+              if (accounts.length > 1) ...[
+                const SizedBox(height: AppSpacing.l),
+                AccountChoice(
+                  label: 'Which account?',
+                  accounts: accounts,
+                  selected: _account!.id,
+                  onSelect: (id) => _fix(accounts.firstWhere((a) => a.id == id)),
+                ),
+              ],
               const SizedBox(height: AppSpacing.l),
               MoneyField(
+                // A new field for each account, so its own figure shows.
+                key: ValueKey(_account!.id),
                 controller: _opening,
-                label: 'Balance on ${Dates.full(settings.openingDate)}',
+                label: '${accounts.length > 1 ? '${_account!.name} on' : 'Balance on'} ${Dates.full(settings.openingDate)}',
                 hint: 'e.g. 2,500.00',
                 textInputAction: TextInputAction.done,
-                validator: (sen) => sen > 0 ? null : 'Enter the starting balance',
               ),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(
-                onPressed: () => _saveOpening(settings),
+                onPressed: _saveOpening,
                 style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
                 child: const Text('Save starting balance'),
               ),

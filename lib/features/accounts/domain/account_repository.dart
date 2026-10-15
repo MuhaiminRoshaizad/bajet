@@ -13,6 +13,11 @@ abstract interface class AccountRepository {
   /// through entries, transfers and check-ins.
   Future<void> updateAccount(Account account);
 
+  /// Corrects what an account held on the opening date, for a figure given
+  /// wrongly. Every balance of it since moves by the difference; nothing is
+  /// logged.
+  Future<void> setOpeningBalance(int accountId, int balance);
+
   /// Moves [amount] from one account to another on [day]. Neither spending
   /// nor income, so only the two accounts' balances change.
   Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note});

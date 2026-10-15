@@ -101,10 +101,11 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
         int? compute() {
           final s = _settings.value;
           if (s == null) return null;
-          return s.openingBalance + _entries.value.where((e) => !e.day.isBefore(s.openingDate)).fold<int>(0, (sum, e) => sum + e.signedAmount);
+          final opening = _accountRows.value.fold<int>(0, (sum, a) => sum + a.openingBalance);
+          return opening + _entries.value.where((e) => !e.day.isBefore(s.openingDate)).fold<int>(0, (sum, e) => sum + e.signedAmount);
         }
 
-        final subs = [_settings.stream.listen((_) => c.add(compute())), _entries.stream.listen((_) => c.add(compute()))];
+        final subs = [for (final s in [_settings.stream, _entries.stream, _accountRows.stream]) s.listen((_) => c.add(compute()))];
         c.onCancel = () => Future.wait(subs.map((s) => s.cancel()));
       });
 
@@ -236,6 +237,10 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
               ? Account(id: x.id, kind: x.kind, name: a.name.trim(), nickname: _blank(a.nickname), openingBalance: x.openingBalance, balance: 0, look: a.look)
               : x,
       ];
+
+  @override
+  Future<void> setOpeningBalance(int accountId, int balance) async =>
+      _accountRows.value = [for (final x in _accountRows.value) x.id == accountId ? _withOpening(x, balance) : x];
 
   @override
   Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note}) async {

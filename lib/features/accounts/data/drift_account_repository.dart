@@ -69,6 +69,11 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
   }
 
   @override
+  Future<void> setOpeningBalance(int accountId, int balance) async {
+    await (_db.update(_db.accounts)..where((t) => t.id.equals(accountId))).write(AccountsCompanion(openingBalance: Value(balance)));
+  }
+
+  @override
   Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note}) =>
       _db.into(_db.transfers).insert(
             TransfersCompanion.insert(occurredOn: day, fromAccountId: fromId, toAccountId: toId, amount: amount, note: Value(_blankToNull(note))),
