@@ -83,7 +83,8 @@ void main() {
 
     final monday = (await world.watchRules().first).first;
     expect((monday.type, monday.plannedSpend, monday.isFastingDay), (DayType.zero, 0, true));
-    expect(find.text('Weekday · No spending · fasting'), findsOneWidget);
+    expect(find.text('Fasting'), findsOneWidget);
+    expect(find.text('RM0.00'), findsNothing);
   });
 
   testWidgets('an allowance the days do not add up to can be spread over them again', (tester) async {

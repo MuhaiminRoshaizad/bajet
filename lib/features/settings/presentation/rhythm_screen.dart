@@ -69,8 +69,15 @@ class RhythmScreen extends ConsumerWidget {
                 ListTile(
                   minTileHeight: 60,
                   title: Text(_weekdays[r.weekday - 1], style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text([r.label, _typeLabels[r.type]!, if (r.isFastingDay) 'fasting'].join(' · ')),
-                  trailing: Text(Money.format(r.plannedSpend), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
+                  subtitle: Text([r.label, if (r.type != DayType.zero) _typeLabels[r.type]!].join(' · ')),
+                  // A pill, not a grey RM0.00, so the days that do spend stand out.
+                  trailing: r.type == DayType.zero
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+                          decoration: BoxDecoration(color: c.well, borderRadius: BorderRadius.circular(AppRadii.pill)),
+                          child: Text(r.isFastingDay ? 'Fasting' : 'No spending', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600, fontSize: 13)),
+                        )
+                      : Text(Money.format(r.plannedSpend), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
                   onTap: () => showModalBottomSheet<void>(
                     context: context,
                     isScrollControlled: true,
