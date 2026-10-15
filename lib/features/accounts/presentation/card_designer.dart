@@ -94,9 +94,9 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   late int? _ink = _account?.look.ink ?? _start?.ink;
   late CardFinish _finish = _account?.look.finish ?? _start?.finish ?? ref.read(totalCardLookProvider).value?.finish ?? CardFinish.brushed;
   late final _nickname = TextEditingController(text: _account?.nickname);
-  final _provider = TextEditingController();
+  late final _provider = TextEditingController(text: _account?.name);
   final _balance = TextEditingController();
-  late String _name = _newKind == AccountKind.cash ? 'Cash' : '';
+  late String _name = _account?.name ?? (_newKind == AccountKind.cash ? 'Cash' : '');
 
   /// Colours taken from a photo of the real card, to pick from.
   List<int> _fromPhoto = const [];
@@ -106,8 +106,9 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   bool get _isCash => _kind == AccountKind.cash;
   bool get _isTotal => _kind == null;
 
-  /// A bank or e-wallet being added still needs its name.
-  bool get _asksProvider => _newKind != null && _newKind != AccountKind.cash;
+  /// A bank or e-wallet names its provider; an upgrade's "Main account" is
+  /// renamed here to the bank it really is.
+  bool get _asksProvider => !_isTotal && !_isCash;
 
   @override
   void initState() {
@@ -127,9 +128,13 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   void _choose(String provider) => setState(() {
         _name = provider;
         _provider.text = provider;
-        final swatch = startingSwatch(_newKind!, provider);
-        _color = swatch.color;
-        _ink = swatch.ink;
+        // A new card starts near the provider's colour; one being edited
+        // keeps the colour the owner gave it.
+        if (_newKind case final kind?) {
+          final swatch = startingSwatch(kind, provider);
+          _color = swatch.color;
+          _ink = swatch.ink;
+        }
       });
 
   void _pick(CardSwatch? swatch) => setState(() {
@@ -162,7 +167,9 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
         look: CardLook(color: _color!, ink: _ink, finish: _finish),
       ));
     } else if (_account case final account?) {
-      await repo.updateAccount(account.copyWith(nickname: () => _nickname.text, look: CardLook(color: _color!, ink: _ink, finish: _finish)));
+      setState(() => _tried = true);
+      if (_name.trim().isEmpty) return;
+      await repo.updateAccount(account.copyWith(name: _name, nickname: () => _nickname.text, look: CardLook(color: _color!, ink: _ink, finish: _finish)));
     } else {
       await repo.saveTotalLook(TotalCardLook(color: _color, finish: _finish));
     }
@@ -204,7 +211,13 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                 accounts: ref.watch(accountsProvider).value ?? const [],
               )
             else
-              AccountCard(account: account.copyWith(nickname: () => _nickname.text.trim().isEmpty ? null : _nickname.text.trim(), look: CardLook(color: _color!, ink: _ink, finish: _finish))),
+              AccountCard(
+                account: account.copyWith(
+                  name: _name.trim().isEmpty ? null : _name.trim(),
+                  nickname: () => _nickname.text.trim().isEmpty ? null : _nickname.text.trim(),
+                  look: CardLook(color: _color!, ink: _ink, finish: _finish),
+                ),
+              ),
             if (_asksProvider) ...[
               const SizedBox(height: AppSpacing.l),
               TextField(
@@ -212,12 +225,12 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                 textCapitalization: TextCapitalization.words,
                 onChanged: (v) => setState(() => _name = v),
                 decoration: InputDecoration(
-                  labelText: kind == AccountKind.bank ? 'Which bank?' : 'Which e-wallet?',
+                  labelText: _kind == AccountKind.bank ? 'Which bank?' : 'Which e-wallet?',
                   hintText: 'Search, or type its name',
                   errorText: _tried && _name.trim().isEmpty ? 'Choose one, or type its name' : null,
                 ),
               ),
-              _ProviderList(kind: kind!, query: _provider.text, chosen: _name, onChoose: _choose),
+              _ProviderList(kind: _kind!, query: _provider.text, chosen: _name, onChoose: _choose),
             ],
             if (!_isCash) ...[
               const SizedBox(height: AppSpacing.l),

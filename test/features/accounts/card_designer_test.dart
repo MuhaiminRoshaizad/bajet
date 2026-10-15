@@ -126,4 +126,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.accounts.single.look, const CardLook(color: 0xFF7A1F2B));
   });
+
+  testWidgets("an upgrade's Main account can be renamed to the bank it really is, keeping its colour", (tester) async {
+    final world = await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.tap(find.text('Main account').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Edit this card'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextField, 'Which bank?'), 'cim');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CIMB'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save card'));
+    await tester.tap(find.text('Save card'));
+    await tester.pumpAndSettle();
+    final main = world.accounts.single;
+    expect((main.name, main.look.color, main.balance), ('CIMB', 0xFF4A5866, 150000));
+  });
 }
