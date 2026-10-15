@@ -68,7 +68,9 @@ The spending rhythm, one row per weekday (1 is Monday).
 
 A day saved as `zero` (fasting days included) plans RM0.00, and whatever it
 had planned moves evenly onto the days that still spend (`withRule`), so the
-week keeps its total. Rhythm offers to spread the weekly allowance over the
+week keeps its total. Days that were an even split are split evenly again,
+so the outcome never depends on the order days are switched off; amounts
+typed unevenly keep their shape. Rhythm offers to spread the weekly allowance over the
 spending days again whenever their total and the allowance differ.
 
 ### `recurring_items`

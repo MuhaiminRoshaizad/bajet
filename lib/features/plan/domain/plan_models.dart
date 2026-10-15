@@ -2,6 +2,8 @@
 /// midnight so day arithmetic never crosses a daylight-saving boundary.
 library;
 
+import 'dart:math' as math;
+
 enum DayType { zero, spend, flex }
 
 /// One weekday of the spending rhythm. [weekday] follows [DateTime.weekday]:
@@ -135,19 +137,25 @@ List<int> spreadOverWeek(int weekly) => spreadEvenly(weekly, 7);
 /// The rhythm once [changed] replaces its weekday. A day that becomes a
 /// no-spending day hands what it had planned to the days that still spend,
 /// so the week keeps its total; any other change is taken as typed.
+///
+/// Days that were an even split (no more than a sen apart) are split evenly
+/// again, so the result never depends on the order days were switched off;
+/// amounts the owner typed unevenly keep their shape and only share the
+/// freed amount.
 List<WeeklyRule> withRule(List<WeeklyRule> rules, WeeklyRule changed) {
   final before = rules.firstWhere((r) => r.weekday == changed.weekday);
   final freed = changed.type == DayType.zero ? before.plannedSpend - changed.plannedSpend : 0;
-  final receivers = [for (final r in rules) if (r.weekday != changed.weekday && r.type != DayType.zero) r.weekday];
-  final shares = freed > 0 && receivers.isNotEmpty ? spreadEvenly(freed, receivers.length) : const <int>[];
+  final receivers = [for (final r in rules) if (r.weekday != changed.weekday && r.type != DayType.zero) r];
+  if (freed <= 0 || receivers.isEmpty) return [for (final r in rules) r.weekday == changed.weekday ? changed : r];
+
+  final amounts = [for (final r in receivers) r.plannedSpend];
+  final even = amounts.reduce(math.max) - amounts.reduce(math.min) <= 1;
+  final total = amounts.fold(0, (s, a) => s + a) + freed;
+  final shares = even ? spreadEvenly(total, receivers.length) : [for (final (i, s) in spreadEvenly(freed, receivers.length).indexed) amounts[i] + s];
+  final next = {for (final (i, r) in receivers.indexed) r.weekday: shares[i]};
   return [
     for (final r in rules)
-      if (r.weekday == changed.weekday)
-        changed
-      else if (shares.isNotEmpty && receivers.contains(r.weekday))
-        r.copyWith(plannedSpend: r.plannedSpend + shares[receivers.indexOf(r.weekday)])
-      else
-        r,
+      if (r.weekday == changed.weekday) changed else if (next.containsKey(r.weekday)) r.copyWith(plannedSpend: next[r.weekday]) else r,
   ];
 }
 

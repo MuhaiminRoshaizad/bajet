@@ -19,10 +19,10 @@ void main() {
   test('a day that stops spending hands its plan to the days that still spend', () {
     final rules = week(spreadOverWeek(3000));
     final noSaturday = withRule(rules, noSpending(6));
-    expect(amounts(noSaturday), [501, 501, 500, 500, 499, 0, 499]);
+    expect(amounts(noSaturday), [500, 500, 500, 500, 500, 0, 500]);
 
     final noWeekend = withRule(noSaturday, noSpending(7));
-    expect(amounts(noWeekend), [601, 601, 600, 600, 598, 0, 0]);
+    expect(amounts(noWeekend), [600, 600, 600, 600, 600, 0, 0]);
     expect(amounts(noWeekend).reduce((a, b) => a + b), 3000);
   });
 
@@ -40,5 +40,24 @@ void main() {
   test('the allowance can be spread again over the spending days only', () {
     final rules = week([0, 0, 0, 0, 0, 0, 0], zero: {6, 7});
     expect(amounts(spreadOverSpendingDays(rules, 3000)), [600, 600, 600, 600, 600, 0, 0]);
+  });
+
+  test('switching days off gives the same even split whatever the order', () {
+    // Monday, Friday, Saturday and Sunday off leaves RM30 over three days.
+    List<List<int>> orders(List<int> days) => days.length <= 1
+        ? [days]
+        : [for (final d in days) for (final rest in orders([...days]..remove(d))) [d, ...rest]];
+    for (final order in orders([1, 5, 6, 7])) {
+      var rules = week(spreadOverWeek(3000));
+      for (final d in order) {
+        rules = withRule(rules, noSpending(d));
+      }
+      expect(amounts(rules), [0, 1000, 1000, 1000, 0, 0, 0], reason: 'order $order');
+    }
+  });
+
+  test('amounts typed unevenly keep their shape and only share what is freed', () {
+    final rules = week([1500, 500, 500, 500, 500, 0, 0], zero: {6, 7});
+    expect(amounts(withRule(rules, noSpending(5))), [1625, 625, 625, 625, 0, 0, 0]);
   });
 }
