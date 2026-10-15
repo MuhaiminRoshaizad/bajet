@@ -6,6 +6,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../domain/ledger_models.dart';
 import 'entry_tile.dart';
 import 'ledger_providers.dart';
@@ -30,7 +31,6 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
     final today = ref.watch(todayProvider);
     final entries = ref.watch(allEntriesProvider);
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
@@ -38,13 +38,17 @@ class HistoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('History')),
       body: switch (entries) {
-        AsyncValue(hasError: true) => Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Text("bajet couldn't read your entries. Close the app fully and open it again.", style: TextStyle(color: c.bad)),
+        AsyncValue(hasError: true) => const EmptyState(
+            icon: Icons.error_outline_rounded,
+            title: "bajet couldn't read your entries",
+            message: 'Close the app fully and open it again. Your entries are still on the phone.',
           ),
-        AsyncValue(:final value?) when value.isEmpty => Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Text('Nothing logged yet. Tap + to log your first spend.', style: TextStyle(color: c.muted)),
+        AsyncValue(:final value?) when value.isEmpty => EmptyState(
+            icon: Icons.receipt_long_rounded,
+            title: 'Nothing logged yet',
+            message: 'Every spend and income you log appears here, newest first.',
+            actionLabel: 'Log a spend',
+            onAction: () => showLogSheet(context),
           ),
         AsyncValue(:final value?) => _HistoryList(rows: _group(value), categories: categories, today: today),
         _ => const SizedBox.shrink(),

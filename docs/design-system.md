@@ -118,6 +118,16 @@ keys its entrance on it, replaying it each visit without resetting scroll.
 When the system's reduce-motion setting is on (`MediaQuery.disableAnimationsOf`),
 all of it is skipped and content appears in place.
 
+## Empty screens
+
+A screen with nothing else to show (Insights for an empty period, History,
+Coach without a key) fills its space with `EmptyState`: an icon in a round
+well, a line saying what is missing, one saying what to do, and the action
+that does it. It sits a little above the middle, because true centre looks
+low above the bottom bar, and scrolls only when large text no longer fits.
+An empty spot inside a busy screen, such as Today's Recent card, stays an
+inline line of text where it is.
+
 ## Interaction rules
 
 - There is one way to log: the + in the centre of the bottom bar. The sheet

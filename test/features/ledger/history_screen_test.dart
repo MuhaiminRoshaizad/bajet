@@ -1,5 +1,7 @@
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
+import 'package:bajet/core/navigation/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
@@ -81,5 +83,19 @@ void main() {
   testWidgets('See all is hidden until something has been logged', (tester) async {
     await pumpApp(tester);
     expect(find.text('See all'), findsNothing);
+  });
+
+  testWidgets('with nothing logged it says so in the middle and offers to log', (tester) async {
+    await pumpApp(tester);
+    // See all appears only once something is logged, so open History directly,
+    // as it is after the last entry is deleted.
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).push(Routes.history);
+    await tester.pumpAndSettle();
+    expect(find.text('Nothing logged yet'), findsOneWidget);
+    expect(tester.getCenter(find.text('Nothing logged yet')).dy, inInclusiveRange(250, 450));
+
+    await tester.tap(find.text('Log a spend'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'Type the amount'), findsOneWidget);
   });
 }

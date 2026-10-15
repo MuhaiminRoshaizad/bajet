@@ -18,7 +18,14 @@ void main() {
   testWidgets('with nothing logged it says so and how to start', (tester) async {
     await pumpApp(tester);
     await openInsights(tester);
-    expect(find.textContaining('Nothing logged this month yet'), findsOneWidget);
+    expect(find.text('Nothing logged this month'), findsOneWidget);
+    // It fills the space under the period switch, centred rather than at the top.
+    final y = tester.getCenter(find.text('Nothing logged this month')).dy;
+    expect(y, inInclusiveRange(250, 450));
+
+    await tester.tap(find.text('Log a spend'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'Type the amount'), findsOneWidget);
   });
 
   testWidgets('shows money in and out and where the flexible money went', (tester) async {

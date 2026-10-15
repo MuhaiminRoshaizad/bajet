@@ -9,11 +9,13 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/insights.dart';
 import 'insights_providers.dart';
@@ -23,15 +25,11 @@ class InsightsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
     final period = ref.watch(insightsPeriodProvider);
     final i = ref.watch(insightsProvider);
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
 
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.xxl),
-        children: [
+    final header = [
           SizedBox(
             height: 48,
             child: Row(
@@ -58,25 +56,45 @@ class InsightsScreen extends ConsumerWidget {
             onSelectionChanged: (s) => ref.read(insightsPeriodProvider.notifier).select(s.single),
           ),
           const SizedBox(height: AppSpacing.l),
-          if (i != null)
-            if (i.isEmpty)
-              SoftWell(
-                radius: AppRadii.card,
-                padding: const EdgeInsets.all(AppSpacing.l + 2),
-                child: Text('Nothing logged ${_since(i, period)} yet. Tap + to log a spend and it shows up here.', style: TextStyle(color: c.ink, height: 1.45)),
-              )
-            else
-              RiseIn(
-                spacing: AppSpacing.l,
-                children: [
-                  _Totals(i: i),
-                  SoftCard(child: _Split(i: i)),
-                  if (i.flexibleByCategory.isNotEmpty) SoftCard(child: _ByCategory(i: i, categories: categories)),
-                  SoftCard(child: _LastDays(days: i.lastDays)),
-                  SoftCard(child: _Habits(i: i)),
-                  const _GoalProgress(),
-                ],
+    ];
+    const padding = EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0);
+
+    if (i != null && i.isEmpty) {
+      return SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(padding: padding, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: header)),
+            Expanded(
+              child: EmptyState(
+                icon: Icons.insights_rounded,
+                title: 'Nothing logged ${_since(i, period)}',
+                message: 'What you log shows up here, by category and by day.',
+                actionLabel: 'Log a spend',
+                onAction: () => showLogSheet(context),
               ),
+            ),
+          ],
+        ),
+      );
+    }
+    return SafeArea(
+      child: ListView(
+        padding: padding.copyWith(bottom: AppSpacing.xxl),
+        children: [
+          ...header,
+          if (i != null)
+            RiseIn(
+              spacing: AppSpacing.l,
+              children: [
+                _Totals(i: i),
+                SoftCard(child: _Split(i: i)),
+                if (i.flexibleByCategory.isNotEmpty) SoftCard(child: _ByCategory(i: i, categories: categories)),
+                SoftCard(child: _LastDays(days: i.lastDays)),
+                SoftCard(child: _Habits(i: i)),
+                const _GoalProgress(),
+              ],
+            ),
         ],
       ),
     );

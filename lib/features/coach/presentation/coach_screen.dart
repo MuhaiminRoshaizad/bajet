@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
@@ -104,7 +105,15 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
             ),
             Expanded(
               child: !hasKey
-                  ? ListView(padding: const EdgeInsets.all(AppSpacing.l), children: const [_NoKey()])
+                  ? EmptyState(
+                      icon: Icons.forum_outlined,
+                      title: 'Ask about your money',
+                      message: "The coach answers from this week's and this month's figures, using your own Anthropic API key.",
+                      actionLabel: 'Add your key',
+                      onAction: () => context.push(Routes.coachKey),
+                      secondaryLabel: "Copy this week's summary",
+                      onSecondary: _copySummary,
+                    )
                   : ListView(
                       controller: _scroll,
                       padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
@@ -142,35 +151,6 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _NoKey extends StatelessWidget {
-  const _NoKey();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SoftWell(
-          radius: AppRadii.card,
-          padding: const EdgeInsets.all(AppSpacing.l + 2),
-          child: Text(
-            'The coach answers questions about your money using your own Anthropic API key. '
-            'Add it under Settings → Coach. Until then, copy this week\'s summary with the button above and paste it into any chat.',
-            style: TextStyle(color: c.ink, height: 1.45),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.l),
-        FilledButton(
-          onPressed: () => context.push(Routes.coachKey),
-          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-          child: const Text('Add your key'),
-        ),
-      ],
     );
   }
 }
