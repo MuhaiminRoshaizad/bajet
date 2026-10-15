@@ -141,6 +141,10 @@ inline line of text where it is.
   Photos as large tiles, and once one is attached, a look at it and Remove.
   The day is today unless the owner taps it and picks another
   in the calendar, from the opening date up to today.
+- When a planned expense event falls within two weeks of the entry's day, a
+  spend can be marked *For* it. The pill then shows what is left of that
+  event's budget instead of the day's plan, and the spend stays out of the
+  weekly allowance.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
 - Saving gives a light haptic and a snackbar with Undo.

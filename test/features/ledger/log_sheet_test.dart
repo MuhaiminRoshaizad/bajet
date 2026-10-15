@@ -191,4 +191,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.entries.single.day, DateTime.utc(2026, 6, 28));
   });
+
+  testWidgets('a spend can be for a nearby event, and counts against its budget', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: DateTime.utc(2026, 7, 10));
+      // Two months off, so not offered.
+      w.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: DateTime.utc(2026, 9, 1));
+    });
+    await openLogger(tester);
+    await typeKeys(tester, '4500');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.pump();
+
+    final birthday = find.widgetWithText(ChoiceChip, 'Birthday · RM100.00 left');
+    await tester.ensureVisible(birthday);
+    expect(find.textContaining('Car service'), findsNothing);
+    await tester.tap(birthday);
+    await tester.pump();
+    expect(find.text('RM55.00 left of the Birthday budget'), findsOneWidget);
+
+    await tester.tap(find.text('Log RM45.00'));
+    await tester.pumpAndSettle();
+    final id = world.events.firstWhere((e) => e.name == 'Birthday').id;
+    expect(world.entries.single.event, EventLink(id, DateTime.utc(2026, 7, 10)));
+  });
+
+  testWidgets('income offers no events to spend on', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: DateTime.utc(2026, 7, 10)));
+    await openLogger(tester);
+    expect(find.textContaining('For an event'), findsOneWidget);
+    await tester.tap(find.text('Income'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('For an event'), findsNothing);
+  });
 }

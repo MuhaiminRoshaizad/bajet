@@ -14,6 +14,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/soft.dart';
+import '../../plan/domain/plan_models.dart' show calendarDay;
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
@@ -62,6 +63,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   String? _label;
   int? _favouriteId;
   String? _receipt;
+
+  /// The planned event this spend is for, if any; its budget plans for it,
+  /// so it stays out of the weekly allowance.
+  EventLink? _event;
   final _note = TextEditingController();
   late DateTime _day = ref.read(todayProvider);
   bool _saving = false;
@@ -82,6 +87,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _note.text = e.note ?? '';
       _day = e.day;
       _receipt = e.receipt;
+      _event = e.event;
     }
     final p = widget.prefill;
     if (p != null) {
@@ -123,6 +129,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       label: _label,
       note: _note.text,
       receipt: _receipt,
+      event: _isIncome ? null : _event,
     );
     final repo = ref.read(ledgerRepositoryProvider);
     final before = widget.editing;
@@ -142,6 +149,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         label: draft.label,
         note: draft.note,
         receipt: draft.receipt,
+        event: draft.event,
       ));
       message = 'Saved changes';
       undo = () => repo.update(before);
@@ -212,6 +220,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       _categoryKey = null;
                       _favouriteId = null;
                       _label = null;
+                      _event = null;
                     }),
                   ),
                   const Spacer(),
@@ -258,7 +267,11 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s),
-                  Center(child: _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day)),
+                  Center(
+                    child: _event == null
+                        ? _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day)
+                        : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
+                  ),
                 ],
               ),
             ),
@@ -324,6 +337,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                           _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
                       ],
                     ),
+                    if (!_isIncome) _EventChoice(selected: _event, today: _day, onChanged: (link) => setState(() => _event = link)),
                     const SizedBox(height: AppSpacing.m),
                     // Full width, so the label is never cut short.
                     TextField(
@@ -376,6 +390,82 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Planned events near the entry's day, any of which the spend can be for.
+/// Shown only when there is one, so most logs never see it.
+class _EventChoice extends ConsumerWidget {
+  const _EventChoice({required this.selected, required this.today, required this.onChanged});
+
+  /// Two weeks either side: a gift is bought before the day or just after.
+  static const _near = 14;
+
+  final EventLink? selected;
+  final DateTime today;
+  final ValueChanged<EventLink?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events = [
+      ...?ref.watch(eventsProvider).value?.where((e) =>
+          !e.isIncome &&
+          !e.done &&
+          (e.id == selected?.eventId || calendarDay(e.date).difference(today).inDays.abs() <= _near)),
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    if (events.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.m),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionLabel('For an event (optional)'),
+          const SizedBox(height: AppSpacing.s),
+          Wrap(
+            spacing: AppSpacing.s,
+            runSpacing: AppSpacing.s,
+            children: [
+              for (final e in events)
+                ChoiceChip(
+                  avatar: const Icon(Icons.event_outlined, size: 18),
+                  label: Text('${e.name} · ${Money.format(e.outstanding)} left'),
+                  selected: selected?.eventId == e.id,
+                  onSelected: (on) => onChanged(on ? EventLink(e.id, e.date) : null),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// In place of the day's plan: what is left of the event's budget after
+/// this spend, since the spend comes out of that budget, not the allowance.
+class _EventHint extends ConsumerWidget {
+  const _EventHint({required this.link, required this.amount, required this.editing});
+
+  final EventLink link;
+  final int amount;
+  final Entry? editing;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final event = ref.watch(eventsProvider).value?.where((e) => e.id == link.eventId).firstOrNull;
+    if (event == null) return const SizedBox.shrink();
+    // An entry being edited is already counted in what the event has spent.
+    final already = editing?.event == link ? editing!.amount : 0;
+    final left = event.amount - (event.spent - already) - amount;
+    final over = left < 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+      decoration: BoxDecoration(color: over ? c.badSurface : c.keepSurface, borderRadius: BorderRadius.circular(AppRadii.pill)),
+      child: Text(
+        over ? '${Money.format(-left)} over the ${event.name} budget' : '${Money.format(left)} left of the ${event.name} budget',
+        style: TextStyle(color: over ? c.bad : c.keep, fontSize: 13, fontWeight: FontWeight.w600),
       ),
     );
   }
