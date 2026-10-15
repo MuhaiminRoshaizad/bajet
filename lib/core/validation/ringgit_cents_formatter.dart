@@ -4,9 +4,13 @@ import 'package:flutter/services.dart';
 /// two-decimal fraction, so `1`, `5`, `0` reads `1.50` and the field can never
 /// hold a malformed amount. Thousands are grouped as they grow (`1,250.00`).
 class RinggitCentsFormatter extends TextInputFormatter {
-  const RinggitCentsFormatter({this.maxSen = 100000000}); // RM1,000,000.00
+  const RinggitCentsFormatter({this.maxSen = 100000000, this.prefix = ''}); // RM1,000,000.00
 
   final int maxSen;
+
+  /// Written in front of the amount, such as `RM`, for a field that shows
+  /// the currency as part of its text; [parse] ignores it.
+  final String prefix;
 
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
@@ -15,7 +19,7 @@ class RinggitCentsFormatter extends TextInputFormatter {
     var sen = int.tryParse(digits) ?? 0;
     if (sen <= 0) return const TextEditingValue();
     if (sen > maxSen) sen = maxSen;
-    final text = format(sen);
+    final text = '$prefix${format(sen)}';
     return TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
   }
 

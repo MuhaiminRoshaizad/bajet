@@ -11,6 +11,7 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/soft.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
@@ -51,10 +52,10 @@ class _LogSheet extends ConsumerStatefulWidget {
 }
 
 class _LogSheetState extends ConsumerState<_LogSheet> {
-  static const _maxDigits = 7; // RM99,999.99
+  static const _amountFormatter = RinggitCentsFormatter(maxSen: 9999999, prefix: 'RM'); // RM99,999.99
 
   bool _isIncome = false;
-  String _digits = '';
+  final _amountText = TextEditingController();
   String? _categoryKey;
   String? _label;
   int? _favouriteId;
@@ -63,7 +64,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   late DateTime _day = ref.read(todayProvider);
   bool _saving = false;
 
-  int get _amount => int.tryParse(_digits) ?? 0;
+  int get _amount => RinggitCentsFormatter.parse(_amountText.text);
+
+  void _setAmount(int sen) => _amountText.text = sen == 0 ? '' : '${_amountFormatter.prefix}${RinggitCentsFormatter.format(sen)}';
 
   @override
   void initState() {
@@ -71,7 +74,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final e = widget.editing;
     if (e != null) {
       _isIncome = e.isIncome;
-      _digits = '${e.amount}';
+      _setAmount(e.amount);
       _categoryKey = e.categoryKey;
       _label = e.label;
       _note.text = e.note ?? '';
@@ -81,7 +84,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final p = widget.prefill;
     if (p != null) {
       _isIncome = p.isIncome;
-      _digits = p.amount == null ? '' : '${p.amount}';
+      _setAmount(p.amount ?? 0);
       _categoryKey = p.categoryKey;
       _label = p.label;
     }
@@ -90,19 +93,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   @override
   void dispose() {
     _note.dispose();
+    _amountText.dispose();
     super.dispose();
-  }
-
-  void _key(String k) {
-    setState(() {
-      if (k == 'del') {
-        if (_digits.isNotEmpty) _digits = _digits.substring(0, _digits.length - 1);
-      } else {
-        final next = (_digits + k).replaceFirst(RegExp(r'^0+'), '');
-        if (next.length <= _maxDigits) _digits = next;
-      }
-      _favouriteId = null;
-    });
   }
 
   void _useFavourite(Favourite f) => setState(() {
@@ -110,7 +102,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         _favouriteId = f.id;
         _categoryKey = f.categoryKey;
         _label = f.label;
-        _digits = '${f.amount}';
+        _setAmount(f.amount);
       });
 
   void _pickCategory(String key) => setState(() {
@@ -205,36 +197,41 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 ],
               ),
             ),
-            // The amount and the keys that fill it stay in view; only the
-            // choices between them scroll.
+            // The amount stays in view above the choices, which scroll; the
+            // phone's number pad opens with the sheet.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.s),
-                  // The amount reads out of a display set into the sheet,
-                  // like a calculator's, above the keys that fill it.
+                  // The amount reads out of a display set into the sheet, typed
+                  // on the number pad and filled from the right like a till.
                   SoftWell(
                     radius: AppRadii.card,
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.l),
-                    child: Semantics(
-                      liveRegion: true,
-                      label: 'Amount ${Money.format(_amount)}',
-                      excludeSemantics: true,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          Money.format(_amount),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 44,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -1,
-                            color: _amount == 0 ? c.muted : c.ink,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+                    child: TextField(
+                      key: const ValueKey('amount'),
+                      controller: _amountText,
+                      // A new entry starts on the amount; an entry being
+                      // edited or filled in waits until the amount is tapped.
+                      autofocus: widget.editing == null && (widget.prefill?.amount ?? 0) == 0,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      textAlign: TextAlign.center,
+                      inputFormatters: const [_amountFormatter],
+                      onChanged: (_) => setState(() => _favouriteId = null),
+                      style: TextStyle(fontSize: 40, fontWeight: FontWeight.w700, letterSpacing: -1, color: c.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+                      decoration: InputDecoration(
+                        hintText: 'RM0.00',
+                        hintStyle: TextStyle(color: c.muted),
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        semanticCounterText: '',
+                        labelText: null,
+                        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
                       ),
                     ),
                   ),
@@ -325,13 +322,6 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 ),
               ),
             ),
-            // While the system keyboard is up for the note, the keypad
-            // steps aside so the note field keeps its room.
-            if (MediaQuery.viewInsetsOf(context).bottom == 0)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
-                child: _Keypad(onKey: _key),
-              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
               child: FilledButton(
@@ -519,39 +509,6 @@ class _CategoryTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Keypad extends StatelessWidget {
-  const _Keypad({required this.onKey});
-
-  final ValueChanged<String> onKey;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'];
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      // Room around each key for its shadow.
-      padding: const EdgeInsets.all(AppSpacing.xs),
-      mainAxisSpacing: AppSpacing.m,
-      crossAxisSpacing: AppSpacing.m,
-      childAspectRatio: 2.2,
-      children: [
-        for (final k in keys)
-          SoftButton(
-            onTap: () => onKey(k),
-            child: Center(
-              child: k == 'del'
-                  ? Icon(Icons.backspace_outlined, color: c.ink, semanticLabel: 'Delete digit')
-                  : Text(k, style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: c.ink)),
-            ),
-          ),
-      ],
     );
   }
 }

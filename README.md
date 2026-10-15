@@ -12,7 +12,7 @@ without a key, nothing leaves the phone.
 ## What it does
 
 - **Log** spending or income from the + in the middle of the bottom bar, with a
-  fill-from-right keypad, favourites that fill the form in, an optional receipt
+  fill-from-right amount on the phone's number pad, favourites that fill the form in, an optional receipt
   photo or screenshot, and undo.
 - **Today** shows the balance, today's planned spend, bills due for
   confirmation, a week strip of spending against the allowance and each day's plan, the current

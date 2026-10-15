@@ -40,9 +40,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(FilledButton, 'Save changes'), findsOneWidget);
 
-    final zero = find.descendant(of: find.byType(GridView), matching: find.text('0')).last;
-    await tester.ensureVisible(zero);
-    await tester.tap(zero);
+    await tester.enterText(find.byKey(const ValueKey('amount')), '4500');
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Save changes'));
     await tester.pumpAndSettle();

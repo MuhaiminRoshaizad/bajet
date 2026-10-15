@@ -11,13 +11,14 @@ Future<void> openLogger(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+final amountField = find.byKey(const ValueKey('amount'));
+
+/// Types [keys] on the number pad after whatever the amount already holds,
+/// as the owner does: each digit fills in from the right.
 Future<void> typeKeys(WidgetTester tester, String keys) async {
-  for (final k in keys.split('')) {
-    final key = find.descendant(of: find.byType(GridView), matching: find.text(k)).last;
-    await tester.ensureVisible(key);
-    await tester.tap(key);
-    await tester.pump();
-  }
+  final held = tester.widget<TextField>(amountField).controller!.text.replaceAll(RegExp(r'\D'), '');
+  await tester.enterText(amountField, held + keys);
+  await tester.pump();
 }
 
 void main() {
@@ -94,15 +95,25 @@ void main() {
     expect(find.text("RM2.00 over today's RM8.00 plan"), findsOneWidget);
   });
 
-  testWidgets('the keypad stays in view, and steps aside while the keyboard is up', (tester) async {
+  testWidgets('a new entry opens on the number pad, with Log above it', (tester) async {
     await pumpApp(tester);
     await openLogger(tester);
-    expect(tester.getRect(find.text('9')).bottom, lessThan(780));
+    expect(tester.widget<TextField>(amountField).keyboardType, TextInputType.number);
+    expect(tester.testTextInput.isVisible, isTrue);
 
+    // With the number pad taking the lower half, Log still sits above it.
     tester.view.viewInsets = const FakeViewPadding(bottom: 900);
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpAndSettle();
-    expect(find.text('9'), findsNothing);
+    expect(tester.getRect(find.widgetWithText(FilledButton, 'Type the amount')).bottom, lessThanOrEqualTo(780 - 300));
+  });
+
+  testWidgets('digits fill the amount from the right and stray keys do nothing', (tester) async {
+    await pumpApp(tester);
+    await openLogger(tester);
+    await tester.enterText(amountField, '5-7 0.');
+    await tester.pump();
+    expect(tester.widget<TextField>(amountField).controller!.text, 'RM5.70');
   });
 
   testWidgets('a receipt can be attached from the gallery and is saved with the entry', (tester) async {

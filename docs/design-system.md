@@ -69,7 +69,7 @@ only four ways to do this:
 |--------------|----------------------------------|----------------------------------------|
 | `SoftCard`   | Raised `AppDepth.card` (6 px)    | Every card                             |
 | `SoftWell`   | Pressed in `AppDepth.well` (3 px) | Notices, readouts, tracks              |
-| `SoftButton` | Raised 3 px, sinks flat on press | Keys, tiles, chips, the + button       |
+| `SoftButton` | Raised 3 px, sinks flat on press | Tiles, chips, the + button             |
 | `SoftMeter`  | A well with a coloured fill      | Progress toward a goal                 |
 
 A raised surface casts a `highlight` shadow up and left and a `shade` shadow
@@ -121,11 +121,12 @@ all of it is skipped and content appears in place.
 ## Interaction rules
 
 - There is one way to log: the + in the centre of the bottom bar. The sheet
-  reads top to bottom as amount, favourites, category, note and day, keypad,
-  then a Log button that names what it will save. The amount, keypad and Log
-  button stay in view; only favourites, categories, note and day scroll
-  between them. While the system keyboard is up for the note, the keypad
-  steps aside. The day is today unless the owner taps it and picks another
+  reads top to bottom as amount, favourites, category, note and day, then a
+  Log button that names what it will save. A new entry opens with the amount
+  focused on the phone's number pad, filling from the right; the amount and
+  the Log button stay in view above it, and only favourites, categories,
+  note and day scroll between them. Every money field uses the same number
+  pad. The day is today unless the owner taps it and picks another
   in the calendar, from the opening date up to today.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
