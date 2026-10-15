@@ -85,6 +85,9 @@ sums (with a prompt to add monthly income when none is planned, since then
 none is counted), and `upcoming()`'s bills, income, events and purchases
 due before then, under one heading per date with that day's net. The
 first four items show, and Show more and Show less open and close the rest.
+A List | Calendar switch turns the card into a month grid (`UpcomingCalendar`)
+from the first planned month to buy day: a green dot for money in, an ink
+dot for money out, buy day ringed, and the items of a tapped day below.
 
 ## Tests
 

@@ -150,4 +150,56 @@ void main() {
     await tester.pumpAndSettle();
     expect(headline('RM1,000.00'), findsOneWidget);
   });
+
+  testWidgets('the calendar marks planned days and lists a tapped day', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.addRecurring(name: 'Salary', isIncome: true, amount: 300000, categoryKey: 'salary', nextDue: d(2026, 7, 25));
+      w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 5));
+      w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 8, 20));
+    });
+    await openRunway(tester);
+    await tester.dragUntilVisible(find.text('Calendar'), find.byType(ListView).first, const Offset(0, -200));
+    await tester.ensureVisible(find.text('Calendar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calendar'));
+    await tester.pumpAndSettle();
+
+    // July opens on its first planned day.
+    expect(find.text('July 2026'), findsOneWidget);
+    expect(find.text('Sunday 5 July'), findsOneWidget);
+    expect(find.bySemanticsLabel('Sat 25/07/2026, 1 planned'), findsOneWidget);
+
+    await tester.ensureVisible(find.bySemanticsLabel('Sat 25/07/2026, 1 planned'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Sat 25/07/2026, 1 planned'));
+    await tester.pumpAndSettle();
+    expect(find.text('Saturday 25 July'), findsOneWidget);
+    expect(find.text('Salary'), findsOneWidget);
+
+    await tester.ensureVisible(find.byTooltip('Next month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Next month'));
+    await tester.pumpAndSettle();
+    expect(find.text('August 2026'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('20/08/2026.*buy day')), findsOneWidget);
+    // Buy day is the last month there is.
+    expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_right_rounded)).onPressed, isNull);
+  });
+
+  testWidgets('the calendar opens on the month of the first thing planned', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.addRecurring(name: 'Salary', isIncome: true, amount: 300000, categoryKey: 'salary', nextDue: d(2026, 8, 3));
+      w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 8, 20));
+    });
+    await openRunway(tester);
+    await tester.dragUntilVisible(find.text('Calendar'), find.byType(ListView).first, const Offset(0, -200));
+    await tester.ensureVisible(find.text('Calendar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Calendar'));
+    await tester.pumpAndSettle();
+    expect(find.text('August 2026'), findsOneWidget);
+    expect(find.text('Monday 3 August'), findsOneWidget);
+    // July is still there to look back at.
+    expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_left_rounded)).onPressed, isNotNull);
+  });
 }

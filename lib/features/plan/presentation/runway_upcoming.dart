@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
@@ -11,6 +12,7 @@ import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/upcoming.dart';
+import 'upcoming_calendar.dart';
 
 /// What is planned before buy day, one heading per date so a day with many
 /// bills names its date once, with their total. The first four items show;
@@ -28,6 +30,7 @@ class _UpcomingCardState extends ConsumerState<UpcomingCard> {
   /// Items, not dates, so a day full of bills cannot stretch the card.
   static const _firstItems = 4;
   bool _showAll = false;
+  bool _calendar = false;
 
   @override
   Widget build(BuildContext context) {
@@ -53,35 +56,53 @@ class _UpcomingCardState extends ConsumerState<UpcomingCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Opening and closing grow and shrink the card rather than jump,
-          // unless the phone asks for less motion.
-          AnimatedSize(
-            duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.fast,
-            curve: AppMotion.ease,
-            alignment: Alignment.topCenter,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final (i, (group, items)) in shown.indexed) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.m),
-                  // A day's total is worth showing only when more than one thing lands on it.
-                  _DateHeading(
-                    first: group.key.$1,
-                    last: group.key.$2,
-                    net: group.value.length > 1 ? group.value.fold<int>(0, (s, x) => s + x.signedAmount) : null,
-                  ),
-                  for (final item in items) _UpcomingRow(item: item, category: categories[item.categoryKey]),
-                ],
-              ],
-            ),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(value: false, label: Text('List'), icon: Icon(Icons.view_list_rounded)),
+              ButtonSegment(value: true, label: Text('Calendar'), icon: Icon(Icons.calendar_month_rounded)),
+            ],
+            selected: {_calendar},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => setState(() => _calendar = s.single),
           ),
-          if (hidden > 0)
-            TextButton.icon(
-              onPressed: () => setState(() => _showAll = !_showAll),
-              icon: Icon(_showAll ? Icons.expand_less_rounded : Icons.expand_more_rounded),
-              label: Text(_showAll ? 'Show less' : 'Show $hidden more'),
-              style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+          const SizedBox(height: AppSpacing.m),
+          if (_calendar)
+            UpcomingCalendar(
+              items: widget.items,
+              today: ref.watch(todayProvider),
+              rowFor: (item) => _UpcomingRow(item: item, category: categories[item.categoryKey]),
+            )
+          else ...[
+            // Opening and closing grow and shrink the card rather than jump,
+            // unless the phone asks for less motion.
+            AnimatedSize(
+              duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.fast,
+              curve: AppMotion.ease,
+              alignment: Alignment.topCenter,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (i, (group, items)) in shown.indexed) ...[
+                    if (i > 0) const SizedBox(height: AppSpacing.m),
+                    // A day's total is worth showing only when more than one thing lands on it.
+                    _DateHeading(
+                      first: group.key.$1,
+                      last: group.key.$2,
+                      net: group.value.length > 1 ? group.value.fold<int>(0, (s, x) => s + x.signedAmount) : null,
+                    ),
+                    for (final item in items) _UpcomingRow(item: item, category: categories[item.categoryKey]),
+                  ],
+                ],
+              ),
             ),
+            if (hidden > 0)
+              TextButton.icon(
+                onPressed: () => setState(() => _showAll = !_showAll),
+                icon: Icon(_showAll ? Icons.expand_less_rounded : Icons.expand_more_rounded),
+                label: Text(_showAll ? 'Show less' : 'Show $hidden more'),
+                style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              ),
+          ],
         ],
       ),
     );
