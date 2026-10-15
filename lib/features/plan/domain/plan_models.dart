@@ -123,6 +123,9 @@ class Goal {
 
   /// The day it was marked bought; null while it is still being saved for.
   final DateTime? achievedOn;
+
+  Goal copyWith({String? name, int? price, DateTime? targetDate}) =>
+      Goal(id: id, name: name ?? this.name, price: price ?? this.price, targetDate: targetDate ?? this.targetDate, priority: priority, achievedOn: achievedOn);
 }
 
 DateTime calendarDay(DateTime d) => DateTime.utc(d.year, d.month, d.day);

@@ -213,6 +213,26 @@ class FakeWorld implements LedgerRepository, PlanRepository {
   @override
   Stream<List<Goal>> watchAchievedGoals() => _achieved.stream;
 
+  List<Goal> get achieved => _achieved.value;
+
+  @override
+  Future<void> updateGoal(Goal goal) async => _goals.value = [for (final g in _goals.value) g.id == goal.id ? goal : g];
+
+  @override
+  Future<void> deleteGoal(int id) async {
+    _goals.value = [..._goals.value.where((g) => g.id != id)];
+    _achieved.value = [..._achieved.value.where((g) => g.id != id)];
+  }
+
+  @override
+  Future<void> restoreGoal(Goal goal) async {
+    if (goal.achievedOn == null) {
+      _goals.value = [..._goals.value, goal];
+    } else {
+      _achieved.value = [..._achieved.value, goal];
+    }
+  }
+
   @override
   Future<void> reorderGoals(List<int> ids) async => _goals.value = [
         for (final (i, id) in ids.indexed)

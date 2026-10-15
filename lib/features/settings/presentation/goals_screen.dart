@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 
@@ -29,7 +30,7 @@ class GoalsScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
-            child: Text('Goals are bought in priority order. Marking one bought logs its price and moves it out of the plan.', style: TextStyle(color: c.muted)),
+            child: Text('Goals are bought in priority order. Tap one to change or delete it; marking one bought logs its price and moves it out of the plan.', style: TextStyle(color: c.muted)),
           ),
           if (goals.isNotEmpty)
             CardGroup(
@@ -53,6 +54,7 @@ class GoalsScreen extends ConsumerWidget {
                         enabled: goals.length > 1,
                         child: ListTile(
                           minTileHeight: 64,
+                          onTap: () => _openForm(context, g),
                           leading: CircleAvatar(backgroundColor: c.keepSurface, foregroundColor: c.keep, child: Text('${i + 1}')),
                           title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text(
@@ -83,7 +85,7 @@ class GoalsScreen extends ConsumerWidget {
             ),
           const SizedBox(height: AppSpacing.l),
           FilledButton.icon(
-            onPressed: () => showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _GoalForm()),
+            onPressed: () => _openForm(context, null),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Add a goal'),
             style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
@@ -101,6 +103,11 @@ class GoalsScreen extends ConsumerWidget {
                     leading: CircleAvatar(backgroundColor: c.goodSurface, foregroundColor: c.good, child: const Icon(Icons.check_rounded)),
                     title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text('Bought ${Dates.full(g.achievedOn!)} for ${Money.format(g.price)}'),
+                    trailing: IconButton(
+                      onPressed: () => _deleteGoal(context, ref, g),
+                      icon: Icon(Icons.delete_outline_rounded, color: c.muted),
+                      tooltip: 'Remove ${g.name} from Done',
+                    ),
                   ),
               ],
             ),
@@ -130,8 +137,35 @@ class GoalsScreen extends ConsumerWidget {
   }
 }
 
+void _openForm(BuildContext context, Goal? goal) =>
+    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _GoalForm(goal: goal));
+
+/// Asks, deletes, and offers to undo. A bought goal's purchase entry stays.
+Future<bool> _deleteGoal(BuildContext context, WidgetRef ref, Goal goal) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final bought = goal.achievedOn != null;
+  final confirmed = await confirmDelete(
+    context,
+    title: bought ? 'Remove ${goal.name} from Done?' : 'Delete ${goal.name}?',
+    message: bought
+        ? 'The purchase stays in History as it was logged.'
+        : 'It comes off Runway and Today. Nothing you have logged changes.',
+    action: bought ? 'Remove' : 'Delete',
+  );
+  if (!confirmed) return false;
+  final repo = ref.read(planRepositoryProvider);
+  await repo.deleteGoal(goal.id);
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(content: Text('${bought ? 'Removed' : 'Deleted'} ${goal.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreGoal(goal))));
+  return true;
+}
+
+/// Adds a goal, or changes [goal] when one is given.
 class _GoalForm extends ConsumerStatefulWidget {
-  const _GoalForm();
+  const _GoalForm({this.goal});
+
+  final Goal? goal;
 
   @override
   ConsumerState<_GoalForm> createState() => _GoalFormState();
@@ -139,9 +173,9 @@ class _GoalForm extends ConsumerStatefulWidget {
 
 class _GoalFormState extends ConsumerState<_GoalForm> {
   final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _price = TextEditingController();
-  DateTime? _date;
+  late final _name = TextEditingController(text: widget.goal?.name);
+  late final _price = TextEditingController(text: widget.goal == null ? '' : RinggitCentsFormatter.format(widget.goal!.price));
+  late DateTime? _date = widget.goal?.targetDate;
   bool _tried = false;
 
   @override
@@ -169,10 +203,17 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
     if (!ok || _date == null) return;
+    final repo = ref.read(planRepositoryProvider);
+    final price = RinggitCentsFormatter.parse(_price.text);
+    if (widget.goal case final goal?) {
+      await repo.updateGoal(goal.copyWith(name: _name.text, price: price, targetDate: _date));
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
     final goals = ref.read(goalsProvider).value ?? const <Goal>[];
     // A new goal joins the end of the queue.
     final priority = goals.fold(0, (m, g) => g.priority > m ? g.priority : m) + 1;
-    await ref.read(planRepositoryProvider).addGoal(name: _name.text, price: RinggitCentsFormatter.parse(_price.text), targetDate: _date!, priority: priority);
+    await repo.addGoal(name: _name.text, price: price, targetDate: _date!, priority: priority);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -188,7 +229,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('New goal', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              Text(widget.goal == null ? 'New goal' : 'Edit goal', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: AppSpacing.l),
               TextFormField(
                 controller: _name,
@@ -229,6 +270,16 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                 ),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save goal')),
+              if (widget.goal case final goal?) ...[
+                const SizedBox(height: AppSpacing.s),
+                DeleteButton(
+                  label: 'Delete goal',
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    if (await _deleteGoal(context, ref, goal)) navigator.pop();
+                  },
+                ),
+              ],
             ],
           ),
         ),

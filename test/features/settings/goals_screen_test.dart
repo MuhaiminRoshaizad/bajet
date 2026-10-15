@@ -102,4 +102,68 @@ void main() {
 
     expect([for (final g in world.goals..sort((a, b) => a.priority.compareTo(b.priority))) g.name], ['Holiday', 'Laptop']);
   });
+
+  Future<void> openGoals(WidgetTester tester) async {
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Goals'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('tapping a goal edits its name, price and buy day', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
+    await openGoals(tester);
+    await tester.tap(find.text('Laptop'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit goal'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextFormField, 'Goal'), 'New laptop');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Price'), '480000');
+    await tester.tap(find.text('Save goal'));
+    await tester.pumpAndSettle();
+
+    final goal = world.goals.single;
+    expect((goal.name, goal.price, goal.targetDate), ('New laptop', 480000, d(2026, 7, 31)));
+  });
+
+  testWidgets('deleting a goal asks first and can be undone', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
+    await openGoals(tester);
+    await tester.tap(find.text('Laptop'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Delete goal'));
+    await tester.tap(find.text('Delete goal'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete Laptop?'), findsOneWidget);
+    await tester.tap(find.text('Keep'));
+    await tester.pumpAndSettle();
+    expect(world.goals, hasLength(1));
+
+    await tester.tap(find.text('Delete goal'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(world.goals, isEmpty);
+    expect(find.text('Edit goal'), findsNothing);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.goals.single.name, 'Laptop');
+  });
+
+  testWidgets('a bought goal can be removed from Done, leaving its purchase', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
+    await openGoals(tester);
+    await tester.tap(find.text('Bought'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mark bought'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Remove Laptop from Done'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.pumpAndSettle();
+    expect(world.achieved, isEmpty);
+    expect(world.entries.single.label, 'Laptop');
+  });
 }

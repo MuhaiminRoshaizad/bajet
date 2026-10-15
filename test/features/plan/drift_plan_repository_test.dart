@@ -39,4 +39,28 @@ void main() {
     expect((saved.id, saved.name, saved.amount, saved.categoryKey, saved.isIncome, saved.nextDue, saved.windowDays),
         (id, 'Salary', 320000, 'salary', true, DateTime.utc(2026, 7, 24), 4));
   });
+
+  test('a goal can be edited, deleted and put back exactly as it was', () async {
+    final id = await plan.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1), priority: 2);
+    final laptop = (await plan.watchActiveGoals().first).single;
+    await plan.updateGoal(laptop.copyWith(name: 'New laptop', price: 480000));
+    expect((await plan.watchActiveGoals().first).single.price, 480000);
+
+    final edited = (await plan.watchActiveGoals().first).single;
+    await plan.deleteGoal(id);
+    expect(await plan.watchActiveGoals().first, isEmpty);
+    await plan.restoreGoal(edited);
+    final back = (await plan.watchActiveGoals().first).single;
+    expect((back.id, back.name, back.price, back.priority), (id, 'New laptop', 480000, 2));
+  });
+
+  test('a bought goal restores as bought', () async {
+    final id = await plan.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1));
+    await plan.markGoalBought(id, on: d(2026, 11, 20));
+    final bought = (await plan.watchAchievedGoals().first).single;
+    await plan.deleteGoal(id);
+    await plan.restoreGoal(bought);
+    expect((await plan.watchAchievedGoals().first).single.achievedOn, d(2026, 11, 20));
+    expect(await plan.watchActiveGoals().first, isEmpty);
+  });
 }

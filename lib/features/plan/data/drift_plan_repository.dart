@@ -203,4 +203,28 @@ class DriftPlanRepository implements PlanRepository {
         await (_db.update(_db.goals)..where((g) => g.id.equals(id)))
             .write(GoalsCompanion(status: const Value(GoalStatus.achieved), achievedOn: Value(on)));
       });
+
+  @override
+  Future<void> updateGoal(domain.Goal goal) async {
+    await (_db.update(_db.goals)..where((g) => g.id.equals(goal.id)))
+        .write(GoalsCompanion(name: Value(goal.name.trim()), price: Value(goal.price), targetDate: Value(goal.targetDate)));
+  }
+
+  @override
+  Future<void> deleteGoal(int id) async {
+    await (_db.delete(_db.goals)..where((g) => g.id.equals(id))).go();
+  }
+
+  @override
+  Future<void> restoreGoal(domain.Goal goal) async {
+    await _db.into(_db.goals).insert(GoalsCompanion.insert(
+          id: Value(goal.id),
+          name: goal.name,
+          price: goal.price,
+          targetDate: goal.targetDate,
+          priority: Value(goal.priority),
+          status: Value(goal.achievedOn == null ? GoalStatus.active : GoalStatus.achieved),
+          achievedOn: Value(goal.achievedOn),
+        ));
+  }
 }

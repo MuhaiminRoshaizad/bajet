@@ -72,4 +72,14 @@ abstract interface class PlanRepository {
   /// Logs the purchase as an expense on [on] and marks the goal achieved, in
   /// one transaction, so it leaves the active goals.
   Future<void> markGoalBought(int id, {required DateTime on});
+
+  /// Changes a goal's name, price and buy day.
+  Future<void> updateGoal(Goal goal);
+
+  /// Removes a goal, active or bought. A bought goal's purchase stays in
+  /// History as the entry it was logged as.
+  Future<void> deleteGoal(int id);
+
+  /// Puts back a goal exactly as it was before [deleteGoal], for undo.
+  Future<void> restoreGoal(Goal goal);
 }

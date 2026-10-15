@@ -24,3 +24,23 @@ Future<bool> confirmDelete(BuildContext context, {required String title, require
   );
   return confirmed ?? false;
 }
+
+/// The Delete at the foot of an edit sheet: outlined in the warning colour,
+/// below Save, so it is never mistaken for the way to finish.
+class DeleteButton extends StatelessWidget {
+  const DeleteButton({super.key, required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.delete_outline_rounded),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(foregroundColor: c.bad, side: BorderSide(color: c.bad.withValues(alpha: 0.5)), minimumSize: const Size.fromHeight(52)),
+    );
+  }
+}
