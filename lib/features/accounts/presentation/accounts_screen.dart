@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/account_models.dart';
@@ -24,6 +26,17 @@ class AccountsScreen extends ConsumerStatefulWidget {
 class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTickerProviderStateMixin {
   late final _spread = AnimationController(vsync: this, duration: const Duration(milliseconds: 650), reverseDuration: const Duration(milliseconds: 380));
   var _leaving = false;
+  final _stack = GlobalKey();
+
+  /// Where each card sits on screen, fanned out, for the account view to fly
+  /// it from and back to.
+  Rect? _placeOf(int accountId) {
+    final box = _stack.currentContext?.findRenderObject() as RenderBox?;
+    final accounts = ref.read(accountsProvider).value ?? const [];
+    final i = accounts.indexWhere((a) => a.id == accountId);
+    if (box == null || !box.attached || i < 0) return null;
+    return AccountStack.spreadCardRect(i, box.size.width).shift(box.localToGlobal(Offset.zero));
+  }
 
   @override
   void initState() {
@@ -73,7 +86,9 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTick
               child: AnimatedBuilder(
                 animation: _spread,
                 builder: (context, _) => AccountStack(
+                  key: _stack,
                   accounts: accounts,
+                  onAccountTap: _spread.isCompleted ? (a) => context.push(Routes.account(a.id), extra: _placeOf) : null,
                   // Out with a bounce past the resting place, back in without one.
                   spread: _leaving ? Curves.easeInCubic.transform(_spread.value) : Curves.easeOutBack.transform(_spread.value),
                   total: TotalCard(look: look ?? const TotalCardLook(), balance: balance, accounts: accounts),

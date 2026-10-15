@@ -45,6 +45,10 @@ class AccountStack extends StatelessWidget {
   static double spreadHeight(double width, int accounts) =>
       billRoom + (accounts == 0 ? width / cardAspectRatio : totalStrip + (accounts - 1) * strip + width / cardAspectRatio);
 
+  /// Where account [index]'s card sits once fanned out, from the stack's
+  /// top left.
+  static Rect spreadCardRect(int index, double width) => Rect.fromLTWH(0, billRoom + totalStrip + index * strip, width, width / cardAspectRatio);
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final w = box.maxWidth;

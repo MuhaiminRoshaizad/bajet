@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/routes.dart';
+import '../features/accounts/presentation/account_view_screen.dart';
 import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/backup/presentation/backup_screen.dart';
@@ -78,6 +79,22 @@ final routerProvider = Provider<GoRouter>((ref) {
                     transitionsBuilder: (context, animation, _, child) => FadeTransition(opacity: animation, child: child),
                     child: const AccountsScreen(),
                   ),
+                  routes: [
+                    // The page draws its own arrival, the card flying out of
+                    // the stack, so the route itself only times it.
+                    GoRoute(
+                      path: ':id',
+                      parentNavigatorKey: root,
+                      pageBuilder: (context, state) => CustomTransitionPage(
+                        key: state.pageKey,
+                        opaque: false,
+                        transitionDuration: AccountViewScreen.duration,
+                        reverseTransitionDuration: AccountViewScreen.reverseDuration,
+                        transitionsBuilder: (context, animation, _, child) => child,
+                        child: AccountViewScreen(accountId: int.parse(state.pathParameters['id']!), places: state.extra as CardPlaces?),
+                      ),
+                    ),
+                  ],
                 ),
                 page('checkin', const CheckinScreen()),
                 page('settings', const SettingsScreen(), routes: [

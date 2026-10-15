@@ -7,6 +7,9 @@ abstract final class Routes {
   static const history = '/today/history';
   static const checkin = '/today/checkin';
   static const accounts = '/today/accounts';
+
+  /// One account, upright, among the others to swipe through.
+  static String account(int id) => '/today/accounts/$id';
   static const settings = '/today/settings';
   static const favourites = '/today/settings/favourites';
   static const rhythm = '/today/settings/rhythm';

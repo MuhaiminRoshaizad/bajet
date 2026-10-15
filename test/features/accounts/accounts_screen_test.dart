@@ -39,4 +39,24 @@ void main() {
     expect(find.text('Your accounts'), findsNothing);
     expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget);
   });
+
+  testWidgets('a card opens upright among the others, and a swipe moves to the next', (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 2));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Wallet 0').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PageView), findsOneWidget);
+    expect(find.text('RM10.00 · E-wallet'), findsOneWidget);
+
+    await tester.fling(find.byType(PageView), const Offset(-300, 0), 1000);
+    await tester.pumpAndSettle();
+    expect(find.text('RM20.00 · E-wallet'), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pumpAndSettle();
+    expect(find.byType(PageView), findsNothing);
+    expect(find.text('Your accounts'), findsOneWidget);
+  });
 }

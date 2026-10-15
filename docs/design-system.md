@@ -134,6 +134,24 @@ keys its entrance on it, replaying it each visit without resetting scroll.
 When the system's reduce-motion setting is on (`MediaQuery.disableAnimationsOf`),
 all of it is skipped and content appears in place.
 
+### Account cards in motion
+
+The one place the app bounces. Today stacks the total with at most two
+accounts peeking out behind it; opening Your accounts flies the stack up
+(a shared `Hero`) and springs the cards apart with `Curves.easeOutBack`, each
+a little after the one above, folding back without a bounce on the way out.
+Tapping a card opens the account view over 700 ms: for the first 300 ms the
+card flies from its place and turns from flat to upright (90°, growing to
+the upright size, `fastOutSlowIn`, no overshoot) while the page washes over;
+neighbours fade in from 50 ms, the name and balance from 300 ms and the dots
+from 400 ms. Leaving reverses the flight over 300 ms back to the card's
+place, whichever account is showing by then. Swiping follows the motion
+study: with `t` pages from the centre, a card coming in from the right turns
+`t × 360°` about its upright axis under a 0.0015 perspective and shows its
+plain back while facing away, one leaving to the left only slides, and every
+card off centre scales by `1 − 0.15|t|` and fades by `1 − 0.4|t|`. The
+balance line swaps once the swipe passes halfway, with a selection click.
+
 ## Empty screens
 
 A screen with nothing else to show (Insights for an empty period, History,
