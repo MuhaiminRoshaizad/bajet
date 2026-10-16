@@ -46,21 +46,33 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: color == null ? BorderSide.none : BorderSide(color: color, width: width),
         );
+    // Inputs sit in a well pressed into the surface; focus and errors draw
+    // an outline, since the well alone is too faint to carry a state.
+    final inputs = InputDecorationTheme(
+      filled: true,
+      fillColor: c.well,
+      contentPadding: const EdgeInsets.all(AppSpacing.l),
+      border: field(),
+      enabledBorder: field(),
+      focusedBorder: field(c.primary, 2),
+      errorBorder: field(c.bad, 1.5),
+      focusedErrorBorder: field(c.bad, 2),
+    );
     return base.copyWith(
       textTheme: base.textTheme.apply(bodyColor: c.ink, displayColor: c.ink),
       dividerTheme: DividerThemeData(color: c.line, space: 1, thickness: 1),
       appBarTheme: AppBarTheme(backgroundColor: c.background, surfaceTintColor: Colors.transparent, foregroundColor: c.ink, elevation: 0),
-      // Inputs sit in a well pressed into the surface; focus and errors draw
-      // an outline, since the well alone is too faint to carry a state.
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: c.well,
-        contentPadding: const EdgeInsets.all(AppSpacing.l),
-        border: field(),
-        enabledBorder: field(),
-        focusedBorder: field(c.primary, 2),
-        errorBorder: field(c.bad, 1.5),
-        focusedErrorBorder: field(c.bad, 2),
+      inputDecorationTheme: inputs,
+      // A dropdown's field reads its own theme, not the one above, so it is
+      // handed the same one to look like every other input.
+      dropdownMenuTheme: DropdownMenuThemeData(
+        inputDecorationTheme: inputs,
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(c.card),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          side: WidgetStatePropertyAll(BorderSide(color: c.line)),
+          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control))),
+        ),
       ),
       // A button's textStyle replaces the ambient one whole, font family and
       // all, so it is set here once with Figtree rather than at each button.

@@ -1,4 +1,5 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
+import 'package:bajet/features/accounts/presentation/provider_picker.dart';
 import 'package:bajet/features/accounts/presentation/account_stack.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,6 +143,21 @@ void main() {
     await tester.tap(find.text('Add account'));
     await tester.pumpAndSettle();
     expect((world.accounts.last.name, world.accounts.last.balance), ('Office card', 0));
+  });
+
+  testWidgets('the bank dropdown sits in the same well as every other field', (tester) async {
+    await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.ensureVisible(find.text('Add an account'));
+    await tester.tap(find.text('Add an account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bank account'));
+    await tester.pumpAndSettle();
+    InputDecoration decoration(Finder field) => tester.widget<InputDecorator>(find.descendant(of: field, matching: find.byType(InputDecorator)).first).decoration;
+    final bank = decoration(find.byType(ProviderPicker));
+    final nickname = decoration(find.widgetWithText(TextField, 'Nickname (optional)'));
+    expect((bank.filled, bank.fillColor, bank.enabledBorder, bank.focusedBorder), (nickname.filled, nickname.fillColor, nickname.enabledBorder, nickname.focusedBorder));
+    expect(bank.filled, isTrue);
   });
 
   testWidgets('the bank list opens grouped, filters as it is typed, and a pick colours the card', (tester) async {
