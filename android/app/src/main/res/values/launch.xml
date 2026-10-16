@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The opening's graphite (lib/features/opening/presentation/titanium_card.dart). -->
+    <color name="launch_graphite">#121418</color>
+</resources>
