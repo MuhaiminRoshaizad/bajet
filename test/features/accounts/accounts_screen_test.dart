@@ -1,3 +1,5 @@
+import 'package:bajet/features/accounts/presentation/account_activity.dart';
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/presentation/account_list.dart';
 import 'package:bajet/features/accounts/presentation/account_stack.dart';
@@ -134,5 +136,27 @@ void main() {
     expect(listOpacities(), everyElement(0.0));
     await tester.pumpAndSettle();
     expect(listOpacities(), everyElement(1.0));
+  });
+
+  testWidgets("scrolling down a card's page shows that account's own activity, moves included", (tester) async {
+    await pumpApp(tester, seed: (w) {
+      addAccounts(w, 1);
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 450, categoryKey: 'food', label: 'Coffee', accountId: 2));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 900, categoryKey: 'food', label: 'Lunch', accountId: 1));
+      w.transfer(fromId: 1, toId: 2, amount: 5000, day: testToday);
+    });
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Wallet 0').hitTestable().first);
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('Wallet 0 activity'), 200, scrollable: find.byType(Scrollable).last);
+    await tester.pumpAndSettle();
+    Finder inActivity(String text) => find.descendant(of: find.byType(AccountActivity), matching: find.text(text));
+    expect(inActivity('Coffee'), findsOneWidget);
+    expect(inActivity('Moved from Main account'), findsOneWidget);
+    expect(inActivity('+RM50.00'), findsOneWidget);
+    // Spent from the other account, so not this one's.
+    expect(inActivity('Lunch'), findsNothing);
   });
 }

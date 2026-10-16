@@ -10,6 +10,7 @@ import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../domain/account_models.dart';
+import 'account_activity.dart';
 import 'account_providers.dart';
 import 'card_designer.dart';
 import 'card_face.dart';
@@ -84,6 +85,8 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
             child: ColoredBox(color: c.background),
           ),
         ),
+        // Under the top bar, the card and its buttons fill the screen as they
+        // always have; the account's own activity waits below, a scroll away.
         SafeArea(
           child: Column(children: [
             FadeTransition(
@@ -101,62 +104,79 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
                 ]),
               ),
             ),
-            FadeTransition(opacity: part(0.43, 0.71), child: _Titles(pages: _pages!, accounts: accounts)),
-            FadeTransition(opacity: part(0.43, 0.71), child: _BalanceLine(account: accounts[_index.clamp(0, accounts.length - 1)])),
             Expanded(
               child: LayoutBuilder(
-                key: _carousel,
-                builder: (context, box) => PageView.builder(
-                  controller: _pages,
-                  itemCount: accounts.length,
-                  onPageChanged: (i) {
-                    HapticFeedback.selectionClick();
-                    setState(() => _index = i);
-                  },
-                  itemBuilder: (context, i) => AnimatedBuilder(
-                    animation: Listenable.merge([_pages!, route]),
-                    builder: (context, _) {
-                      final page = _pages!.hasClients && _pages!.position.haveDimensions ? _pages!.page! : _index.toDouble();
-                      // Until the flight has landed, the cards here are the
-                      // flyers', and wait unseen.
-                      final flying = widget.places != null && route.status != AnimationStatus.completed;
-                      return Opacity(
-                        opacity: flying ? 0 : 1,
-                        child: _SwipeCard(account: accounts[i], t: i - page, size: _cardSize(box.biggest)),
-                      );
-                    },
-                  ),
+                builder: (context, box) => SingleChildScrollView(
+                  child: Column(children: [
+                    SizedBox(
+                      height: box.maxHeight,
+                      child: Column(children: [
+                        FadeTransition(opacity: part(0.43, 0.71), child: _Titles(pages: _pages!, accounts: accounts)),
+                        FadeTransition(opacity: part(0.43, 0.71), child: _BalanceLine(account: accounts[_index.clamp(0, accounts.length - 1)])),
+                        Expanded(
+                          child: LayoutBuilder(
+                            key: _carousel,
+                            builder: (context, box) => PageView.builder(
+                              controller: _pages,
+                              itemCount: accounts.length,
+                              onPageChanged: (i) {
+                                HapticFeedback.selectionClick();
+                                setState(() => _index = i);
+                              },
+                              itemBuilder: (context, i) => AnimatedBuilder(
+                                animation: Listenable.merge([_pages!, route]),
+                                builder: (context, _) {
+                                  final page = _pages!.hasClients && _pages!.position.haveDimensions ? _pages!.page! : _index.toDouble();
+                                  // Until the flight has landed, the cards here are the
+                                  // flyers', and wait unseen.
+                                  final flying = widget.places != null && route.status != AnimationStatus.completed;
+                                  return Opacity(
+                                    opacity: flying ? 0 : 1,
+                                    child: _SwipeCard(account: accounts[i], t: i - page, size: _cardSize(box.biggest)),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        FadeTransition(
+                          opacity: part(0.57, 1),
+                          child: Column(children: [
+                            _Dots(pages: _pages!, count: accounts.length),
+                            // Moving money needs somewhere to move it to.
+                            if (accounts.length > 1)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.l, AppSpacing.l, 0),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: FilledButton(
+                                      key: ValueKey(accounts[_index.clamp(0, accounts.length - 1)].id),
+                                      onPressed: () => showMoveMoney(context, fromId: accounts[_index.clamp(0, accounts.length - 1)].id),
+                                      child: Text('Move money from ${accounts[_index.clamp(0, accounts.length - 1)].name}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            TextButton(
+                              onPressed: () => context.push(Routes.checkin),
+                              style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                              child: const Text('Match what you really have'),
+                            ),
+                          ]),
+                        ),
+                        const SizedBox(height: AppSpacing.l),
+                      ]),
+                    ),
+                    FadeTransition(
+                      opacity: part(0.57, 1),
+                      child: AccountActivity(account: accounts[_index.clamp(0, accounts.length - 1)]),
+                    ),
+                  ]),
                 ),
               ),
             ),
-            FadeTransition(
-              opacity: part(0.57, 1),
-              child: Column(children: [
-                _Dots(pages: _pages!, count: accounts.length),
-                // Moving money needs somewhere to move it to.
-                if (accounts.length > 1)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.l, AppSpacing.l, 0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: FilledButton(
-                          key: ValueKey(accounts[_index.clamp(0, accounts.length - 1)].id),
-                          onPressed: () => showMoveMoney(context, fromId: accounts[_index.clamp(0, accounts.length - 1)].id),
-                          child: Text('Move money from ${accounts[_index.clamp(0, accounts.length - 1)].name}', maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                      ),
-                    ),
-                  ),
-                TextButton(
-                  onPressed: () => context.push(Routes.checkin),
-                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                  child: const Text('Match what you really have'),
-                ),
-              ]),
-            ),
-            const SizedBox(height: AppSpacing.l),
           ]),
         ),
         if (widget.places != null)

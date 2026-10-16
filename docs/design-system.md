@@ -178,6 +178,10 @@ study: with `t` pages from the centre, a card coming in from the right turns
 plain back while facing away, one leaving to the left only slides, and every
 card off centre scales by `1 − 0.15|t|` and fades by `1 − 0.4|t|`. The
 balance line swaps once the swipe passes halfway, with a selection click.
+Below the card screen's buttons, a scroll away under a pinned top bar, is
+the showing account's activity (`AccountActivity`): its latest 20 entries
+and transfers, newest first, each transfer signed from this account's side
+("Moved to Cash −RM20.00", "Moved from Bank +RM50.00").
 
 ## Empty screens
 
