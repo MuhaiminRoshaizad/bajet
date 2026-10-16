@@ -45,7 +45,7 @@ plus its entries and the transfers into it, less those out of it, since.
 | `color`           | int   | The card's colour as ARGB                      |
 | `ink_color`       | int?  | The card's text colour when picked, e.g. gold on black; otherwise it follows the card's lightness |
 | `finish`          | enum  | `brushed`, `matte`, `gloss` or `leather` (cash) |
-| `sort_order`      | int   | Display order; the first account takes anything logged without one |
+| `sort_order`      | int   | Display order, set by dragging cards on Your accounts (`reorderAccounts`); the first account at the time takes anything logged without one |
 
 ### `transfers`
 Money moved from one account to another. Neither spending nor income, so it is

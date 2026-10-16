@@ -58,6 +58,13 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
   }
 
   @override
+  Future<void> reorderAccounts(List<int> ids) => _db.transaction(() async {
+        for (final (i, id) in ids.indexed) {
+          await (_db.update(_db.accounts)..where((t) => t.id.equals(id))).write(AccountsCompanion(sortOrder: Value(i)));
+        }
+      });
+
+  @override
   Future<void> updateAccount(domain.Account a) async {
     await (_db.update(_db.accounts)..where((t) => t.id.equals(a.id))).write(AccountsCompanion(
           name: Value(a.name.trim()),

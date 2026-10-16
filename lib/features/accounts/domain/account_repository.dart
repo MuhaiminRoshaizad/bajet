@@ -9,6 +9,10 @@ abstract interface class AccountRepository {
   /// others.
   Future<int> addAccount(AccountDraft draft);
 
+  /// Puts the accounts in the order of [ids], first to last: the order of
+  /// Today's stack, Your accounts, the swipe between cards and every picker.
+  Future<void> reorderAccounts(List<int> ids);
+
   /// Changes an account's name, nickname and card. Its balance changes only
   /// through entries, transfers and check-ins.
   Future<void> updateAccount(Account account);

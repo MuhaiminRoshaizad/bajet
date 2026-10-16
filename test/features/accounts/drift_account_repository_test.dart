@@ -59,6 +59,18 @@ void main() {
     expect([for (final t in all) t.id], [second, early]);
   });
 
+  test('reordering changes the order everywhere, never a balance, and lasts', () async {
+    final (bank, cash) = await bankAndCash();
+    final third = await accounts.addAccount(const domain.AccountDraft(kind: domain.AccountKind.ewallet, name: 'Wallet', balance: 500, look: slate));
+    await accounts.reorderAccounts([third, cash, bank]);
+    final all = await accounts.watchAccounts().first;
+    expect([for (final a in all) (a.id, a.balance)], [(third, 500), (cash, 8450), (bank, 100000)]);
+
+    // A new account still goes last.
+    final fourth = await accounts.addAccount(const domain.AccountDraft(kind: domain.AccountKind.bank, name: 'Other', balance: 0, look: slate));
+    expect([for (final a in await accounts.watchAccounts().first) a.id], [third, cash, bank, fourth]);
+  });
+
   test('editing changes the name, nickname and card, never the balance', () async {
     final (bank, _) = await bankAndCash();
     final before = (await accounts.watchAccounts().first).firstWhere((a) => a.id == bank);

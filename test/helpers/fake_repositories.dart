@@ -220,6 +220,10 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   }
 
   @override
+  Future<void> reorderAccounts(List<int> ids) async =>
+      _accountRows.value = [for (final id in ids) _accountRows.value.firstWhere((a) => a.id == id)];
+
+  @override
   Future<void> updateAccount(Account a) async => _accountRows.value = [
         for (final x in _accountRows.value)
           x.id == a.id
