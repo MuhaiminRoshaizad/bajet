@@ -51,7 +51,12 @@ class CardSurface extends StatelessWidget {
         ),
         child: ClipRRect(
           borderRadius: _radius,
-          child: CustomPaint(foregroundPainter: _FinishPainter(finish), child: child),
+          // The finish is painted once into its own layer, so a balance
+          // counting up over it never repaints the streaks.
+          child: Stack(children: [
+            Positioned.fill(child: RepaintBoundary(child: CustomPaint(painter: _FinishPainter(finish)))),
+            child,
+          ]),
         ),
       );
 }
@@ -116,12 +121,17 @@ class AccountCard extends StatelessWidget {
   final bool back;
 
   @override
-  Widget build(BuildContext context) => AspectRatio(
-        aspectRatio: cardAspectRatio,
-        child: Semantics(
-          label: '${account.name}${account.nickname == null ? '' : ', ${account.nickname}'}, ${Money.format(account.balance)}',
-          excludeSemantics: true,
-          child: account.kind == AccountKind.cash ? CashWallet(account: account, back: back) : _BankCard(account: account, back: back),
+  // Each card is its own layer: moving, scaling or turning it moves the
+  // picture already drawn instead of redrawing a thousand grain dots and a
+  // hundred streaks on every frame.
+  Widget build(BuildContext context) => RepaintBoundary(
+        child: AspectRatio(
+          aspectRatio: cardAspectRatio,
+          child: Semantics(
+            label: '${account.name}${account.nickname == null ? '' : ', ${account.nickname}'}, ${Money.format(account.balance)}',
+            excludeSemantics: true,
+            child: account.kind == AccountKind.cash ? CashWallet(account: account, back: back) : _BankCard(account: account, back: back),
+          ),
         ),
       );
 }
@@ -260,7 +270,7 @@ class CashWallet extends StatelessWidget {
               ),
               boxShadow: const [BoxShadow(color: Color(0xA6000000), blurRadius: 24, offset: Offset(0, 12), spreadRadius: -12)],
             ),
-            child: CustomPaint(painter: _LeatherPainter(seed: account.id), child: const SizedBox.expand()),
+            child: RepaintBoundary(child: CustomPaint(painter: _LeatherPainter(seed: account.id), child: const SizedBox.expand())),
           ),
         ),
         if (!back) Positioned.fill(child: _CardText(account: account, contactless: false, top: 0.17)),
