@@ -21,7 +21,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final theme = initialThemeModeProvider.overrideWithValue(await FileThemeModeStore().read());
   final lock = initialLockSettingsProvider.overrideWithValue(await FileLockSettingsStore().read());
-  final opening = [playOpeningProvider.overrideWithValue(true), initialEntranceHoldProvider.overrideWithValue(openingEntranceHold)];
+  final opening = [playOpeningProvider.overrideWithValue(true), initialEntranceHoldProvider.overrideWithValue(true)];
   if (!demo) return runApp(ProviderScope(overrides: [theme, lock, ...opening], child: const BajetApp()));
   final db = AppDatabase(NativeDatabase.memory());
   final now = DateTime.now();

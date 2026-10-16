@@ -12,6 +12,7 @@ import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
 import 'package:bajet/features/lock/domain/app_lock.dart';
+import 'package:bajet/features/opening/data/splash_hand_over.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/receipt_store.dart';
@@ -86,6 +87,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   DateTime clock = DateTime(2026, 7, 1, 9);
   final deviceAuth = FakeDeviceAuth();
   final recents = FakeRecentsPrivacy();
+  final splash = FakeSplash();
   final photos = FakePhotoColours();
   var _nextId = 1;
 
@@ -611,4 +613,17 @@ class FakeRecentsPrivacy implements RecentsPrivacy {
 
   @override
   Future<void> hideFromRecents(bool hidden) async => this.hidden = hidden;
+}
+
+/// Android's splash: [played] says whether Android dealt the cards, as on
+/// Android 12 and later.
+class FakeSplash implements SplashHandOver {
+  bool played = true;
+  bool removed = false;
+
+  @override
+  Future<bool> ready() async => played;
+
+  @override
+  Future<void> remove() async => removed = true;
 }

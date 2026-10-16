@@ -102,6 +102,9 @@ class _AccountsStackState extends ConsumerState<_AccountsStack> {
   // Shared with the opening, whose cards land on this stack.
   final _stack = openingStackKey;
 
+  // After the opening the total is already there, so it does not count up.
+  late final _countUp = !ref.read(openingProvider);
+
   void _open(int count) {
     final box = _stack.currentContext?.findRenderObject() as RenderBox?;
     final places = box == null || !box.hasSize ? null : StackPlaces(box.localToGlobal(Offset.zero) & box.size, count);
@@ -124,7 +127,7 @@ class _AccountsStackState extends ConsumerState<_AccountsStack> {
           child: AccountStack(
             key: _stack,
             accounts: accounts,
-            total: const TodayTotalCard(countUp: true),
+            total: TodayTotalCard(countUp: _countUp),
           ),
         ),
       ),

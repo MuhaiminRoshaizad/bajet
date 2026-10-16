@@ -11,61 +11,41 @@ const titaniumShades = [Color(0xFF5F656D), Color(0xFF9AA0A8), Color(0xFFD8DBDF)]
 /// The graphite the opening plays on, the same as the launch screen's.
 const graphite = Color(0xFF121418);
 
-/// One of the icon's titanium cards at [width]. The front card carries the
-/// chip and, while [sheen] runs from -1.3 to 1.3, a band of light crossing it.
+/// The wordmark's letters, each drawn on its own, as the splash animation
+/// draws them too.
+const wordmarkStyle = TextStyle(fontFamily: 'Figtree', fontSize: 34 * OpeningPlan.zoom, height: 1, fontWeight: FontWeight.w800, letterSpacing: .68 * OpeningPlan.zoom, color: Color(0xFFE3E9EE));
+
+/// One of the icon's titanium cards at [width], flat like the splash
+/// animation's, so the hand-over from Android shows no seam. The front card
+/// carries the chip.
 class TitaniumCard extends StatelessWidget {
-  const TitaniumCard({super.key, required this.depth, required this.width, this.sheen});
+  const TitaniumCard({super.key, required this.depth, required this.width});
 
   /// 0 the back card, 2 the front.
   final int depth;
   final double width;
-  final double? sheen;
+
+  /// The splash animation draws the same card from these, at
+  /// [OpeningPlan.cardWidth].
+  static double radiusAt(double width) => 16 * width / 330;
+  static Rect chipAt(double width) => Rect.fromLTWH(12.5 * width / 100, 22 * width / 100, 19 * width / 100, 15 * width / 100);
 
   @override
   Widget build(BuildContext context) {
-    final h = width / cardAspectRatio, s = width / 100;
-    final radius = BorderRadius.circular(16 * width / 330);
+    final chip = chipAt(width);
     return SizedBox(
       width: width,
-      height: h,
+      height: width / cardAspectRatio,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: titaniumShades[depth],
-          borderRadius: radius,
-          boxShadow: const [BoxShadow(color: Color(0xB3000000), offset: Offset(0, 10), blurRadius: 22, spreadRadius: -12)],
-        ),
+        decoration: BoxDecoration(color: titaniumShades[depth], borderRadius: BorderRadius.circular(radiusAt(width))),
         child: depth < 2
             ? null
-            : ClipRRect(
-                borderRadius: radius,
-                child: Stack(children: [
-                  Positioned(
-                    left: 12.5 * s,
-                    top: 22 * s,
-                    width: 19 * s,
-                    height: 15 * s,
-                    child: DecoratedBox(decoration: BoxDecoration(color: graphite.withValues(alpha: .32), borderRadius: BorderRadius.circular(4 * width / 330))),
-                  ),
-                  if (sheen case final f? when f > -1.3 && f < 1.3)
-                    Positioned(
-                      left: -0.1 * width + f * 1.2 * width,
-                      top: -0.3 * h,
-                      width: 1.2 * width,
-                      height: 1.6 * h,
-                      child: const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            // The mock-up's 105° band.
-                            begin: Alignment(-0.966, -0.259),
-                            end: Alignment(0.966, 0.259),
-                            colors: [Color(0x00FFFFFF), Color(0x99FFFFFF), Color(0x00FFFFFF)],
-                            stops: [.38, .5, .62],
-                          ),
-                        ),
-                      ),
-                    ),
-                ]),
-              ),
+            : Stack(children: [
+                Positioned.fromRect(
+                  rect: chip,
+                  child: DecoratedBox(decoration: BoxDecoration(color: graphite.withValues(alpha: .32), borderRadius: BorderRadius.circular(4 * width / 330))),
+                ),
+              ]),
       ),
     );
   }
@@ -74,7 +54,7 @@ class TitaniumCard extends StatelessWidget {
 /// The three cards fanned as in the icon, small, where the lock screen
 /// would show a padlock. The opening's cards land exactly on it.
 class FanMark extends StatelessWidget {
-  const FanMark({super.key, this.scale = .45});
+  const FanMark({super.key, this.scale = .55});
 
   final double scale;
 

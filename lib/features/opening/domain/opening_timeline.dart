@@ -2,27 +2,33 @@ import 'dart:math' as math;
 
 import 'package:flutter/animation.dart';
 
-/// The opening, frame for frame as approved in the motion mock-up: one
-/// titanium card, then two, then three spring into the fan, "bajet" rises
-/// under it, and the cards arc into Today's stack or onto the lock screen.
+/// The opening, from the approved motion mock-up: one titanium card, then
+/// two, then three spring into the fan, "bajet" rises under it, and the
+/// cards arc into Today's stack or onto the lock screen.
+///
+/// Up to [dealEnd] it is Android's splash animation, which Android plays
+/// the moment the icon is tapped and asks to keep within a second; so the
+/// mock-up's deal runs at [pace]. `res/drawable-v31/splash_deal.xml` is
+/// generated from this timeline (test/features/opening/splash_deal_test.dart).
+/// From [dealEnd] on, bajet plays the hand-over at the mock-up's own speed.
 ///
 /// It is written the way the mock-up's Web Animations were: each track has
 /// a start, a length, an easing over the whole track and keyframes, and
 /// where tracks overlap the one added later wins. Times are milliseconds
-/// from the first frame.
+/// from the tap.
 abstract final class OpeningTimes {
-  static const pop = 60.0;
-  static const sheen = 220.0;
-  static const mid = 280.0;
-  static const back = 420.0;
-  static const fan = 640.0;
-  static const word = 1070.0;
-  static const line = 1330.0;
-  static const glint = 1470.0;
-  static const out = 1900.0;
-  static const fly = 1950.0;
-  static const rise = 2300.0;
-  static const end = 2850.0;
+  static const pace = .62;
+  static const pop = 60 * pace;
+  static const mid = 280 * pace;
+  static const back = 420 * pace;
+  static const fan = 640 * pace;
+  static const word = 560.0;
+  static const line = 720.0;
+  static const dealEnd = 1000.0;
+  static const out = dealEnd;
+  static const fly = out + 50;
+  static const rise = fly + 350;
+  static const end = fly + 100 + 600 + 50;
 }
 
 /// The mock-up's three curves, as CSS cubic-béziers.
@@ -139,7 +145,7 @@ class StackTarget extends OpeningTarget {
 
 /// The centre of the lock screen's fan, drawn at [scale] of the opening's.
 class LockTarget extends OpeningTarget {
-  const LockTarget(this.centre, {this.scale = .45});
+  const LockTarget(this.centre, {this.scale = .55});
 
   final Offset centre;
   final double scale;
@@ -158,16 +164,23 @@ class OpeningPlan {
   final Size size;
   final OpeningTarget target;
 
+  /// Android's splash keeps only a circle 192 dp across in view, so the
+  /// mock-up's opening is drawn at this share of its size: every card, even
+  /// mid-bounce, the word and its line stay inside that circle
+  /// (test/features/opening/splash_deal_test.dart checks).
+  static const zoom = .82;
+
   /// The icon's 108-unit canvas is drawn at this many logical pixels a unit.
-  static const k = 2.2;
+  static const k = 2.2 * zoom;
+  static const lineWidth = 132 * zoom;
   static const cardWidth = 40 * k;
   static const angles = [-20.0, 0.0, 20.0];
-  static const _midOffset = Offset(-16, 11), _backOffset = Offset(-30, 21);
+  static const _midOffset = Offset(-16 * zoom, 11 * zoom), _backOffset = Offset(-30 * zoom, 21 * zoom);
 
   /// The fan sits a little above the middle, leaving room for the word.
-  late final Offset fanCentre = Offset(size.width / 2, size.height / 2 - 20);
-  late final double wordTop = fanCentre.dy + 64;
-  late final double lineTop = wordTop + 44;
+  late final Offset fanCentre = Offset(size.width / 2, size.height / 2 - 20 * zoom);
+  late final double wordTop = fanCentre.dy + 64 * zoom;
+  late final double lineTop = wordTop + 44 * zoom;
 
   /// A card's centre in the fan at angle [a]: as in the launcher icon, the
   /// cards turn about a point below them.
@@ -186,12 +199,9 @@ class OpeningPlan {
   final cards = List.generate(3, (_) => <Track<CardPose>>[]);
   final realFaces = List.generate(3, (_) => <Track<double>>[]);
   final titaniumFaces = List.generate(3, (_) => <Track<double>>[]);
-  final sheen = <Track<double>>[];
   final letters = List.generate(5, (_) => <Track<Letter>>[]);
   final letterLift = List.generate(5, (_) => <Track<double>>[]);
   final line = <Track<double>>[];
-  final lineSpark = <Track<double>>[];
-  final lineSparkOpacity = <Track<double>>[];
   final backdrop = <Track<double>>[];
 
   void _build() {
@@ -200,17 +210,17 @@ class OpeningPlan {
     Track<double> number(double start, double duration, List<Frame<double>> frames, {Curve curve = Curves.linear, bool fillBefore = false}) =>
         Track(start, duration, frames, lerpNum, curve: curve, fillBefore: fillBefore);
 
-    // 1. The front card arrives alone, with a little tilt.
-    cards[2].add(pose(OpeningTimes.pop, 260, [
-      Frame(0, _at(0, const Offset(0, 16), .55, -10).withOpacity(0)),
-      Frame(.55, _at(0, const Offset(0, -3), 1.07, 3)),
-      Frame(.8, _at(0, const Offset(0, 1), .98, -1)),
+    // 1. The front card arrives alone, with a little tilt. Steps 1 to 4
+    // are Android's splash animation.
+    cards[2].add(pose(OpeningTimes.pop, 260 * OpeningTimes.pace, [
+      Frame(0, _at(0, const Offset(0, 16 * zoom), .55, -10).withOpacity(0)),
+      Frame(.55, _at(0, const Offset(0, -3 * zoom), 1.07, 3)),
+      Frame(.8, _at(0, const Offset(0, 1 * zoom), .98, -1)),
       Frame(1, _at(0)),
     ], curve: OpeningCurves.soft, fillBefore: true));
-    sheen.add(number(OpeningTimes.sheen, 420, const [Frame(0, -1.3), Frame(1, 1.3)], curve: OpeningCurves.easeInOut, fillBefore: true));
 
     // 2. A second card slides out from behind it, then a third.
-    Track<CardPose> slide(Offset from, Offset to, double start) => pose(start, 280, [
+    Track<CardPose> slide(Offset from, Offset to, double start) => pose(start, 280 * OpeningTimes.pace, [
           Frame(0, _at(0, from).withOpacity(0)),
           Frame(.12, _at(0, from)),
           Frame(.6, _at(0, to * 1.3, 1, -4)),
@@ -224,14 +234,14 @@ class OpeningPlan {
     const swing = [(0.0, 0.0), (.4, 1.42), (.6, .84), (.76, 1.1), (.9, .97), (1.0, 1.0)];
     for (final (i, from) in [(0, _backOffset), (1, _midOffset), (2, Offset.zero)]) {
       final a = angles[i];
-      cards[i].add(pose(OpeningTimes.fan, 380, [
+      cards[i].add(pose(OpeningTimes.fan, 380 * OpeningTimes.pace, [
         for (final (o, m) in swing) Frame(o, _at(a * m, from * (1 - math.min(1, o * 1.6)), o == .4 ? 1.04 : 1), OpeningCurves.soft),
       ]));
     }
 
     // 4. The word: each letter rises from behind its line with a soft bounce.
     for (var i = 0; i < 5; i++) {
-      letters[i].add(Track(OpeningTimes.word + i * 60, 480, const [
+      letters[i].add(Track(OpeningTimes.word + i * 40, 280, const [
         Frame(0, (drop: 1.15, blur: 4.0, opacity: 0.0)),
         Frame(.62, (drop: -.12, blur: 0.0, opacity: 1.0)),
         Frame(.82, (drop: .04, blur: 0.0, opacity: 1.0)),
@@ -239,13 +249,9 @@ class OpeningPlan {
       ], _lerpLetter, curve: OpeningCurves.soft, fillBefore: true));
       letterLift[i].add(number(OpeningTimes.out + i * 30, 220, const [Frame(0, 0), Frame(1, 1)], curve: OpeningCurves.easeIn));
     }
-    // The line draws out from the middle and a point of light runs along it,
-    // then it closes as the word lifts away.
-    line.add(number(OpeningTimes.line, 420, const [Frame(0, 0), Frame(1, 1)], curve: OpeningCurves.emphasized, fillBefore: true));
+    // The line draws out from the middle, then closes as the word lifts away.
+    line.add(number(OpeningTimes.line, 260, const [Frame(0, 0), Frame(1, 1)], curve: OpeningCurves.emphasized, fillBefore: true));
     line.add(number(OpeningTimes.out, 240, const [Frame(0, 1), Frame(1, 0)], curve: OpeningCurves.easeIn));
-    lineSpark.add(number(OpeningTimes.line + 200, 520, const [Frame(0, 0), Frame(1, 1)], curve: OpeningCurves.easeInOut, fillBefore: true));
-    lineSparkOpacity.add(number(OpeningTimes.line + 200, 520, const [Frame(0, 0), Frame(.2, 1), Frame(.8, 1), Frame(1, 0)], curve: OpeningCurves.easeInOut, fillBefore: true));
-    sheen.add(number(OpeningTimes.glint, 480, const [Frame(0, -1.3), Frame(1, 1.3)], curve: OpeningCurves.easeInOut));
 
     // 5. Off to where they belong; the graphite lifts.
     backdrop.add(number(OpeningTimes.fly + 60, 460, const [Frame(0, 1), Frame(1, 0)], curve: OpeningCurves.easeOut));
@@ -255,7 +261,7 @@ class OpeningPlan {
       switch (target) {
         case StackTarget():
           final r = target[i], p = fanAt(a);
-          final m = (r.center - p) * .5 + const Offset(0, -46);
+          final m = (r.center - p) * .5 + const Offset(0, -46 * zoom);
           cards[i].add(pose(d, 600, [
             Frame(0, from),
             Frame(.5, CardPose(p + m, cardWidth * ((1 + r.width / cardWidth) / 2 * 1.05), a * .35)),
@@ -268,8 +274,8 @@ class OpeningPlan {
           final p = fanAt(a), to = centre + (p - fanCentre) * scale - p;
           cards[i].add(pose(d, 560, [
             Frame(0, from),
-            Frame(.55, _at(a, to * .55 + const Offset(0, -30), .7, a * 1.2)),
-            Frame(.85, _at(a, to + const Offset(0, 3), scale - .01)),
+            Frame(.55, _at(a, to * .55 + const Offset(0, -30 * zoom), .7, a * 1.2)),
+            Frame(.85, _at(a, to + const Offset(0, 3 * zoom), scale - .01)),
             Frame(1, _at(a, to, scale)),
           ], curve: OpeningCurves.soft));
         case NoTarget():
@@ -289,15 +295,13 @@ class OpeningPlan {
 
   double real(int i, double ms) => resolve(realFaces[i], ms, 0);
   double titanium(int i, double ms) => resolve(titaniumFaces[i], ms, 1);
-  double sheenAt(double ms) => resolve(sheen, ms, 1.3);
   Letter letter(int i, double ms) {
     final l = resolve(letters[i], ms, (drop: 0.0, blur: 0.0, opacity: 1.0));
     final lift = resolve(letterLift[i], ms, 0.0);
+    // The word lifts 14 of the mock-up's 34 px letter height.
     return (drop: l.drop - lift * 14 / 34, blur: l.blur, opacity: l.opacity * (1 - lift));
   }
 
   double lineAt(double ms) => resolve(line, ms, 0);
-  double sparkAt(double ms) => resolve(lineSpark, ms, 0);
-  double sparkOpacityAt(double ms) => resolve(lineSparkOpacity, ms, 0);
   double backdropAt(double ms) => resolve(backdrop, ms, 1);
 }

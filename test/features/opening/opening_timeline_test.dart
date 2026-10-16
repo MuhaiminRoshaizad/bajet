@@ -34,11 +34,22 @@ void main() {
     });
   });
 
+  test("Android's part, the deal and the word, ends within a second, with everything settled", () {
+    expect(t.dealEnd, lessThanOrEqualTo(1000));
+    for (var i = 0; i < 3; i++) {
+      expect(plan.card(i, t.dealEnd).turn, OpeningPlan.angles[i]);
+    }
+    for (var i = 0; i < 5; i++) {
+      expect(plan.letter(i, t.dealEnd), (drop: 0.0, blur: 0.0, opacity: 1.0));
+    }
+    expect(plan.lineAt(t.dealEnd), 1);
+  });
+
   test('the front card arrives alone, small and tilted, and settles upright in the middle', () {
     expect(plan.card(2, 0).opacity, 0);
     expect(plan.card(2, 0).turn, -10);
     expect(plan.card(2, 0).width, closeTo(OpeningPlan.cardWidth * .55, 1e-9));
-    final settled = plan.card(2, t.pop + 260);
+    final settled = plan.card(2, t.pop + 260 * t.pace);
     expect((settled.centre, settled.width, settled.turn, settled.opacity), (plan.fanAt(0), OpeningPlan.cardWidth, 0, 1));
     expect(plan.card(1, t.mid - 1).opacity, 0, reason: 'the second card is still hidden');
   });
@@ -50,11 +61,11 @@ void main() {
 
   test('the fan swings past its angles at 40% and settles on them', () {
     // Each keyframe is reached exactly, whatever the easing between them.
-    expect(plan.card(2, t.fan + 380 * .4).turn, closeTo(20 * 1.42, 1e-9));
-    expect(plan.card(2, t.fan + 380 * .4).width, closeTo(OpeningPlan.cardWidth * 1.04, 1e-9));
-    expect(plan.card(0, t.fan + 380 * .6).turn, closeTo(-20 * .84, 1e-9));
+    expect(plan.card(2, t.fan + 380 * t.pace * .4).turn, closeTo(20 * 1.42, 1e-4));
+    expect(plan.card(2, t.fan + 380 * t.pace * .4).width, closeTo(OpeningPlan.cardWidth * 1.04, 1e-4));
+    expect(plan.card(0, t.fan + 380 * t.pace * .6).turn, closeTo(-20 * .84, 1e-4));
     for (var i = 0; i < 3; i++) {
-      final p = plan.card(i, t.fan + 380);
+      final p = plan.card(i, t.dealEnd);
       expect((p.centre, p.turn), (plan.fanAt(OpeningPlan.angles[i]), OpeningPlan.angles[i]));
     }
   });
@@ -66,11 +77,11 @@ void main() {
 
   test('each letter rises past its line, dips, and sits on it; then all lift away', () {
     expect(plan.letter(0, 0), (drop: 1.15, blur: 4.0, opacity: 0.0));
-    final settled = plan.letter(4, t.word + 4 * 60 + 480);
+    final settled = plan.letter(4, t.word + 4 * 40 + 280);
     expect((settled.drop, settled.opacity), (0, 1));
     expect(plan.letter(0, t.out + 220).opacity, 0);
     expect(plan.lineAt(t.line - 1), 0);
-    expect(plan.lineAt(t.line + 420), 1);
+    expect(plan.lineAt(t.line + 260), 1);
     expect(plan.lineAt(t.out + 240), 0);
   });
 
@@ -91,8 +102,8 @@ void main() {
     for (var i = 0; i < 3; i++) {
       final p = locked.card(i, t.end);
       final a = OpeningPlan.angles[i];
-      expect(p.centre.dx, closeTo(centre.dx + OpeningPlan.fanOffset(a).dx * .45, 1e-9));
-      expect(p.width, closeTo(OpeningPlan.cardWidth * .45, 1e-9));
+      expect(p.centre.dx, closeTo(centre.dx + OpeningPlan.fanOffset(a).dx * .55, 1e-9));
+      expect(p.width, closeTo(OpeningPlan.cardWidth * .55, 1e-9));
       expect(locked.titanium(i, t.end), 1);
     }
   });

@@ -15,31 +15,20 @@ class ScreenEntry extends Notifier<int> {
 
 final screenEntryProvider = NotifierProvider<ScreenEntry, int>(ScreenEntry.new);
 
-/// How long the first screens of a launch hold their entrance, for
+/// Whether the first screens of a launch hold their entrance, for
 /// something that plays over them first, such as the opening. Overridden in
 /// main.
-final initialEntranceHoldProvider = Provider<Duration>((ref) => Duration.zero);
+final initialEntranceHoldProvider = Provider<bool>((ref) => false);
 
-/// When held entrances may start, or null when nothing holds them.
-class EntranceHold extends Notifier<DateTime?> {
+/// While true, entrances wait, laid out but unseen; released, they play.
+class EntranceHold extends Notifier<bool> {
   @override
-  DateTime? build() {
-    final hold = ref.watch(initialEntranceHoldProvider);
-    return hold == Duration.zero ? null : DateTime.now().add(hold);
-  }
+  bool build() => ref.watch(initialEntranceHoldProvider);
 
-  void release() => state = null;
-
-  /// What is left of the hold, for an entrance starting now.
-  Duration get remaining {
-    final until = state;
-    if (until == null) return Duration.zero;
-    final left = until.difference(DateTime.now());
-    return left.isNegative ? Duration.zero : left;
-  }
+  void release() => state = false;
 }
 
-final entranceHoldProvider = NotifierProvider<EntranceHold, DateTime?>(EntranceHold.new);
+final entranceHoldProvider = NotifierProvider<EntranceHold, bool>(EntranceHold.new);
 
 /// Lays [children] out top to bottom, each rising and fading in a moment after
 /// the one above it. With the system's reduce-motion setting on, they appear
@@ -61,11 +50,14 @@ class RiseIn extends ConsumerWidget {
     if (MediaQuery.disableAnimationsOf(context)) {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: spaced);
     }
+    // Laid out, so the opening can find where to land, but not yet seen.
+    if (ref.watch(entranceHoldProvider)) {
+      return Opacity(opacity: 0, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: spaced));
+    }
     return Column(
       key: ValueKey(ref.watch(screenEntryProvider)),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: AnimateList(
-        delay: ref.read(entranceHoldProvider.notifier).remaining,
         interval: AppMotion.stagger,
         effects: [
           const FadeEffect(duration: AppMotion.enter, curve: AppMotion.ease),

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/widgets/rise_in.dart';
 import '../features/accounts/presentation/account_providers.dart';
 import '../features/accounts/presentation/account_stack.dart';
 import '../features/accounts/presentation/card_face.dart';
@@ -13,9 +14,12 @@ import '../features/opening/presentation/opening_providers.dart';
 import '../features/opening/presentation/titanium_card.dart';
 import '../features/today/presentation/today_total_card.dart';
 
-/// Plays the opening over the app on a cold start (docs/design-system.md,
-/// Opening). A tap anywhere skips to the end; with the system's remove
-/// animations setting on, it does not play at all.
+/// Plays bajet's part of the opening over the app on a cold start
+/// (docs/design-system.md, Opening). On Android 12 and later, Android's
+/// splash has already dealt the cards; this picks them up exactly where it
+/// left them, and only then has the splash taken away. Older phones have no
+/// animated splash, so this plays the deal too. A tap anywhere skips to the
+/// end; with the system's remove animations setting on, nothing moves.
 class OpeningOverlay extends ConsumerStatefulWidget {
   const OpeningOverlay({super.key});
 
@@ -24,35 +28,61 @@ class OpeningOverlay extends ConsumerStatefulWidget {
 }
 
 class _OpeningOverlayState extends ConsumerState<OpeningOverlay> with SingleTickerProviderStateMixin {
-  late final _clock = AnimationController(vsync: this, duration: Duration(milliseconds: OpeningTimes.end.round()))
+  static double _at(double ms) => ms / OpeningTimes.end;
+
+  late final AnimationController _clock = AnimationController(vsync: this, duration: Duration(milliseconds: OpeningTimes.end.round()))
+    ..addListener(() {
+      if (_clock.value >= _at(OpeningTimes.rise)) ref.read(entranceHoldProvider.notifier).release();
+    })
     ..addStatusListener((s) {
       if (s == AnimationStatus.completed) ref.read(openingProvider.notifier).finish();
     });
   OpeningPlan? _plan;
   OpeningTarget _aim = const NoTarget();
   var _aimed = false;
+  var _asked = false;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context) && !_clock.isAnimating) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(openingProvider.notifier).finish(skipped: true));
-    }
-  }
+  /// Until Android says whether it played the deal, nothing shows but the
+  /// graphite, which is what both Android's splash and the older launch
+  /// screen show too.
+  var _shown = false;
 
   /// Android can hand over its first frame before it has said how big the
-  /// screen is, so the clock waits for a real size, and the plan is redrawn
-  /// whenever the size changes.
+  /// screen is, so the hand-over waits for a real size, and the plan is
+  /// redrawn whenever the size changes.
   OpeningPlan _planFor(Size size) {
+    if (!_asked) {
+      _asked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _handOver());
+    }
     final plan = _plan;
     if (plan != null && plan.size == size && plan.target == _aim) return plan;
-    if (!_clock.isAnimating && !_clock.isCompleted && !MediaQuery.disableAnimationsOf(context)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_clock.isAnimating && !_clock.isCompleted) _clock.forward();
-      });
-    }
     return _plan = OpeningPlan(size, _aim);
   }
+
+  Future<void> _handOver() async {
+    final splash = ref.read(splashHandOverProvider);
+    final played = await splash.ready();
+    if (!mounted) return;
+    // Draw the fan where Android left it, then let Android's splash go.
+    setState(() {
+      _shown = true;
+      _clock.value = played ? _at(OpeningTimes.dealEnd) : 0;
+    });
+    // A frame can finish building a moment before it reaches the screen, so
+    // give the fan a couple of frames to be there before Android lets go;
+    // on the phone, one frame was not enough and a blank frame flashed.
+    for (var i = 0; i < 3; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted) WidgetsBinding.instance.scheduleFrame();
+    }
+    await splash.remove();
+    if (!mounted) return;
+    if (MediaQuery.disableAnimationsOf(context)) return _skip();
+    _clock.forward();
+  }
+
+  void _skip() => ref.read(openingProvider.notifier).finish();
 
   @override
   void dispose() {
@@ -79,9 +109,11 @@ class _OpeningOverlayState extends ConsumerState<OpeningOverlay> with SingleTick
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final size = box.biggest;
         if (size.isEmpty) return const ColoredBox(color: graphite);
+        _planFor(size);
+        if (!_shown) return const ColoredBox(color: graphite);
         return Listener(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: (_) => ref.read(openingProvider.notifier).finish(skipped: true),
+          onPointerDown: (_) => _skip(),
           child: AnimatedBuilder(
             animation: _clock,
             builder: (context, _) {
@@ -144,7 +176,7 @@ class _Frame extends ConsumerWidget {
           alignment: Alignment.center,
           transform: Matrix4.rotationZ(pose.turn * math.pi / 180)..scaleByDouble(pose.width / base, pose.width / base, 1, 1),
           child: Stack(children: [
-            if (titanium > 0) Opacity(opacity: titanium.clamp(0, 1), child: TitaniumCard(depth: i, width: base, sheen: i == 2 ? plan.sheenAt(ms) : null)),
+            if (titanium > 0) Opacity(opacity: titanium.clamp(0, 1), child: TitaniumCard(depth: i, width: base)),
             if (real != null && shown > 0) Opacity(opacity: shown.clamp(0, 1), child: real),
           ]),
         ),
@@ -153,11 +185,11 @@ class _Frame extends ConsumerWidget {
   }
 
   /// "bajet" under the fan, each letter rising from behind its own line, and
-  /// the titanium line beneath it with its point of light.
+  /// the titanium line beneath it.
   List<Widget> _word() {
-    const style = TextStyle(fontSize: 34, height: 1, fontWeight: FontWeight.w800, letterSpacing: .68, color: Color(0xFFE3E9EE));
-    final line = plan.lineAt(ms), spark = plan.sparkAt(ms), sparkOpacity = plan.sparkOpacityAt(ms) * line;
-    final x0 = plan.size.width / 2 - 66;
+    const style = wordmarkStyle;
+    final line = plan.lineAt(ms);
+    final x0 = plan.size.width / 2 - OpeningPlan.lineWidth / 2;
     return [
       Positioned(
         top: plan.wordTop,
@@ -173,7 +205,7 @@ class _Frame extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: .5),
                   child: Transform.translate(
-                    offset: Offset(0, letter.drop * 34),
+                    offset: Offset(0, letter.drop * wordmarkStyle.fontSize!),
                     child: Opacity(opacity: letter.opacity.clamp(0, 1), child: glyph),
                   ),
                 ),
@@ -185,7 +217,7 @@ class _Frame extends ConsumerWidget {
         Positioned(
           top: plan.lineTop,
           left: x0,
-          width: 132,
+          width: OpeningPlan.lineWidth,
           height: 2,
           child: Opacity(
             opacity: line.clamp(0, 1),
@@ -196,25 +228,6 @@ class _Frame extends ConsumerWidget {
                   borderRadius: BorderRadius.all(Radius.circular(2)),
                   gradient: LinearGradient(colors: [Color(0x00D8DBDF), Color(0xFFD8DBDF), Color(0xFFD8DBDF), Color(0x00D8DBDF)], stops: [0, .3, .7, 1]),
                 ),
-              ),
-            ),
-          ),
-        ),
-      if (sparkOpacity > 0)
-        Positioned(
-          // The point rides on the line, so it is squeezed towards the
-          // middle while the line is still drawing out.
-          top: plan.lineTop - 3,
-          left: plan.size.width / 2 + (spark * 132 - 66) * line - 4,
-          width: 8,
-          height: 8,
-          child: Opacity(
-            opacity: sparkOpacity.clamp(0, 1),
-            child: const DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Color(0x8CFFFFFF), blurRadius: 10, spreadRadius: 3)],
               ),
             ),
           ),
