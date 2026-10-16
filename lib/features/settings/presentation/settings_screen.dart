@@ -15,6 +15,8 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../coach/presentation/coach_providers.dart';
+import '../../lock/presentation/app_lock_sheet.dart';
+import '../../lock/presentation/lock_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import 'balance_sheet.dart';
 
@@ -126,6 +128,13 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Coach',
                 value: ref.watch(coachKeyProvider).value == null ? 'Add your key' : 'Key saved',
                 onTap: () => context.push(Routes.coachKey),
+              ),
+              SettingsRow(
+                icon: Icons.lock_outline_rounded,
+                tint: Tint.sky,
+                title: 'App lock',
+                value: lockSummary(ref.watch(lockSettingsProvider)),
+                onTap: () => showAppLockSheet(context),
               ),
               SettingsRow(
                 icon: Icons.contrast_rounded,
