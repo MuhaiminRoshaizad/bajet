@@ -17,6 +17,19 @@ abstract interface class AccountRepository {
   /// through entries, transfers and check-ins.
   Future<void> updateAccount(Account account);
 
+  /// What still points at the account, for the question before deleting it.
+  Future<AccountUse> accountUse(int id);
+
+  /// Deletes an account. With [moveTo], everything it held joins that
+  /// account: its entries, bills, starting balance and transfers, except
+  /// those between the two, which would move money from the account to
+  /// itself. Without it they are deleted too. Throws for the last account,
+  /// since there must always be one to log to.
+  Future<AccountRemoval> deleteAccount(int id, {int? moveTo});
+
+  /// Takes back a [deleteAccount], for undo.
+  Future<void> restoreAccount(AccountRemoval removal);
+
   /// Corrects what an account held on the opening date, for a figure given
   /// wrongly. Every balance of it since moves by the difference; nothing is
   /// logged.

@@ -3,6 +3,7 @@ import 'package:bajet/features/accounts/data/drift_account_repository.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart' as domain;
 import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
+import 'package:bajet/features/plan/data/drift_plan_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -83,5 +84,82 @@ void main() {
     expect(await accounts.watchTotalLook().first, const domain.TotalCardLook());
     await accounts.saveTotalLook(const domain.TotalCardLook(color: 0xFFCDB88A, finish: domain.CardFinish.gloss));
     expect(await accounts.watchTotalLook().first, const domain.TotalCardLook(color: 0xFFCDB88A, finish: domain.CardFinish.gloss));
+  });
+
+  group('deleting an account', () {
+    late DriftLedgerRepository ledger;
+    late DriftPlanRepository plan;
+    late int bank, cash, wallet;
+
+    // Cash with a lunch, a bill, a top-up from the bank and a transfer on to
+    // an e-wallet.
+    setUp(() async {
+      ledger = DriftLedgerRepository(db);
+      plan = DriftPlanRepository(db);
+      (bank, cash) = await bankAndCash();
+      wallet = await accounts.addAccount(const domain.AccountDraft(kind: domain.AccountKind.ewallet, name: 'Wallet', balance: 2000, look: slate));
+      await ledger.add(EntryDraft(day: d(2026, 7, 2), isIncome: false, amount: 1200, categoryKey: 'food', label: 'Lunch', accountId: cash));
+      await plan.addRecurring(name: 'Phone', isIncome: false, amount: 3000, categoryKey: 'bills', nextDue: d(2026, 8, 1), accountId: cash);
+      await accounts.transfer(fromId: bank, toId: cash, amount: 5000, day: d(2026, 7, 3));
+      await accounts.transfer(fromId: cash, toId: wallet, amount: 1000, day: d(2026, 7, 4));
+    });
+
+    Future<Map<int, int>> balances() async => {for (final a in await accounts.watchAccounts().first) a.id: a.balance};
+
+    test('counts what still points at it', () async {
+      final use = await accounts.accountUse(cash);
+      expect((use.entries, use.transfers, use.isEmpty), (1, 2, false));
+      expect(use.bills, ['Phone']);
+      expect((await accounts.accountUse(wallet)).entries, 0);
+    });
+
+    test('moving its history keeps the total, and the money lands in the account chosen', () async {
+      final before = await balances();
+      final total = await ledger.watchBalance().first;
+      await accounts.deleteAccount(cash, moveTo: bank);
+
+      final after = await balances();
+      expect(after.keys, [bank, wallet]);
+      expect(after[bank], before[bank]! + before[cash]!);
+      expect(after[wallet], before[wallet]);
+      expect(await ledger.watchBalance().first, total);
+      final lunch = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+      expect(lunch.accountId, bank);
+      expect((await plan.watchRecurring().first).single.accountId, bank);
+      // The top-up from the bank would now go from the bank to itself, so it
+      // is gone; the one on to the wallet comes from the bank instead.
+      final transfers = await accounts.watchTransfers().first;
+      expect([for (final t in transfers) (t.fromId, t.toId, t.amount)], [(bank, wallet, 1000)]);
+    });
+
+    test('deleting its history too takes its entries, bills and transfers with it', () async {
+      await accounts.deleteAccount(cash);
+      expect((await balances()).keys, [bank, wallet]);
+      expect(await ledger.watchSince(d(2026, 7, 1)).first, isEmpty);
+      expect(await plan.watchRecurring().first, isEmpty);
+      expect(await accounts.watchTransfers().first, isEmpty);
+      expect(await balances(), {bank: 100000, wallet: 2000});
+    });
+
+    test('undo puts every row back as it was, after either kind', () async {
+      final before = await balances();
+      for (final moveTo in [bank, null]) {
+        final removal = await accounts.deleteAccount(cash, moveTo: moveTo);
+        expect(removal.account.id, cash);
+        await accounts.restoreAccount(removal);
+        expect(await balances(), before);
+        expect([for (final a in await accounts.watchAccounts().first) a.name], ['Bank', 'Cash', 'Wallet']);
+        expect((await ledger.watchSince(d(2026, 7, 1)).first).single.accountId, cash);
+        expect((await plan.watchRecurring().first).single.accountId, cash);
+        expect([for (final t in await accounts.watchTransfers().first) (t.fromId, t.toId)], [(cash, wallet), (bank, cash)]);
+      }
+    });
+
+    test('the last account always stays', () async {
+      await accounts.deleteAccount(cash);
+      await accounts.deleteAccount(wallet, moveTo: bank);
+      expect(() => accounts.deleteAccount(bank), throwsStateError);
+      expect((await balances()).keys, [bank]);
+    });
   });
 }

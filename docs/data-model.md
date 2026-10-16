@@ -47,6 +47,14 @@ plus its entries and the transfers into it, less those out of it, since.
 | `finish`          | enum  | `matte` (default), `gloss`, `mirror`, `pearl`, `frosted` or `guilloche`; `leather` or `suede` for cash |
 | `sort_order`      | int   | Display order, set by dragging cards on Your accounts (`reorderAccounts`); the first account at the time takes anything logged without one |
 
+Deleting an account (`deleteAccount`) either moves what points at it into
+another account or deletes that too. Moving re-files its entries, bills and
+transfers under the other account and adds its `opening_balance` to that
+account's, so the total never changes; transfers between the two are deleted,
+since they would move money from an account to itself. The last account can
+never be deleted. One transaction does it all, and `restoreAccount` writes
+every changed row back for undo.
+
 ### `transfers`
 Money moved from one account to another. Neither spending nor income, so it is
 kept apart from `entries`: the total balance, the weekly allowance, Insights

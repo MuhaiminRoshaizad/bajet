@@ -242,6 +242,58 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
       ];
 
   @override
+  Future<AccountUse> accountUse(int id) async {
+    final firstId = _accountRows.value.firstOrNull?.id;
+    return AccountUse(
+      entries: _entries.value.where((e) => (e.accountId ?? firstId) == id).length,
+      transfers: _transfers.value.where((t) => t.touches(id)).length,
+      bills: [for (final r in _recurring.value) if ((r.accountId ?? firstId) == id) r.name],
+    );
+  }
+
+  @override
+  Future<AccountRemoval> deleteAccount(int id, {int? moveTo}) async {
+    if (moveTo == id) throw ArgumentError.value(moveTo, 'moveTo');
+    if (_accountRows.value.length < 2) throw StateError('The last account cannot be deleted.');
+    final removal = _FakeAccountRemoval(accounts.firstWhere((a) => a.id == id), movedTo: moveTo, rows: _accountRows.value, entries: _entries.value, transfers: _transfers.value, recurring: _recurring.value);
+    final firstId = _accountRows.value.first.id;
+    bool mine(int? accountId) => (accountId ?? firstId) == id;
+    final gone = _accountRows.value.firstWhere((a) => a.id == id);
+    if (moveTo != null) {
+      _entries.value = [
+        for (final e in _entries.value)
+          mine(e.accountId)
+              ? Entry(id: e.id, day: e.day, isIncome: e.isIncome, amount: e.amount, categoryKey: e.categoryKey, label: e.label, note: e.note, receipt: e.receipt, event: e.event, accountId: moveTo)
+              : e,
+      ];
+      _recurring.value = [for (final r in _recurring.value) mine(r.accountId) ? r.copyWith(accountId: moveTo) : r];
+      _transfers.value = [
+        for (final t in _transfers.value)
+          if (!(t.touches(id) && t.touches(moveTo)))
+            t.touches(id) ? Transfer(id: t.id, day: t.day, fromId: t.fromId == id ? moveTo : t.fromId, toId: t.toId == id ? moveTo : t.toId, amount: t.amount, note: t.note) : t,
+      ];
+      _accountRows.value = [for (final a in _accountRows.value) a.id == moveTo ? _withOpening(a, a.openingBalance + gone.openingBalance) : a];
+    } else {
+      _entries.value = [..._entries.value.where((e) => !mine(e.accountId))];
+      _recurring.value = [..._recurring.value.where((r) => !mine(r.accountId))];
+      _transfers.value = [..._transfers.value.where((t) => !t.touches(id))];
+    }
+    _accountRows.value = [..._accountRows.value.where((a) => a.id != id)];
+    _entriesChanged();
+    return removal;
+  }
+
+  @override
+  Future<void> restoreAccount(AccountRemoval removal) async {
+    final r = removal as _FakeAccountRemoval;
+    _accountRows.value = r.rows;
+    _entries.value = r.entries;
+    _transfers.value = r.transfers;
+    _recurring.value = r.recurring;
+    _entriesChanged();
+  }
+
+  @override
   Future<void> setOpeningBalance(int accountId, int balance) async =>
       _accountRows.value = [for (final x in _accountRows.value) x.id == accountId ? _withOpening(x, balance) : x];
 
@@ -626,4 +678,14 @@ class FakeSplash implements SplashHandOver {
 
   @override
   Future<void> remove() async => removed = true;
+}
+
+/// The whole world as it was before a delete: the fake puts it all back.
+class _FakeAccountRemoval extends AccountRemoval {
+  _FakeAccountRemoval(super.account, {super.movedTo, required this.rows, required this.entries, required this.transfers, required this.recurring});
+
+  final List<Account> rows;
+  final List<Entry> entries;
+  final List<Transfer> transfers;
+  final List<RecurringItem> recurring;
 }

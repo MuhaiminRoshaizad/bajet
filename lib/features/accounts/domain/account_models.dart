@@ -109,3 +109,27 @@ class Transfer {
 
   bool touches(int accountId) => fromId == accountId || toId == accountId;
 }
+
+/// What still points at an account, which deleting it has to deal with.
+class AccountUse {
+  const AccountUse({required this.entries, required this.transfers, required this.bills});
+
+  final int entries;
+  final int transfers;
+
+  /// The names of the bills and pay paid from or into it.
+  final List<String> bills;
+
+  bool get isEmpty => entries == 0 && transfers == 0 && bills.isEmpty;
+}
+
+/// What [AccountRepository.deleteAccount] took away, kept so Undo can put it
+/// back. Only the repository that made it can restore it.
+class AccountRemoval {
+  const AccountRemoval(this.account, {this.movedTo});
+
+  final Account account;
+
+  /// The account its history joined, or null when that was deleted too.
+  final int? movedTo;
+}
