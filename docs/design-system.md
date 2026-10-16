@@ -292,6 +292,11 @@ inline line of text where it is.
   event, bill, income, favourite or entry opens its form, with Delete at the
   foot (`DeleteButton`). Deleting always asks first (`confirmDelete`) and
   then offers Undo.
+- An account is deleted from the foot of its Edit card sheet. One with
+  history asks where that goes, moving it to another account by default so
+  no past figure changes; *Delete them too* names the bills it takes. From
+  the card page, the page closes first so the card leaves Your accounts in
+  view. The last account's Delete is disabled, with the reason under it.
 - Tapping Today's stack opens Your accounts. Settings → Balance opens the
   balance sheet: *Match what you really have* goes to the check-in, which
   logs any difference to its account; *Fix the starting balance* rewrites

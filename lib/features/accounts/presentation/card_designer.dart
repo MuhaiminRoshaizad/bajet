@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/account_models.dart';
@@ -11,12 +12,16 @@ import '../domain/photo_colours.dart';
 import 'account_providers.dart';
 import 'card_face.dart';
 import 'card_palette.dart';
+import 'delete_account.dart';
 import 'photo_match_screen.dart';
 import 'provider_picker.dart';
 
 /// Changes how [account]'s card looks: its finish, colour and nickname. Its
-/// balance changes only through what is logged.
-Future<void> showCardDesigner(BuildContext context, Account account) => _open(context, _CardDesigner(account: account));
+/// balance changes only through what is logged. Returns the owner's choice
+/// when they asked to delete the account instead; the caller deletes it once
+/// it has closed whatever showed the card.
+Future<DeleteChoice?> showCardDesigner(BuildContext context, Account account) =>
+    showModalBottomSheet<DeleteChoice>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _CardDesigner(account: account));
 
 /// Changes how the total card looks.
 Future<void> showTotalCardDesigner(BuildContext context) => _open(context, const _CardDesigner());
@@ -183,6 +188,26 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  /// Delete, below Save. The last account stays, since there must always be
+  /// one to log to.
+  List<Widget> _delete(Account account) {
+    final all = ref.watch(accountsProvider).value ?? const <Account>[];
+    final last = all.length < 2;
+    return [
+      const SizedBox(height: AppSpacing.s),
+      DeleteButton(label: 'Delete account', onPressed: last ? null : () => _askDelete(account, all)),
+      if (last) ...[
+        const SizedBox(height: AppSpacing.xs),
+        Text("It's your only account. Add another before deleting this one.", textAlign: TextAlign.center, style: TextStyle(color: context.colors.muted, fontSize: 12)),
+      ],
+    ];
+  }
+
+  Future<void> _askDelete(Account account, List<Account> all) async {
+    final choice = await askDeleteAccount(context, ref.read(accountRepositoryProvider), account, all);
+    if (choice != null && mounted) Navigator.of(context).pop(choice);
+  }
+
   @override
   Widget build(BuildContext context) {
     final kind = _newKind;
@@ -294,7 +319,10 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
-          child: FilledButton(onPressed: _save, child: Text(_isTotal ? 'Save total card' : kind == null ? 'Save card' : 'Add account')),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            FilledButton(onPressed: _save, child: Text(_isTotal ? 'Save total card' : kind == null ? 'Save card' : 'Add account')),
+            if (_account case final editing?) ..._delete(editing),
+          ]),
         ),
       ]),
     );

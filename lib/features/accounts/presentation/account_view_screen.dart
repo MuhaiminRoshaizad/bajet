@@ -14,6 +14,7 @@ import 'account_activity.dart';
 import 'account_providers.dart';
 import 'card_designer.dart';
 import 'card_face.dart';
+import 'delete_account.dart';
 import 'move_money_sheet.dart';
 
 /// Where each account's card sits on the page it was opened from, so the card
@@ -60,6 +61,19 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
     super.dispose();
   }
 
+  /// Opens the card's designer. If the owner deleted the account from it,
+  /// the page flies the card home first, so the card leaves Your accounts
+  /// where they can see it go.
+  Future<void> _edit(Account account, List<Account> all) async {
+    final choice = await showCardDesigner(context, account);
+    if (choice == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(accountRepositoryProvider);
+    await Navigator.of(context).maybePop();
+    await Future<void>.delayed(AccountViewScreen.reverseDuration);
+    await deleteAccount(messenger, repo, account, choice, all);
+  }
+
   @override
   Widget build(BuildContext context) {
     final accounts = ref.watch(accountsProvider).value;
@@ -99,7 +113,7 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
                   IconButton(
                     tooltip: 'Edit this card',
                     icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => showCardDesigner(context, accounts[_index.clamp(0, accounts.length - 1)]),
+                    onPressed: () => _edit(accounts[_index.clamp(0, accounts.length - 1)], accounts),
                   ),
                 ]),
               ),

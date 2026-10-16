@@ -9,9 +9,11 @@ import '../domain/account_models.dart';
 import 'account_providers.dart';
 import 'card_designer.dart';
 import 'card_face.dart';
+import 'delete_account.dart';
 
 /// Every card's look in one list, the total card first: each row opens the
-/// card designer, and a new account can be added at the end.
+/// card designer, where an account can also be deleted, and a new account
+/// can be added at the end.
 class AccountSettingsScreen extends ConsumerWidget {
   const AccountSettingsScreen({super.key});
 
@@ -39,7 +41,12 @@ class AccountSettingsScreen extends ConsumerWidget {
                   swatch: Color(a.look.color),
                   title: a.name,
                   value: [a.nickname ?? kindLabel(a.kind), Money.format(a.balance)].join(' · '),
-                  onTap: () => showCardDesigner(context, a),
+                  onTap: () async {
+                    final choice = await showCardDesigner(context, a);
+                    if (choice != null && context.mounted) {
+                      await deleteAccount(ScaffoldMessenger.of(context), ref.read(accountRepositoryProvider), a, choice, accounts);
+                    }
+                  },
                 ),
             ],
           ),

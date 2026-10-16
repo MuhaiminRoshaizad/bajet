@@ -26,12 +26,13 @@ Future<bool> confirmDelete(BuildContext context, {required String title, require
 }
 
 /// The Delete at the foot of an edit sheet: outlined in the warning colour,
-/// below Save, so it is never mistaken for the way to finish.
+/// below Save, so it is never mistaken for the way to finish. Without
+/// [onPressed] it is shown disabled, for something that cannot go yet.
 class DeleteButton extends StatelessWidget {
   const DeleteButton({super.key, required this.label, required this.onPressed});
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
