@@ -1,5 +1,4 @@
 import 'package:bajet/features/launch/domain/launch_link.dart';
-import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -30,13 +29,8 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Type the amount'), findsOneWidget);
   });
 
-  testWidgets('shortcuts and the widget follow favourites and the week, without the balance', (tester) async {
-    final world = await pumpApp(tester, seed: (w) {
-      w.favourites.add(label: 'Lunch', categoryKey: 'food', amount: 800);
-      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1200, categoryKey: 'food'));
-    });
+  testWidgets('the shortcuts follow the favourites', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.favourites.add(label: 'Lunch', categoryKey: 'food', amount: 800));
     expect(world.home.shortcuts, [(1, 'Lunch')]);
-    expect(world.home.widget!.weekLine, 'RM38.00 left this week');
-    expect(world.home.widget!.favourites, [(1, 'Lunch')]);
   });
 }

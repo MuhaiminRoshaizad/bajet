@@ -510,12 +510,11 @@ class FakePhotoColours implements PhotoColours {
   Future<PhotoSample?> pick(PhotoSource source) async => next;
 }
 
-/// The home screen without a launcher: records what bajet sends it, and
-/// [launch] stands in for a tap on a shortcut or the widget.
+/// The home screen without a launcher: records the shortcuts bajet sets, and
+/// [launch] stands in for a tap on one.
 class FakeHomeSurface implements HomeSurface {
   final _links = StreamController<LaunchLink>.broadcast();
   List<(int, String)>? shortcuts;
-  WidgetSnapshot? widget;
 
   void launch(LaunchLink link) => _links.add(link);
 
@@ -524,9 +523,6 @@ class FakeHomeSurface implements HomeSurface {
 
   @override
   Future<void> setShortcuts(List<(int, String)> favourites) async => shortcuts = favourites;
-
-  @override
-  Future<void> updateWidget(WidgetSnapshot snapshot) async => widget = snapshot;
 }
 
 class FakeCoachKeys implements CoachKeyStore {

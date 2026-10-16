@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/money/money.dart';
 import '../../ledger/presentation/ledger_providers.dart';
-import '../../plan/presentation/plan_providers.dart';
 import '../data/home_surface.dart';
 import '../domain/launch_link.dart';
 
@@ -23,20 +21,10 @@ class PendingLaunchController extends Notifier<LaunchLink?> {
 
 final pendingLaunchProvider = NotifierProvider<PendingLaunchController, LaunchLink?>(PendingLaunchController.new);
 
-/// Keeps the launcher shortcuts and the widget in step with favourites and
-/// the week. Watched for the app's lifetime; it does its work as a side
-/// effect each time an input changes.
+/// Keeps the launcher shortcuts in step with the favourites. Watched for the
+/// app's lifetime; it does its work as a side effect each time they change.
 final homeSurfaceSyncProvider = Provider<void>((ref) {
   final favourites = ref.watch(favouritesProvider).value;
-  final spent = ref.watch(weekSpentProvider);
-  final cap = ref.watch(settingsProvider).value?.weeklyCap;
-  if (favourites == null || spent == null || cap == null) return;
-  final surface = ref.watch(homeSurfaceProvider);
-  final named = [for (final f in favourites) (f.id, f.label)];
-  final left = cap - spent;
-  unawaited(surface.setShortcuts(named));
-  unawaited(surface.updateWidget(WidgetSnapshot(
-    weekLine: left >= 0 ? '${Money.format(left)} left this week' : '${Money.format(-left)} over this week',
-    favourites: named.take(2).toList(),
-  )));
+  if (favourites == null) return;
+  unawaited(ref.watch(homeSurfaceProvider).setShortcuts([for (final f in favourites) (f.id, f.label)]));
 });

@@ -80,7 +80,7 @@ A folder under `core/` appears only once two features need it.
 | `backup` | JSON export through the share sheet and restore from a picked file |
 | `checkin` | The Sunday check-in: compare each account with what it really holds (the bank app as a whole while there is one account), log any gap to that account, look back at the week |
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
-| `launch` | Launcher shortcuts and the home-screen widget: one `bajet://log` link format, a pending launch held until the shell can open the logger, and syncing what the widget shows |
+| `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
 | `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day, given the week and month as context; the week's summary can still be copied |
 | `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
@@ -161,6 +161,6 @@ build hook at build time. The app itself never downloads anything.
 |-------|-----------------------------------------------------------------------|
 | v1    | Log, Today, weekly ring, history, basic runway, coach-ready export    |
 | v1.1  | Insights, text, PDF and CSV reports, Sunday check-in, receipts        |
-| v1.2  | What-if sliders, home-screen widget, launcher shortcuts               |
+| v1.2  | What-if sliders, launcher shortcuts                                   |
 | v1.3  | Coach                                                                 |
 | later | Demo mode (`--dart-define=BAJET_DEMO=true`, in-memory made-up data), CI |

@@ -25,8 +25,8 @@ without a key, nothing leaves the phone.
   habits, for this week, this month or all time.
 - **Reports** share any of those periods as text, a PDF or a CSV file.
 - **Sunday check-in** compares the balance with the bank and logs any gap.
-- **Home screen**: a widget with what is left of the week, and long-press
-  shortcuts, both opening the logger filled in from a favourite.
+- **Launcher shortcuts**: long-press the app icon to open the logger, empty
+  or filled in from a favourite.
 - **Coach** answers questions about your money from this week's and month's
   figures, using your own Anthropic key, up to ten a day. The week's summary
   can also be copied to paste anywhere.

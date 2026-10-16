@@ -139,6 +139,8 @@ in rose.
 
 ## 013: A native widget through home_widget
 
+**Superseded by 016.**
+
 **Decided:** the home-screen widget is a small Android layout
 (`BajetWidgetProvider`, `res/layout/bajet_widget.xml`) fed by the
 `home_widget` package; launcher shortcuts use Flutter's own
@@ -188,3 +190,17 @@ Twenty-seven days keeps one month's window closed before the next opens.
 **Costs:** a projection with a window dips lower between a window's start and
 end than the money usually does. Schema version 3 and backup format 3 add
 `window_days`; older databases and backups read as fixed days.
+
+## 016: No home-screen widget for now
+
+**Decided:** the home-screen widget and the `home_widget` package are
+removed. The launcher shortcuts stay, still opening the logger through a
+`bajet://log` link.
+
+**Why:** the widget looked out of place next to the rest of the app, and it
+would show what is left of the week on a screen anyone can see, which the
+app lock cannot cover. A widget will come back later, redesigned, and that
+redesign has to settle how it behaves while the app is locked.
+
+**Costs:** logging from the home screen now takes a long-press on the icon
+instead of one tap.

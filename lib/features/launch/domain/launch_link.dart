@@ -1,6 +1,6 @@
-/// Where a launch from outside the app should land. The home-screen widget
-/// and the launcher shortcuts both speak this one link format:
-/// `bajet://log`, or `bajet://log?favourite=<id>` to fill one in.
+/// Where a launch from outside the app should land. Every launcher shortcut
+/// speaks this one link format: `bajet://log`, or
+/// `bajet://log?favourite=<id>` to fill one in.
 class LaunchLink {
   const LaunchLink.log({this.favouriteId});
 
@@ -23,16 +23,4 @@ class LaunchLink {
 
   @override
   int get hashCode => favouriteId.hashCode;
-}
-
-/// What the home-screen widget shows. Kept short and free of the balance,
-/// since a home screen is seen by anyone holding the phone.
-class WidgetSnapshot {
-  const WidgetSnapshot({required this.weekLine, required this.favourites});
-
-  /// Such as "RM15.80 left this week".
-  final String weekLine;
-
-  /// Up to two favourites as (id, label) for one-tap buttons.
-  final List<(int, String)> favourites;
 }
