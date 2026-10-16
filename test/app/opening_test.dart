@@ -2,7 +2,9 @@ import 'package:bajet/app/opening_overlay.dart';
 import 'package:bajet/core/widgets/rise_in.dart';
 import 'package:bajet/features/accounts/presentation/account_stack.dart';
 import 'package:bajet/features/lock/domain/app_lock.dart';
+import 'package:bajet/features/opening/domain/opening_timeline.dart';
 import 'package:bajet/features/opening/presentation/opening_providers.dart';
+import 'package:bajet/features/opening/presentation/titanium_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,6 +34,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(OpeningOverlay), findsNothing);
     expect(stackOpacity(tester), 1);
+  });
+
+  testWidgets('a first frame with no screen size yet still centres the fan', (tester) async {
+    // Android can draw the first frame before it reports the screen's size.
+    await pumpApp(tester, settle: false, seed: (_) => tester.view.physicalSize = Size.zero, overrides: (_) => opening);
+    await tester.pump();
+    tester.view.physicalSize = const Size(1080, 2340);
+    await play(tester, 400);
+    final front = tester.getCenter(find.byType(TitaniumCard).last);
+    expect(front.dx, closeTo(180, .5));
+    expect(front.dy, closeTo(780 / 2 - 20 - 1.85 * OpeningPlan.k, .5));
+    await play(tester, 3000);
   });
 
   testWidgets('a tap skips straight to Today', (tester) async {

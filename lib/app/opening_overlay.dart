@@ -29,17 +29,29 @@ class _OpeningOverlayState extends ConsumerState<OpeningOverlay> with SingleTick
       if (s == AnimationStatus.completed) ref.read(openingProvider.notifier).finish();
     });
   OpeningPlan? _plan;
+  OpeningTarget _aim = const NoTarget();
   var _aimed = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_clock.isAnimating || _clock.isCompleted) return;
-    if (MediaQuery.disableAnimationsOf(context)) {
+    if (MediaQuery.disableAnimationsOf(context) && !_clock.isAnimating) {
       WidgetsBinding.instance.addPostFrameCallback((_) => ref.read(openingProvider.notifier).finish(skipped: true));
-    } else {
-      _clock.forward();
     }
+  }
+
+  /// Android can hand over its first frame before it has said how big the
+  /// screen is, so the clock waits for a real size, and the plan is redrawn
+  /// whenever the size changes.
+  OpeningPlan _planFor(Size size) {
+    final plan = _plan;
+    if (plan != null && plan.size == size && plan.target == _aim) return plan;
+    if (!_clock.isAnimating && !_clock.isCompleted && !MediaQuery.disableAnimationsOf(context)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_clock.isAnimating && !_clock.isCompleted) _clock.forward();
+      });
+    }
+    return _plan = OpeningPlan(size, _aim);
   }
 
   @override
@@ -66,6 +78,7 @@ class _OpeningOverlayState extends ConsumerState<OpeningOverlay> with SingleTick
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final size = box.biggest;
+        if (size.isEmpty) return const ColoredBox(color: graphite);
         return Listener(
           behavior: HitTestBehavior.opaque,
           onPointerDown: (_) => ref.read(openingProvider.notifier).finish(skipped: true),
@@ -75,10 +88,9 @@ class _OpeningOverlayState extends ConsumerState<OpeningOverlay> with SingleTick
               final ms = _clock.value * OpeningTimes.end;
               if (!_aimed && ms >= OpeningTimes.fly) {
                 _aimed = true;
-                _plan = OpeningPlan(size, _target());
+                _aim = _target();
               }
-              final plan = _plan ??= OpeningPlan(size, const NoTarget());
-              return _Frame(plan: plan, ms: ms, base: size.width - 32);
+              return _Frame(plan: _planFor(size), ms: ms, base: size.width - 32);
             },
           ),
         );
