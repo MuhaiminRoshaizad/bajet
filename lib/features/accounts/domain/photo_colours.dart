@@ -3,17 +3,70 @@ import 'dart:typed_data';
 
 enum PhotoSource { camera, gallery }
 
-/// Takes colours from a photo of the owner's own card, for its look. Only
-/// colours come back; the photo is never kept, so no card number ever sits
-/// in the app, its backups or an export.
+/// Takes a photo of the owner's own card, for its colour. The photo is held
+/// in memory only, small, while a colour is picked from it; it is never
+/// written anywhere the app keeps, so no card number sits in the app, its
+/// backups or an export.
 abstract interface class PhotoColours {
-  /// Up to five colours as ARGB, most common first; null if cancelled.
-  Future<List<int>?> pick(PhotoSource source);
+  /// The photo, at most [PhotoSample.longSide] pixels on its long side; null
+  /// if cancelled.
+  Future<PhotoSample?> pick(PhotoSource source);
+}
+
+/// A small photo as RGBA pixels, row by row.
+class PhotoSample {
+  const PhotoSample({required this.width, required this.height, required this.rgba});
+
+  /// Large enough to tap a colour precisely, small enough to keep no detail.
+  static const longSide = 480;
+
+  final int width;
+  final int height;
+  final Uint8List rgba;
+
+  /// The card-shaped frame the card is lined up in, as a fraction of the
+  /// photo: centred, 80% of its width, 1.9 times as wide as tall, smaller
+  /// if the photo is too short for that.
+  ({double left, double top, double width, double height}) get frame {
+    var w = 0.8;
+    var h = w * width / height / 1.9;
+    if (h > 0.9) (w, h) = (w * 0.9 / h, 0.9);
+    return (left: (1 - w) / 2, top: (1 - h) / 2, width: w, height: h);
+  }
+
+  /// The pixels inside [frame].
+  Uint8List get framed {
+    final f = frame;
+    final x0 = (f.left * width).round(), x1 = ((f.left + f.width) * width).round();
+    final y0 = (f.top * height).round(), y1 = ((f.top + f.height) * height).round();
+    final out = BytesBuilder(copy: false);
+    for (var y = y0; y < y1; y++) {
+      out.add(Uint8List.sublistView(rgba, (y * width + x0) * 4, (y * width + x1) * 4));
+    }
+    return out.takeBytes();
+  }
+
+  /// The colour at a point given as fractions of the photo, averaged over
+  /// the pixels around it so one speck of noise does not decide it.
+  int colourAt(double fx, double fy) {
+    final cx = (fx.clamp(0.0, 1.0) * (width - 1)).round(), cy = (fy.clamp(0.0, 1.0) * (height - 1)).round();
+    var r = 0, g = 0, b = 0, n = 0;
+    for (var y = math.max(0, cy - 2); y <= math.min(height - 1, cy + 2); y++) {
+      for (var x = math.max(0, cx - 2); x <= math.min(width - 1, cx + 2); x++) {
+        final i = (y * width + x) * 4;
+        r += rgba[i];
+        g += rgba[i + 1];
+        b += rgba[i + 2];
+        n++;
+      }
+    }
+    return 0xFF000000 | (r ~/ n) << 16 | (g ~/ n) << 8 | b ~/ n;
+  }
 }
 
 /// The most common distinct colours in RGBA [pixels], up to [count]. Pixels
 /// are grouped by their top four bits per channel and each group averaged;
-/// a group too close to one already chosen is skipped, so the five are
+/// a group too close to one already chosen is skipped, so the colours are
 /// genuinely different. Mostly see-through pixels are ignored.
 List<int> commonColours(Uint8List pixels, {int count = 5}) {
   final groups = <int, List<int>>{};

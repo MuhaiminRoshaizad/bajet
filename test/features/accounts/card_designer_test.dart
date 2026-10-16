@@ -152,12 +152,62 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Choose a photo'));
     await tester.pumpAndSettle();
+    // The table fills most of the photo, but only the frame is counted, so
+    // the card's colour comes first.
+    expect(find.text('From inside the frame'), findsOneWidget);
     expect(find.bySemanticsLabel('Colour 2 from your photo'), findsOneWidget);
+    await tester.tap(find.text('Use this colour'));
+    await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Save card'));
     await tester.tap(find.text('Save card'));
     await tester.pumpAndSettle();
     expect(world.accounts.single.look, const CardLook(color: 0xFF7A1F2B));
+  });
+
+  testWidgets('tapping the photo takes the exact colour under the finger', (tester) async {
+    final world = await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.tap(find.text('Main account').hitTestable().first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Edit this card'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Match my card'));
+    await tester.tap(find.text('Match my card'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Take a photo'));
+    await tester.pumpAndSettle();
+
+    // The photo's top left corner is table.
+    final photo = tester.getRect(find.byKey(const ValueKey('photo')));
+    await tester.tapAt(photo.topLeft + const Offset(4, 4));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Use this colour'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save card'));
+    await tester.tap(find.text('Save card'));
+    await tester.pumpAndSettle();
+    expect(world.accounts.single.look.color, 0xFFE8E8E8);
+  });
+
+  testWidgets('cancelling the photo leaves the colour as it was', (tester) async {
+    final world = await pumpApp(tester);
+    world.photos.next = null;
+    await openAccounts(tester);
+    await tester.tap(find.text('Main account').hitTestable().first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Edit this card'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Match my card'));
+    await tester.tap(find.text('Match my card'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose a photo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Use this colour'), findsNothing);
+    await tester.ensureVisible(find.text('Save card'));
+    await tester.tap(find.text('Save card'));
+    await tester.pumpAndSettle();
+    expect(world.accounts.single.look.color, firstAccountColor);
   });
 
   testWidgets("an upgrade's Main account can be renamed to the bank it really is, keeping its colour", (tester) async {

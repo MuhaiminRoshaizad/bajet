@@ -112,10 +112,16 @@ filters it; a name not listed is used from its last row ("Not listed? Use
 …") or simply left typed. A well-known one starts on a swatch near its
 colour (`startingSwatch`). The sheet goes in the order it is filled in:
 provider, amount, nickname, then finish, colour and photo match, with its
-Add or Save button pinned below the scroll. "Match my card" takes up to five colours
-from a photo of the owner's real card (`commonColours`) to pick from; the
-photo is read small, only the chosen colour is saved, and the picker's copy
-is deleted at once, so no card number is ever kept. These card
+Add or Save button pinned below the scroll. "Match my card" (or "Match my
+wallet") asks, with two large buttons, to take or choose a photo of the
+owner's real card, then shows it full screen (`PhotoMatchScreen`) with a
+card-shaped frame, 80% of the photo's width and 1.9 times as wide as tall.
+The three most common colours inside the frame (`commonColours`) are offered
+first, and a tap or drag anywhere takes the colour under the finger,
+averaged over the pixels around it and shown in a magnifier held above it,
+with a selection click as it changes. The photo is read at most 480 px on
+its long side and held in memory only; only the chosen colour is saved, and
+the picker's copy is deleted at once, so no card number is ever kept. These card
 colours are the owner's data, so they are the one place colours do not come
 from the theme; the total card, with no colour of its own, takes the app's
 surface.

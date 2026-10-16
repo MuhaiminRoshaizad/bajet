@@ -11,6 +11,7 @@ import '../domain/photo_colours.dart';
 import 'account_providers.dart';
 import 'card_face.dart';
 import 'card_palette.dart';
+import 'photo_match_screen.dart';
 import 'provider_picker.dart';
 
 /// Changes how [account]'s card looks: its finish, colour and nickname. Its
@@ -98,8 +99,6 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   final _balance = TextEditingController();
   late String _name = _account?.name ?? (_newKind == AccountKind.cash ? 'Cash' : '');
 
-  /// Colours taken from a photo of the real card, to pick from.
-  List<int> _fromPhoto = const [];
   bool _tried = false;
 
   AccountKind? get _kind => _account?.kind ?? _newKind;
@@ -146,15 +145,16 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
         _ink = swatch?.ink;
       });
 
-  Future<void> _match(PhotoSource source) async {
-    final colours = await ref.read(photoColoursProvider).pick(source);
-    if (colours == null || !mounted) return;
+  Future<void> _match() async {
+    final source = await showModalBottomSheet<PhotoSource>(context: context, useSafeArea: true, builder: (_) => const _PhotoSourceChooser());
+    if (source == null || !mounted) return;
+    final photo = await ref.read(photoColoursProvider).pick(source);
+    if (photo == null || !mounted) return;
+    final colour = await showPhotoMatch(context, photo);
+    if (colour == null || !mounted) return;
     setState(() {
-      _fromPhoto = colours;
-      if (colours.isNotEmpty) {
-        _color = colours.first;
-        _ink = null;
-      }
+      _color = colour;
+      _ink = null;
     });
   }
 
@@ -271,16 +271,14 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                   for (final s in swatches) _Swatch(name: s.name, color: Color(s.color), selected: _color == s.color && _ink == s.ink, onTap: () => _pick(s)),
                 ]),
                 const SizedBox(height: AppSpacing.s),
-                _PhotoMatch(
-                  label: _isTotal ? 'Match a photo' : _isCash ? 'Match my wallet' : 'Match my card',
-                  colours: _fromPhoto,
-                  selected: _color,
-                  onSource: _match,
-                  onPick: (c) => setState(() {
-                    _color = c;
-                    _ink = null;
-                  }),
-                ),
+                Row(children: [
+                  TextButton.icon(
+                    onPressed: _match,
+                    icon: const Icon(Icons.colorize_outlined),
+                    label: Text(_isTotal ? 'Match a photo' : _isCash ? 'Match my wallet' : 'Match my card'),
+                  ),
+                  Expanded(child: Text("The photo isn't kept.", style: TextStyle(color: context.colors.muted, fontSize: 12))),
+                ]),
               ],
             ),
           ),
@@ -294,42 +292,35 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   }
 }
 
-/// Takes up to five colours from a photo of the real card and offers them as
-/// swatches. Only the colour picked is saved; the photo is gone at once.
-class _PhotoMatch extends StatelessWidget {
-  const _PhotoMatch({required this.label, required this.colours, required this.selected, required this.onSource, required this.onPick});
-
-  final String label;
-  final List<int> colours;
-  final int? selected;
-  final ValueChanged<PhotoSource> onSource;
-  final ValueChanged<int> onPick;
+/// Where the photo comes from, as two large buttons.
+class _PhotoSourceChooser extends StatelessWidget {
+  const _PhotoSourceChooser();
 
   @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        MenuAnchor(
-          menuChildren: [
-            MenuItemButton(leadingIcon: const Icon(Icons.photo_camera_outlined), onPressed: () => onSource(PhotoSource.camera), child: const Text('Take a photo')),
-            MenuItemButton(leadingIcon: const Icon(Icons.photo_library_outlined), onPressed: () => onSource(PhotoSource.gallery), child: const Text('Choose a photo')),
-          ],
-          builder: (context, menu, _) => TextButton.icon(
-            onPressed: () => menu.isOpen ? menu.close() : menu.open(),
-            icon: const Icon(Icons.colorize_outlined),
-            label: Text(label),
-          ),
-        ),
-        Expanded(child: Text("The photo isn't kept.", style: TextStyle(color: c.muted, fontSize: 12))),
-      ]),
-      if (colours.isNotEmpty)
-        Wrap(spacing: AppSpacing.xs, children: [
-          for (final (i, colour) in colours.indexed)
-            _Swatch(name: 'Colour ${i + 1} from your photo', color: Color(colour), selected: selected == colour, onTap: () => onPick(colour)),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Text('Match the colour', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: AppSpacing.xs),
+          Text("Take or choose a photo of it. Only the colour you pick is saved; the photo isn't kept.", style: TextStyle(color: context.colors.muted)),
+          const SizedBox(height: AppSpacing.l),
+          Row(children: [
+            for (final (source, label, icon) in const [
+              (PhotoSource.camera, 'Take a photo', Icons.photo_camera_outlined),
+              (PhotoSource.gallery, 'Choose a photo', Icons.photo_library_outlined),
+            ]) ...[
+              if (source == PhotoSource.gallery) const SizedBox(width: AppSpacing.s),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(source),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 96), padding: const EdgeInsets.all(AppSpacing.s)),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon), const SizedBox(height: AppSpacing.xs), Text(label, textAlign: TextAlign.center)]),
+                ),
+              ),
+            ],
+          ]),
         ]),
-    ]);
-  }
+      );
 }
 
 class _Label extends StatelessWidget {

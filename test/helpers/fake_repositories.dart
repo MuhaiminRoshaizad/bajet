@@ -486,12 +486,28 @@ class FakeReceipts implements ReceiptStore {
   Future<void> keepOnly(Set<String> names) async => kept = names;
 }
 
-/// A camera that always sees the same card: [next] is what a photo yields.
+/// A camera that always sees the same thing: [next] is the photo it takes,
+/// by default a wine-red card on a light grey table, the table taking up
+/// most of the picture.
 class FakePhotoColours implements PhotoColours {
-  List<int>? next = const [0xFF7A1F2B, 0xFFE8E8E8];
+  PhotoSample? next = cardOnTable();
+
+  static PhotoSample cardOnTable({int card = 0xFF7A1F2B, int table = 0xFFE8E8E8}) {
+    const w = 40, h = 30;
+    final rgba = Uint8List(w * h * 4);
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        // The card fills most of the frame, and no more than a third of the
+        // whole photo.
+        final c = x >= 6 && x < 34 && y >= 8 && y < 22 ? card : table;
+        rgba.setAll((y * w + x) * 4, [c >> 16 & 255, c >> 8 & 255, c & 255, 255]);
+      }
+    }
+    return PhotoSample(width: w, height: h, rgba: rgba);
+  }
 
   @override
-  Future<List<int>?> pick(PhotoSource source) async => next;
+  Future<PhotoSample?> pick(PhotoSource source) async => next;
 }
 
 /// The home screen without a launcher: records what bajet sends it, and
