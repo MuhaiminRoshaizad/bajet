@@ -209,6 +209,21 @@ the showing account's activity (`AccountActivity`): its latest 20 entries
 and transfers, newest first, each transfer signed from this account's side
 ("Moved to Cash −RM20.00", "Moved from Bank +RM50.00").
 
+## App icon
+
+Three cards fanned like a hand, on a graphite tile that is a little lighter
+at the top (`#1F232A` to `#121418`). The cards step in lightness from back to
+front, gunmetal `#5F656D`, steel `#9AA0A8` and titanium `#D8DBDF`, so they part
+by lightness alone with no second hue. The front card carries a chip and a
+line engraved in the tile colour. They turn −20°, 0° and 20° about a point
+below them, and the fan drops 4.65 dp so its centre of mass sits on the
+icon's centre, inside the 66 dp circle every launcher keeps whole.
+
+Android 8 and later draw it from vectors (`res/drawable/ic_launcher_*.xml`,
+`mipmap-anydpi-v26/ic_launcher.xml`); the themed-icon layer separates the
+cards by opacity, since the system tints it one colour. Older phones use
+the PNGs in `mipmap-*dpi`, rendered from the same drawing.
+
 ## Empty screens
 
 A screen with nothing else to show (Insights for an empty period, History,
