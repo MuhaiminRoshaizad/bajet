@@ -152,8 +152,11 @@ The one place the app bounces. Today stacks the total with at most two
 accounts peeking out behind it. Your accounts leaves the total on Today and
 shows every account overlapped like a wallet, each with a strip for its name
 and balance (wider above a cash wallet, so its bills never cover a balance);
-arriving, the cards spring from one pile into their strips, each a little
-after the one above (`Curves.easeOutBack`). Scrolling opens them downward:
+arriving, the total lifts away and fades while the cards slide out from
+behind it, from exactly where they sat in Today's stack, down into their
+strips, each a little after the one above (`Curves.easeOutBack`); leaving,
+they slide back behind it without a bounce. Today's stack hides while its
+cards are away (`accountsOnTopProvider`), so no card is ever seen twice. Scrolling opens them downward:
 the first 220 px of scroll are held, so the top card stays put while the
 cards below drop away until each is whole with a 14 px gap, and only then
 does the page scroll (`AccountListLayout`). Tapping a card opens the account view over 700 ms: for the first 300 ms the

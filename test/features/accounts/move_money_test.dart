@@ -29,9 +29,9 @@ void main() {
     await tester.pumpAndSettle();
     expect({for (final a in world.accounts) a.name: a.balance}, {'Main account': 145000, 'Cash': 13450});
     expect(world.entries, isEmpty);
-    expect(find.text('Moved RM50.00 from Main account to Cash'), findsOneWidget);
+    expect(find.text('Moved RM50.00 from Main account to Cash').hitTestable(), findsOneWidget);
 
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo').hitTestable());
     await tester.pumpAndSettle();
     expect(world.transferCount, 0);
   });

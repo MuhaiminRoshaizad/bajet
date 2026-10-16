@@ -30,7 +30,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Your accounts'), findsOneWidget);
-    expect(find.byKey(const ValueKey('tab-Today')), findsNothing);
+    expect(find.byKey(const ValueKey('tab-Today')).hitTestable(), findsNothing);
     // Fanned out, every account's name shows in its strip.
     for (final name in ['Main account', 'Wallet 0', 'Wallet 1', 'Wallet 2']) {
       expect(find.text(name).hitTestable(), findsWidgets, reason: name);
@@ -46,7 +46,7 @@ void main() {
     await pumpApp(tester, seed: (w) => addAccounts(w, 2));
     await tester.tap(find.byType(AccountStack));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Wallet 0').first);
+    await tester.tap(find.text('Wallet 0').hitTestable().first);
     await tester.pumpAndSettle();
 
     expect(find.byType(PageView), findsOneWidget);
@@ -74,22 +74,42 @@ void main() {
     await pumpApp(tester, seed: (w) => addAccounts(w, 3));
     await tester.tap(find.byType(AccountStack));
     await tester.pumpAndSettle();
-    expect(find.byType(TotalCard), findsNothing);
+    expect(find.byType(TotalCard).hitTestable(), findsNothing);
 
-    double top(String name) => tester.getRect(find.ancestor(of: find.text(name).first, matching: find.byType(AccountCard))).top;
+    double top(String name) => tester.getRect(find.ancestor(of: find.text(name).hitTestable().first, matching: find.byType(AccountCard))).top;
     final first = top('Main account'), second = top('Wallet 0');
     expect(second - first, AccountListLayout.strip);
 
     // Scrolling part of the way: the top card holds, the next drops away.
-    await tester.drag(find.byType(ListView), const Offset(0, -110));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -110));
     await tester.pumpAndSettle();
     expect(top('Main account'), first);
     expect(top('Wallet 0'), greaterThan(second));
 
     // Fully open, every card is whole with a gap beneath it.
-    await tester.drag(find.byType(ListView), const Offset(0, -200));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -200));
     await tester.pumpAndSettle();
     final height = tester.getSize(find.byType(AccountCard).first).height;
     expect(top('Wallet 0') - top('Main account'), height + AccountListLayout.gap);
+  });
+
+  testWidgets("Today's stack lends its cards to Your accounts and has them back once they land", (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 2));
+    double stackOpacity() => tester.widget<Opacity>(find.ancestor(of: find.byType(AccountStack), matching: find.byType(Opacity)).first).opacity;
+    expect(stackOpacity(), 1);
+
+    await tester.tap(find.byType(AccountStack));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    // Mid-flight: one of each card, flying, and Today's own copies hidden.
+    expect(stackOpacity(), 0);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(stackOpacity(), 0);
+    await tester.pumpAndSettle();
+    expect(stackOpacity(), 1);
   });
 }

@@ -14,7 +14,7 @@ void main() {
   testWidgets("the pencil on an account changes its card's colour, finish and nickname, not its balance", (tester) async {
     final world = await pumpApp(tester);
     await openAccounts(tester);
-    await tester.tap(find.text('Main account').first);
+    await tester.tap(find.text('Main account').hitTestable().first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();
@@ -33,7 +33,7 @@ void main() {
   testWidgets('cash is offered leathers and no finish', (tester) async {
     await pumpApp(tester, seed: (w) => w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather))));
     await openAccounts(tester);
-    await tester.tap(find.text('Cash').first);
+    await tester.tap(find.text('Cash').hitTestable().first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();
@@ -115,7 +115,7 @@ void main() {
   testWidgets('Match my card takes the colour from a photo and keeps only the colour', (tester) async {
     final world = await pumpApp(tester);
     await openAccounts(tester);
-    await tester.tap(find.text('Main account').first);
+    await tester.tap(find.text('Main account').hitTestable().first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();
@@ -136,7 +136,7 @@ void main() {
   testWidgets("an upgrade's Main account can be renamed to the bank it really is, keeping its colour", (tester) async {
     final world = await pumpApp(tester);
     await openAccounts(tester);
-    await tester.tap(find.text('Main account').first);
+    await tester.tap(find.text('Main account').hitTestable().first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();

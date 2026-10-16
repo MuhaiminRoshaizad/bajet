@@ -14,4 +14,19 @@ final accountsProvider = StreamProvider<List<Account>>((ref) => ref.watch(accoun
 
 final photoColoursProvider = Provider<PhotoColours>((ref) => DevicePhotoColours());
 
+/// True while Your accounts is over Today, arriving or leaving: its cards
+/// are flying from or back into Today's stack, which hides meanwhile so no
+/// card shows twice.
+class AccountsOnTop extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  /// Ignored once the app itself is going away.
+  void set(bool value) {
+    if (ref.mounted) state = value;
+  }
+}
+
+final accountsOnTopProvider = NotifierProvider<AccountsOnTop, bool>(AccountsOnTop.new);
+
 final totalCardLookProvider = StreamProvider<TotalCardLook>((ref) => ref.watch(accountRepositoryProvider).watchTotalLook());

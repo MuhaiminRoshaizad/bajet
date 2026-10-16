@@ -70,12 +70,16 @@ class AccountListLayout {
 
 /// The cards laid out by [AccountListLayout] for the current scroll.
 class AccountList extends StatelessWidget {
-  const AccountList({super.key, required this.accounts, required this.offset, required this.arrived, this.onTap});
+  const AccountList({super.key, required this.accounts, required this.offset, this.arrived = 1, this.onTap, this.hidden = const {}});
 
   final List<Account> accounts;
   final double offset;
   final double arrived;
   final ValueChanged<Account>? onTap;
+
+  /// Accounts whose cards are in flight elsewhere, so they hold their place
+  /// unseen and never show twice.
+  final Set<int> hidden;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
@@ -90,7 +94,10 @@ class AccountList extends StatelessWidget {
                 top: layout.top(i, offset, arrived: arrived),
                 left: 0,
                 width: box.maxWidth,
-                child: GestureDetector(onTap: onTap == null ? null : () => onTap!(a), child: AccountCard(account: a)),
+                child: Opacity(
+                  opacity: hidden.contains(a.id) ? 0 : 1,
+                  child: GestureDetector(onTap: onTap == null ? null : () => onTap!(a), child: AccountCard(account: a)),
+                ),
               ),
           ]),
         );

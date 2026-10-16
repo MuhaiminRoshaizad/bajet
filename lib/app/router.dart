@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/navigation/routes.dart';
 import '../features/accounts/presentation/account_settings_screen.dart';
+import '../features/accounts/presentation/account_stack.dart';
 import '../features/accounts/presentation/account_view_screen.dart';
 import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/plan/presentation/plan_providers.dart';
@@ -73,12 +74,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                 GoRoute(
                   path: 'accounts',
                   parentNavigatorKey: root,
+                  // Draws its own arrival, the cards sliding out of Today's
+                  // stack, so the route only times it and keeps Today below.
                   pageBuilder: (context, state) => CustomTransitionPage(
                     key: state.pageKey,
-                    transitionDuration: const Duration(milliseconds: 300),
-                    reverseTransitionDuration: const Duration(milliseconds: 260),
-                    transitionsBuilder: (context, animation, _, child) => FadeTransition(opacity: animation, child: child),
-                    child: const AccountsScreen(),
+                    opaque: false,
+                    transitionDuration: AccountsScreen.duration,
+                    reverseTransitionDuration: AccountsScreen.reverseDuration,
+                    transitionsBuilder: (context, animation, _, child) => child,
+                    child: AccountsScreen(from: state.extra as StackPlaces?),
                   ),
                   routes: [
                     // The page draws its own arrival, the card flying out of

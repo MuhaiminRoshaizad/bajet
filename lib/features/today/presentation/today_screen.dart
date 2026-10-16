@@ -89,32 +89,54 @@ class _Header extends StatelessWidget {
       );
 }
 
-/// The total with the accounts stacked behind it. Tapping it opens them all.
-class _AccountsStack extends ConsumerWidget {
+/// The total with the accounts stacked behind it. Tapping it opens them all,
+/// the cards sliding out from behind the total.
+class _AccountsStack extends ConsumerStatefulWidget {
   const _AccountsStack({required this.balance, required this.rule});
 
   final int? balance;
   final WeeklyRule? rule;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AccountsStack> createState() => _AccountsStackState();
+}
+
+class _AccountsStackState extends ConsumerState<_AccountsStack> {
+  final _stack = GlobalKey();
+
+  void _open(int count) {
+    final box = _stack.currentContext?.findRenderObject() as RenderBox?;
+    final places = box == null || !box.hasSize ? null : StackPlaces(box.localToGlobal(Offset.zero) & box.size, count);
+    context.push(Routes.accounts, extra: places);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final balance = widget.balance;
+    final rule = widget.rule;
     final accounts = ref.watch(accountsProvider).value ?? const [];
     final look = ref.watch(totalCardLookProvider).value ?? const TotalCardLook();
+    // While Your accounts is over Today its cards are this stack's, in flight.
+    final lent = ref.watch(accountsOnTopProvider);
     return Semantics(
       button: true,
       hint: 'See your accounts',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => context.push(Routes.accounts),
-        child: AccountStack(
-          accounts: accounts,
-          total: TotalCard(
-            look: look,
-            balance: balance,
+        onTap: () => _open(accounts.length),
+        child: Opacity(
+          opacity: lent ? 0 : 1,
+          child: AccountStack(
+            key: _stack,
             accounts: accounts,
-            countUp: true,
-            hint: 'tap to see them',
-            below: rule == null ? null : _PlanPill(rule: rule!),
+            total: TotalCard(
+              look: look,
+              balance: balance,
+              accounts: accounts,
+              countUp: true,
+              hint: 'tap to see them',
+              below: rule == null ? null : _PlanPill(rule: rule),
+            ),
           ),
         ),
       ),

@@ -23,6 +23,9 @@ class AccountStack extends StatelessWidget {
   /// The height the stack takes, for a card of [width].
   static double height(double width, int accounts) => billRoom + accounts.clamp(0, peeks) * peek + width / cardAspectRatio;
 
+  /// How small a card behind the total is drawn, [depth] 1 the nearest.
+  static double scaleAt(int depth) => 1 - depth * 0.035;
+
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
         final w = box.maxWidth;
@@ -38,10 +41,34 @@ class AccountStack extends StatelessWidget {
                 top: billRoom + (shown - 1 - i) * peek,
                 left: 0,
                 width: w,
-                child: Transform.scale(scale: 1 - (i + 1) * 0.035, alignment: Alignment.topCenter, child: AccountCard(account: accounts[i])),
+                child: Transform.scale(scale: scaleAt(i + 1), alignment: Alignment.topCenter, child: AccountCard(account: accounts[i])),
               ),
             Positioned(key: const ValueKey('total-card'), top: billRoom + shown * peek, left: 0, width: w, child: total),
           ]),
         );
       });
+}
+
+/// Where Today's stack was on screen when it was tapped, so Your accounts can
+/// slide each card out of exactly that place and back into it.
+class StackPlaces {
+  const StackPlaces(this.stack, this.count);
+
+  /// The stack's own rect, in global coordinates.
+  final Rect stack;
+  final int count;
+
+  double get _height => stack.width / cardAspectRatio;
+  int get _shown => count.clamp(0, AccountStack.peeks);
+
+  Rect get total => Rect.fromLTWH(stack.left, stack.top + AccountStack.billRoom + _shown * AccountStack.peek, stack.width, _height);
+
+  /// Account [i]'s card; those that do not peek out wait behind the deepest
+  /// one that does.
+  Rect card(int i) {
+    final depth = (i + 1).clamp(1, _shown == 0 ? 1 : _shown);
+    final k = AccountStack.scaleAt(depth);
+    final top = stack.top + AccountStack.billRoom + (_shown - depth) * AccountStack.peek;
+    return Rect.fromLTWH(stack.left + stack.width * (1 - k) / 2, top, stack.width * k, _height * k);
+  }
 }
