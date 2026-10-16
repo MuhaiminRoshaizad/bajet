@@ -17,8 +17,8 @@ class BajetApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Runs once per launch; see receiptCleanupProvider.
     ref.watch(receiptCleanupProvider);
-    // Kept alive for the app's lifetime: the home-screen widget and shortcuts
-    // follow the data, and a link that launched the app is held until used.
+    // Kept alive for the app's lifetime: the launcher shortcuts follow the
+    // favourites, and a link that launched the app is held until used.
     ref.watch(homeSurfaceSyncProvider);
     ref.watch(pendingLaunchProvider);
     return MaterialApp.router(

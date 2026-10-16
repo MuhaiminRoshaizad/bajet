@@ -42,7 +42,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   void initState() {
     super.initState();
-    // A shortcut or widget tap opens the logger, filled in from a favourite
+    // A launcher shortcut opens the logger, filled in from a favourite
     // when the link names one. Fires at once too, for a link that started
     // the app before the shell existed.
     ref.listenManual(pendingLaunchProvider, (_, link) {
