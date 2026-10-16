@@ -92,11 +92,19 @@ background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
 Each account is drawn as a card 1.9 times as wide as it is tall
 (`cardAspectRatio`), a little wider than a real bank card's 1.59, so cards take
 less of the screen; the radius is 16 px (`card_face.dart`). A card is one
-colour the owner picked, lit from the top left, under a finish that never
-moves: matte or gloss (a fixed diagonal sheen). Text is dark on light cards and white on dark ones unless
+colour the owner picked, lit from the top left, under one of six finishes
+(`card_finishes.dart`): matte, gloss (a fixed diagonal sheen), mirror (a
+bright band of polished metal), pearl (a milky pink-to-blue shimmer),
+frosted glass (fine frost with an etched edge) or guilloché (engraved
+waves, like a banknote's). Mirror and pearl catch the light as the card
+turns: their shine follows a tilt from -1 to 1, which comes from the swipe
+between cards on the account view, from scrolling Your accounts, and from
+a finger dragged across the designer's preview; there is no motion sensor.
+Only those two repaint when it changes (`finishMoves`), and the frost and
+suede textures are small squares made once and tiled. Text is dark on light cards and white on dark ones unless
 the owner picked its colour, such as gold on black. The provider's name is
 plain text, at the top and again as the wordmark; there are no logos or
-issuers' card designs, which are trademarks. Cash is a stitched leather
+issuers' card designs, which are trademarks. Cash is a stitched leather or suede
 wallet instead, with one to five plain green bills sticking out of the top
 as the balance grows (`billsFor`) and none when it is empty. The colours come from the app's own palette (`card_palette.dart`): sixteen
 for cards, eight leathers for the wallet, and "Match the app" for the total

@@ -1,6 +1,7 @@
 import 'package:bajet/core/theme/app_theme.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/presentation/card_face.dart';
+import 'package:bajet/features/accounts/presentation/card_finishes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -57,5 +58,21 @@ void main() {
     expect(find.text('RM4,018.00'), findsOneWidget);
     expect(find.text('8 accounts · tap to see them'), findsOneWidget);
     expect(find.text('+2'), findsOneWidget);
+  });
+
+  testWidgets('every finish draws, card and wallet alike', (tester) async {
+    for (final f in CardFinish.values) {
+      final cash = f == CardFinish.leather || f == CardFinish.suede;
+      await show(tester, AccountCard(account: account(kind: cash ? AccountKind.cash : AccountKind.bank, look: CardLook(color: 0xFF00877F, finish: f)), tilt: 0.4));
+      expect(tester.takeException(), isNull, reason: f.name);
+    }
+  });
+
+  test('only mirror and pearl repaint as the card turns', () {
+    for (final f in CardFinish.values) {
+      expect(FinishPainter(f, tilt: 0.5).shouldRepaint(FinishPainter(f)), finishMoves(f), reason: f.name);
+      expect(FinishPainter(f).shouldRepaint(FinishPainter(f)), isFalse, reason: f.name);
+    }
+    expect(finishMoves(CardFinish.mirror) && finishMoves(CardFinish.pearl), isTrue);
   });
 }

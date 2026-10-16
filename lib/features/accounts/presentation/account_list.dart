@@ -206,7 +206,9 @@ class _AccountListState extends State<AccountList> {
                   onPickUp: widget.onReorder == null || accounts.length < 2 ? null : () => _pickUp(layout, a),
                   onDrag: (travel) => _drag(box.maxWidth, travel),
                   onDrop: _drop,
-                  child: AccountCard(account: a),
+                  // Scrolling turns the cards a little, so a mirror or pearl
+                  // card's shine slides as the finger drags the list.
+                  child: AccountCard(account: a, tilt: (widget.offset / 300 - 0.15 * i).clamp(-1.0, 1.0)),
                 ),
               ),
             ),

@@ -101,6 +101,9 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
 
   bool _tried = false;
 
+  /// How far the preview is turned by a finger dragged across it.
+  double _tilt = 0;
+
   AccountKind? get _kind => _account?.kind ?? _newKind;
   bool get _isCash => _kind == AccountKind.cash;
   bool get _isTotal => _kind == null;
@@ -212,20 +215,28 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                 ],
                 // Room above the preview for a wallet's bills.
                 SizedBox(height: _isCash ? AppSpacing.xxxl : AppSpacing.l),
-                if (account == null)
-                  TotalCard(
-                    look: TotalCardLook(color: _color, finish: _finish),
-                    balance: ref.watch(balanceProvider).value,
-                    accounts: ref.watch(accountsProvider).value ?? const [],
-                  )
-                else
-                  AccountCard(
-                    account: account.copyWith(
-                      name: _name.trim().isEmpty ? null : _name.trim(),
-                      nickname: () => _nickname.text.trim().isEmpty ? null : _nickname.text.trim(),
-                      look: CardLook(color: _color!, ink: _ink, finish: _finish),
-                    ),
+                // Dragging a finger across the preview turns it, to see how a
+                // mirror or pearl finish catches the light.
+                LayoutBuilder(
+                  builder: (context, box) => GestureDetector(
+                    onHorizontalDragUpdate: (d) => setState(() => _tilt = (d.localPosition.dx / box.maxWidth * 2 - 1).clamp(-1.0, 1.0)),
+                    child: account == null
+                        ? TotalCard(
+                            look: TotalCardLook(color: _color, finish: _finish),
+                            balance: ref.watch(balanceProvider).value,
+                            accounts: ref.watch(accountsProvider).value ?? const [],
+                            tilt: _tilt,
+                          )
+                        : AccountCard(
+                            account: account.copyWith(
+                              name: _name.trim().isEmpty ? null : _name.trim(),
+                              nickname: () => _nickname.text.trim().isEmpty ? null : _nickname.text.trim(),
+                              look: CardLook(color: _color!, ink: _ink, finish: _finish),
+                            ),
+                            tilt: _tilt,
+                          ),
                   ),
+                ),
                 if (_asksProvider) ...[
                   const SizedBox(height: AppSpacing.l),
                   ProviderPicker(
@@ -257,15 +268,13 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.l),
-                if (!_isCash) ...[
-                  const _Label('Finish'),
-                  Wrap(spacing: AppSpacing.s, children: [
-                    for (final f in cardFinishes)
-                      ChoiceChip(label: Text(finishLabel(f)), selected: _finish == f, onSelected: (_) => setState(() => _finish = f)),
-                  ]),
-                  const SizedBox(height: AppSpacing.l),
-                ],
-                _Label(_isCash ? 'Leather' : 'Colour'),
+                const _Label('Finish'),
+                Wrap(spacing: AppSpacing.s, runSpacing: AppSpacing.xs, children: [
+                  for (final f in _isCash ? walletFinishes : cardFinishes)
+                    ChoiceChip(label: Text(finishLabel(f)), selected: _finish == f, onSelected: (_) => setState(() => _finish = f)),
+                ]),
+                const SizedBox(height: AppSpacing.l),
+                const _Label('Colour'),
                 Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: [
                   if (_isTotal) _Swatch(name: 'Match the app', selected: _color == null, onTap: () => _pick(null)),
                   for (final s in swatches) _Swatch(name: s.name, color: Color(s.color), selected: _color == s.color && _ink == s.ink, onTap: () => _pick(s)),

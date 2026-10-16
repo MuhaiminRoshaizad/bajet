@@ -29,7 +29,7 @@ One row, created during first-run setup.
 | `weekly_cap`        | int  | Flexible spending allowed per week        |
 | `buffer`            | int  | Minimum left after buying a goal          |
 | `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |
-| `total_card_finish` | enum | `matte` (default), `gloss` or `leather`  |
+| `total_card_finish` | enum | `matte` (default), `gloss`, `mirror`, `pearl`, `frosted` or `guilloche` |
 
 ### `accounts`
 A place money is kept. Its balance is `opening_balance` on the opening date,
@@ -44,7 +44,7 @@ plus its entries and the transfers into it, less those out of it, since.
 | `opening_balance` | int   | Balance on the opening date                    |
 | `color`           | int   | The card's colour as ARGB                      |
 | `ink_color`       | int?  | The card's text colour when picked, e.g. gold on black; otherwise it follows the card's lightness |
-| `finish`          | enum  | `matte` (default), `gloss` or `leather` (cash) |
+| `finish`          | enum  | `matte` (default), `gloss`, `mirror`, `pearl`, `frosted` or `guilloche`; `leather` or `suede` for cash |
 | `sort_order`      | int   | Display order, set by dragging cards on Your accounts (`reorderAccounts`); the first account at the time takes anything logged without one |
 
 ### `transfers`

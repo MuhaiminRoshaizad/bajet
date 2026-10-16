@@ -45,13 +45,19 @@ const leatherSwatches = [
   CardSwatch('Grey', 0xFF55585C),
 ];
 
-/// The finishes a card can have; leather is only ever the wallet's.
-const cardFinishes = [CardFinish.matte, CardFinish.gloss];
+/// The finishes a card can have, and the wallet's own.
+const cardFinishes = [CardFinish.matte, CardFinish.gloss, CardFinish.mirror, CardFinish.pearl, CardFinish.frosted, CardFinish.guilloche];
+const walletFinishes = [CardFinish.leather, CardFinish.suede];
 
 String finishLabel(CardFinish finish) => switch (finish) {
       CardFinish.matte => 'Matte',
       CardFinish.gloss => 'Gloss',
+      CardFinish.mirror => 'Mirror',
+      CardFinish.pearl => 'Pearl',
+      CardFinish.frosted => 'Frosted glass',
+      CardFinish.guilloche => 'Guilloché',
       CardFinish.leather => 'Leather',
+      CardFinish.suede => 'Suede',
     };
 
 /// The swatch a new account starts on: near a provider's own colour when it

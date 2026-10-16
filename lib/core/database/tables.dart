@@ -30,8 +30,8 @@ enum GoalStatus { active, paused, achieved, archived }
 
 enum AccountKind { cash, bank, ewallet }
 
-/// How a card is drawn. Leather is the cash wallet's.
-enum CardFinish { matte, gloss, leather }
+/// How a card is drawn. Leather and suede are the cash wallet's.
+enum CardFinish { matte, gloss, mirror, pearl, frosted, guilloche, leather, suede }
 
 /// One row only, created during first-run setup. The starting balance lives
 /// on each account, as of [openingDate].

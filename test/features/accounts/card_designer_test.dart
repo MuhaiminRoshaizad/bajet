@@ -19,7 +19,13 @@ void main() {
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.bySemanticsLabel('Black and gold'));
+
+    await tester.pumpAndSettle();
+
     await tester.tap(find.bySemanticsLabel('Black and gold'));
+    await tester.ensureVisible(find.text('Gloss'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Gloss'));
     await tester.enterText(find.widgetWithText(TextField, 'Nickname (optional)'), 'Savings');
     await tester.ensureVisible(find.text('Save card'));
@@ -30,14 +36,35 @@ void main() {
     expect((main.look, main.nickname, main.balance), (const CardLook(color: 0xFF151515, ink: 0xFFE6C674, finish: CardFinish.gloss), 'Savings', 150000));
   });
 
-  testWidgets('cash is offered leathers and no finish', (tester) async {
-    await pumpApp(tester, seed: (w) => w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather))));
+  testWidgets("cash is offered leather or suede and none of a card's finishes, and keeps the one picked", (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather))));
     await openAccounts(tester);
     await tester.tap(find.text('Cash').hitTestable().first);
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();
     expect(find.text('Leather'), findsOneWidget);
+    expect(find.text('Mirror'), findsNothing);
+
+    await tester.ensureVisible(find.text('Suede'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Suede'));
+    await tester.ensureVisible(find.text('Save card'));
+    await tester.tap(find.text('Save card'));
+    await tester.pumpAndSettle();
+    expect(world.accounts.last.look.finish, CardFinish.suede);
+  });
+
+  testWidgets("a card is offered six finishes and brushed metal isn't one", (tester) async {
+    await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.tap(find.text('Main account').hitTestable().first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Edit this card'));
+    await tester.pumpAndSettle();
+    for (final f in ['Matte', 'Gloss', 'Mirror', 'Pearl', 'Frosted glass', 'Guilloché']) {
+      expect(find.widgetWithText(ChoiceChip, f), findsOneWidget);
+    }
     expect(find.text('Brushed metal'), findsNothing);
   });
 
@@ -53,6 +80,8 @@ void main() {
     await tester.tap(find.text('Accounts'));
     await tester.pumpAndSettle();
     await openTotal();
+    await tester.ensureVisible(find.bySemanticsLabel('Champagne'));
+    await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Champagne'));
     await tester.ensureVisible(find.text('Save total card'));
     await tester.tap(find.text('Save total card'));
@@ -60,6 +89,8 @@ void main() {
     expect(world.totalLook, const TotalCardLook(color: 0xFFCDB88A));
 
     await openTotal();
+    await tester.ensureVisible(find.bySemanticsLabel('Match the app'));
+    await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Match the app'));
     await tester.ensureVisible(find.text('Save total card'));
     await tester.tap(find.text('Save total card'));

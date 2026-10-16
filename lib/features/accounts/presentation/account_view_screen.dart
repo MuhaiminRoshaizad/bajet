@@ -219,7 +219,7 @@ class _SwipeCard extends StatelessWidget {
             ..scaleByDouble(scale, scale, 1, 1),
           // Past a quarter turn the front faces away; show the plain back,
           // never the front's writing mirrored.
-          child: _Upright(account: account, size: size, back: math.cos(angle) < 0),
+          child: _Upright(account: account, size: size, back: math.cos(angle) < 0, tilt: t.clamp(-1.0, 1.0)),
         ),
       ),
     );
@@ -228,16 +228,20 @@ class _SwipeCard extends StatelessWidget {
 
 /// A landscape card turned a quarter clockwise, so it reads top to bottom.
 class _Upright extends StatelessWidget {
-  const _Upright({required this.account, required this.size, this.back = false});
+  const _Upright({required this.account, required this.size, this.back = false, this.tilt = 0});
 
   final Account account;
   final Size size;
   final bool back;
 
+  /// How far along the swipe it is, so a mirror or pearl finish catches the
+  /// light as it moves.
+  final double tilt;
+
   @override
   Widget build(BuildContext context) => SizedBox.fromSize(
         size: size,
-        child: RotatedBox(quarterTurns: 1, child: AccountCard(account: account, back: back)),
+        child: RotatedBox(quarterTurns: 1, child: AccountCard(account: account, back: back, tilt: tilt)),
       );
 }
 

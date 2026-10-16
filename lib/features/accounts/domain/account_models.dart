@@ -9,8 +9,8 @@ enum AccountKind { cash, bank, ewallet }
 const firstAccountName = 'Main account';
 const firstAccountColor = 0xFF4A5866;
 
-/// How a card is drawn. Leather is the cash wallet's.
-enum CardFinish { matte, gloss, leather }
+/// How a card is drawn. Leather and suede are the cash wallet's.
+enum CardFinish { matte, gloss, mirror, pearl, frosted, guilloche, leather, suede }
 
 /// A card's colours as ARGB. [ink] is the text colour when the owner picked
 /// one, such as gold on black; otherwise the text follows the card's
