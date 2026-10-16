@@ -228,3 +228,20 @@ While the lock is on, Android 13 and later keep no picture of bajet for the
 app switcher (`setRecentsScreenshotEnabled`), so the switcher shows a blank
 card. `FLAG_SECURE` would cover older phones too, but it also blocks every
 screenshot the owner takes, so it is not used.
+
+## 018: bajet plays its opening itself
+
+**Decided:** the opening animation runs in Flutter from the first frame.
+Android's launch screen, including the Android 12 splash, shows plain
+graphite and no icon while the app loads.
+
+**Why:** the opening was approved as a mock-up and has to bounce exactly
+as it did there. Android's splash can play an animated icon, but it crops
+it to a circle, which the cards overshoot while bouncing, keeps it to
+about a second, and ends it whenever the app is ready, which on a fast
+start would cut the deal off halfway.
+
+**Costs:** the deal starts once bajet has loaded, not the moment the icon
+is tapped, so a slow start shows graphite for a moment first. The whole
+opening runs about 2.85 s; a tap skips it, and it plays on a cold start
+only.

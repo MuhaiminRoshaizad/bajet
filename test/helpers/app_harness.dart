@@ -23,7 +23,8 @@ final demoSettings = PlanSettings(openingDate: testToday, weeklyCap: 5000, buffe
 
 /// Pumps the whole app over in-memory fake repositories and returns them so
 /// the test can seed and inspect data; [overrides] adds any others. Without
-/// [setUpDone] the app opens on first-run setup. drift itself is covered by repository tests against a
+/// [setUpDone] the app opens on first-run setup. With [settle] false it
+/// returns after the first frame, for a test of what plays as the app opens. drift itself is covered by repository tests against a
 /// real in-memory database; widget tests stay on the fakes because drift's
 /// stream timers do not run on the widget tester's fake clock.
 Future<FakeWorld> pumpApp(
@@ -31,6 +32,7 @@ Future<FakeWorld> pumpApp(
   bool setUpDone = true,
   void Function(FakeWorld world)? seed,
   List<Override> Function(FakeWorld world)? overrides,
+  bool settle = true,
 }) async {
   // A typical phone: 360 x 780 logical pixels.
   tester.view
@@ -61,6 +63,6 @@ Future<FakeWorld> pumpApp(
     ],
     child: const BajetApp(),
   ));
-  await tester.pumpAndSettle();
+  if (settle) await tester.pumpAndSettle();
   return world;
 }

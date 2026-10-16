@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/rise_in.dart';
+import '../../opening/presentation/opening_providers.dart';
+import '../../opening/presentation/titanium_card.dart';
 import '../domain/app_lock.dart';
 import 'lock_providers.dart';
 
@@ -30,7 +33,8 @@ class LockGate extends ConsumerWidget {
 
 enum _Status { asking, cancelled, failed, lockedOut, unavailable }
 
-/// Asks for the fingerprint as soon as it shows, and again on a tap.
+/// Asks for the fingerprint as soon as it shows, or once the opening has
+/// landed on it, and again on a tap.
 class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
 
@@ -45,7 +49,13 @@ class _LockScreenState extends ConsumerState<LockScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ask());
+    if (!ref.read(openingProvider)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _ask());
+      return;
+    }
+    ref.listenManual(openingProvider, (_, playing) {
+      if (!playing) _ask();
+    });
   }
 
   Future<void> _ask() async {
@@ -93,38 +103,47 @@ class _LockScreenState extends ConsumerState<LockScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.lock_outline_rounded, size: 40, color: c.primary),
+                  // The icon's fan; while the opening plays, its cards are
+                  // flying here.
+                  Opacity(opacity: ref.watch(openingProvider) ? 0 : 1, child: FanMark(key: openingLockMarkKey)),
                   const SizedBox(height: AppSpacing.l),
-                  Text(title, textAlign: TextAlign.center, style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: AppSpacing.s),
-                  Text(body, textAlign: TextAlign.center, style: TextStyle(color: warn ? c.bad : c.muted)),
-                  const SizedBox(height: AppSpacing.xxxl),
-                  if (_status == _Status.unavailable)
-                    FilledButton(onPressed: () => ref.read(appLockProvider.notifier).turnOffAndOpen(), child: const Text('Open bajet'))
-                  else ...[
-                    if (_status != _Status.lockedOut)
-                      Semantics(
-                        button: true,
-                        label: 'Unlock with fingerprint',
-                        excludeSemantics: true,
-                        child: InkResponse(
-                          onTap: _busy ? null : _ask,
-                          radius: 48,
-                          child: AnimatedContainer(
-                            duration: AppMotion.fast,
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(color: warn ? c.badSurface : c.primarySoft, shape: BoxShape.circle),
-                            child: Icon(Icons.fingerprint_rounded, size: 44, color: warn ? c.bad : c.primary),
+                  // Held until the opening's cards have landed above it.
+                  RiseIn(children: [
+                    Text(title, textAlign: TextAlign.center, style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: AppSpacing.s),
+                    Text(body, textAlign: TextAlign.center, style: TextStyle(color: warn ? c.bad : c.muted)),
+                    const SizedBox(height: AppSpacing.xxxl),
+                    if (_status == _Status.unavailable)
+                      Center(child: FilledButton(onPressed: () => ref.read(appLockProvider.notifier).turnOffAndOpen(), child: const Text('Open bajet')))
+                    else ...[
+                      if (_status != _Status.lockedOut)
+                        Center(
+                          child: Semantics(
+                            button: true,
+                            label: 'Unlock with fingerprint',
+                            excludeSemantics: true,
+                            child: InkResponse(
+                              onTap: _busy ? null : _ask,
+                              radius: 48,
+                              child: AnimatedContainer(
+                                duration: AppMotion.fast,
+                                width: 84,
+                                height: 84,
+                                decoration: BoxDecoration(color: warn ? c.badSurface : c.primarySoft, shape: BoxShape.circle),
+                                child: Icon(Icons.fingerprint_rounded, size: 44, color: warn ? c.bad : c.primary),
+                              ),
+                            ),
                           ),
                         ),
+                      const SizedBox(height: AppSpacing.l),
+                      Center(
+                        child: TextButton(
+                          onPressed: _busy ? null : _ask,
+                          child: Text(_status == _Status.lockedOut ? 'Use phone PIN' : 'Use phone PIN instead'),
+                        ),
                       ),
-                    const SizedBox(height: AppSpacing.l),
-                    TextButton(
-                      onPressed: _busy ? null : _ask,
-                      child: Text(_status == _Status.lockedOut ? 'Use phone PIN' : 'Use phone PIN instead'),
-                    ),
-                  ],
+                    ],
+                  ]),
                 ],
               ),
             ),

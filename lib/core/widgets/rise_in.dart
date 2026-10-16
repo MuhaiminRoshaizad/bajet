@@ -15,6 +15,32 @@ class ScreenEntry extends Notifier<int> {
 
 final screenEntryProvider = NotifierProvider<ScreenEntry, int>(ScreenEntry.new);
 
+/// How long the first screens of a launch hold their entrance, for
+/// something that plays over them first, such as the opening. Overridden in
+/// main.
+final initialEntranceHoldProvider = Provider<Duration>((ref) => Duration.zero);
+
+/// When held entrances may start, or null when nothing holds them.
+class EntranceHold extends Notifier<DateTime?> {
+  @override
+  DateTime? build() {
+    final hold = ref.watch(initialEntranceHoldProvider);
+    return hold == Duration.zero ? null : DateTime.now().add(hold);
+  }
+
+  void release() => state = null;
+
+  /// What is left of the hold, for an entrance starting now.
+  Duration get remaining {
+    final until = state;
+    if (until == null) return Duration.zero;
+    final left = until.difference(DateTime.now());
+    return left.isNegative ? Duration.zero : left;
+  }
+}
+
+final entranceHoldProvider = NotifierProvider<EntranceHold, DateTime?>(EntranceHold.new);
+
 /// Lays [children] out top to bottom, each rising and fading in a moment after
 /// the one above it. With the system's reduce-motion setting on, they appear
 /// in place.
@@ -39,6 +65,7 @@ class RiseIn extends ConsumerWidget {
       key: ValueKey(ref.watch(screenEntryProvider)),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: AnimateList(
+        delay: ref.read(entranceHoldProvider.notifier).remaining,
         interval: AppMotion.stagger,
         effects: [
           const FadeEffect(duration: AppMotion.enter, curve: AppMotion.ease),

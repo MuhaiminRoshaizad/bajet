@@ -7,7 +7,9 @@ import '../features/launch/presentation/launch_providers.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
 import '../features/lock/presentation/lock_providers.dart';
 import '../features/lock/presentation/lock_screen.dart';
+import '../features/opening/presentation/opening_providers.dart';
 import 'dismiss_keyboard.dart';
+import 'opening_overlay.dart';
 import 'router.dart';
 
 final _keyboard = DismissKeyboardOnTap();
@@ -31,7 +33,10 @@ class BajetApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
-      builder: (context, child) => LockGate(child: child!),
+      builder: (context, child) => Stack(children: [
+        LockGate(child: child!),
+        if (ref.watch(openingProvider)) const Positioned.fill(child: OpeningOverlay()),
+      ]),
       actions: {...WidgetsApp.defaultActions, ..._keyboard.actions},
     );
   }

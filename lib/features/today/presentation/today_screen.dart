@@ -10,17 +10,17 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
-import '../../accounts/domain/account_models.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_stack.dart';
-import '../../accounts/presentation/card_face.dart';
 import '../../accounts/presentation/hold_swell.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
+import '../../opening/presentation/opening_providers.dart';
 import 'today_providers.dart';
+import 'today_total_card.dart';
 import 'week_strip.dart';
 
 class TodayScreen extends ConsumerWidget {
@@ -33,7 +33,6 @@ class TodayScreen extends ConsumerWidget {
     if (balance.hasError) return const _ReadError();
 
     final settings = ref.watch(settingsProvider).value;
-    final rule = ref.watch(todayRuleProvider);
     final days = ref.watch(weekDaysProvider);
     final weekSpent = ref.watch(weekSpentProvider);
     final projection = ref.watch(projectionProvider);
@@ -51,7 +50,7 @@ class TodayScreen extends ConsumerWidget {
           RiseIn(
             spacing: AppSpacing.l,
             children: [
-              _AccountsStack(balance: balance.value, rule: rule),
+              const _AccountsStack(),
               if (today.weekday == DateTime.sunday) const _CheckinCard(),
               for (final item in due) _DueCard(item: item),
               if (days != null && weekSpent != null && settings != null)
@@ -93,17 +92,15 @@ class _Header extends StatelessWidget {
 /// The total with the accounts stacked behind it. Tapping it opens them all,
 /// the cards sliding out from behind the total.
 class _AccountsStack extends ConsumerStatefulWidget {
-  const _AccountsStack({required this.balance, required this.rule});
-
-  final int? balance;
-  final WeeklyRule? rule;
+  const _AccountsStack();
 
   @override
   ConsumerState<_AccountsStack> createState() => _AccountsStackState();
 }
 
 class _AccountsStackState extends ConsumerState<_AccountsStack> {
-  final _stack = GlobalKey();
+  // Shared with the opening, whose cards land on this stack.
+  final _stack = openingStackKey;
 
   void _open(int count) {
     final box = _stack.currentContext?.findRenderObject() as RenderBox?;
@@ -113,12 +110,10 @@ class _AccountsStackState extends ConsumerState<_AccountsStack> {
 
   @override
   Widget build(BuildContext context) {
-    final balance = widget.balance;
-    final rule = widget.rule;
     final accounts = ref.watch(accountsProvider).value ?? const [];
-    final look = ref.watch(totalCardLookProvider).value ?? const TotalCardLook();
-    // While Your accounts is over Today its cards are this stack's, in flight.
-    final lent = ref.watch(accountsOnTopProvider);
+    // While Your accounts is over Today, or the opening plays, its cards
+    // are this stack's, in flight.
+    final lent = ref.watch(accountsOnTopProvider) || ref.watch(openingProvider);
     return Semantics(
       button: true,
       hint: 'See your accounts',
@@ -129,35 +124,9 @@ class _AccountsStackState extends ConsumerState<_AccountsStack> {
           child: AccountStack(
             key: _stack,
             accounts: accounts,
-            total: TotalCard(
-              look: look,
-              balance: balance,
-              accounts: accounts,
-              countUp: true,
-              hint: 'tap to see them',
-              below: rule == null ? null : _PlanPill(rule: rule),
-            ),
+            total: const TodayTotalCard(countUp: true),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PlanPill extends StatelessWidget {
-  const _PlanPill({required this.rule});
-
-  final WeeklyRule rule;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-      decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-      child: Text(
-        rule.plannedSpend > 0 ? '${rule.label} · up to ${Money.format(rule.plannedSpend)}' : '${rule.label} · no spending planned',
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.primary),
       ),
     );
   }
