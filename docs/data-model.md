@@ -29,7 +29,7 @@ One row, created during first-run setup.
 | `weekly_cap`        | int  | Flexible spending allowed per week        |
 | `buffer`            | int  | Minimum left after buying a goal          |
 | `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |
-| `total_card_finish` | enum | `brushed`, `matte`, `gloss` or `leather`  |
+| `total_card_finish` | enum | `matte` (default), `gloss` or `leather`  |
 
 ### `accounts`
 A place money is kept. Its balance is `opening_balance` on the opening date,
@@ -44,7 +44,7 @@ plus its entries and the transfers into it, less those out of it, since.
 | `opening_balance` | int   | Balance on the opening date                    |
 | `color`           | int   | The card's colour as ARGB                      |
 | `ink_color`       | int?  | The card's text colour when picked, e.g. gold on black; otherwise it follows the card's lightness |
-| `finish`          | enum  | `brushed`, `matte`, `gloss` or `leather` (cash) |
+| `finish`          | enum  | `matte` (default), `gloss` or `leather` (cash) |
 | `sort_order`      | int   | Display order, set by dragging cards on Your accounts (`reorderAccounts`); the first account at the time takes anything logged without one |
 
 ### `transfers`
@@ -203,8 +203,8 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 6,
-  "settings": { "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000, "totalCardColor": null, "totalCardFinish": "brushed" },
+  "format": 7,
+  "settings": { "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000, "totalCardColor": null, "totalCardFinish": "matte" },
   "accounts": [], "transfers": [],
   "categories": [], "weeklyRules": [], "recurringItems": [],
   "plannedEvents": [], "goals": [], "favourites": [], "entries": []
@@ -225,6 +225,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 4      | Each planned event carries `repeatsYearly`; older files get false |
 | 5      | Each entry carries `plannedEventId` and `plannedEventOn`; older files get null |
 | 6      | `accounts` and `transfers`; each entry and recurring item carries `accountId`; settings carry `totalCardColor` and `totalCardFinish` in place of `openingBalance`, which older files turn into one account, "Main account", that every entry and item belongs to |
+| 7      | No `brushed` finish: older files' brushed cards and total card restore as `matte` |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
@@ -245,3 +246,4 @@ data on the phone is left as it was.
 | 4       | `planned_events.repeats_yearly`, for birthdays and other yearly events |
 | 5       | `entries.planned_event_id` and `planned_event_on`, for spending against an event |
 | 6       | `accounts` and `transfers`; `entries.account_id` and `recurring_items.account_id`; the total card's look on `app_settings`, whose `opening_balance` moves to a first account, "Main account", which every existing entry and bill joins |
+| 7       | Brushed metal retired: `accounts.finish` and `app_settings.total_card_finish` turn `brushed` into `matte`, which becomes their default |

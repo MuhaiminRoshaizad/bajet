@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -34,6 +34,7 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(entries, entries.plannedEventOn);
           }
           if (from < 6) await _moveToAccounts(m);
+          if (from < 7) await _retireBrushedMetal(m);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -58,6 +59,17 @@ class AppDatabase extends _$AppDatabase {
     await m.alterTable(TableMigration(entries, newColumns: [entries.accountId], columnTransformer: {entries.accountId: const Constant(1)}));
     await m.alterTable(TableMigration(recurringItems, newColumns: [recurringItems.accountId], columnTransformer: {recurringItems.accountId: const Constant(1)}));
     await m.alterTable(TableMigration(appSettings, newColumns: [appSettings.totalCardColor, appSettings.totalCardFinish]));
+  }
+
+  /// Version 7 drops the brushed metal finish: every card and the total card
+  /// that had it turns matte, which is also the new default.
+  Future<void> _retireBrushedMetal(Migrator m) async {
+    const matte = "CASE WHEN {c} = 'brushed' THEN 'matte' ELSE {c} END";
+    await m.alterTable(TableMigration(accounts, columnTransformer: {accounts.finish: CustomExpression<String>(matte.replaceAll('{c}', 'finish'))}));
+    await m.alterTable(TableMigration(
+      appSettings,
+      columnTransformer: {appSettings.totalCardFinish: CustomExpression<String>(matte.replaceAll('{c}', 'total_card_finish'))},
+    ));
   }
 
   /// [id], or when none is named the first account in order. Throws before

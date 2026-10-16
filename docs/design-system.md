@@ -93,8 +93,7 @@ Each account is drawn as a card 1.9 times as wide as it is tall
 (`cardAspectRatio`), a little wider than a real bank card's 1.59, so cards take
 less of the screen; the radius is 16 px (`card_face.dart`). A card is one
 colour the owner picked, lit from the top left, under a finish that never
-moves: brushed metal (fine vertical streaks), matte or gloss (a fixed
-diagonal sheen). Text is dark on light cards and white on dark ones unless
+moves: matte or gloss (a fixed diagonal sheen). Text is dark on light cards and white on dark ones unless
 the owner picked its colour, such as gold on black. The provider's name is
 plain text, at the top and again as the wordmark; there are no logos or
 issuers' card designs, which are trademarks. Cash is a stitched leather

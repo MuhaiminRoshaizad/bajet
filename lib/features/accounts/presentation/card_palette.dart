@@ -46,10 +46,9 @@ const leatherSwatches = [
 ];
 
 /// The finishes a card can have; leather is only ever the wallet's.
-const cardFinishes = [CardFinish.brushed, CardFinish.matte, CardFinish.gloss];
+const cardFinishes = [CardFinish.matte, CardFinish.gloss];
 
 String finishLabel(CardFinish finish) => switch (finish) {
-      CardFinish.brushed => 'Brushed metal',
       CardFinish.matte => 'Matte',
       CardFinish.gloss => 'Gloss',
       CardFinish.leather => 'Leather',

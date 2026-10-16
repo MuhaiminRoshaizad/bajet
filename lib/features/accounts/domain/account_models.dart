@@ -10,13 +10,13 @@ const firstAccountName = 'Main account';
 const firstAccountColor = 0xFF4A5866;
 
 /// How a card is drawn. Leather is the cash wallet's.
-enum CardFinish { brushed, matte, gloss, leather }
+enum CardFinish { matte, gloss, leather }
 
 /// A card's colours as ARGB. [ink] is the text colour when the owner picked
 /// one, such as gold on black; otherwise the text follows the card's
 /// lightness.
 class CardLook {
-  const CardLook({required this.color, this.ink, this.finish = CardFinish.brushed});
+  const CardLook({required this.color, this.ink, this.finish = CardFinish.matte});
 
   final int color;
   final int? ink;
@@ -84,7 +84,7 @@ class AccountDraft {
 /// The total card has no account behind it; with no colour it follows the
 /// app's own light or dark surface.
 class TotalCardLook {
-  const TotalCardLook({this.color, this.finish = CardFinish.brushed});
+  const TotalCardLook({this.color, this.finish = CardFinish.matte});
 
   final int? color;
   final CardFinish finish;

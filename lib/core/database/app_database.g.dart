@@ -67,7 +67,7 @@ class $AppSettingsTable extends AppSettings
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    defaultValue: const Constant('brushed'),
+    defaultValue: const Constant('matte'),
   ).withConverter<CardFinish>($AppSettingsTable.$convertertotalCardFinish);
   @override
   List<GeneratedColumn> get $columns => [
@@ -516,7 +516,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-        defaultValue: const Constant('brushed'),
+        defaultValue: const Constant('matte'),
       ).withConverter<CardFinish>($AccountsTable.$converterfinish);
   static const VerificationMeta _sortOrderMeta = const VerificationMeta(
     'sortOrder',

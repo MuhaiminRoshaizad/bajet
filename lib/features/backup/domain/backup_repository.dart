@@ -8,8 +8,9 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// `repeatsYearly`. 5: entries carry `plannedEventId` and `plannedEventOn`.
 /// 6: `accounts` and `transfers`; entries and recurring items carry
 /// `accountId`; settings carry the total card's look instead of
-/// `openingBalance`, which becomes the first account's.
-const backupFormatVersion = 6;
+/// `openingBalance`, which becomes the first account's. 7: no `brushed`
+/// finish; cards that had it are `matte`.
+const backupFormatVersion = 7;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -80,6 +81,19 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
       'recurringItems': [for (final r in (b['recurringItems'] as List<Object?>? ?? const [])) {...r! as Map<String, Object?>, 'accountId': 1}],
     };
     format = 6;
+  }
+  if (format == 6) {
+    String finish(Object? f) => f == 'brushed' ? 'matte' : f! as String;
+    final settings = b['settings'] as Map<String, Object?>?;
+    b = {
+      ...b,
+      'format': 7,
+      'settings': settings == null ? null : {...settings, 'totalCardFinish': finish(settings['totalCardFinish'])},
+      'accounts': [
+        for (final a in (b['accounts'] as List<Object?>? ?? const [])) {...a! as Map<String, Object?>, 'finish': finish((a as Map<String, Object?>)['finish'])},
+      ],
+    };
+    format = 7;
   }
   return b;
 }

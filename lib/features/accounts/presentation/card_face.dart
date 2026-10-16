@@ -70,15 +70,6 @@ class _FinishPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     switch (finish) {
-      case CardFinish.brushed:
-        // Fine vertical streaks, alternately lighter and darker, like
-        // brushed metal.
-        final light = Paint()..color = const Color(0x0FFFFFFF);
-        final dark = Paint()..color = const Color(0x0D000000);
-        for (var x = 0.0; x < size.width; x += 3) {
-          canvas.drawRect(Rect.fromLTWH(x, 0, 1, size.height), (x ~/ 3).isEven ? light : dark);
-        }
-        _glow(canvas, rect, 0.10);
       case CardFinish.matte:
         _glow(canvas, rect, 0.07);
       case CardFinish.gloss:

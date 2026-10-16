@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bajet/core/database/app_database.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart' show firstAccountName;
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -59,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 6);
+    expect(db.schemaVersion, 7);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -133,6 +134,31 @@ void main() {
     expect((entry.amount, entry.accountId, entry.recurringItemId), (450, 1, 1));
     expect((await old.select(old.recurringItems).getSingle()).accountId, 1);
     final settings = await old.select(old.appSettings).getSingle();
-    expect((settings.openingDate, settings.weeklyCap, settings.totalCardColor, settings.totalCardFinish), (DateTime.utc(2026, 7, 1), 3000, null, CardFinish.brushed));
+    expect((settings.openingDate, settings.weeklyCap, settings.totalCardColor, settings.totalCardFinish), (DateTime.utc(2026, 7, 1), 3000, null, CardFinish.matte));
+  });
+
+  test('a version 6 database turns its brushed metal cards matte and keeps everything else', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v6.sql').readAsStringSync());
+      raw.execute("INSERT INTO app_settings (opening_date, weekly_cap, buffer, total_card_finish) VALUES ('2026-07-01', 3000, 0, 'brushed')");
+      raw.execute("INSERT INTO accounts (kind, name, opening_balance, color, finish, sort_order) VALUES ('bank', 'Bank', 1000, 1, 'brushed', 1)");
+      raw.execute("INSERT INTO accounts (kind, name, opening_balance, color, finish, sort_order) VALUES ('cash', 'Cash', 500, 2, 'leather', 0)");
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key, account_id) VALUES ('2026-07-01', 'expense', 450, 'food', 1)");
+      raw.execute("INSERT INTO transfers (occurred_on, from_account_id, to_account_id, amount) VALUES ('2026-07-02', 1, 2, 100)");
+      raw.execute('PRAGMA user_version = 6');
+    }));
+    addTearDown(old.close);
+    final accounts = await (old.select(old.accounts)..orderBy([(a) => OrderingTerm(expression: a.id)])).get();
+    expect([for (final a in accounts) (a.id, a.name, a.openingBalance, a.finish, a.sortOrder)], [
+      (1, 'Bank', 1000, CardFinish.matte, 1),
+      (2, 'Cash', 500, CardFinish.leather, 0),
+    ]);
+    expect((await old.select(old.appSettings).getSingle()).totalCardFinish, CardFinish.matte);
+    expect((await old.select(old.entries).getSingle()).accountId, 1);
+    expect((await old.select(old.transfers).getSingle()).toAccountId, 2);
+    // A card added afterwards starts matte too.
+    final id = await old.into(old.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: 'New', color: 3));
+    expect((await (old.select(old.accounts)..where((a) => a.id.equals(id))).getSingle()).finish, CardFinish.matte);
   });
 }

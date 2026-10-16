@@ -31,7 +31,7 @@ enum GoalStatus { active, paused, achieved, archived }
 enum AccountKind { cash, bank, ewallet }
 
 /// How a card is drawn. Leather is the cash wallet's.
-enum CardFinish { brushed, matte, gloss, leather }
+enum CardFinish { matte, gloss, leather }
 
 /// One row only, created during first-run setup. The starting balance lives
 /// on each account, as of [openingDate].
@@ -45,7 +45,7 @@ class AppSettings extends Table {
 
   /// The total card's look; no colour means it follows the app's theme.
   IntColumn get totalCardColor => integer().nullable()();
-  TextColumn get totalCardFinish => textEnum<CardFinish>().withDefault(const Constant('brushed'))();
+  TextColumn get totalCardFinish => textEnum<CardFinish>().withDefault(const Constant('matte'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -66,7 +66,7 @@ class Accounts extends Table {
   /// (such as gold on black); otherwise text follows the card's lightness.
   IntColumn get color => integer()();
   IntColumn get inkColor => integer().nullable()();
-  TextColumn get finish => textEnum<CardFinish>().withDefault(const Constant('brushed'))();
+  TextColumn get finish => textEnum<CardFinish>().withDefault(const Constant('matte'))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }
 

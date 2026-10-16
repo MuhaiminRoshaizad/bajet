@@ -189,6 +189,23 @@ void main() {
     expect(await DriftLedgerRepository(target).watchBalance().first, 150000 - 50000 - 450);
   });
 
+  test('a format 6 backup restores its brushed metal cards, and the total card, as matte', () async {
+    await fill(source);
+    await DriftAccountRepository(source).saveTotalLook(const domain.TotalCardLook(color: 0xFFCDB88A, finish: domain.CardFinish.gloss));
+    final v7 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    final v6 = {
+      ...v7,
+      'format': 6,
+      'settings': {...v7['settings']! as Map<String, Object?>, 'totalCardFinish': 'brushed'},
+      'accounts': [for (final a in v7['accounts']! as List) {...(a as Map<String, Object?>), 'finish': 'brushed'}],
+    };
+    await DriftBackupRepository(target).restore(v6);
+
+    final accounts = await DriftAccountRepository(target).watchAccounts().first;
+    expect(accounts.map((a) => a.look.finish), everyElement(domain.CardFinish.matte));
+    expect((await DriftAccountRepository(target).watchTotalLook().first).finish, domain.CardFinish.matte);
+  });
+
   test('accounts, the money moved between them and the total card survive a round trip', () async {
     await fill(source);
     final accounts = DriftAccountRepository(source);

@@ -90,10 +90,10 @@ class _CardDesigner extends ConsumerStatefulWidget {
 class _CardDesignerState extends ConsumerState<_CardDesigner> {
   late final Account? _account = widget.account;
   late final AccountKind? _newKind = widget.newKind;
-  late final CardLook? _start = _newKind == null ? null : startingSwatch(_newKind, '').look(_newKind == AccountKind.cash ? CardFinish.leather : CardFinish.brushed);
+  late final CardLook? _start = _newKind == null ? null : startingSwatch(_newKind, '').look(_newKind == AccountKind.cash ? CardFinish.leather : CardFinish.matte);
   late int? _color = _account?.look.color ?? _start?.color ?? ref.read(totalCardLookProvider).value?.color;
   late int? _ink = _account?.look.ink ?? _start?.ink;
-  late CardFinish _finish = _account?.look.finish ?? _start?.finish ?? ref.read(totalCardLookProvider).value?.finish ?? CardFinish.brushed;
+  late CardFinish _finish = _account?.look.finish ?? _start?.finish ?? ref.read(totalCardLookProvider).value?.finish ?? CardFinish.matte;
   late final _nickname = TextEditingController(text: _account?.nickname);
   late final _provider = TextEditingController(text: _account?.name);
   final _balance = TextEditingController();
