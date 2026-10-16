@@ -156,7 +156,12 @@ arriving, the total lifts away and fades while the cards slide out from
 behind it, from exactly where they sat in Today's stack, down into their
 strips, each a little after the one above (`Curves.easeOutBack`); leaving,
 they slide back behind it without a bounce. Today's stack hides while its
-cards are away (`accountsOnTopProvider`), so no card is ever seen twice. Scrolling opens them downward:
+cards are away (`accountsOnTopProvider`), so no card is ever seen twice.
+Pressing and holding Today's stack or a card here (`HoldSwell`) swells it to
+×1.06 and raises it 4 px after 140 ms, with a light haptic tick
+(`easeOutBack`, 260 ms), then a firmer tick 420 ms later; it springs back
+over 380 ms when let go or when the finger moves. A press counts as a hold,
+not a tap, only once the firmer tick has come. Scrolling opens them downward:
 the first 220 px of scroll are held, so the top card stays put while the
 cards below drop away until each is whole with a 14 px gap, and only then
 does the page scroll (`AccountListLayout`). Tapping a card opens the

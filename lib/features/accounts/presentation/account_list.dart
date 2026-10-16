@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../domain/account_models.dart';
 import 'card_face.dart';
+import 'hold_swell.dart';
 
 /// Where each card sits on Your accounts. At rest the cards overlap like a
 /// wallet, each showing a strip with its name and balance. Scrolling opens
@@ -96,7 +97,7 @@ class AccountList extends StatelessWidget {
                 width: box.maxWidth,
                 child: Opacity(
                   opacity: hidden.contains(a.id) ? 0 : 1,
-                  child: GestureDetector(onTap: onTap == null ? null : () => onTap!(a), child: AccountCard(account: a)),
+                  child: HoldSwell(onTap: onTap == null ? null : () => onTap!(a), child: AccountCard(account: a)),
                 ),
               ),
           ]),

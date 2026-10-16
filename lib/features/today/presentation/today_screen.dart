@@ -14,6 +14,7 @@ import '../../accounts/domain/account_models.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_stack.dart';
 import '../../accounts/presentation/card_face.dart';
+import '../../accounts/presentation/hold_swell.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
@@ -121,8 +122,7 @@ class _AccountsStackState extends ConsumerState<_AccountsStack> {
     return Semantics(
       button: true,
       hint: 'See your accounts',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+      child: HoldSwell(
         onTap: () => _open(accounts.length),
         child: Opacity(
           opacity: lent ? 0 : 1,
