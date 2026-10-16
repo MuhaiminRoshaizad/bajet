@@ -5,6 +5,7 @@ import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/coach/presentation/coach_providers.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/ledger/presentation/ledger_providers.dart';
+import 'package:bajet/features/lock/presentation/lock_providers.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/presentation/plan_providers.dart';
 import 'package:flutter/widgets.dart';
@@ -51,6 +52,10 @@ Future<FakeWorld> pumpApp(
       accountRepositoryProvider.overrideWithValue(world),
       photoColoursProvider.overrideWithValue(world.photos),
       themeModeStoreProvider.overrideWithValue(world.themeModes),
+      lockSettingsStoreProvider.overrideWithValue(world.lockSettings),
+      initialLockSettingsProvider.overrideWithValue(world.lockSettings.saved),
+      deviceAuthProvider.overrideWithValue(world.deviceAuth),
+      lockClockProvider.overrideWithValue(() => world.clock),
       ...?overrides?.call(world),
     ],
     child: const BajetApp(),

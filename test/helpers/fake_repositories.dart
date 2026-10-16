@@ -11,6 +11,7 @@ import 'package:bajet/features/accounts/domain/photo_colours.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
+import 'package:bajet/features/lock/domain/app_lock.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/receipt_store.dart';
@@ -78,6 +79,12 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final coachKeys = FakeCoachKeys();
   final coach = FakeCoach();
   final themeModes = FakeThemeModes();
+  final lockSettings = FakeLockSettings();
+
+  /// The wall clock the app lock reads; tests move it on to stand for time
+  /// spent away.
+  DateTime clock = DateTime(2026, 7, 1, 9);
+  final deviceAuth = FakeDeviceAuth();
   final photos = FakePhotoColours();
   var _nextId = 1;
 
@@ -569,4 +576,31 @@ class FakeThemeModes implements ThemeModeStore {
 
   @override
   Future<void> write(ThemeMode mode) async => saved = mode;
+}
+
+class FakeLockSettings implements LockSettingsStore {
+  LockSettings saved = const LockSettings();
+
+  @override
+  Future<LockSettings> read() async => saved;
+
+  @override
+  Future<void> write(LockSettings settings) async => saved = settings;
+}
+
+/// The phone's fingerprint prompt: answers with [outcomes] in turn, then
+/// keeps giving the last one, and counts how often it was shown.
+class FakeDeviceAuth implements DeviceAuth {
+  bool available = true;
+  List<AuthOutcome> outcomes = [AuthOutcome.passed];
+  final titles = <String>[];
+
+  @override
+  Future<bool> isAvailable() async => available;
+
+  @override
+  Future<AuthOutcome> authenticate({required String title, required String reason}) async {
+    titles.add(title);
+    return outcomes.length > 1 ? outcomes.removeAt(0) : outcomes.single;
+  }
 }

@@ -5,6 +5,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode.dart';
 import '../features/launch/presentation/launch_providers.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
+import '../features/lock/presentation/lock_screen.dart';
 import 'dismiss_keyboard.dart';
 import 'router.dart';
 
@@ -28,6 +29,7 @@ class BajetApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
+      builder: (context, child) => LockGate(child: child!),
       actions: {...WidgetsApp.defaultActions, ..._keyboard.actions},
     );
   }

@@ -55,6 +55,7 @@ lib/
     dates/              dd/mm/yyyy formatting, the only place dates become text
     money/              sen ↔ RM formatting, the only place money becomes text
     navigation/         route paths, so features can link without the router
+    platform/           screens bajet opens outside itself (camera, pickers, share sheet)
     sharing/            the share sheet, for backups and reports
     theme/              colour, spacing, radii and motion tokens
     validation/         input formatters and validators
@@ -83,6 +84,7 @@ A folder under `core/` appears only once two features need it.
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
 | `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day, given the week and month as context; the week's summary can still be copied |
+| `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, and the owner's lock choices |
 | `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
 
 Shared providers live beside what they provide: `databaseProvider` and

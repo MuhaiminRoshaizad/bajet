@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../core/platform/outside_app.dart';
 import '../domain/photo_colours.dart';
 
 /// Reads a photo from the camera or the gallery small, into memory, then
@@ -15,14 +16,14 @@ class DevicePhotoColours implements PhotoColours {
 
   @override
   Future<PhotoSample?> pick(PhotoSource source) async {
-    final picked = await _picker.pickImage(
-      source: source == PhotoSource.camera ? ImageSource.camera : ImageSource.gallery,
-      // Colours need little detail; a small image is quicker and is only
-      // ever held in memory.
-      maxWidth: PhotoSample.longSide.toDouble(),
-      maxHeight: PhotoSample.longSide.toDouble(),
-      requestFullMetadata: false,
-    );
+    final picked = await OutsideApp.run(() => _picker.pickImage(
+        source: source == PhotoSource.camera ? ImageSource.camera : ImageSource.gallery,
+        // Colours need little detail; a small image is quicker and is only
+        // ever held in memory.
+        maxWidth: PhotoSample.longSide.toDouble(),
+        maxHeight: PhotoSample.longSide.toDouble(),
+        requestFullMetadata: false,
+      ));
     if (picked == null) return null;
     try {
       final codec = await ui.instantiateImageCodec(await picked.readAsBytes());

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../core/platform/outside_app.dart';
 import '../domain/receipt_store.dart';
 
 /// Receipts in a `receipts` folder inside the app's own documents, which no
@@ -22,13 +23,13 @@ class DeviceReceiptStore implements ReceiptStore {
   Future<String?> pick(ReceiptSource source) async {
     // Big enough to read a receipt's small print, small enough that a year
     // of them stays well inside Auto Backup's 25 MB.
-    final picked = await _picker.pickImage(
-      source: source == ReceiptSource.camera ? ImageSource.camera : ImageSource.gallery,
-      maxWidth: 1600,
-      maxHeight: 1600,
-      imageQuality: 75,
-      requestFullMetadata: false,
-    );
+    final picked = await OutsideApp.run(() => _picker.pickImage(
+        source: source == ReceiptSource.camera ? ImageSource.camera : ImageSource.gallery,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 75,
+        requestFullMetadata: false,
+      ));
     if (picked == null) return null;
     final dot = picked.name.lastIndexOf('.');
     final name = '${DateTime.now().microsecondsSinceEpoch}${dot < 0 ? '.jpg' : picked.name.substring(dot)}';
