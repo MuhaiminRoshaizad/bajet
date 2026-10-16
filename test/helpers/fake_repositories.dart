@@ -85,6 +85,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   /// spent away.
   DateTime clock = DateTime(2026, 7, 1, 9);
   final deviceAuth = FakeDeviceAuth();
+  final recents = FakeRecentsPrivacy();
   final photos = FakePhotoColours();
   var _nextId = 1;
 
@@ -603,4 +604,11 @@ class FakeDeviceAuth implements DeviceAuth {
     titles.add(title);
     return outcomes.length > 1 ? outcomes.removeAt(0) : outcomes.single;
   }
+}
+
+class FakeRecentsPrivacy implements RecentsPrivacy {
+  bool? hidden;
+
+  @override
+  Future<void> hideFromRecents(bool hidden) async => this.hidden = hidden;
 }

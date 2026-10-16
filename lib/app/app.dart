@@ -5,6 +5,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode.dart';
 import '../features/launch/presentation/launch_providers.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
+import '../features/lock/presentation/lock_providers.dart';
 import '../features/lock/presentation/lock_screen.dart';
 import 'dismiss_keyboard.dart';
 import 'router.dart';
@@ -22,6 +23,7 @@ class BajetApp extends ConsumerWidget {
     // favourites, and a link that launched the app is held until used.
     ref.watch(homeSurfaceSyncProvider);
     ref.watch(pendingLaunchProvider);
+    ref.watch(recentsPrivacySyncProvider);
     return MaterialApp.router(
       title: 'bajet',
       debugShowCheckedModeBanner: false,

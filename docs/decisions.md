@@ -223,3 +223,8 @@ which bring in `androidx.appcompat`. iOS will need a Face ID purpose string.
 The lock guards the screen only: the database is protected by Android's app
 sandbox and storage encryption, not by the lock, and an exported backup is
 as readable as before.
+
+While the lock is on, Android 13 and later keep no picture of bajet for the
+app switcher (`setRecentsScreenshotEnabled`), so the switcher shows a blank
+card. `FLAG_SECURE` would cover older phones too, but it also blocks every
+screenshot the owner takes, so it is not used.

@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/platform/outside_app.dart';
+import '../data/channel_recents_privacy.dart';
 import '../data/file_lock_settings_store.dart';
 import '../data/local_device_auth.dart';
 import '../domain/app_lock.dart';
 
 final lockSettingsStoreProvider = Provider<LockSettingsStore>((ref) => FileLockSettingsStore());
 final deviceAuthProvider = Provider<DeviceAuth>((ref) => LocalDeviceAuth());
+final recentsPrivacyProvider = Provider<RecentsPrivacy>((ref) => const ChannelRecentsPrivacy());
 
 /// The choices as read before the first frame, so a locked app never shows
 /// the money before the lock screen. Overridden in main.
@@ -79,3 +83,9 @@ class AppLockController extends Notifier<bool> {
 }
 
 final appLockProvider = NotifierProvider<AppLockController, bool>(AppLockController.new);
+
+/// Keeps the app switcher's picture of bajet in step with the lock. Watched
+/// for the app's lifetime.
+final recentsPrivacySyncProvider = Provider<void>((ref) {
+  unawaited(ref.watch(recentsPrivacyProvider).hideFromRecents(ref.watch(lockSettingsProvider.select((s) => s.enabled))));
+});

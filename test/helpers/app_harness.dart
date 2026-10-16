@@ -55,6 +55,7 @@ Future<FakeWorld> pumpApp(
       lockSettingsStoreProvider.overrideWithValue(world.lockSettings),
       initialLockSettingsProvider.overrideWithValue(world.lockSettings.saved),
       deviceAuthProvider.overrideWithValue(world.deviceAuth),
+      recentsPrivacyProvider.overrideWithValue(world.recents),
       lockClockProvider.overrideWithValue(() => world.clock),
       ...?overrides?.call(world),
     ],

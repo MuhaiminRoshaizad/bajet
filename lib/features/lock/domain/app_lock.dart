@@ -57,3 +57,10 @@ abstract interface class DeviceAuth {
   /// phone's PIN too. [reason] says what passing it does.
   Future<AuthOutcome> authenticate({required String title, required String reason});
 }
+
+/// Whether Android may keep a picture of bajet for the app switcher. While
+/// the lock is on it may not, so the switcher shows a blank card instead of
+/// the balance. Screenshots the owner takes still work.
+abstract interface class RecentsPrivacy {
+  Future<void> hideFromRecents(bool hidden);
+}

@@ -24,6 +24,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.deviceAuth.titles, ['Turn on App lock']);
     expect(world.lockSettings.saved, const LockSettings(enabled: true));
+    expect(world.recents.hidden, isTrue);
 
     await tester.tap(find.text('5 minutes'));
     await tester.pumpAndSettle();
@@ -62,5 +63,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.lockSettings.saved.enabled, isFalse);
     expect(world.deviceAuth.titles, ['Unlock bajet'], reason: 'only the unlock on opening');
+    expect(world.recents.hidden, isFalse, reason: 'the app switcher may show bajet again');
   });
 }

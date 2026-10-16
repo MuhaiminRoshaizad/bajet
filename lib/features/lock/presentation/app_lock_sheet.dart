@@ -106,6 +106,8 @@ class _AppLockSheetState extends ConsumerState<_AppLockSheet> {
                   ),
                   const SizedBox(height: AppSpacing.s),
                   Text('How long bajet can sit in the background before it asks again.', style: TextStyle(color: c.muted, fontSize: 13)),
+                  const SizedBox(height: AppSpacing.l),
+                  Text('The app switcher shows a blank card while the lock is on.', style: TextStyle(color: c.muted, fontSize: 13)),
                 ],
               ),
             ),
