@@ -134,6 +134,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                       // cards here wait unseen.
                       hidden: settled && above.status == AnimationStatus.dismissed ? const {} : {for (final a in accounts) a.id},
                       onTap: settled ? (a) => context.push(Routes.account(a.id), extra: _placeOf) : null,
+                      onReorder: (ids) => ref.read(accountRepositoryProvider).reorderAccounts(ids),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),

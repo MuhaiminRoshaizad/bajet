@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../domain/account_models.dart';
 import 'card_face.dart';
 import 'hold_swell.dart';
@@ -69,38 +71,219 @@ class AccountListLayout {
   }
 }
 
-/// The cards laid out by [AccountListLayout] for the current scroll.
-class AccountList extends StatelessWidget {
-  const AccountList({super.key, required this.accounts, required this.offset, this.arrived = 1, this.onTap, this.hidden = const {}});
+/// The cards laid out by [AccountListLayout] for the current scroll. Held
+/// until the firmer tick, a card is picked up and can be dragged up or down:
+/// the others slide out of its way with a click each, a dashed outline shows
+/// where it will land, and letting go saves the new order ([onReorder]).
+class AccountList extends StatefulWidget {
+  const AccountList({
+    super.key,
+    required this.accounts,
+    required this.offset,
+    this.arrived = 1,
+    this.onTap,
+    this.onReorder,
+    this.hidden = const {},
+  });
 
   final List<Account> accounts;
   final double offset;
   final double arrived;
   final ValueChanged<Account>? onTap;
 
+  /// Every account's id in the order the owner dragged them into.
+  final ValueChanged<List<int>>? onReorder;
+
   /// Accounts whose cards are in flight elsewhere, so they hold their place
   /// unseen and never show twice.
   final Set<int> hidden;
 
   @override
+  State<AccountList> createState() => _AccountListState();
+}
+
+class _AccountListState extends State<AccountList> {
+  /// The order while a card is being dragged, and after it is let go until
+  /// the saved order comes back.
+  List<int>? _order;
+  int? _dragged;
+
+  /// The dragged card's top when it was picked up, and the finger's travel.
+  double _from = 0, _dy = 0;
+
+  static const _slide = Duration(milliseconds: 220);
+
+  static String _key(Iterable<int> ids) => ids.join(',');
+
+  List<Account> get _accounts {
+    final order = _order;
+    if (order == null) return widget.accounts;
+    final byId = {for (final a in widget.accounts) a.id: a};
+    // Accounts added or gone meanwhile: the saved list is the truth.
+    if (order.length != byId.length || !order.every(byId.containsKey)) return widget.accounts;
+    return [for (final id in order) byId[id]!];
+  }
+
+  @override
+  void didUpdateWidget(AccountList old) {
+    super.didUpdateWidget(old);
+    // The saved order has arrived: nothing left to hold on to.
+    if (_dragged == null && _order != null && _key(widget.accounts.map((a) => a.id)) == _key(_order!)) _order = null;
+  }
+
+  void _pickUp(AccountListLayout layout, Account a) {
+    setState(() {
+      _order = [for (final x in _accounts) x.id];
+      _dragged = a.id;
+      _from = layout.top(_order!.indexOf(a.id), widget.offset);
+      _dy = 0;
+    });
+  }
+
+  void _drag(double width, Offset travel) {
+    final order = _order;
+    final id = _dragged;
+    if (order == null || id == null) return;
+    final byId = {for (final a in _accounts) a.id: a};
+    final top = _from + travel.dy;
+    // The slot whose top is nearest the card's, trying the card in each.
+    var best = order.indexOf(id);
+    var bestGap = double.infinity;
+    for (var i = 0; i < order.length; i++) {
+      final trial = [...order]
+        ..remove(id)
+        ..insert(i, id);
+      final gap = (AccountListLayout(accounts: [for (final x in trial) byId[x]!], width: width).top(i, widget.offset) - top).abs();
+      if (gap < bestGap) (best, bestGap) = (i, gap);
+    }
+    setState(() {
+      _dy = travel.dy;
+      if (best != order.indexOf(id)) {
+        HapticFeedback.selectionClick();
+        _order = [...order]
+          ..remove(id)
+          ..insert(best, id);
+      }
+    });
+  }
+
+  void _drop() {
+    final order = _order;
+    setState(() => _dragged = null);
+    if (order == null) return;
+    if (_key(order) != _key(widget.accounts.map((a) => a.id))) {
+      widget.onReorder?.call(order);
+    } else {
+      _order = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
+        final accounts = _accounts;
         final layout = AccountListLayout(accounts: accounts, width: box.maxWidth);
+        final dragging = _dragged != null;
+        final slot = accounts.indexWhere((a) => a.id == _dragged);
+        Widget card(int i, Account a) {
+          final held = a.id == _dragged;
+          return AnimatedPositioned(
+            key: ValueKey('account-card-${a.id}'),
+            // Following the scroll or the finger is immediate; sliding out of
+            // the way, or into the slot when let go, is not.
+            duration: held || _order == null ? Duration.zero : _slide,
+            curve: Curves.easeOutCubic,
+            top: held
+                ? (_from + _dy).clamp(layout.top(0, widget.offset) - 20, layout.top(accounts.length - 1, widget.offset) + 20)
+                : layout.top(i, widget.offset, arrived: widget.arrived),
+            left: 0,
+            width: box.maxWidth,
+            child: Opacity(
+              opacity: widget.hidden.contains(a.id) ? 0 : 1,
+              child: _Dim(
+                on: dragging && !held,
+                child: HoldSwell(
+                  onTap: widget.onTap == null ? null : () => widget.onTap!(a),
+                  onPickUp: widget.onReorder == null || accounts.length < 2 ? null : () => _pickUp(layout, a),
+                  onDrag: (travel) => _drag(box.maxWidth, travel),
+                  onDrop: _drop,
+                  child: AccountCard(account: a),
+                ),
+              ),
+            ),
+          );
+        }
+
         return SizedBox(
           height: layout.height,
           child: Stack(clipBehavior: Clip.none, children: [
-            // Later cards overlap the bottom of the one above.
+            // Later cards overlap the bottom of the one above; the card being
+            // dragged rides over them all, above the outline of its slot.
             for (final (i, a) in accounts.indexed)
+              if (a.id != _dragged) card(i, a),
+            if (dragging)
               Positioned(
-                key: ValueKey('account-card-${a.id}'),
-                top: layout.top(i, offset, arrived: arrived),
+                top: layout.top(slot, widget.offset),
                 left: 0,
                 width: box.maxWidth,
-                child: Opacity(
-                  opacity: hidden.contains(a.id) ? 0 : 1,
-                  child: HoldSwell(onTap: onTap == null ? null : () => onTap!(a), child: AccountCard(account: a)),
-                ),
+                height: slot == accounts.length - 1 ? layout.cardHeight : AccountListLayout.strip,
+                child: const IgnorePointer(child: _Slot()),
               ),
+            for (final (i, a) in accounts.indexed)
+              if (a.id == _dragged) card(i, a),
           ]),
         );
       });
+}
+
+/// The cards not being dragged, a little darker, so the one held stands out.
+class _Dim extends StatelessWidget {
+  const _Dim({required this.on, required this.child});
+
+  final bool on;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+        tween: Tween(end: on ? 0.82 : 1),
+        duration: const Duration(milliseconds: 180),
+        builder: (context, k, child) => k == 1
+            ? child!
+            : ColorFiltered(
+                colorFilter: ColorFilter.matrix([k, 0, 0, 0, 0, 0, k, 0, 0, 0, 0, 0, k, 0, 0, 0, 0, 0, 1, 0]),
+                child: child,
+              ),
+        child: child,
+      );
+}
+
+/// Where the card being dragged will land: a dashed outline in the card's
+/// shape.
+class _Slot extends StatelessWidget {
+  const _Slot();
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(painter: _DashedOutline(context.colors.muted.withValues(alpha: 0.6)));
+}
+
+class _DashedOutline extends CustomPainter {
+  const _DashedOutline(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final outline = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(16)));
+    for (final metric in outline.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += 10) {
+        canvas.drawPath(metric.extractPath(d, d + 5), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedOutline old) => old.color != color;
 }

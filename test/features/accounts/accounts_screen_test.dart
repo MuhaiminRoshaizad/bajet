@@ -159,4 +159,41 @@ void main() {
     // Spent from the other account, so not this one's.
     expect(inActivity('Lunch'), findsNothing);
   });
+
+  testWidgets('holding a card picks it up, dragging it reorders the cards, and Today follows', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => addAccounts(w, 2));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+
+    final press = await tester.startGesture(tester.getCenter(find.text('Wallet 1').hitTestable().first));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 500));
+    // Picked up: the slot it will land in is outlined.
+    expect(find.byType(CustomPaint).hitTestable(), findsWidgets);
+    for (var i = 0; i < 10; i++) {
+      await press.moveBy(const Offset(0, -16));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await press.up();
+    await tester.pumpAndSettle();
+    expect([for (final a in world.accounts) a.name], ['Wallet 1', 'Main account', 'Wallet 0']);
+
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pumpAndSettle();
+    expect([for (final a in tester.widget<AccountStack>(find.byType(AccountStack)).accounts) a.name], ['Wallet 1', 'Main account', 'Wallet 0']);
+  });
+
+  testWidgets('a quick tap still opens a card, and a scroll never picks one up', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => addAccounts(w, 2));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('Wallet 0').hitTestable().first, const Offset(0, -120));
+    await tester.pumpAndSettle();
+    expect([for (final a in world.accounts) a.name], ['Main account', 'Wallet 0', 'Wallet 1']);
+
+    await tester.tap(find.text('Wallet 1').hitTestable().first);
+    await tester.pumpAndSettle();
+    expect(find.text('Move money from Wallet 1'), findsOneWidget);
+  });
 }

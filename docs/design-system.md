@@ -161,7 +161,15 @@ Pressing and holding Today's stack or a card here (`HoldSwell`) swells it to
 ×1.06 and raises it 4 px after 140 ms, with a light haptic tick
 (`easeOutBack`, 260 ms), then a firmer tick 420 ms later; it springs back
 over 380 ms when let go or when the finger moves. A press counts as a hold,
-not a tap, only once the firmer tick has come. Scrolling opens them downward:
+not a tap, only once the firmer tick has come; that tick is a long press,
+so it takes the finger from the scroll. On Your accounts it picks the card
+up: it lifts to ×1.08, the other cards dim to 82%, and a dashed outline
+marks its slot. Dragged up or down, it rides over the others, which slide
+out of its way over 220 ms with a selection click each; let go, it settles
+into the slot and the order is saved (`reorderAccounts`), with no Done
+button. That one order drives Today's peeking cards and dots, Your
+accounts, the swipe between cards and every account picker. Today's stack
+only swells and ticks; it is never picked up. Scrolling opens them downward:
 the first 220 px of scroll are held, so the top card stays put while the
 cards below drop away until each is whole with a 14 px gap, and only then
 does the page scroll (`AccountListLayout`). Tapping a card opens the
