@@ -217,206 +217,203 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // The toggle sits in the middle; a box as wide as the close
-            // button on the left keeps it truly centred.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
-              child: Row(
-                children: [
-                  const SizedBox(width: 48),
-                  const Spacer(),
-                  _KindToggle(
-                    isIncome: _isIncome,
-                    onChanged: (v) => setState(() {
-                      _isIncome = v;
-                      _categoryKey = null;
-                      _favouriteId = null;
-                      _label = null;
-                      _event = null;
-                    }),
-                  ),
-                  const Spacer(),
-                  IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close_rounded), tooltip: 'Close'),
-                ],
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // The toggle sits in the middle; a box as wide as the close
+          // button on the left keeps it truly centred.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+            child: Row(
+              children: [
+                const SizedBox(width: 48),
+                const Spacer(),
+                _KindToggle(
+                  isIncome: _isIncome,
+                  onChanged: (v) => setState(() {
+                    _isIncome = v;
+                    _categoryKey = null;
+                    _favouriteId = null;
+                    _label = null;
+                    _event = null;
+                  }),
+                ),
+                const Spacer(),
+                IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close_rounded), tooltip: 'Close'),
+              ],
             ),
-            // The amount stays in view above the choices, which scroll; the
-            // phone's number pad opens with the sheet.
-            Padding(
+          ),
+          // The amount stays in view above the choices, which scroll; the
+          // phone's number pad opens with the sheet.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.s),
+                // The amount reads out of a display set into the sheet, typed
+                // on the number pad and filled from the right like a till.
+                SoftWell(
+                  radius: AppRadii.card,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
+                  child: TextField(
+                    key: const ValueKey('amount'),
+                    controller: _amountText,
+                    // A new entry starts on the amount; an entry being
+                    // edited or filled in waits until the amount is tapped.
+                    autofocus: widget.editing == null && (widget.prefill?.amount ?? 0) == 0,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.done,
+                    textAlign: TextAlign.center,
+                    inputFormatters: const [_amountFormatter],
+                    onChanged: (_) => setState(() => _favouriteId = null),
+                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.w700, letterSpacing: -1, color: c.ink, fontFeatures: const [FontFeature.tabularFigures()]),
+                    decoration: InputDecoration(
+                      hintText: 'RM0.00',
+                      hintStyle: TextStyle(color: c.muted),
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      semanticCounterText: '',
+                      labelText: null,
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s),
+                Center(
+                  child: _event == null
+                      ? _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day, editing: widget.editing)
+                      : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: AppSpacing.s),
-                  // The amount reads out of a display set into the sheet, typed
-                  // on the number pad and filled from the right like a till.
-                  SoftWell(
-                    radius: AppRadii.card,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
-                    child: TextField(
-                      key: const ValueKey('amount'),
-                      controller: _amountText,
-                      // A new entry starts on the amount; an entry being
-                      // edited or filled in waits until the amount is tapped.
-                      autofocus: widget.editing == null && (widget.prefill?.amount ?? 0) == 0,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      textAlign: TextAlign.center,
-                      inputFormatters: const [_amountFormatter],
-                      onChanged: (_) => setState(() => _favouriteId = null),
-                      style: TextStyle(fontSize: 40, fontWeight: FontWeight.w700, letterSpacing: -1, color: c.ink, fontFeatures: const [FontFeature.tabularFigures()]),
-                      decoration: InputDecoration(
-                        hintText: 'RM0.00',
-                        hintStyle: TextStyle(color: c.muted),
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        semanticCounterText: '',
-                        labelText: null,
-                        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+                  if (!_isIncome && favourites.isEmpty && widget.editing == null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: _manageFavourites,
+                        icon: const Icon(Icons.star_outline_rounded),
+                        label: const Text('Set up favourites for things you buy often'),
                       ),
+                    ),
+                  if (!_isIncome && favourites.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s),
+                    Row(
+                      children: [
+                        _SectionLabel('Favourites'),
+                        const Spacer(),
+                        TextButton(onPressed: _manageFavourites, style: TextButton.styleFrom(minimumSize: const Size(48, 40)), child: const Text('Edit')),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 64,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        // Room for the chips' shadows, which a list clips.
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.s - 2),
+                        itemCount: favourites.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.m),
+                        itemBuilder: (_, i) {
+                          final f = favourites[i];
+                          final cat = categories.where((x) => x.key == f.categoryKey).firstOrNull;
+                          return _FavouriteChip(
+                            favourite: f,
+                            tint: categoryTint(cat),
+                            selected: _favouriteId == f.id,
+                            onTap: () => _useFavourite(f),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.l),
+                  _SectionLabel('Category'),
+                  const SizedBox(height: AppSpacing.s),
+                  GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    // Room around each tile for its shadow.
+                    padding: const EdgeInsets.all(AppSpacing.xs),
+                    mainAxisSpacing: AppSpacing.m,
+                    crossAxisSpacing: AppSpacing.m,
+                    childAspectRatio: 1.1,
+                    children: [
+                      for (final cat in categories)
+                        _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
+                    ],
+                  ),
+                  if (!_isIncome) _EventChoice(selected: _event, today: _day, onChanged: (link) => setState(() => _event = link)),
+                  // With one account there is nothing to choose.
+                  if (accounts.length > 1) ...[
+                    const SizedBox(height: AppSpacing.m),
+                    AccountChoice(
+                      label: _isIncome ? 'Paid into' : 'Paid from',
+                      accounts: accounts,
+                      selected: accounts.any((a) => a.id == _accountId) ? _accountId : accounts.first.id,
+                      onSelect: (id) => setState(() => _accountId = id),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.m),
+                  // Full width, so the label is never cut short.
+                  TextField(
+                    controller: _note,
+                    maxLength: 60,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                  // The day and the receipt as a matched pair; padded for
+                  // the tiles' shadows.
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.xs),
+                    child: Row(
+                      children: [
+                        Expanded(child: _DayTile(day: _day, onChanged: (d) => setState(() => _day = d))),
+                        const SizedBox(width: AppSpacing.m),
+                        Expanded(child: ReceiptTile(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r))),
+                      ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s),
-                  Center(
-                    child: _event == null
-                        ? _PlanHint(amount: _amount, isIncome: _isIncome, categoryKey: _categoryKey, day: _day, editing: widget.editing)
-                        : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
-                  ),
+                  if (widget.editing != null) ...[
+                    const SizedBox(height: AppSpacing.s),
+                    DeleteButton(label: 'Delete entry', onPressed: _delete),
+                    const SizedBox(height: AppSpacing.s),
+                  ],
                 ],
               ),
             ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (!_isIncome && favourites.isEmpty && widget.editing == null)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          onPressed: _manageFavourites,
-                          icon: const Icon(Icons.star_outline_rounded),
-                          label: const Text('Set up favourites for things you buy often'),
-                        ),
-                      ),
-                    if (!_isIncome && favourites.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.s),
-                      Row(
-                        children: [
-                          _SectionLabel('Favourites'),
-                          const Spacer(),
-                          TextButton(onPressed: _manageFavourites, style: TextButton.styleFrom(minimumSize: const Size(48, 40)), child: const Text('Edit')),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 64,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          // Room for the chips' shadows, which a list clips.
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.s - 2),
-                          itemCount: favourites.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.m),
-                          itemBuilder: (_, i) {
-                            final f = favourites[i];
-                            final cat = categories.where((x) => x.key == f.categoryKey).firstOrNull;
-                            return _FavouriteChip(
-                              favourite: f,
-                              tint: categoryTint(cat),
-                              selected: _favouriteId == f.id,
-                              onTap: () => _useFavourite(f),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.l),
-                    _SectionLabel('Category'),
-                    const SizedBox(height: AppSpacing.s),
-                    GridView.count(
-                      crossAxisCount: 4,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      // Room around each tile for its shadow.
-                      padding: const EdgeInsets.all(AppSpacing.xs),
-                      mainAxisSpacing: AppSpacing.m,
-                      crossAxisSpacing: AppSpacing.m,
-                      childAspectRatio: 1.1,
-                      children: [
-                        for (final cat in categories)
-                          _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
-                      ],
-                    ),
-                    if (!_isIncome) _EventChoice(selected: _event, today: _day, onChanged: (link) => setState(() => _event = link)),
-                    // With one account there is nothing to choose.
-                    if (accounts.length > 1) ...[
-                      const SizedBox(height: AppSpacing.m),
-                      AccountChoice(
-                        label: _isIncome ? 'Paid into' : 'Paid from',
-                        accounts: accounts,
-                        selected: accounts.any((a) => a.id == _accountId) ? _accountId : accounts.first.id,
-                        onSelect: (id) => setState(() => _accountId = id),
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.m),
-                    // Full width, so the label is never cut short.
-                    TextField(
-                      controller: _note,
-                      maxLength: 60,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
-                    ),
-                    const SizedBox(height: AppSpacing.m),
-                    // The day and the receipt as a matched pair; padded for
-                    // the tiles' shadows.
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xs),
-                      child: Row(
-                        children: [
-                          Expanded(child: _DayTile(day: _day, onChanged: (d) => setState(() => _day = d))),
-                          const SizedBox(width: AppSpacing.m),
-                          Expanded(child: ReceiptTile(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r))),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.s),
-                    if (widget.editing != null) ...[
-                      const SizedBox(height: AppSpacing.s),
-                      DeleteButton(label: 'Delete entry', onPressed: _delete),
-                      const SizedBox(height: AppSpacing.s),
-                    ],
-                  ],
-                ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
+            child: FilledButton(
+              onPressed: ready ? _save : null,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control + 4)),
+              ),
+              child: Text(
+                _amount == 0
+                    ? 'Type the amount'
+                    : _categoryKey == null
+                        ? 'Pick a category'
+                        : widget.editing != null
+                            ? 'Save changes'
+                            : '${_isIncome ? 'Add' : 'Log'} ${Money.format(_amount)}',
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
-              child: FilledButton(
-                onPressed: ready ? _save : null,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control + 4)),
-                ),
-                child: Text(
-                  _amount == 0
-                      ? 'Type the amount'
-                      : _categoryKey == null
-                          ? 'Pick a category'
-                          : widget.editing != null
-                              ? 'Save changes'
-                              : '${_isIncome ? 'Add' : 'Log'} ${Money.format(_amount)}',
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -76,48 +76,45 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     // compare with their own app or wallet.
     final single = accounts.length == 1;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Sunday check-in')),
-        body: ListView(
-          padding: const EdgeInsets.all(AppSpacing.l),
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
-              child: Text(
-                'Week of ${Dates.short(monday)} to ${Dates.short(DateTime.utc(monday.year, monday.month, monday.day + 6))}',
-                style: TextStyle(color: c.muted),
-              ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Sunday check-in')),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.l),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.m),
+            child: Text(
+              'Week of ${Dates.short(monday)} to ${Dates.short(DateTime.utc(monday.year, monday.month, monday.day + 6))}',
+              style: TextStyle(color: c.muted),
             ),
-            SoftCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(single ? 'Does it match your bank?' : 'Does each account match?', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                  for (final a in accounts) ...[
-                    const SizedBox(height: AppSpacing.l),
-                    _AccountCheck(
-                      account: a,
-                      field: _field(a.id),
-                      single: single,
-                      onLogMissing: (amount) => _logMissing(amount, a.id),
-                    ),
-                  ],
+          ),
+          SoftCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(single ? 'Does it match your bank?' : 'Does each account match?', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                for (final a in accounts) ...[
+                  const SizedBox(height: AppSpacing.l),
+                  _AccountCheck(
+                    account: a,
+                    field: _field(a.id),
+                    single: single,
+                    onLogMissing: (amount) => _logMissing(amount, a.id),
+                  ),
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.l),
-            if (days != null && spent != null && cap != null) SoftCard(child: WeekStrip(days: days, spent: spent, cap: cap)),
-            const SizedBox(height: AppSpacing.l),
-            OutlinedButton.icon(
-              onPressed: () => context.push('${Routes.report}?period=week'),
-              icon: const Icon(Icons.ios_share_rounded),
-              label: const Text("Share this week's report"),
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.l),
+          if (days != null && spent != null && cap != null) SoftCard(child: WeekStrip(days: days, spent: spent, cap: cap)),
+          const SizedBox(height: AppSpacing.l),
+          OutlinedButton.icon(
+            onPressed: () => context.push('${Routes.report}?period=week'),
+            icon: const Icon(Icons.ios_share_rounded),
+            label: const Text("Share this week's report"),
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+          ),
+        ],
       ),
     );
   }

@@ -221,6 +221,9 @@ inline line of text where it is.
 
 ## Interaction rules
 
+- Tapping anywhere outside the field being typed in puts the keyboard
+  away, on every screen and sheet (`DismissKeyboardOnTap`, set once on the
+  app); a drag that starts outside it, such as a scroll, leaves it up.
 - There is one way to log: the + in the centre of the bottom bar. The sheet
   reads top to bottom as amount, favourites, category, note and day, then a
   Log button that names what it will save. A new entry opens with the amount

@@ -67,89 +67,86 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
       });
     });
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.s, 0),
-              child: SizedBox(
-                height: 48,
-                child: Row(
-                  children: [
-                    Text('Coach', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-                    const SizedBox(width: AppSpacing.s),
-                    const Spacer(),
-                    if (hasKey)
-                      Flexible(
-                        child: Semantics(
-                        label: '$used of $coachDailyLimit questions used today',
-                        excludeSemantics: true,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-                          decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-                          child: Text(
-                            '${coachDailyLimit - used} left today',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.s, 0),
+            child: SizedBox(
+              height: 48,
+              child: Row(
+                children: [
+                  Text('Coach', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                  const SizedBox(width: AppSpacing.s),
+                  const Spacer(),
+                  if (hasKey)
+                    Flexible(
+                      child: Semantics(
+                      label: '$used of $coachDailyLimit questions used today',
+                      excludeSemantics: true,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+                        decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
+                        child: Text(
+                          '${coachDailyLimit - used} left today',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
-                      ),
-                    IconButton(onPressed: _copySummary, icon: const Icon(Icons.copy_rounded), tooltip: "Copy this week's summary"),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: !hasKey
-                  ? EmptyState(
-                      icon: Icons.forum_outlined,
-                      title: 'Ask about your money',
-                      message: "The coach answers from this week's and this month's figures, using your own Anthropic API key.",
-                      actionLabel: 'Add your key',
-                      onAction: () => context.push(Routes.coachKey),
-                      secondaryLabel: "Copy this week's summary",
-                      onSecondary: _copySummary,
-                    )
-                  : ListView(
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
-                      children: [
-                        if (chat.messages.isEmpty)
-                          SoftWell(
-                            radius: AppRadii.card,
-                            padding: const EdgeInsets.all(AppSpacing.l + 2),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Ask about your money', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                                const SizedBox(height: AppSpacing.xs),
-                                Text(
-                                  'The coach reads this week and this month and answers from those figures. '
-                                  'Each question sends them to Anthropic with your key.',
-                                  style: TextStyle(color: c.muted, height: 1.4),
-                                ),
-                              ],
-                            ),
-                          ),
-                        for (final m in chat.messages) _Bubble(message: m),
-                        if (chat.sending) const _Thinking(),
-                        if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider.notifier).retry() : null),
-                      ],
                     ),
-            ),
-            if (hasKey)
-              _Composer(
-                controller: _question,
-                enabled: !chat.sending && used < coachDailyLimit,
-                showSuggestions: chat.messages.isEmpty,
-                onSend: _send,
+                    ),
+                  IconButton(onPressed: _copySummary, icon: const Icon(Icons.copy_rounded), tooltip: "Copy this week's summary"),
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+          Expanded(
+            child: !hasKey
+                ? EmptyState(
+                    icon: Icons.forum_outlined,
+                    title: 'Ask about your money',
+                    message: "The coach answers from this week's and this month's figures, using your own Anthropic API key.",
+                    actionLabel: 'Add your key',
+                    onAction: () => context.push(Routes.coachKey),
+                    secondaryLabel: "Copy this week's summary",
+                    onSecondary: _copySummary,
+                  )
+                : ListView(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
+                    children: [
+                      if (chat.messages.isEmpty)
+                        SoftWell(
+                          radius: AppRadii.card,
+                          padding: const EdgeInsets.all(AppSpacing.l + 2),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Ask about your money', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'The coach reads this week and this month and answers from those figures. '
+                                'Each question sends them to Anthropic with your key.',
+                                style: TextStyle(color: c.muted, height: 1.4),
+                              ),
+                            ],
+                          ),
+                        ),
+                      for (final m in chat.messages) _Bubble(message: m),
+                      if (chat.sending) const _Thinking(),
+                      if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider.notifier).retry() : null),
+                    ],
+                  ),
+          ),
+          if (hasKey)
+            _Composer(
+              controller: _question,
+              enabled: !chat.sending && used < coachDailyLimit,
+              showSuggestions: chat.messages.isEmpty,
+              onSend: _send,
+            ),
+        ],
       ),
     );
   }

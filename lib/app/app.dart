@@ -5,7 +5,10 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode.dart';
 import '../features/launch/presentation/launch_providers.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
+import 'dismiss_keyboard.dart';
 import 'router.dart';
+
+final _keyboard = DismissKeyboardOnTap();
 
 class BajetApp extends ConsumerWidget {
   const BajetApp({super.key});
@@ -25,6 +28,7 @@ class BajetApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
+      actions: {...WidgetsApp.defaultActions, ..._keyboard.actions},
     );
   }
 }

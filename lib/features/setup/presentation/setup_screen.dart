@@ -100,41 +100,38 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final text = Theme.of(context).textTheme;
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        appBar: _step > 0
-            ? AppBar(
-                backgroundColor: c.background,
-                leading: BackButton(onPressed: () => setState(() => _step--)),
-              )
-            : null,
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.xl),
-                children: [
-                  Text('Step ${_step + 1} of 3', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: AppSpacing.s),
-                  Text(
-                    switch (_step) { 0 => 'Where do you keep your money?', 1 => 'Your week', _ => 'Your first goal' },
-                    style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: AppSpacing.s),
-                  Text(
-                    switch (_step) {
-                      0 => "Add every place you hold money, with what's in it right now: your wallet, banks and e-wallets. You need at least one, and can add more later.",
-                      1 => 'What you allow yourself each week. You can change it later in Settings.',
-                      _ => 'Something you are saving for. bajet works out whether you will get there with money to spare. You can skip this.',
-                    },
-                    style: TextStyle(color: c.muted, height: 1.45),
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
-                  switch (_step) { 0 => _accountsStep(), 1 => _moneyStep(), _ => _goalStep() },
-                ],
-              ),
+    return Scaffold(
+      appBar: _step > 0
+          ? AppBar(
+              backgroundColor: c.background,
+              leading: BackButton(onPressed: () => setState(() => _step--)),
+            )
+          : null,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              children: [
+                Text('Step ${_step + 1} of 3', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
+                const SizedBox(height: AppSpacing.s),
+                Text(
+                  switch (_step) { 0 => 'Where do you keep your money?', 1 => 'Your week', _ => 'Your first goal' },
+                  style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: AppSpacing.s),
+                Text(
+                  switch (_step) {
+                    0 => "Add every place you hold money, with what's in it right now: your wallet, banks and e-wallets. You need at least one, and can add more later.",
+                    1 => 'What you allow yourself each week. You can change it later in Settings.',
+                    _ => 'Something you are saving for. bajet works out whether you will get there with money to spare. You can skip this.',
+                  },
+                  style: TextStyle(color: c.muted, height: 1.45),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                switch (_step) { 0 => _accountsStep(), 1 => _moneyStep(), _ => _goalStep() },
+              ],
             ),
           ),
         ),

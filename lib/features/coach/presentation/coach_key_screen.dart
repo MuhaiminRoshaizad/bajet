@@ -70,81 +70,78 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
     final c = context.colors;
     final saved = ref.watch(coachKeyProvider).value != null;
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Coach')),
-        body: ListView(
-          padding: const EdgeInsets.all(AppSpacing.l),
-          children: [
-            SoftWell(
-              radius: AppRadii.card,
-              padding: const EdgeInsets.all(AppSpacing.l + 2),
-              child: Text(
-                'The coach uses your own Anthropic API key, from console.anthropic.com under API keys. '
-                'Questions are billed to your Anthropic account, at most $coachDailyLimit a day. '
-                'Each one sends your question and a summary of this week and month to Anthropic. '
-                'The key stays in this phone\'s secure storage and is never shown again or backed up.',
-                style: TextStyle(color: c.ink, height: 1.45),
-              ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Coach')),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.l),
+        children: [
+          SoftWell(
+            radius: AppRadii.card,
+            padding: const EdgeInsets.all(AppSpacing.l + 2),
+            child: Text(
+              'The coach uses your own Anthropic API key, from console.anthropic.com under API keys. '
+              'Questions are billed to your Anthropic account, at most $coachDailyLimit a day. '
+              'Each one sends your question and a summary of this week and month to Anthropic. '
+              'The key stays in this phone\'s secure storage and is never shown again or backed up.',
+              style: TextStyle(color: c.ink, height: 1.45),
             ),
-            const SizedBox(height: AppSpacing.l),
-            if (saved) ...[
-              SoftCard(
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: c.good),
-                    const SizedBox(width: AppSpacing.m),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('A key is saved', style: TextStyle(fontWeight: FontWeight.w700)),
-                          Text('$used of $coachDailyLimit questions used today', style: TextStyle(color: c.muted, fontSize: 13)),
-                        ],
-                      ),
+          ),
+          const SizedBox(height: AppSpacing.l),
+          if (saved) ...[
+            SoftCard(
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: c.good),
+                  const SizedBox(width: AppSpacing.m),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('A key is saved', style: TextStyle(fontWeight: FontWeight.w700)),
+                        Text('$used of $coachDailyLimit questions used today', style: TextStyle(color: c.muted, fontSize: 13)),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.l),
-              Text('To change it, paste a new key below.', style: TextStyle(color: c.muted)),
-              const SizedBox(height: AppSpacing.s),
-            ],
-            Form(
-              key: _form,
-              child: Focus(
-                skipTraversal: true,
-                // Reward early, punish late: check once the field is left.
-                onFocusChange: (focused) {
-                  if (!focused && _key.text.isNotEmpty) _field.currentState?.validate();
-                },
-                child: TextFormField(
-                  key: _field,
-                  controller: _key,
-                  obscureText: true,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  keyboardType: TextInputType.visiblePassword,
-                  autovalidateMode: AutovalidateMode.onUserInteractionIfError,
-                  validator: _validate,
-                  onFieldSubmitted: (_) => _save(),
-                  decoration: const InputDecoration(labelText: 'Anthropic API key', hintText: 'sk-ant-…'),
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: AppSpacing.l),
-            FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: Text(saved ? 'Replace the key' : 'Save the key')),
-            if (saved) ...[
-              const SizedBox(height: AppSpacing.s),
-              TextButton(
-                onPressed: _remove,
-                style: TextButton.styleFrom(foregroundColor: c.bad, minimumSize: const Size.fromHeight(48)),
-                child: const Text('Remove the key'),
-              ),
-            ],
+            Text('To change it, paste a new key below.', style: TextStyle(color: c.muted)),
+            const SizedBox(height: AppSpacing.s),
           ],
-        ),
+          Form(
+            key: _form,
+            child: Focus(
+              skipTraversal: true,
+              // Reward early, punish late: check once the field is left.
+              onFocusChange: (focused) {
+                if (!focused && _key.text.isNotEmpty) _field.currentState?.validate();
+              },
+              child: TextFormField(
+                key: _field,
+                controller: _key,
+                obscureText: true,
+                autocorrect: false,
+                enableSuggestions: false,
+                keyboardType: TextInputType.visiblePassword,
+                autovalidateMode: AutovalidateMode.onUserInteractionIfError,
+                validator: _validate,
+                onFieldSubmitted: (_) => _save(),
+                decoration: const InputDecoration(labelText: 'Anthropic API key', hintText: 'sk-ant-…'),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.l),
+          FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: Text(saved ? 'Replace the key' : 'Save the key')),
+          if (saved) ...[
+            const SizedBox(height: AppSpacing.s),
+            TextButton(
+              onPressed: _remove,
+              style: TextButton.styleFrom(foregroundColor: c.bad, minimumSize: const Size.fromHeight(48)),
+              child: const Text('Remove the key'),
+            ),
+          ],
+        ],
       ),
     );
   }
