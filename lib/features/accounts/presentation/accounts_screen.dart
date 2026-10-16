@@ -101,6 +101,8 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
     final c = context.colors;
     final accounts = ref.watch(accountsProvider).value ?? const [];
     final route = ModalRoute.of(context)!.animation!;
+    // A card's own page over this one: its cards are in flight there.
+    final above = ModalRoute.of(context)!.secondaryAnimation!;
     Animation<double> part(double from, double to) => CurvedAnimation(parent: route, curve: Interval(from, to, curve: Curves.easeOut));
     return AnimatedBuilder(
       animation: route,
@@ -123,13 +125,14 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                 padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.xxl),
                 children: [
                   AnimatedBuilder(
-                    animation: _scroll,
+                    animation: Listenable.merge([_scroll, above]),
                     builder: (context, _) => AccountList(
                       key: _list,
                       accounts: accounts,
                       offset: _offset,
-                      // In flight from Today, the cards here wait unseen.
-                      hidden: settled ? const {} : {for (final a in accounts) a.id},
+                      // In flight, from Today or to a card's own page, the
+                      // cards here wait unseen.
+                      hidden: settled && above.status == AnimationStatus.dismissed ? const {} : {for (final a in accounts) a.id},
                       onTap: settled ? (a) => context.push(Routes.account(a.id), extra: _placeOf) : null,
                     ),
                   ),

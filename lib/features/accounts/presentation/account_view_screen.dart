@@ -117,10 +117,11 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
                     animation: Listenable.merge([_pages!, route]),
                     builder: (context, _) {
                       final page = _pages!.hasClients && _pages!.position.haveDimensions ? _pages!.page! : _index.toDouble();
-                      // The tapped card is the flyer until it has landed.
-                      final flying = widget.places != null && i == _index && route.status != AnimationStatus.completed;
+                      // Until the flight has landed, the cards here are the
+                      // flyers', and wait unseen.
+                      final flying = widget.places != null && route.status != AnimationStatus.completed;
                       return Opacity(
-                        opacity: flying ? 0 : (i == _index ? 1 : part(0.07, 0.43).value),
+                        opacity: flying ? 0 : 1,
                         child: _SwipeCard(account: accounts[i], t: i - page, size: _cardSize(box.biggest)),
                       );
                     },
@@ -158,7 +159,8 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
             const SizedBox(height: AppSpacing.l),
           ]),
         ),
-        if (widget.places != null) _Flyer(account: accounts[_index.clamp(0, accounts.length - 1)], places: widget.places!, carousel: _carousel, route: route, size: _cardSize),
+        if (widget.places != null)
+          _Flyers(accounts: accounts, index: _index.clamp(0, accounts.length - 1), places: widget.places!, carousel: _carousel, route: route, size: _cardSize),
       ]),
     );
   }
@@ -219,13 +221,16 @@ class _Upright extends StatelessWidget {
       );
 }
 
-/// The card on its way between its place in the stack and the middle of this
-/// page: it turns from flat to upright and grows a little, with no
-/// overshoot.
-class _Flyer extends StatelessWidget {
-  const _Flyer({required this.account, required this.places, required this.carousel, required this.route, required this.size});
+/// Every card on its way between Your accounts and this page. The one
+/// tapped turns from flat to upright as it glides to the middle and grows a
+/// little, with no overshoot; the cards beside it glide to the edges where
+/// this page shows them, smaller and faded; the rest slide away down. Back,
+/// all of them return to their own places. One copy of each, always.
+class _Flyers extends StatelessWidget {
+  const _Flyers({required this.accounts, required this.index, required this.places, required this.carousel, required this.route, required this.size});
 
-  final Account account;
+  final List<Account> accounts;
+  final int index;
   final CardPlaces places;
   final GlobalKey carousel;
   final Animation<double> route;
@@ -235,34 +240,56 @@ class _Flyer extends StatelessWidget {
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: route,
         builder: (context, _) {
-          final from = places(account.id);
           final area = carousel.currentContext?.findRenderObject() as RenderBox?;
-          if (from == null || area == null || !area.hasSize || route.status == AnimationStatus.completed) return const SizedBox.shrink();
+          if (area == null || !area.hasSize || route.status == AnimationStatus.completed) return const SizedBox.shrink();
           final upright = size(area.size);
           final centre = area.localToGlobal(area.size.center(Offset.zero));
-          // Out, the flight is the first part of the arrival; home, it is the
-          // whole of the leaving.
-          final k = route.status == AnimationStatus.reverse
-              ? Curves.fastOutSlowIn.transform(route.value)
-              : Curves.fastOutSlowIn.transform((route.value / 0.43).clamp(0.0, 1.0));
-          // Lying flat the card is as wide as in the stack; upright, its long
-          // side is the upright card's height.
-          final grow = upright.height / from.width;
-          final mid = Offset.lerp(from.center, centre, k)!;
-          return Positioned(
-            left: mid.dx - from.width / 2,
-            top: mid.dy - from.height / 2,
-            width: from.width,
-            height: from.height,
-            child: IgnorePointer(
-              child: Transform.rotate(
-                angle: k * math.pi / 2,
-                child: Transform.scale(scale: 1 + (grow - 1) * k, child: AccountCard(account: account)),
-              ),
-            ),
-          );
+          final leaving = route.status == AnimationStatus.reverse;
+          // The farthest cards first, so the tapped one flies over the rest.
+          final order = [for (var j = 0; j < accounts.length; j++) j]..sort((a, b) => (b - index).abs().compareTo((a - index).abs()));
+          return Stack(children: [
+            for (final j in order) ?_flyer(j, upright, centre, area.size.width, leaving),
+          ]);
         },
       );
+
+  Widget? _flyer(int j, Size upright, Offset centre, double width, bool leaving) {
+    final from = places(accounts[j].id);
+    if (from == null) return null;
+    final t = j - index, a = t.abs();
+    // Out, the flight is the first part of the arrival, the neighbours a beat
+    // behind; home, it is the whole of the leaving.
+    final raw = leaving ? route.value : ((route.value - 0.04 * a.clamp(0, 2)) / 0.43).clamp(0.0, 1.0);
+    final k = Curves.fastOutSlowIn.transform(raw);
+    if (a > 1) {
+      // Not on this page: slides down and out of sight.
+      return Positioned.fromRect(
+        rect: from.translate(0, 640 * k),
+        child: IgnorePointer(child: Opacity(opacity: 1 - k, child: AccountCard(account: accounts[j]))),
+      );
+    }
+    final side = 1 - 0.15 * a;
+    // Lying flat the card is as wide as in the list; upright, its long side
+    // is the upright card's height.
+    final grow = upright.height * side / from.width;
+    final to = centre + Offset(t * width * 0.70, 0);
+    final mid = Offset.lerp(from.center, to, k)!;
+    return Positioned(
+      left: mid.dx - from.width / 2,
+      top: mid.dy - from.height / 2,
+      width: from.width,
+      height: from.height,
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: 1 - 0.4 * a * k,
+          child: Transform.rotate(
+            angle: k * math.pi / 2,
+            child: Transform.scale(scale: 1 + (grow - 1) * k, child: AccountCard(account: accounts[j])),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// The account names in a strip that moves with the swipe: the centred one

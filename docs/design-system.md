@@ -159,12 +159,15 @@ they slide back behind it without a bounce. Today's stack hides while its
 cards are away (`accountsOnTopProvider`), so no card is ever seen twice. Scrolling opens them downward:
 the first 220 px of scroll are held, so the top card stays put while the
 cards below drop away until each is whole with a 14 px gap, and only then
-does the page scroll (`AccountListLayout`). Tapping a card opens the account view over 700 ms: for the first 300 ms the
-card flies from its place and turns from flat to upright (90°, growing to
-the upright size, `fastOutSlowIn`, no overshoot) while the page washes over;
-neighbours fade in from 50 ms, the name and balance from 300 ms and the dots
-from 400 ms. Leaving reverses the flight over 300 ms back to the card's
-place, whichever account is showing by then. Swiping follows the motion
+does the page scroll (`AccountListLayout`). Tapping a card opens the
+account view over 700 ms, and every card flies, one copy of each, while the
+list's own copies hide. For the first 300 ms the tapped card flies from its
+place and turns from flat to upright (90°, growing to the upright size,
+`fastOutSlowIn`, no overshoot) while the page washes over; the cards beside
+it glide a beat behind to the edges where the page shows them, smaller and
+faded, and the rest slide away down. The name and balance fade in from
+300 ms and the dots from 400 ms. Leaving reverses the flight over 300 ms,
+every card back to its own place, whichever account is showing by then. Swiping follows the motion
 study: with `t` pages from the centre, a card coming in from the right turns
 `t × 360°` about its upright axis under a 0.0015 perspective and shows its
 plain back while facing away, one leaving to the left only slides, and every

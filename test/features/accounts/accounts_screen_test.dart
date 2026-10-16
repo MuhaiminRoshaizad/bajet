@@ -112,4 +112,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(stackOpacity(), 1);
   });
+
+  testWidgets("while a card flies to its own page and back, the list's copies stay hidden", (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 2));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+    List<double> listOpacities() => [
+          for (final o in tester.widgetList<Opacity>(find.descendant(of: find.byType(AccountList), matching: find.byType(Opacity)))) o.opacity,
+        ];
+    expect(listOpacities(), everyElement(1.0));
+
+    await tester.tap(find.text('Wallet 0').hitTestable().first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(listOpacities(), everyElement(0.0));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(listOpacities(), everyElement(0.0));
+    await tester.pumpAndSettle();
+    expect(listOpacities(), everyElement(1.0));
+  });
 }
