@@ -45,6 +45,20 @@ void main() {
     expect(await ledger.watchBalance().first, all.values.reduce((a, b) => a + b));
   });
 
+  test('transfers come newest first, the later of a day on top, and a deleted one is gone', () async {
+    final (bank, cash) = await bankAndCash();
+    final early = await accounts.transfer(fromId: bank, toId: cash, amount: 1000, day: d(2026, 7, 2));
+    final first = await accounts.transfer(fromId: cash, toId: bank, amount: 200, day: d(2026, 7, 5), note: 'Change');
+    final second = await accounts.transfer(fromId: bank, toId: cash, amount: 300, day: d(2026, 7, 5));
+    var all = await accounts.watchTransfers().first;
+    expect([for (final t in all) t.id], [second, first, early]);
+    expect((all[1].fromId, all[1].toId, all[1].amount, all[1].day, all[1].note), (cash, bank, 200, d(2026, 7, 5), 'Change'));
+
+    await accounts.deleteTransfer(first);
+    all = await accounts.watchTransfers().first;
+    expect([for (final t in all) t.id], [second, early]);
+  });
+
   test('editing changes the name, nickname and card, never the balance', () async {
     final (bank, _) = await bankAndCash();
     final before = (await accounts.watchAccounts().first).firstWhere((a) => a.id == bank);

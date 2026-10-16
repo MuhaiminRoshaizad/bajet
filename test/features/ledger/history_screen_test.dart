@@ -1,3 +1,4 @@
+import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/core/navigation/routes.dart';
@@ -129,5 +130,40 @@ void main() {
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     expect(world.entries.length, before);
+  });
+
+  void seedWithMove(FakeWorld w) {
+    seedTwoDays(w);
+    w.addAccount(const AccountDraft(kind: AccountKind.cash, name: 'Cash', balance: 0, look: CardLook(color: 0xFF6B3F24, finish: CardFinish.leather)));
+    w.transfer(fromId: 1, toId: 2, amount: 5000, day: testToday);
+  }
+
+  testWidgets("money moved shows in its own row on its day, never in the day's spending", (tester) async {
+    await pumpApp(tester, seed: seedWithMove);
+    await openHistory(tester);
+
+    expect(find.text('Main account → Cash'), findsOneWidget);
+    expect(find.text('RM50.00'), findsOneWidget);
+    expect(find.textContaining('Moved, not spent'), findsOneWidget);
+    // Today's heading still totals only the coffee.
+    expect(find.text('−RM4.50'), findsNWidgets(2));
+  });
+
+  testWidgets('a move can be deleted from History, with undo', (tester) async {
+    final world = await pumpApp(tester, seed: seedWithMove);
+    await openHistory(tester);
+
+    await tester.drag(find.text('Main account → Cash'), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this move?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(world.transferCount, 0);
+    expect(find.text('Main account → Cash'), findsNothing);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.transferCount, 1);
+    expect(find.text('Main account → Cash'), findsOneWidget);
   });
 }

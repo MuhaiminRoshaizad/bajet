@@ -22,6 +22,9 @@ abstract interface class AccountRepository {
   /// nor income, so only the two accounts' balances change.
   Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note});
 
+  /// Every transfer, newest first.
+  Stream<List<Transfer>> watchTransfers();
+
   /// Takes back a transfer, for undo.
   Future<void> deleteTransfer(int id);
 

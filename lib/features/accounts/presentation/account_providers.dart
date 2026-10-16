@@ -12,6 +12,9 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) => DriftAcco
 /// Every account in display order, each with its balance now.
 final accountsProvider = StreamProvider<List<Account>>((ref) => ref.watch(accountRepositoryProvider).watchAccounts());
 
+/// Every transfer, newest first.
+final transfersProvider = StreamProvider<List<Transfer>>((ref) => ref.watch(accountRepositoryProvider).watchTransfers());
+
 final photoColoursProvider = Provider<PhotoColours>((ref) => DevicePhotoColours());
 
 /// True while Your accounts is over Today, arriving or leaving: its cards

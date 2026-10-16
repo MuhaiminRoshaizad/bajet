@@ -160,7 +160,8 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   // Accounts
 
   final _accountRows = _Live<List<Account>>([]);
-  final _transfers = _Live<List<({int id, int from, int to, int amount, DateTime day})>>([]);
+  final _transfers = _Live<List<Transfer>>([]);
+  var _nextTransferId = 1;
   final _totalLook = _Live(const TotalCardLook());
   var _nextAccountId = 1;
 
@@ -195,7 +196,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
           look: a.look,
           balance: a.openingBalance +
               _entries.value.where((e) => (e.accountId ?? firstId) == a.id && counted(e.day)).fold<int>(0, (sum, e) => sum + e.signedAmount) +
-              _transfers.value.where((t) => counted(t.day)).fold<int>(0, (sum, t) => sum + (t.to == a.id ? t.amount : 0) - (t.from == a.id ? t.amount : 0)),
+              _transfers.value.where((t) => counted(t.day)).fold<int>(0, (sum, t) => sum + (t.toId == a.id ? t.amount : 0) - (t.fromId == a.id ? t.amount : 0)),
         ),
     ];
   }
@@ -232,10 +233,16 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
 
   @override
   Future<int> transfer({required int fromId, required int toId, required int amount, required DateTime day, String? note}) async {
-    final id = _transfers.value.length + 1;
-    _transfers.value = [..._transfers.value, (id: id, from: fromId, to: toId, amount: amount, day: day)];
+    final id = _nextTransferId++;
+    _transfers.value = [..._transfers.value, Transfer(id: id, day: day, fromId: fromId, toId: toId, amount: amount, note: _blank(note))];
     return id;
   }
+
+  @override
+  Stream<List<Transfer>> watchTransfers() => _transfers.stream.map((all) => [...all]..sort((a, b) {
+        final byDay = b.day.compareTo(a.day);
+        return byDay != 0 ? byDay : b.id.compareTo(a.id);
+      }));
 
   @override
   Future<void> deleteTransfer(int id) async => _transfers.value = [..._transfers.value.where((t) => t.id != id)];

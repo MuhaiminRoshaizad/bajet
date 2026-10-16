@@ -52,6 +52,8 @@ Money moved from one account to another. Neither spending nor income, so it is
 kept apart from `entries`: the total balance, the weekly allowance, Insights
 and Runway never see it. Moving money (from an account view, or Your accounts)
 writes one row dated today and offers to undo it, which deletes the row.
+History lists every row, newest first (`watchTransfers`), and deleting one
+there offers an undo that writes it again.
 
 | Column            | Type  | Notes                                |
 |-------------------|-------|--------------------------------------|

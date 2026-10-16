@@ -227,7 +227,10 @@ inline line of text where it is.
   Settings → Favourites and reachable from the logger's Edit link.
 - Destructive actions ask for confirmation, then offer undo. In History,
   swiping an entry left asks before deleting it; tapping it edits it in the
-  same sheet used for logging.
+  same sheet used for logging. Money moved between accounts shows there too,
+  in its own primary-blue row ("Bank → Cash", "Moved, not spent") under its
+  day, never counted in that day's spending; swiping one left deletes it,
+  with undo.
 - Goals are reordered by holding one and dragging it; a drag that starts
   at once would lose the gesture to the page's scrolling. Reorderable lists
   also expose move up and move down to TalkBack. Bought goals move to a Done

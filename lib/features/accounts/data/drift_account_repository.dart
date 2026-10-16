@@ -80,6 +80,15 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
           );
 
   @override
+  Stream<List<domain.Transfer>> watchTransfers() => (_db.select(_db.transfers)
+        ..orderBy([(t) => OrderingTerm.desc(t.occurredOn), (t) => OrderingTerm.desc(t.id)]))
+      .watch()
+      .map((rows) => [
+            for (final t in rows)
+              domain.Transfer(id: t.id, day: t.occurredOn, fromId: t.fromAccountId, toId: t.toAccountId, amount: t.amount, note: t.note),
+          ]);
+
+  @override
   Future<void> deleteTransfer(int id) => (_db.delete(_db.transfers)..where((t) => t.id.equals(id))).go();
 
   @override

@@ -8,12 +8,16 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../accounts/domain/account_models.dart';
+import '../../accounts/presentation/account_providers.dart';
+import '../../accounts/presentation/transfer_tile.dart';
 import '../domain/ledger_models.dart';
 import 'entry_tile.dart';
 import 'ledger_providers.dart';
 import 'log_sheet.dart';
 
-/// Every entry, newest first, grouped by day.
+/// Every entry and every transfer, newest first, grouped by day. Transfers
+/// show in their own blue rows and never count in a day's spending.
 sealed class _Row {}
 
 class _DayRow extends _Row {
@@ -27,6 +31,11 @@ class _EntryRow extends _Row {
   final Entry entry;
 }
 
+class _TransferRow extends _Row {
+  _TransferRow(this.transfer);
+  final Transfer transfer;
+}
+
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
@@ -34,6 +43,7 @@ class HistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final today = ref.watch(todayProvider);
     final entries = ref.watch(allEntriesProvider);
+    final transfers = ref.watch(transfersProvider).value ?? const <Transfer>[];
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
 
     return Scaffold(
@@ -44,29 +54,27 @@ class HistoryScreen extends ConsumerWidget {
             title: "bajet couldn't read your entries",
             message: 'Close the app fully and open it again. Your entries are still on the phone.',
           ),
-        AsyncValue(:final value?) when value.isEmpty => EmptyState(
+        AsyncValue(:final value?) when value.isEmpty && transfers.isEmpty => EmptyState(
             icon: Icons.receipt_long_rounded,
             title: 'Nothing logged yet',
             message: 'Every spend and income you log appears here, newest first.',
             actionLabel: 'Log a spend',
             onAction: () => showLogSheet(context),
           ),
-        AsyncValue(:final value?) => _HistoryList(rows: _group(value), categories: categories, today: today),
+        AsyncValue(:final value?) => _HistoryList(rows: _group(value, transfers), categories: categories, today: today),
         _ => const SizedBox.shrink(),
       },
     );
   }
 
-  static List<_Row> _group(List<Entry> entries) {
+  static List<_Row> _group(List<Entry> entries, List<Transfer> transfers) {
     final rows = <_Row>[];
-    DateTime? current;
-    for (final e in entries) {
-      if (e.day != current) {
-        current = e.day;
-        final spent = entries.where((x) => x.day == e.day && !x.isIncome).fold(0, (s, x) => s + x.amount);
-        rows.add(_DayRow(e.day, spent));
-      }
-      rows.add(_EntryRow(e));
+    final days = {...entries.map((e) => e.day), ...transfers.map((t) => t.day)}.toList()..sort((a, b) => b.compareTo(a));
+    for (final day in days) {
+      final ofDay = entries.where((e) => e.day == day);
+      rows.add(_DayRow(day, ofDay.where((x) => !x.isIncome).fold(0, (s, x) => s + x.amount)));
+      rows.addAll(ofDay.map(_EntryRow.new));
+      rows.addAll(transfers.where((t) => t.day == day).map(_TransferRow.new));
     }
     return rows;
   }
@@ -82,6 +90,7 @@ class _HistoryList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
+    final names = {for (final a in ref.watch(accountsProvider).value ?? const <Account>[]) a.id: a.name};
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.xxl),
       itemCount: rows.length,
@@ -114,6 +123,24 @@ class _HistoryList extends ConsumerWidget {
               onTap: () => showLogSheet(context, editing: entry),
             ),
           ),
+        _TransferRow(:final transfer) => Dismissible(
+            key: ValueKey('transfer-${transfer.id}'),
+            direction: DismissDirection.endToStart,
+            confirmDismiss: (_) => confirmDelete(
+              context,
+              title: 'Delete this move?',
+              message: '${Money.format(transfer.amount)} from ${names[transfer.fromId]} to ${names[transfer.toId]} on ${Dates.full(transfer.day)}. '
+                  'Both balances go back to before it; your total does not change.',
+            ),
+            onDismissed: (_) => _deleteTransfer(context, ref, transfer),
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: AppSpacing.xl),
+              decoration: BoxDecoration(color: c.bad, borderRadius: BorderRadius.circular(AppRadii.control)),
+              child: Text('Delete', style: TextStyle(color: c.onBad, fontWeight: FontWeight.w700)),
+            ),
+            child: TransferTile(transfer: transfer, names: names, today: today),
+          ),
       },
     );
   }
@@ -140,6 +167,21 @@ class _HistoryList extends ConsumerWidget {
       ..showSnackBar(SnackBar(
         content: Text('Deleted ${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey}'),
         action: SnackBarAction(label: 'Undo', onPressed: () => repo.restore(entry)),
+      ));
+  }
+
+  Future<void> _deleteTransfer(BuildContext context, WidgetRef ref, Transfer t) async {
+    final repo = ref.read(accountRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    await repo.deleteTransfer(t.id);
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text('Deleted the move of ${Money.format(t.amount)}'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () => repo.transfer(fromId: t.fromId, toId: t.toId, amount: t.amount, day: t.day, note: t.note),
+        ),
       ));
   }
 }

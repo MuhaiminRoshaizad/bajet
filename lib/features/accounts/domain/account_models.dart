@@ -95,3 +95,17 @@ class TotalCardLook {
   @override
   int get hashCode => Object.hash(color, finish);
 }
+
+/// Money moved from one account to another: neither spending nor income.
+class Transfer {
+  const Transfer({required this.id, required this.day, required this.fromId, required this.toId, required this.amount, this.note});
+
+  final int id;
+  final DateTime day;
+  final int fromId;
+  final int toId;
+  final int amount;
+  final String? note;
+
+  bool touches(int accountId) => fromId == accountId || toId == accountId;
+}
