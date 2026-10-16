@@ -204,3 +204,22 @@ redesign has to settle how it behaves while the app is locked.
 
 **Costs:** logging from the home screen now takes a long-press on the icon
 instead of one tap.
+
+## 017: App lock through local_auth
+
+**Decided:** the optional app lock asks for the phone's own fingerprint,
+face or screen lock through `local_auth`, published by the Flutter team.
+bajet keeps no PIN of its own, and the phone's PIN, pattern or password is
+always accepted when the fingerprint fails.
+
+**Why:** the phone already holds a credential the owner knows and Android
+already guards it, so a second PIN would only be something else to forget.
+A first-party package is the safest bet for code that has to follow every
+Android and iOS release.
+
+**Costs:** Android needs a fragment activity, the `USE_BIOMETRIC`
+permission (granted at install, never asked about) and AppCompat themes,
+which bring in `androidx.appcompat`. iOS will need a Face ID purpose string.
+The lock guards the screen only: the database is protected by Android's app
+sandbox and storage encryption, not by the lock, and an exported backup is
+as readable as before.
