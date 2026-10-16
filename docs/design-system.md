@@ -260,6 +260,13 @@ inline line of text where it is.
 
 ## Interaction rules
 
+- Back at the top of the app never closes bajet by surprise
+  (`LeaveGuard`): on Runway, Insights or Coach it goes to Today, and on
+  Today it asks "Leave bajet?" under the app icon, saying what App lock
+  will ask for on the way back in. Stay is the text button and Leave the
+  filled one, not the warning colour, since leaving loses nothing. Back
+  inside a screen or a sheet goes back as usual. Catching Back on Today
+  gives up Android's back-to-home preview there.
 - Tapping anywhere outside the field being typed in puts the keyboard
   away, on every screen and sheet (`DismissKeyboardOnTap`, set once on the
   app); a drag that starts outside it, such as a scroll, leaves it up.

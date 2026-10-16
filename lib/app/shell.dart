@@ -11,6 +11,7 @@ import '../features/launch/domain/launch_link.dart';
 import '../features/launch/presentation/launch_providers.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
 import '../features/ledger/presentation/log_sheet.dart';
+import 'leave_guard.dart';
 
 class _Tab {
   const _Tab(this.label, this.icon, this.selectedIcon);
@@ -67,32 +68,39 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
     final c = context.colors;
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: ColoredBox(
-        color: c.background,
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.xs),
-            child: Row(
-              children: [
-                for (final (i, tab) in _tabs.indexed) ...[
-                  // The one way to log sits in the middle, under the thumb.
-                  if (i == 2) const _AddButton(),
-                  Expanded(
-                    child: _TabButton(
-                      key: ValueKey('tab-${tab.label}'),
-                      tab: tab,
-                      selected: navigationShell.currentIndex == i,
-                      onTap: () {
-                        ref.read(screenEntryProvider.notifier).arrive();
-                        navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
-                      },
+    return LeaveGuard(
+      onToday: navigationShell.currentIndex == 0,
+      goToday: () {
+        ref.read(screenEntryProvider.notifier).arrive();
+        navigationShell.goBranch(0);
+      },
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: ColoredBox(
+          color: c.background,
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.xs),
+              child: Row(
+                children: [
+                  for (final (i, tab) in _tabs.indexed) ...[
+                    // The one way to log sits in the middle, under the thumb.
+                    if (i == 2) const _AddButton(),
+                    Expanded(
+                      child: _TabButton(
+                        key: ValueKey('tab-${tab.label}'),
+                        tab: tab,
+                        selected: navigationShell.currentIndex == i,
+                        onTap: () {
+                          ref.read(screenEntryProvider.notifier).arrive();
+                          navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
+                        },
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
