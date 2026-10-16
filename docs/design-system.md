@@ -226,21 +226,27 @@ the PNGs in `mipmap-*dpi`, rendered from the same drawing.
 
 ## Opening
 
-On a cold start the app plays one opening over its first screen, about
-2.85 s, every step timed in `OpeningTimes` (`features/opening/domain`):
-the front titanium card pops in with a tilt and a sheen, a second and
-third slide out from behind it to the lower left, and all three spring
-into the icon's fan, swinging to 1.42 of their angle and back twice.
-"bajet" then rises letter by letter from behind its line over a titanium
-underline that draws out from the middle, and the cards arc into Today's
-stack, front card onto the total, or land small on the lock screen's fan.
-Today's entrance waits for them (`EntranceHold`). Easing is the soft
-`Cubic(.33, 0, .3, 1)` throughout, with the keyframes doing the bouncing.
+A cold start opens in two parts, timed in `OpeningTimes`
+(`features/opening/domain`). First, Android's own splash plays the deal
+the moment the icon is tapped, within a second: the front titanium card
+pops in with a tilt, a second and third slide out from behind it to the
+lower left, all three spring into the icon's fan, swinging to 1.42 of
+their angle and back twice, and "bajet" rises letter by letter over a
+titanium line that draws out from the middle. That animation
+(`res/drawable-v31/splash_deal.xml`) is generated from the same timeline,
+and a test fails if they drift apart. Then bajet draws the same fan in the
+same place and has Android's splash taken away: the word lifts off and the
+cards arc into Today's stack, front card onto the total, or land small on
+the lock screen's fan. Today's entrance waits for them (`EntranceHold`).
+Easing is the soft `Cubic(.33, 0, .3, 1)` throughout, with the keyframes
+doing the bouncing.
 
-A tap anywhere skips to the end. It never plays on returning to the app,
-and with the system's remove animations setting on it does not play at
-all. Android's own launch screen is plain graphite with no icon, so the
-opening carries on from it without a seam.
+Android keeps only a circle 192 dp across of its splash in view, so the
+whole opening is drawn at `OpeningPlan.zoom` (0.82) of the mock-up's size.
+Phones older than Android 12 have no animated splash; there bajet plays
+the deal itself after a plain graphite launch screen. A tap skips the
+hand-over, and with the system's remove animations setting on nothing
+moves.
 
 ## Empty screens
 

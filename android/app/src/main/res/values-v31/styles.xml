@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12 and later draw their own splash. It shows the graphite
-         with no icon, because bajet plays the whole opening itself from its
-         first frame: Android's splash would crop the bouncing cards to a
-         circle and could end the deal halfway on a fast start. -->
+    <!-- Android 12 and later draw their own splash, and play the opening's
+         deal on it from the moment bajet is tapped: one titanium card, then
+         two, then three spring into the fan, and "bajet" rises underneath.
+         The animation is generated from bajet's timeline; MainActivity keeps
+         the splash up until bajet has drawn the same fan and takes over. -->
     <style name="LaunchTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:windowSplashScreenBackground">@color/launch_graphite</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_deal</item>
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
     </style>
     <style name="NormalTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>

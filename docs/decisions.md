@@ -231,6 +231,8 @@ screenshot the owner takes, so it is not used.
 
 ## 018: bajet plays its opening itself
 
+**Superseded by 019.**
+
 **Decided:** the opening animation runs in Flutter from the first frame.
 Android's launch screen, including the Android 12 splash, shows plain
 graphite and no icon while the app loads.
@@ -245,3 +247,24 @@ start would cut the deal off halfway.
 is tapped, so a slow start shows graphite for a moment first. The whole
 opening runs about 2.85 s; a tap skips it, and it plays on a cold start
 only.
+
+## 019: Android plays the deal, bajet the hand-over
+
+**Decided:** Android 12 and later play the opening's deal and wordmark on
+their own splash screen, as an animated vector generated from bajet's
+timeline. MainActivity keeps the splash up until the animation has ended
+and bajet has drawn the same fan, then removes it, and bajet flies the
+cards into Today. Older phones get the whole opening from bajet.
+
+**Why:** 018 put the whole 2.85 s opening in Flutter, which only starts
+once the app has loaded, so a tap showed plain graphite first; and the
+first frame could arrive before the screen had a size, which put the fan
+in the top-left corner on a real phone. Android's splash screen guide
+expects the icon animation from the tap, within a second, and only the
+exit to be the app's own. This follows it, and reaches Today about a
+second sooner.
+
+**Costs:** the deal runs at 0.62 of the mock-up's speed to fit the
+second, the two light sheens and the moving point on the line are gone
+(an animated vector cannot move a gradient), and the whole opening is
+drawn at 0.82 of its size to stay inside the circle Android shows.
