@@ -140,7 +140,7 @@ Future income or expenses, once or every year.
 | `name`, `kind`, `amount`, `category_key` | | As above                  |
 | `due_on`              | day  | The next time it happens                 |
 | `done`                | bool | Set only for a one-off event             |
-| `count_in_projection` | bool | False for money that may not arrive      |
+| `count_in_projection` | bool | "Plan for it": false for something that might not happen at all, such as an unconfirmed bonus |
 | `repeats_yearly`      | bool | Same date each year; done moves `due_on` on a year |
 
 An expense event's `amount` is a budget. Entries spent on it carry its id and

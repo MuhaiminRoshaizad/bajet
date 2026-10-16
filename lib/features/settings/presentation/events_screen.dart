@@ -254,8 +254,19 @@ class _EventFormState extends ConsumerState<_EventForm> {
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Count it in the plan'),
-                subtitle: const Text('Turn off for money that may not come, so the plan does not rely on it.'),
+                title: Row(children: [
+                  const Text('Plan for it'),
+                  IconButton(
+                    tooltip: 'What does Plan for it mean?',
+                    icon: Icon(Icons.info_outline_rounded, size: 20, color: c.primary),
+                    onPressed: () => showModalBottomSheet<void>(context: context, useSafeArea: true, isScrollControlled: true, builder: (_) => const _HowEventsWork()),
+                  ),
+                ]),
+                // An expense is nearly always planned for; an income only once
+                // it is sure.
+                subtitle: Text(_isIncome
+                    ? "Off if it might not come, like a bonus you've only heard about. The plan won't count on it until it arrives."
+                    : 'On if it will happen, even if the amount is a guess. Your balance only changes by what you log.'),
                 value: _counted,
                 onChanged: (v) => setState(() => _counted = v),
               ),
@@ -269,6 +280,66 @@ class _EventFormState extends ConsumerState<_EventForm> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// What a planned event's amount is, how the real spending replaces it, and
+/// when to plan for one.
+class _HowEventsWork extends StatelessWidget {
+  const _HowEventsWork();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final body = TextStyle(color: c.muted, height: 1.45);
+    final strong = TextStyle(color: c.ink, fontWeight: FontWeight.w600);
+    Widget choice(String tag, bool on, String text) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: 40,
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              decoration: BoxDecoration(
+                color: on ? c.primary : null,
+                border: on ? null : Border.all(color: c.muted),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(tag, textAlign: TextAlign.center, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: on ? c.onPrimary : c.muted)),
+            ),
+            const SizedBox(width: AppSpacing.m),
+            Expanded(child: Text(text, style: body.copyWith(color: c.ink))),
+          ]),
+        );
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('How a planned event works', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: AppSpacing.s),
+        Text.rich(TextSpan(style: body, children: [
+          TextSpan(text: 'The amount is a guess. ', style: strong),
+          const TextSpan(text: 'Nothing is ever taken from your balance by itself. Your balance only changes by what you log.'),
+        ])),
+        const SizedBox(height: AppSpacing.m),
+        Text.rich(TextSpan(style: body, children: [
+          const TextSpan(text: 'Until the day, the plan sets the guess aside, so Runway and buy day already allow for it. When you spend, log the real amount and pick the event under '),
+          TextSpan(text: 'For an event', style: strong),
+          const TextSpan(text: '. The real amount then replaces the guess, whether it came to less or more.'),
+        ])),
+        const SizedBox(height: AppSpacing.l),
+        Text('Plan for it, or not?', style: strong),
+        const SizedBox(height: AppSpacing.s),
+        choice('ON', true, 'It will happen, even if the amount is only a guess: a birthday, a bill, paying someone back.'),
+        choice('OFF', false, "It might not happen at all: a bonus you've only heard about, a refund not yet confirmed, a trip still being decided."),
+        const SizedBox(height: AppSpacing.s),
+        Text.rich(TextSpan(style: body, children: [
+          const TextSpan(text: 'Switched off, it stays in your upcoming list marked '),
+          TextSpan(text: 'not counted', style: strong),
+          const TextSpan(text: ", so you don't forget it. Runway's What if can show what it would change."),
+        ])),
+        const SizedBox(height: AppSpacing.l),
+        FilledButton.tonal(onPressed: () => Navigator.of(context).pop(), child: const Text('Got it')),
+      ]),
     );
   }
 }

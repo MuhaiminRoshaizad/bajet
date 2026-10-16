@@ -108,4 +108,31 @@ void main() {
     await openEvents(tester);
     expect(find.text('RM73.00 of RM100.00 spent · 20/07/2026'), findsOneWidget);
   });
+
+  testWidgets('the plan switch explains itself for an expense and an income, and the info opens without flipping it', (tester) async {
+    await pumpApp(tester);
+    await openEvents(tester);
+    await tester.tap(find.text('Add an event'));
+    await tester.pumpAndSettle();
+    expect(find.text('Plan for it'), findsOneWidget);
+    expect(find.textContaining('On if it will happen'), findsOneWidget);
+
+    await tester.tap(find.text('Income'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Off if it might not come'), findsOneWidget);
+
+    bool on() => tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value;
+    expect(on(), isTrue);
+    await tester.ensureVisible(find.byTooltip('What does Plan for it mean?'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('What does Plan for it mean?'));
+    await tester.pumpAndSettle();
+    expect(find.text('How a planned event works'), findsOneWidget);
+    await tester.ensureVisible(find.text('Got it'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
+    expect(find.text('How a planned event works'), findsNothing);
+    expect(on(), isTrue);
+  });
 }
