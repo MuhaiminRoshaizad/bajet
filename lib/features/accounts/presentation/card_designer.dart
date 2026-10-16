@@ -7,11 +7,11 @@ import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/account_models.dart';
-import '../domain/known_providers.dart';
 import '../domain/photo_colours.dart';
 import 'account_providers.dart';
 import 'card_face.dart';
 import 'card_palette.dart';
+import 'provider_picker.dart';
 
 /// Changes how [account]'s card looks: its finish, colour and nickname. Its
 /// balance changes only through what is logged.
@@ -113,8 +113,12 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   @override
   void initState() {
     super.initState();
-    // The preview shows the balance as it is typed.
+    // The preview shows the balance as it is typed, and a provider's name
+    // whether it is picked or typed.
     _balance.addListener(() => setState(() {}));
+    _provider.addListener(() {
+      if (_provider.text != _name) setState(() => _name = _provider.text);
+    });
   }
 
   @override
@@ -190,122 +194,103 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
             look: CardLook(color: _color!, ink: _ink, finish: _finish),
           );
     final swatches = _isCash ? leatherSwatches : cardSwatches;
+    // In the order it is filled in: which one, what is in it, its nickname,
+    // then how it looks. Add stays pinned below, always in reach.
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(_isTotal ? 'Total card' : kind == null ? 'Edit card' : 'Add ${kind == AccountKind.cash ? 'cash' : kind == AccountKind.bank ? 'a bank account' : 'an e-wallet'}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-            if (_isTotal) ...[
-              const SizedBox(height: AppSpacing.xs),
-              Text('Only how it looks. It always shows every account together.', style: TextStyle(color: context.colors.muted)),
-            ],
-            // Room above the preview for a wallet's bills.
-            SizedBox(height: _isCash ? AppSpacing.xxxl : AppSpacing.l),
-            if (account == null)
-              TotalCard(
-                look: TotalCardLook(color: _color, finish: _finish),
-                balance: ref.watch(balanceProvider).value,
-                accounts: ref.watch(accountsProvider).value ?? const [],
-              )
-            else
-              AccountCard(
-                account: account.copyWith(
-                  name: _name.trim().isEmpty ? null : _name.trim(),
-                  nickname: () => _nickname.text.trim().isEmpty ? null : _nickname.text.trim(),
-                  look: CardLook(color: _color!, ink: _ink, finish: _finish),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.l),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(_isTotal ? 'Total card' : kind == null ? 'Edit card' : 'Add ${kind == AccountKind.cash ? 'cash' : kind == AccountKind.bank ? 'a bank account' : 'an e-wallet'}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                if (_isTotal) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('Only how it looks. It always shows every account together.', style: TextStyle(color: context.colors.muted)),
+                ],
+                // Room above the preview for a wallet's bills.
+                SizedBox(height: _isCash ? AppSpacing.xxxl : AppSpacing.l),
+                if (account == null)
+                  TotalCard(
+                    look: TotalCardLook(color: _color, finish: _finish),
+                    balance: ref.watch(balanceProvider).value,
+                    accounts: ref.watch(accountsProvider).value ?? const [],
+                  )
+                else
+                  AccountCard(
+                    account: account.copyWith(
+                      name: _name.trim().isEmpty ? null : _name.trim(),
+                      nickname: () => _nickname.text.trim().isEmpty ? null : _nickname.text.trim(),
+                      look: CardLook(color: _color!, ink: _ink, finish: _finish),
+                    ),
+                  ),
+                if (_asksProvider) ...[
+                  const SizedBox(height: AppSpacing.l),
+                  ProviderPicker(
+                    kind: _kind!,
+                    controller: _provider,
+                    onChoose: _choose,
+                    errorText: _tried && _name.trim().isEmpty ? 'Choose one, or type its name' : null,
+                  ),
+                ],
+                if (kind != null) ...[
+                  const SizedBox(height: AppSpacing.m),
+                  MoneyField(
+                    controller: _balance,
+                    label: 'How much is in it now',
+                    hint: 'e.g. 1,250.00',
+                    helper: 'Leave it empty for RM0.00.',
+                    textInputAction: TextInputAction.next,
+                  ),
+                ],
+                if (!_isTotal) ...[
+                  const SizedBox(height: AppSpacing.m),
+                  TextField(
+                    controller: _nickname,
+                    maxLength: 24,
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.done,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(labelText: 'Nickname (optional)', hintText: 'e.g. Savings', counterText: ''),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.l),
+                if (!_isCash) ...[
+                  const _Label('Finish'),
+                  Wrap(spacing: AppSpacing.s, children: [
+                    for (final f in cardFinishes)
+                      ChoiceChip(label: Text(finishLabel(f)), selected: _finish == f, onSelected: (_) => setState(() => _finish = f)),
+                  ]),
+                  const SizedBox(height: AppSpacing.l),
+                ],
+                _Label(_isCash ? 'Leather' : 'Colour'),
+                Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: [
+                  if (_isTotal) _Swatch(name: 'Match the app', selected: _color == null, onTap: () => _pick(null)),
+                  for (final s in swatches) _Swatch(name: s.name, color: Color(s.color), selected: _color == s.color && _ink == s.ink, onTap: () => _pick(s)),
+                ]),
+                const SizedBox(height: AppSpacing.s),
+                _PhotoMatch(
+                  label: _isTotal ? 'Match a photo' : _isCash ? 'Match my wallet' : 'Match my card',
+                  colours: _fromPhoto,
+                  selected: _color,
+                  onSource: _match,
+                  onPick: (c) => setState(() {
+                    _color = c;
+                    _ink = null;
+                  }),
                 ),
-              ),
-            if (_asksProvider) ...[
-              const SizedBox(height: AppSpacing.l),
-              TextField(
-                controller: _provider,
-                textCapitalization: TextCapitalization.words,
-                onChanged: (v) => setState(() => _name = v),
-                decoration: InputDecoration(
-                  labelText: _kind == AccountKind.bank ? 'Which bank?' : 'Which e-wallet?',
-                  hintText: 'Search, or type its name',
-                  errorText: _tried && _name.trim().isEmpty ? 'Choose one, or type its name' : null,
-                ),
-              ),
-              _ProviderList(kind: _kind!, query: _provider.text, chosen: _name, onChoose: _choose),
-            ],
-            if (!_isCash) ...[
-              const SizedBox(height: AppSpacing.l),
-              const _Label('Finish'),
-              Wrap(spacing: AppSpacing.s, children: [
-                for (final f in cardFinishes)
-                  ChoiceChip(label: Text(finishLabel(f)), selected: _finish == f, onSelected: (_) => setState(() => _finish = f)),
-              ]),
-            ],
-            const SizedBox(height: AppSpacing.l),
-            _Label(_isCash ? 'Leather' : 'Colour'),
-            Wrap(spacing: AppSpacing.xs, runSpacing: AppSpacing.xs, children: [
-              if (_isTotal) _Swatch(name: 'Match the app', selected: _color == null, onTap: () => _pick(null)),
-              for (final s in swatches) _Swatch(name: s.name, color: Color(s.color), selected: _color == s.color && _ink == s.ink, onTap: () => _pick(s)),
-            ]),
-            const SizedBox(height: AppSpacing.s),
-            _PhotoMatch(
-              label: _isTotal ? 'Match a photo' : _isCash ? 'Match my wallet' : 'Match my card',
-              colours: _fromPhoto,
-              selected: _color,
-              onSource: _match,
-              onPick: (c) => setState(() {
-                _color = c;
-                _ink = null;
-              }),
+              ],
             ),
-            if (!_isTotal) ...[
-              const SizedBox(height: AppSpacing.l),
-              TextField(
-                controller: _nickname,
-                maxLength: 24,
-                textCapitalization: TextCapitalization.sentences,
-                onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(labelText: 'Nickname (optional)', hintText: 'e.g. Savings', counterText: ''),
-              ),
-            ],
-            if (kind != null) ...[
-              const SizedBox(height: AppSpacing.m),
-              MoneyField(
-                controller: _balance,
-                label: 'How much is in it now',
-                hint: 'e.g. 1,250.00',
-                helper: 'Leave it empty for RM0.00.',
-                textInputAction: TextInputAction.done,
-              ),
-            ],
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton(onPressed: _save, child: Text(_isTotal ? 'Save total card' : kind == null ? 'Save card' : 'Add account')),
-          ],
+          ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.s, AppSpacing.xl, AppSpacing.l),
+          child: FilledButton(onPressed: _save, child: Text(_isTotal ? 'Save total card' : kind == null ? 'Save card' : 'Add account')),
+        ),
+      ]),
     );
-  }
-}
-
-/// Up to five providers matching what has been typed, and the typed name
-/// itself when it matches none. Hidden once one is chosen.
-class _ProviderList extends StatelessWidget {
-  const _ProviderList({required this.kind, required this.query, required this.chosen, required this.onChoose});
-
-  final AccountKind kind;
-  final String query;
-  final String chosen;
-  final ValueChanged<String> onChoose;
-
-  @override
-  Widget build(BuildContext context) {
-    final typed = query.trim();
-    final matches = providersMatching(kind, typed);
-    if (matches.contains(chosen) && chosen == typed) return const SizedBox.shrink();
-    final exact = matches.any((m) => m.toLowerCase() == typed.toLowerCase());
-    return Column(children: [
-      for (final p in matches.take(5)) ListTile(dense: true, title: Text(p), onTap: () => onChoose(p)),
-      if (typed.isNotEmpty && !exact) ListTile(dense: true, leading: const Icon(Icons.add), title: Text('Use “$typed”'), onTap: () => onChoose(typed)),
-    ]);
   }
 }
 

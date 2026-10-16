@@ -105,11 +105,38 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, 'Which e-wallet?'), 'Office card');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Use “Office card”'));
+    await tester.tap(find.text('Not listed? Use “Office card”').last);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Add account'));
     await tester.tap(find.text('Add account'));
     await tester.pumpAndSettle();
     expect((world.accounts.last.name, world.accounts.last.balance), ('Office card', 0));
+  });
+
+  testWidgets('the bank list opens grouped, filters as it is typed, and a pick colours the card', (tester) async {
+    final world = await pumpApp(tester);
+    await openAccounts(tester);
+    await tester.ensureVisible(find.text('Add an account'));
+    await tester.tap(find.text('Add an account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bank account'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextField, 'Which bank?'));
+    await tester.pumpAndSettle();
+    expect(find.text('MOST USED'), findsOneWidget);
+    expect(find.text('DIGITAL BANKS'), findsOneWidget);
+
+    await tester.enterText(find.widgetWithText(TextField, 'Which bank?'), 'cim');
+    await tester.pumpAndSettle();
+    expect(find.text('MOST USED'), findsNothing);
+    await tester.tap(find.text('CIMB').last);
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('Add account'));
+    await tester.tap(find.text('Add account'));
+    await tester.pumpAndSettle();
+    expect((world.accounts.last.name, world.accounts.last.look.color), ('CIMB', 0xFFC0262D));
   });
 
   testWidgets('Match my card takes the colour from a photo and keeps only the colour', (tester) async {
