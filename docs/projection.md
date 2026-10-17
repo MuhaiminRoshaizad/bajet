@@ -32,6 +32,9 @@ for each day:
    `nextDue` date onward. An item with a window (`windowDays`) counts on the
    window's last day if it is income and its first day if it is a bill, so
    the plan never relies on pay arriving early or a bill going out late.
+   On the first day, a bill whose `nextDue` has already passed unpaid is
+   charged once for each month missed; late pay is not counted until it is
+   marked received.
 3. Apply planned events that are not done and are counted in the projection,
    a yearly one on its date in every year up to the end of the window. For
    an expense event's next occurrence only what is left of its budget
@@ -63,8 +66,8 @@ it:
 
 A bill paid early still falls due later in the same month. Giving each
 recurring item the date of its next unpaid occurrence makes the rule exact:
-nothing before `nextDue` is charged. Confirming a payment moves `nextDue`
-forward a month. See [decision 008](decisions.md#008-recurring-items-track-their-next-due-date).
+nothing before `nextDue` is charged, and a `nextDue` already behind today is
+a bill still owed. Confirming a payment moves `nextDue` forward a month. See [decision 008](decisions.md#008-recurring-items-track-their-next-due-date).
 
 ## Live inputs
 
@@ -76,7 +79,9 @@ every stream has loaded, and recalculates whenever any of them changes.
 
 Confirming a recurring item (`PlanRepository.confirmRecurring`) logs a real
 entry and moves `nextDue` forward a month in one transaction, so the payment
-is never counted twice.
+is never counted twice. It takes the due day the user was shown and does
+nothing once that day is no longer the next one, so a second tap, or an old
+coach card, never pays it twice.
 
 ## On screen
 
