@@ -87,8 +87,8 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final themeModes = FakeThemeModes();
   final lockSettings = FakeLockSettings();
 
-  /// The wall clock the app lock reads; tests move it on to stand for time
-  /// spent away.
+  /// The wall clock the app reads; tests move it on to stand for time
+  /// passing.
   DateTime clock = DateTime(2026, 7, 1, 9);
   final deviceAuth = FakeDeviceAuth();
   final recents = FakeRecentsPrivacy();

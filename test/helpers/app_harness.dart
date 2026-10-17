@@ -1,7 +1,8 @@
-import 'package:bajet/features/accounts/presentation/account_providers.dart';
 import 'package:bajet/app/app.dart';
 import 'package:bajet/core/database/database_provider.dart';
+import 'package:bajet/core/dates/clock.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
+import 'package:bajet/features/accounts/presentation/account_providers.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:bajet/features/coach/presentation/coach_providers.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
@@ -64,7 +65,7 @@ Future<FakeWorld> pumpApp(
       deviceAuthProvider.overrideWithValue(world.deviceAuth),
       recentsPrivacyProvider.overrideWithValue(world.recents),
       splashHandOverProvider.overrideWithValue(world.splash),
-      lockClockProvider.overrideWithValue(() => world.clock),
+      clockProvider.overrideWithValue(() => world.clock),
       ...?overrides?.call(world),
     ],
     child: const BajetApp(),

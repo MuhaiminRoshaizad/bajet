@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/dates/clock.dart';
 import '../../../core/platform/outside_app.dart';
 import '../data/channel_recents_privacy.dart';
 import '../data/file_lock_settings_store.dart';
@@ -16,9 +17,6 @@ final recentsPrivacyProvider = Provider<RecentsPrivacy>((ref) => const ChannelRe
 /// The choices as read before the first frame, so a locked app never shows
 /// the money before the lock screen. Overridden in main.
 final initialLockSettingsProvider = Provider<LockSettings>((ref) => const LockSettings());
-
-/// What the lock measures time away with. Overridden in tests.
-final lockClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 class LockSettingsController extends Notifier<LockSettings> {
   @override
@@ -59,7 +57,7 @@ class AppLockController extends Notifier<bool> {
 
   void _changed(AppLifecycleState lifecycle) {
     final settings = ref.read(lockSettingsProvider);
-    final now = ref.read(lockClockProvider);
+    final now = ref.read(clockProvider);
     switch (lifecycle) {
       case AppLifecycleState.hidden || AppLifecycleState.paused:
         if (settings.enabled && !OutsideApp.isOpen) _awaySince ??= now();
