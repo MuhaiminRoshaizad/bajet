@@ -7,6 +7,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../plan/presentation/runway_screen.dart';
 import '../../report/domain/report.dart';
+import '../../report/presentation/report_providers.dart';
 import '../data/anthropic_coach_client.dart';
 import '../data/secure_coach_key_store.dart';
 import '../domain/coach_client.dart';
@@ -60,13 +61,16 @@ final weekSummaryProvider = Provider<String?>((ref) {
 /// the month so far. Null until everything has loaded.
 final coachContextProvider = Provider<String?>((ref) {
   final week = ref.watch(weekSummaryProvider);
-  final month = ref.watch(insightsForProvider((period: InsightsPeriod.month, offset: 0)));
+  const thisMonth = (period: InsightsPeriod.month, offset: 0);
+  final month = ref.watch(insightsForProvider(thisMonth));
+  final accounts = ref.watch(reportAccountsProvider(thisMonth));
   final balance = ref.watch(balanceProvider).value;
   final settings = ref.watch(settingsProvider).value;
   final categories = ref.watch(categoriesProvider).value;
-  if (week == null || month == null || balance == null || settings == null || categories == null) return null;
+  if (week == null || month == null || accounts == null || balance == null || settings == null || categories == null) return null;
   final monthText = reportText(
     i: month,
+    accounts: accounts,
     balance: balance,
     weeklyCap: settings.weeklyCap,
     buffer: settings.buffer,

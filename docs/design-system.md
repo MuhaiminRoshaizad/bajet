@@ -349,7 +349,11 @@ inline line of text where it is.
 - A report is shared as text, PDF or CSV, picked with radio buttons, for the
   same ranges as Insights; opened from Insights it starts on the range shown.
   The Share button is pinned to the bottom so it stays in view however long
-  the preview runs.
+  the preview runs. Every format names each entry's account and lists money
+  out by every category, fixed ones marked; with two or more accounts, text
+  and PDF also give each account's money in and out for the period and what
+  it holds now (`byAccount`). Moves between the owner's own accounts are
+  neither in nor out. The balance shown is today's, whatever the period.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;
   the thumbnail in the logger opens it full screen, pinch to zoom.

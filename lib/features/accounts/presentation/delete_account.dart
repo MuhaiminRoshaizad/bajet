@@ -16,7 +16,7 @@ class DeleteChoice {
   final int? moveTo;
 }
 
-String _called(Account a) => a.nickname ?? a.name;
+String _called(Account a) => a.called;
 
 /// Asks before [account] is deleted. One never used gets a plain confirm;
 /// one with history asks where that goes, moving it by default so no past

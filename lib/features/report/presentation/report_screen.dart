@@ -18,6 +18,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../data/report_pdf.dart';
 import '../domain/report.dart';
+import 'report_providers.dart';
 
 enum ReportFormat { text, pdf, csv }
 
@@ -45,11 +46,13 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   /// The PDF or CSV of [i]: its bytes, file name and type.
   Future<(List<int>, String, String)> _file(Insights i, List<Entry> entries, Map<String, Category> categories) async {
-    if (_format == ReportFormat.csv) return (utf8.encode(reportCsv(entries, categories)), _fileName(i, 'csv'), 'text/csv');
+    final accounts = ref.read(reportAccountsProvider(_range))!;
+    if (_format == ReportFormat.csv) return (utf8.encode(reportCsv(entries, categories, accounts)), _fileName(i, 'csv'), 'text/csv');
     final settings = ref.read(settingsProvider).value!;
     final bytes = await reportPdf(
       i: i,
       entries: entries,
+      accounts: accounts,
       categories: categories,
       balance: ref.read(balanceProvider).value ?? 0,
       buffer: settings.buffer,
@@ -99,11 +102,13 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     final balance = ref.watch(balanceProvider).value;
     final all = ref.watch(allEntriesProvider).value;
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
-    final ready = i != null && settings != null && balance != null && all != null;
+    final accounts = ref.watch(reportAccountsProvider(_range));
+    final ready = i != null && settings != null && balance != null && all != null && accounts != null;
     final text = !ready
         ? ''
         : reportText(
             i: i,
+            accounts: accounts,
             balance: balance,
             weeklyCap: settings.weeklyCap,
             buffer: settings.buffer,

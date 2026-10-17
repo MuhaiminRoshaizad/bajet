@@ -57,6 +57,9 @@ class Account {
   final int balance;
   final CardLook look;
 
+  /// What the owner calls it: the nickname if it has one.
+  String get called => nickname ?? name;
+
   Account copyWith({String? name, String? Function()? nickname, CardLook? look}) => Account(
         id: id,
         kind: kind,

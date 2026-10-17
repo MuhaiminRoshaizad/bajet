@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../insights/domain/insights.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../plan/domain/projection.dart';
+import '../domain/report.dart';
 
 /// A printable report of [i]: a summary on the first page, then every entry
 /// in the period. Printed on paper, so it always uses the light palette.
@@ -17,6 +18,7 @@ import '../../plan/domain/projection.dart';
 Future<Uint8List> reportPdf({
   required Insights i,
   required List<Entry> entries,
+  required List<AccountLine> accounts,
   required Map<String, Category> categories,
   required int balance,
   required int buffer,
@@ -61,7 +63,7 @@ Future<Uint8List> reportPdf({
     ),
     build: (context) => [
       pw.Text('bajet report', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, color: ink)),
-      pw.Text('${Dates.full(i.from)} to ${Dates.full(i.to)} · balance ${Money.format(balance)}', style: pw.TextStyle(color: muted, fontSize: 10)),
+      pw.Text('${Dates.full(i.from)} to ${Dates.full(i.to)} · balance today ${Money.format(balance)}', style: pw.TextStyle(color: muted, fontSize: 10)),
       pw.SizedBox(height: 14),
       pw.Row(children: [
         figure('Money in', Money.format(i.moneyIn), primary),
@@ -69,6 +71,19 @@ Future<Uint8List> reportPdf({
         figure(i.kept >= 0 ? 'Kept' : 'Spent more than came in', Money.format(i.kept.abs()), i.kept >= 0 ? keep : bad),
         figure('Untracked', Money.format(i.untrackedOut), i.untrackedOut > 0 ? bad : ink),
       ]),
+      if (accounts.length > 1) ...[
+        heading('By account'),
+        _table(
+          [
+            ['Account', 'In', 'Out', 'Now'],
+            for (final a in accounts) [a.name, Money.format(a.moneyIn), Money.format(a.moneyOut), Money.format(a.balance)],
+          ],
+          line: line,
+          ink: ink,
+          header: true,
+          amounts: 3,
+        ),
+      ],
       heading('Money out by kind'),
       _table(
         [
@@ -79,9 +94,9 @@ Future<Uint8List> reportPdf({
         line: line,
         ink: ink,
       ),
-      if (i.flexibleByCategory.isNotEmpty) ...[
-        heading('Flexible spending by category'),
-        _table([for (final (key, amount) in i.flexibleByCategory) [categories[key]?.label ?? key, Money.format(amount)]], line: line, ink: ink),
+      if (i.outByCategory.isNotEmpty) ...[
+        heading('Money out by category'),
+        _table([for (final (key, amount) in i.outByCategory) [categoryName(categories, key), Money.format(amount)]], line: line, ink: ink),
       ],
       heading('Habits'),
       pw.Bullet(text: '${i.daysWithinPlan} of ${i.daysSoFar} finished days within plan, ${i.zeroSpendDays} with no flexible spending', style: pw.TextStyle(color: ink, fontSize: 10)),
@@ -102,10 +117,11 @@ Future<Uint8List> reportPdf({
       else
         _table(
           [
-            ['Date', 'Category', 'Label and note', 'Amount'],
+            ['Date', if (accounts.length > 1) 'Account', 'Category', 'Label and note', 'Amount'],
             for (final e in entries)
               [
                 Dates.full(e.day),
+                if (accounts.length > 1) accountOf(accounts, e),
                 categories[e.categoryKey]?.label ?? e.categoryKey,
                 [e.label, e.note].whereType<String>().join(' · '),
                 '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}',
@@ -120,14 +136,19 @@ Future<Uint8List> reportPdf({
   return doc.save();
 }
 
-pw.Widget _table(List<List<String>> rows, {required PdfColor line, required PdfColor ink, bool header = false}) => pw.TableHelper.fromTextArray(
-      data: rows,
-      headerCount: header ? 1 : 0,
-      border: pw.TableBorder(horizontalInside: pw.BorderSide(color: line, width: 0.5)),
-      cellStyle: pw.TextStyle(color: ink, fontSize: 9),
-      headerStyle: pw.TextStyle(color: ink, fontSize: 9, fontWeight: pw.FontWeight.bold),
-      cellAlignments: {rows.first.length - 1: pw.Alignment.centerRight},
-      headerAlignment: pw.Alignment.centerLeft,
-      headerAlignments: {rows.first.length - 1: pw.Alignment.centerRight},
-      cellPadding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-    );
+/// Rows of text with the last [amounts] columns right-aligned, since they
+/// hold money.
+pw.Widget _table(List<List<String>> rows, {required PdfColor line, required PdfColor ink, bool header = false, int amounts = 1}) {
+  final right = {for (var n = rows.first.length - amounts; n < rows.first.length; n++) n: pw.Alignment.centerRight};
+  return pw.TableHelper.fromTextArray(
+    data: rows,
+    headerCount: header ? 1 : 0,
+    border: pw.TableBorder(horizontalInside: pw.BorderSide(color: line, width: 0.5)),
+    cellStyle: pw.TextStyle(color: ink, fontSize: 9),
+    headerStyle: pw.TextStyle(color: ink, fontSize: 9, fontWeight: pw.FontWeight.bold),
+    cellAlignments: right,
+    headerAlignment: pw.Alignment.centerLeft,
+    headerAlignments: right,
+    cellPadding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+  );
+}
