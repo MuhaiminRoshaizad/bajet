@@ -43,6 +43,14 @@ void main() {
     expect(copied, contains('Flexible spending this week: RM12.00 of RM50.00'));
   });
 
+  testWidgets("the copy button sits at the header's edge, in line with Insights' share button", (tester) async {
+    await openCoach(tester);
+    final copy = tester.getTopRight(find.byTooltip("Copy this week's summary")).dx;
+    await tester.tap(find.byKey(const ValueKey('tab-Insights')));
+    await tester.pumpAndSettle();
+    expect(copy, tester.getTopRight(find.byTooltip('Share a report')).dx);
+  });
+
   testWidgets('a question is answered from the week and month, and counted', (tester) async {
     final world = await openCoach(tester);
     expect(find.text('10 left today'), findsOneWidget);

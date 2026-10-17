@@ -72,30 +72,36 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.s, 0),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
             child: SizedBox(
               height: 48,
               child: Row(
                 children: [
                   Text('Coach', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                   const SizedBox(width: AppSpacing.s),
-                  const Spacer(),
-                  if (hasKey)
-                    Flexible(
-                      child: Semantics(
-                      label: '$used of $coachDailyLimit questions used today',
-                      excludeSemantics: true,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-                        decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-                        child: Text(
-                          '${coachDailyLimit - used} left today',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                  // All the spare width goes before the pill, so it and the copy
+                  // button sit at the edge; the pill may still shorten at large
+                  // text sizes.
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: !hasKey
+                          ? null
+                          : Semantics(
+                              label: '$used of $coachDailyLimit questions used today',
+                              excludeSemantics: true,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+                                decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
+                                child: Text(
+                                  '${coachDailyLimit - used} left today',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
                     ),
-                    ),
+                  ),
                   IconButton(onPressed: _copySummary, icon: const Icon(Icons.copy_rounded), tooltip: "Copy this week's summary"),
                 ],
               ),
