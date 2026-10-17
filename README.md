@@ -5,31 +5,37 @@ what is left for the week, and know whether the current savings goal is on
 track.
 
 bajet is offline-first: everything is stored on the device and there is no
-account. The only network use is the optional coach, which sends a question
-and a summary of the week and month to Anthropic with the user's own API key;
-without a key, nothing leaves the phone.
+account. The only network use is the optional coach, which sends a question,
+and only the figures it looks up to answer it, to Anthropic with the user's
+own API key; without a key, nothing leaves the phone.
 
 ## What it does
 
 - **Log** spending or income from the + in the middle of the bottom bar, with a
   fill-from-right amount on the phone's number pad, favourites that fill the form in, an optional receipt
-  photo or screenshot, and undo.
+  photo or screenshot, and undo. Days you forgot can be logged up to a year back.
+- **Accounts** keep bank, cash and e-wallet money apart as cards you design,
+  with transfers between them that are neither spending nor income.
 - **Today** shows the balance, today's planned spend, bills due for
-  confirmation, a week strip of spending against the allowance and each day's plan, the current
-  goal, and recent entries. History lists everything, to edit or delete.
+  confirmation, a dial of the week's spending against the allowance that says what is left a day,
+  the current goal, and recent entries. History lists everything, to edit or delete.
 - **Runway** charts the projected balance up to a goal's buy day and says what
   will be left after buying it, against a buffer you choose. What-if sliders
   try a change to weekly spending or a new monthly cost without saving it.
-- **Insights** shows money in and out, fixed against flexible spending, where
-  the flexible money went, the last fourteen days against the plan, and
-  habits, for this week, this month or all time.
-- **Reports** share any of those periods as text, a PDF or a CSV file.
+- **Insights** shows money in and out, fixed against flexible spending, a ring
+  of where the money went, the last fourteen days against the plan, and
+  habits, for any week, any month or all time.
+- **Reports** share any of those periods as text, a PDF or a CSV file, broken
+  down by account and category, and PDFs, CSVs and backups save straight to
+  the phone.
 - **Sunday check-in** compares the balance with the bank and logs any gap.
 - **Launcher shortcuts**: long-press the app icon to open the logger, empty
   or filled in from a favourite.
-- **Coach** answers questions about your money from this week's and month's
-  figures, using your own Anthropic key, up to ten a day. The week's summary
-  can also be copied to paste anywhere.
+- **Coach** answers questions about your money by looking up the figures it
+  needs, any week, month, entry, account or the plan, using your own
+  Anthropic key, up to ten a day. It can suggest logging a spend, moving money
+  or marking a bill paid, which happens only when you tap to confirm. The
+  week's summary can also be copied to paste anywhere.
 - **Settings** holds every amount and rule: allowance and buffer, goals, bills
   and income, one-off events, the weekly rhythm, favourites, backups, and a
   light or dark appearance that otherwise follows the phone.
@@ -38,7 +44,7 @@ without a key, nothing leaves the phone.
 
 ## Status
 
-Version 1.3 is in daily use on Android, with a demo mode for screenshots and
+Version 1.4 is in daily use on Android, with a demo mode for screenshots and
 CI on every push; see
 [release phases](docs/architecture.md#release-phases).
 

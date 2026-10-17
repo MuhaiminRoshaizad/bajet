@@ -194,4 +194,5 @@ build hook at build time. The app itself never downloads anything.
 | v1.1  | Insights, text, PDF and CSV reports, Sunday check-in, receipts        |
 | v1.2  | What-if sliders, launcher shortcuts                                   |
 | v1.3  | Coach                                                                 |
-| later | Demo mode (`--dart-define=BAJET_DEMO=true`, in-memory made-up data), CI |
+| v1.4  | Accounts and transfers, deleting accounts, logging forgotten days, app lock, the opening animation, the week dial, past weeks and months, the category ring, reports by account, saving files to the phone, demo mode (`--dart-define=BAJET_DEMO=true`, in-memory made-up data) and CI on every push; the coach looks up any period and suggests changes to confirm |
+| v1.5  | The coach's avatars, personalities, memory and gatekeeper             |
