@@ -120,10 +120,27 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
   /// is fixed at RM0.
   bool get _plansNothing => _type == DayType.zero;
 
+  /// A day that was off fills in its share of the week the moment it starts
+  /// spending, rather than saving an empty box as RM0.
   void _setType(DayType type) => setState(() {
+        final wasOff = _plansNothing;
         _type = type;
-        if (_plansNothing) _amount.clear();
+        if (_plansNothing) {
+          _amount.clear();
+        } else if (wasOff && _starts && _amount.text.isEmpty) {
+          final rules = ref.read(rulesProvider).value ?? const <WeeklyRule>[];
+          final share = startingShare(rules, widget.rule.weekday, ref.read(settingsProvider).value?.weeklyCap ?? 0);
+          if (share > 0) _amount.text = RinggitCentsFormatter.format(share);
+        }
       });
+
+  /// Whether this saves a no-spending day as one that spends.
+  bool get _starts => widget.rule.type == DayType.zero && !_plansNothing;
+
+  List<WeeklyRule> get _others =>
+      [for (final r in ref.read(rulesProvider).value ?? const <WeeklyRule>[]) if (r.weekday != widget.rule.weekday && r.type != DayType.zero) r];
+
+  int get _othersPlan => _others.fold(0, (s, r) => s + r.plannedSpend);
 
   void _setFasting(bool fasting) => setState(() {
         _fasting = fasting;
@@ -150,8 +167,15 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  /// Where this day's old plan goes once it stops spending.
+  /// Where this day's old plan goes once it stops spending, or where its new
+  /// plan comes from once it starts.
   String? _handOver() {
+    if (_starts) {
+      final amount = RinggitCentsFormatter.parse(_amount.text);
+      final others = _others.length;
+      if (amount == 0 || others == 0 || _othersPlan == 0 || amount > _othersPlan) return null;
+      return 'Takes ${Money.format(amount)} from the other $others spending ${others == 1 ? 'day' : 'days'}, so the week still plans ${Money.format(_othersPlan)}.';
+    }
     if (!_plansNothing || widget.rule.plannedSpend == 0) return null;
     final rules = ref.read(rulesProvider).value ?? const <WeeklyRule>[];
     final others = rules.where((r) => r.weekday != widget.rule.weekday && r.type != DayType.zero).length;
@@ -194,13 +218,21 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
                 onSelectionChanged: (s) => _setType(s.single),
               ),
               const SizedBox(height: AppSpacing.m),
-              MoneyField(
-                controller: _amount,
-                label: 'Planned spend',
-                hint: _plansNothing ? '0.00' : 'e.g. 10.00',
-                helper: _handOver() ?? (_plansNothing ? 'A no-spending day plans RM0.00.' : 'Leave empty for none. The projection subtracts this every week.'),
-                enabled: !_plansNothing,
-                textInputAction: TextInputAction.done,
+              ValueListenableBuilder(
+                valueListenable: _amount,
+                builder: (context, _, _) => MoneyField(
+                  controller: _amount,
+                  label: 'Planned spend',
+                  hint: _plansNothing ? '0.00' : 'e.g. 10.00',
+                  helper: _handOver() ?? (_plansNothing ? 'A no-spending day plans RM0.00.' : 'Leave empty for none. The projection subtracts this every week.'),
+                  // The other days give this day its amount, so it cannot be
+                  // more than they plan between them.
+                  validator: (sen) => _starts && _othersPlan > 0 && sen > _othersPlan
+                      ? 'More than the ${Money.format(_othersPlan)} the week plans. Raise your weekly allowance first.'
+                      : null,
+                  enabled: !_plansNothing,
+                  textInputAction: TextInputAction.done,
+                ),
               ),
               const SizedBox(height: AppSpacing.s),
               SwitchListTile(

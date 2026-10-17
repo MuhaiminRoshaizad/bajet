@@ -61,6 +61,27 @@ void main() {
     expect(amounts(withRule(rules, noSpending(5))), [1625, 625, 625, 625, 0, 0, 0]);
   });
 
+  test('a no-spending day that starts spending takes its share from the others, so the week keeps its total', () {
+    // RM40 over Tuesday to Friday, Monday off; Monday comes back at its share.
+    final rules = week([0, 1000, 1000, 1000, 1000, 0, 0], zero: {1, 6, 7});
+    expect(startingShare(rules, 1, 4000), 800);
+    final monday = WeeklyRule(weekday: 1, label: 'Day', type: DayType.spend, plannedSpend: 800);
+    expect(amounts(withRule(rules, monday)), [800, 800, 800, 800, 800, 0, 0]);
+  });
+
+  test('a day starting with an amount of its own takes that much, never leaving a day below zero', () {
+    final rules = week([0, 1500, 300, 0, 0, 0, 0], zero: {1, 4, 5, 6, 7});
+    final monday = WeeklyRule(weekday: 1, label: 'Day', type: DayType.spend, plannedSpend: 1000);
+    expect(amounts(withRule(rules, monday)), [1000, 800, 0, 0, 0, 0, 0]);
+  });
+
+  test('with no other day planning anything, a day starts at the whole allowance', () {
+    final rules = week(List.filled(7, 0), zero: {1, 2, 3, 4, 5, 6, 7});
+    expect(startingShare(rules, 3, 4000), 4000);
+    final wednesday = WeeklyRule(weekday: 3, label: 'Day', type: DayType.spend, plannedSpend: 4000);
+    expect(amounts(withRule(rules, wednesday)), [0, 0, 4000, 0, 0, 0, 0]);
+  });
+
   test('a yearly event happens on its date every year in the window, a one-off once', () {
     final birthday = PlannedEvent(id: 1, name: 'Birthday', amount: 10000, categoryKey: 'gifts', isIncome: false, date: DateTime.utc(2026, 10, 30), repeatsYearly: true);
     expect(birthday.occurrences(DateTime.utc(2026, 7, 1), DateTime.utc(2028, 12, 31)), [DateTime.utc(2026, 10, 30), DateTime.utc(2027, 10, 30), DateTime.utc(2028, 10, 30)]);

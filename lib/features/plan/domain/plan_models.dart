@@ -202,27 +202,57 @@ List<int> spreadOverWeek(int weekly) => spreadEvenly(weekly, 7);
 
 /// The rhythm once [changed] replaces its weekday. A day that becomes a
 /// no-spending day hands what it had planned to the days that still spend,
-/// so the week keeps its total; any other change is taken as typed.
+/// and a no-spending day that starts spending takes its amount from them, so
+/// the week keeps its total; any other change is taken as typed.
 ///
 /// Days that were an even split (no more than a sen apart) are split evenly
-/// again, so the result never depends on the order days were switched off;
-/// amounts the owner typed unevenly keep their shape and only share the
-/// freed amount.
+/// again, so the result never depends on the order days were switched; amounts
+/// the owner typed unevenly keep their shape and only share what moved.
 List<WeeklyRule> withRule(List<WeeklyRule> rules, WeeklyRule changed) {
   final before = rules.firstWhere((r) => r.weekday == changed.weekday);
-  final freed = changed.type == DayType.zero ? before.plannedSpend - changed.plannedSpend : 0;
+  final starts = before.type == DayType.zero && changed.type != DayType.zero;
+  final moved = changed.type == DayType.zero ? before.plannedSpend - changed.plannedSpend : (starts ? -changed.plannedSpend : 0);
   final receivers = [for (final r in rules) if (r.weekday != changed.weekday && r.type != DayType.zero) r];
-  if (freed <= 0 || receivers.isEmpty) return [for (final r in rules) r.weekday == changed.weekday ? changed : r];
-
   final amounts = [for (final r in receivers) r.plannedSpend];
+  final total = amounts.fold(0, (s, a) => s + a) + moved;
+  if (moved == 0 || receivers.isEmpty || total < 0) return [for (final r in rules) r.weekday == changed.weekday ? changed : r];
+
   final even = amounts.reduce(math.max) - amounts.reduce(math.min) <= 1;
-  final total = amounts.fold(0, (s, a) => s + a) + freed;
-  final shares = even ? spreadEvenly(total, receivers.length) : [for (final (i, s) in spreadEvenly(freed, receivers.length).indexed) amounts[i] + s];
+  final shares = even
+      ? spreadEvenly(total, receivers.length)
+      : moved > 0
+          ? [for (final (i, s) in spreadEvenly(moved, receivers.length).indexed) amounts[i] + s]
+          : _takeEvenly(amounts, -moved);
   final next = {for (final (i, r) in receivers.indexed) r.weekday: shares[i]};
   return [
     for (final r in rules)
       if (r.weekday == changed.weekday) changed else if (next.containsKey(r.weekday)) r.copyWith(plannedSpend: next[r.weekday]) else r,
   ];
+}
+
+/// Takes [taken] sen from [amounts] as evenly as it can, never below zero.
+List<int> _takeEvenly(List<int> amounts, int taken) {
+  final next = [...amounts];
+  var left = taken;
+  while (left > 0) {
+    final open = [for (final (i, a) in next.indexed) if (a > 0) i];
+    if (open.isEmpty) break;
+    for (final (k, part) in spreadEvenly(left, open.length).indexed) {
+      final take = math.min(part, next[open[k]]);
+      next[open[k]] -= take;
+      left -= take;
+    }
+  }
+  return next;
+}
+
+/// What a no-spending day plans once it starts spending: its even share of
+/// what the week already plans, or of the weekly [allowance] when the other
+/// days plan nothing.
+int startingShare(List<WeeklyRule> rules, int weekday, int allowance) {
+  final spending = [for (final r in rules) if (r.type != DayType.zero || r.weekday == weekday) r.weekday]..sort();
+  final planned = rules.where((r) => r.weekday != weekday && r.type != DayType.zero).fold(0, (s, r) => s + r.plannedSpend);
+  return spreadEvenly(planned == 0 ? allowance : planned, spending.length)[spending.indexOf(weekday)];
 }
 
 /// Each spending day's even share of [weekly]; no-spending days keep RM0.

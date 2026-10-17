@@ -70,6 +70,43 @@ void main() {
     expect(find.textContaining('Planned in total: RM50.00 a week.'), findsOneWidget);
   });
 
+  testWidgets('a no-spending day switched to Spending fills in its share and takes it from the other days', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      for (var d = 1; d <= 7; d++) {
+        final spends = d >= 2 && d <= 5;
+        w.saveRule(WeeklyRule(weekday: d, label: 'Day', type: spends ? DayType.spend : DayType.zero, plannedSpend: spends ? 1000 : 0));
+      }
+    });
+    await openRhythm(tester);
+    await openDay(tester, 'Monday');
+
+    await tester.tap(find.text('Spending'));
+    await tester.pump();
+    expect(tester.widget<TextField>(find.descendant(of: find.widgetWithText(TextFormField, 'Planned spend'), matching: find.byType(TextField))).controller!.text, '8.00');
+    expect(find.text('Takes RM8.00 from the other 4 spending days, so the week still plans RM40.00.'), findsOneWidget);
+    await save(tester);
+
+    expect(await planned(world), [800, 800, 800, 800, 800, 0, 0]);
+  });
+
+  testWidgets('a day switched on cannot take more than the week plans', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      for (var d = 1; d <= 7; d++) {
+        w.saveRule(WeeklyRule(weekday: d, label: 'Day', type: d == 2 ? DayType.spend : DayType.zero, plannedSpend: d == 2 ? 1000 : 0));
+      }
+    });
+    await openRhythm(tester);
+    await openDay(tester, 'Monday');
+
+    await tester.tap(find.text('Spending'));
+    await tester.pump();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Planned spend'), '1500');
+    await save(tester);
+
+    expect(find.text('More than the RM10.00 the week plans. Raise your weekly allowance first.'), findsOneWidget);
+    expect(await planned(world), [0, 1000, 0, 0, 0, 0, 0]);
+  });
+
   testWidgets('a fasting day becomes a no-spending day at RM0', (tester) async {
     final world = await pumpApp(tester, seed: spreadWeek);
     await openRhythm(tester);
