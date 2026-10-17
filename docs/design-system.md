@@ -326,9 +326,18 @@ inline line of text where it is.
   the bank opens the logger as income, filled in, so the owner still picks
   what it was. Today shows a check-in card on Sundays; Settings always links
   to it.
+- Insights and the report pick their range with `PeriodPicker`: Week, Month
+  or All, and under Week or Month one arrow row that steps back as far as the
+  week or month of the first day logged and forward to the current one. Away
+  from the current one, the row's middle says "Back to this week" (or month)
+  and jumps there. Switching between Week and Month lands on the current one.
+  Content slides 24 points in from the side it came from (`PeriodSlide`,
+  `AppMotion.fast`). A past period is whole; only the current one says "so
+  far". Its habits are judged against today's rhythm, the only one kept.
 - A report is shared as text, PDF or CSV, picked with radio buttons, for the
-  same three periods as Insights. The Share button is pinned to the bottom so
-  it stays in view however long the preview runs.
+  same ranges as Insights; opened from Insights it starts on the range shown.
+  The Share button is pinned to the bottom so it stays in view however long
+  the preview runs.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;
   the thumbnail in the logger opens it full screen, pinch to zoom.

@@ -12,6 +12,7 @@ import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/soft.dart';
 import '../../insights/domain/insights.dart';
 import '../../insights/presentation/insights_providers.dart';
+import '../../insights/presentation/period_picker.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -23,16 +24,17 @@ enum ReportFormat { text, pdf, csv }
 /// Shares a report of a week, a month or everything, as text to paste, a
 /// PDF to keep or a CSV for a spreadsheet.
 class ReportScreen extends ConsumerStatefulWidget {
-  const ReportScreen({super.key, this.initialPeriod = InsightsPeriod.week});
+  const ReportScreen({super.key, this.initialRange = (period: InsightsPeriod.week, offset: 0)});
 
-  final InsightsPeriod initialPeriod;
+  /// The range Insights was showing, so a past month's report is one tap away.
+  final InsightsRange initialRange;
 
   @override
   ConsumerState<ReportScreen> createState() => _ReportScreenState();
 }
 
 class _ReportScreenState extends ConsumerState<ReportScreen> {
-  late InsightsPeriod _period = widget.initialPeriod;
+  late InsightsRange _range = widget.initialRange;
   ReportFormat _format = ReportFormat.text;
   bool _busy = false;
 
@@ -92,7 +94,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final i = ref.watch(insightsForProvider(_period));
+    final i = ref.watch(insightsForProvider(_range));
     final settings = ref.watch(settingsProvider).value;
     final balance = ref.watch(balanceProvider).value;
     final all = ref.watch(allEntriesProvider).value;
@@ -115,16 +117,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
-          SegmentedButton<InsightsPeriod>(
-            segments: const [
-              ButtonSegment(value: InsightsPeriod.week, label: Text('This week')),
-              ButtonSegment(value: InsightsPeriod.month, label: Text('This month')),
-              ButtonSegment(value: InsightsPeriod.all, label: Text('All')),
-            ],
-            selected: {_period},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _period = s.single),
-          ),
+          PeriodPicker(range: _range, onChanged: (r) => setState(() => _range = r)),
           if (ready)
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.s, AppSpacing.xs, 0),

@@ -16,7 +16,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('tab-Insights')));
     await tester.pumpAndSettle();
-    expect(find.text('This month'), findsOneWidget);
+    expect(find.text('Month'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('tab-Coach')));
     await tester.pumpAndSettle();

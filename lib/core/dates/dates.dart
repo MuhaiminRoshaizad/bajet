@@ -6,6 +6,7 @@ abstract final class Dates {
   static final _short = DateFormat('dd/MM');
   static final _weekday = DateFormat('EEE');
   static final _month = DateFormat('MMM');
+  static final _monthYear = DateFormat('MMMM yyyy');
 
   static String full(DateTime d) => _full.format(d);
   static String short(DateTime d) => _short.format(d);
@@ -21,4 +22,7 @@ abstract final class Dates {
 
   /// `Nov`.
   static String monthShort(DateTime d) => _month.format(d);
+
+  /// `October 2026`.
+  static String monthYear(DateTime d) => _monthYear.format(d);
 }

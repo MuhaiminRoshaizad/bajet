@@ -41,8 +41,49 @@ void main() {
   testWidgets('switching to this week narrows the period', (tester) async {
     await pumpApp(tester, seed: (w) => w.add(EntryDraft(day: testToday, isIncome: false, amount: 800, categoryKey: 'food')));
     await openInsights(tester);
-    await tester.tap(find.text('This week'));
+    await tester.tap(find.text('Week'));
     await tester.pumpAndSettle();
     expect(labelled('Food RM8.00'), findsOneWidget);
+  });
+
+  testWidgets('the arrows step back to an earlier month, and its label jumps back to this one', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      // Logged back into June, before the opening date of 01/07/2026.
+      w.add(EntryDraft(day: d(6, 20), isIncome: false, amount: 1500, categoryKey: 'food', label: 'Dinner'));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 800, categoryKey: 'food'));
+    });
+    await openInsights(tester);
+    expect(find.text('July 2026'), findsOneWidget);
+    expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_right_rounded)).onPressed, isNull);
+
+    await tester.tap(find.byTooltip('Earlier month'));
+    await tester.pumpAndSettle();
+    expect(find.text('June 2026'), findsOneWidget);
+    expect(labelled('Food RM15.00'), findsOneWidget);
+    // June is the first month with anything logged, so the way back ends.
+    expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.chevron_left_rounded)).onPressed, isNull);
+
+    await tester.tap(find.text('Back to this month'));
+    await tester.pumpAndSettle();
+    expect(find.text('July 2026'), findsOneWidget);
+    expect(labelled('Food RM8.00'), findsOneWidget);
+  });
+
+  testWidgets('switching to Week lands on the current week, and Share takes the range shown', (tester) async {
+    await pumpApp(tester, seed: (w) => w.add(EntryDraft(day: d(6, 20), isIncome: false, amount: 1500, categoryKey: 'food')));
+    await openInsights(tester);
+    await tester.tap(find.byTooltip('Earlier month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Week'));
+    await tester.pumpAndSettle();
+    expect(find.text('This week · so far'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Earlier week'));
+    await tester.pumpAndSettle();
+    expect(find.text('22/06 to 28/06/2026'), findsOneWidget);
+    await tester.tap(find.byTooltip('Share a report'));
+    await tester.pumpAndSettle();
+    expect(find.text('22/06 to 28/06/2026'), findsOneWidget);
+    expect(find.textContaining('bajet report, 22/06/2026 to 28/06/2026'), findsOneWidget);
   });
 }

@@ -83,11 +83,25 @@ class Insights {
   bool get isEmpty => moneyIn == 0 && moneyOut == 0;
 }
 
-/// The first day of [period] ending on [today]. "All" starts at [firstDay].
-DateTime periodStart(InsightsPeriod period, DateTime today, DateTime firstDay) => switch (period) {
-      InsightsPeriod.week => weekStart(today),
-      InsightsPeriod.month => DateTime.utc(today.year, today.month, 1),
-      InsightsPeriod.all => calendarDay(firstDay),
+/// The first and last day of the week or month [offset] steps before the
+/// one holding [today] (0 is the current one), never past today. "All" runs
+/// from [firstDay] to today, whatever the offset.
+(DateTime, DateTime) periodSpan(InsightsPeriod period, DateTime today, DateTime firstDay, {int offset = 0}) {
+  final to = calendarDay(today);
+  final (from, end) = switch (period) {
+    InsightsPeriod.week => (weekStart(to).add(Duration(days: 7 * offset)), weekStart(to).add(Duration(days: 7 * offset + 6))),
+    InsightsPeriod.month => (DateTime.utc(to.year, to.month + offset, 1), DateTime.utc(to.year, to.month + offset + 1, 0)),
+    InsightsPeriod.all => (calendarDay(firstDay), to),
+  };
+  return (from, end.isAfter(to) ? to : end);
+}
+
+/// How far back [period] can step: the offset of the week or month holding
+/// [firstDay], so there is always something it could show.
+int earliestOffset(InsightsPeriod period, DateTime today, DateTime firstDay) => switch (period) {
+      InsightsPeriod.week => -(weekStart(calendarDay(today)).difference(weekStart(calendarDay(firstDay))).inDays ~/ 7),
+      InsightsPeriod.month => -((today.year - firstDay.year) * 12 + today.month - firstDay.month),
+      InsightsPeriod.all => 0,
     };
 
 /// The first day Insights knows about: the opening date, or an earlier day
@@ -97,8 +111,11 @@ DateTime periodStart(InsightsPeriod period, DateTime today, DateTime firstDay) =
 DateTime firstDay(DateTime openingDate, List<Entry> entries) =>
     entries.fold(calendarDay(openingDate), (first, e) => e.day.isBefore(first) ? calendarDay(e.day) : first);
 
+/// The figures for [period], [offset] weeks or months back from the current
+/// one.
 Insights insights({
   required InsightsPeriod period,
+  int offset = 0,
   required DateTime today,
   required DateTime openingDate,
   required int weeklyCap,
@@ -106,10 +123,10 @@ Insights insights({
   required List<Category> categories,
   required List<WeeklyRule> rules,
 }) {
-  final to = calendarDay(today);
+  final now = calendarDay(today);
   final first = firstDay(openingDate, entries);
+  var (from, to) = periodSpan(period, now, first, offset: offset);
   // Nothing before the first day counts, whatever the period.
-  var from = periodStart(period, to, first);
   if (from.isBefore(first)) from = first;
   final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
   final planned = {for (final r in rules) r.weekday: r.plannedSpend};
@@ -127,13 +144,14 @@ Insights insights({
 
   final days = [for (var d = from; !d.isAfter(to); d = DateTime.utc(d.year, d.month, d.day + 1)) d];
   int spentOn(DateTime d) => d.isBefore(first) ? 0 : flexibleSpent(entries, fixed, d, d);
-  // Today is still under way, so it counts toward no habit yet.
-  final finished = days.where((d) => d != to).toList();
+  // Today is still under way, so it counts toward no habit yet; a past
+  // period is finished throughout.
+  final finished = days.where((d) => d != now).toList();
 
   var weeksUnder = 0, fullWeeks = 0;
   for (var monday = weekStart(from); !monday.isAfter(to); monday = DateTime.utc(monday.year, monday.month, monday.day + 7)) {
     final sunday = DateTime.utc(monday.year, monday.month, monday.day + 6);
-    if (monday.isBefore(from) || !sunday.isBefore(to)) continue;
+    if (monday.isBefore(from) || sunday.isAfter(to) || !sunday.isBefore(now)) continue;
     fullWeeks++;
     if (flexibleSpent(entries, fixed, monday, sunday) <= weeklyCap) weeksUnder++;
   }

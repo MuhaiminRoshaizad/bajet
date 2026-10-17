@@ -116,4 +116,25 @@ void main() {
     expect(i.fixedOut, without.fixedOut + 4500);
     expect(flexibleSpent([gift], const {}, d(7, 15), d(7, 15)), 0);
   });
+
+  test('a past week is whole: every day finished and the week counted', () {
+    final i = insights(period: InsightsPeriod.week, offset: -1, today: d(7, 15), openingDate: d(7, 1), weeklyCap: 5000, entries: entries, categories: demoCategories, rules: rules);
+    expect((i.from, i.to), (d(7, 6), d(7, 12)));
+    expect((i.moneyOut, i.flexibleOut), (5000, 5000));
+    expect((i.daysSoFar, i.zeroSpendDays), (7, 4));
+    expect((i.weeksUnderAllowance, i.fullWeeks), (1, 1));
+    expect(i.lastDays.last.date, d(7, 12));
+  });
+
+  test('a past month runs to its last day, starting no earlier than the first day logged', () {
+    final i = insights(period: InsightsPeriod.month, offset: -1, today: d(7, 15), openingDate: d(7, 1), weeklyCap: 5000, entries: entries, categories: demoCategories, rules: rules);
+    expect((i.from, i.to, i.moneyOut), (d(6, 30), d(6, 30), 999));
+  });
+
+  test('the way back stops at the week or month of the first day logged', () {
+    expect(earliestOffset(InsightsPeriod.month, d(7, 15), d(6, 30)), -1);
+    expect(earliestOffset(InsightsPeriod.week, d(7, 15), d(6, 30)), -2);
+    expect(earliestOffset(InsightsPeriod.month, DateTime.utc(2027, 1, 9), d(10, 13)), -3);
+    expect(periodSpan(InsightsPeriod.month, DateTime.utc(2027, 1, 9), d(10, 13), offset: -3), (d(10, 1), d(10, 31)));
+  });
 }

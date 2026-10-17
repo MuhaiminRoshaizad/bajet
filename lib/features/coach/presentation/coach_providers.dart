@@ -60,7 +60,7 @@ final weekSummaryProvider = Provider<String?>((ref) {
 /// the month so far. Null until everything has loaded.
 final coachContextProvider = Provider<String?>((ref) {
   final week = ref.watch(weekSummaryProvider);
-  final month = ref.watch(insightsForProvider(InsightsPeriod.month));
+  final month = ref.watch(insightsForProvider((period: InsightsPeriod.month, offset: 0)));
   final balance = ref.watch(balanceProvider).value;
   final settings = ref.watch(settingsProvider).value;
   final categories = ref.watch(categoriesProvider).value;

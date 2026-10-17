@@ -19,6 +19,7 @@ import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/insights.dart';
 import 'insights_providers.dart';
+import 'period_picker.dart';
 
 class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
@@ -37,7 +38,7 @@ class InsightsScreen extends ConsumerWidget {
                 Text('Insights', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                 const Spacer(),
                 IconButton(
-                  onPressed: () => context.push('${Routes.report}?period=${period.name}'),
+                  onPressed: () => context.push('${Routes.report}?period=${period.period.name}&offset=${period.offset}'),
                   icon: const Icon(Icons.ios_share_rounded),
                   tooltip: 'Share a report',
                 ),
@@ -45,16 +46,7 @@ class InsightsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s),
-          SegmentedButton<InsightsPeriod>(
-            segments: const [
-              ButtonSegment(value: InsightsPeriod.week, label: Text('This week')),
-              ButtonSegment(value: InsightsPeriod.month, label: Text('This month')),
-              ButtonSegment(value: InsightsPeriod.all, label: Text('All')),
-            ],
-            selected: {period},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => ref.read(insightsPeriodProvider.notifier).select(s.single),
-          ),
+          PeriodPicker(range: period, onChanged: ref.read(insightsPeriodProvider.notifier).show),
           const SizedBox(height: AppSpacing.l),
     ];
     const padding = EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0);
@@ -66,12 +58,15 @@ class InsightsScreen extends ConsumerWidget {
           children: [
             Padding(padding: padding, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: header)),
             Expanded(
-              child: EmptyState(
+              child: PeriodSlide(
+                range: period,
+                child: EmptyState(
                 icon: Icons.insights_rounded,
                 title: 'Nothing logged ${_since(i, period)}',
                 message: 'What you log shows up here, by category and by day.',
                 actionLabel: 'Log a spend',
                 onAction: () => showLogSheet(context),
+                ),
               ),
             ),
           ],
@@ -84,25 +79,28 @@ class InsightsScreen extends ConsumerWidget {
         children: [
           ...header,
           if (i != null)
-            RiseIn(
-              spacing: AppSpacing.l,
-              children: [
-                _Totals(i: i),
-                SoftCard(child: _Split(i: i)),
-                if (i.flexibleByCategory.isNotEmpty) SoftCard(child: _ByCategory(i: i, categories: categories)),
-                SoftCard(child: _LastDays(days: i.lastDays)),
-                SoftCard(child: _Habits(i: i)),
-                const _GoalProgress(),
-              ],
+            PeriodSlide(
+              range: period,
+              child: RiseIn(
+                spacing: AppSpacing.l,
+                children: [
+                  _Totals(i: i),
+                  SoftCard(child: _Split(i: i)),
+                  if (i.flexibleByCategory.isNotEmpty) SoftCard(child: _ByCategory(i: i, categories: categories)),
+                  SoftCard(child: _LastDays(days: i.lastDays)),
+                  SoftCard(child: _Habits(i: i)),
+                  const _GoalProgress(),
+                ],
+              ),
             ),
         ],
       ),
     );
   }
 
-  static String _since(Insights i, InsightsPeriod p) => switch (p) {
-        InsightsPeriod.week => 'this week',
-        InsightsPeriod.month => 'this month',
+  static String _since(Insights i, InsightsRange r) => switch (r.period) {
+        InsightsPeriod.week => r.offset == 0 ? 'this week' : 'that week',
+        InsightsPeriod.month => r.offset == 0 ? 'this month' : 'in ${Dates.monthYear(i.to)}',
         InsightsPeriod.all => 'since ${Dates.full(i.from)}',
       };
 }

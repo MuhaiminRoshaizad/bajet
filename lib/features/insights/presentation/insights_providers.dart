@@ -5,25 +5,38 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/insights.dart';
 
-class InsightsPeriodController extends Notifier<InsightsPeriod> {
-  @override
-  InsightsPeriod build() => InsightsPeriod.month;
+/// A week, a month or everything, [offset] weeks or months back from the
+/// current one (0 is the current one; "All" has none).
+typedef InsightsRange = ({InsightsPeriod period, int offset});
 
-  void select(InsightsPeriod period) => state = period;
+class InsightsPeriodController extends Notifier<InsightsRange> {
+  @override
+  InsightsRange build() => (period: InsightsPeriod.month, offset: 0);
+
+  void show(InsightsRange range) => state = range;
 }
 
-final insightsPeriodProvider = NotifierProvider<InsightsPeriodController, InsightsPeriod>(InsightsPeriodController.new);
+final insightsPeriodProvider = NotifierProvider<InsightsPeriodController, InsightsRange>(InsightsPeriodController.new);
 
-/// The figures for one period, or null until settings, entries and the
+/// The first day Insights can show, or null until it has loaded.
+final insightsFirstDayProvider = Provider<DateTime?>((ref) {
+  final settings = ref.watch(settingsProvider).value;
+  final entries = ref.watch(allEntriesProvider).value;
+  if (settings == null || entries == null) return null;
+  return firstDay(settings.openingDate, entries);
+});
+
+/// The figures for one range, or null until settings, entries and the
 /// rhythm have loaded. Insights and the report both read from here.
-final insightsForProvider = Provider.family<Insights?, InsightsPeriod>((ref, period) {
+final insightsForProvider = Provider.family<Insights?, InsightsRange>((ref, range) {
   final settings = ref.watch(settingsProvider).value;
   final entries = ref.watch(allEntriesProvider).value;
   final categories = ref.watch(categoriesProvider).value;
   final rules = ref.watch(rulesProvider).value;
   if (settings == null || entries == null || categories == null || rules == null) return null;
   return insights(
-    period: period,
+    period: range.period,
+    offset: range.offset,
     today: ref.watch(todayProvider),
     openingDate: settings.openingDate,
     weeklyCap: settings.weeklyCap,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -57,7 +59,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.report,
         builder: (context, state) => ReportScreen(
-          initialPeriod: InsightsPeriod.values.asNameMap()[state.uri.queryParameters['period']] ?? InsightsPeriod.week,
+          initialRange: (
+            period: InsightsPeriod.values.asNameMap()[state.uri.queryParameters['period']] ?? InsightsPeriod.week,
+            offset: math.min(0, int.tryParse(state.uri.queryParameters['offset'] ?? '') ?? 0),
+          ),
         ),
       ),
       StatefulShellRoute.indexedStack(

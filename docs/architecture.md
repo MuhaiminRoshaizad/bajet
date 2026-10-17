@@ -106,7 +106,8 @@ accounts (`Routes.accounts`) opens the same way but over Today, which stays
 underneath while the page draws its own arrival from where Today's stack was
 (`StackPlaces`, passed as the route's `extra`). The report
 (`Routes.report`) sits above the tabs, so it opens the same way from Settings,
-Insights and the check-in, and takes the period as `?period=week|month|all`.
+Insights and the check-in, and takes the range as `?period=week|month|all`
+plus `&offset=-n` for a week or month n back from the current one.
 
 Until setup has saved its settings, every route redirects to
 `/setup`; once settings exist, `/setup` redirects to Today. The router listens
