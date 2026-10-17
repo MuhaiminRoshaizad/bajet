@@ -196,10 +196,7 @@ class CoachController extends Notifier<CoachChat> {
   bool _stillDue(CoachProposal p) {
     if (p is! BillPaidProposal) return true;
     final now = ref.read(coachDataProvider)?.recurring.where((r) => r.id == p.item.id).firstOrNull;
-    // Days by the calendar: drift reads dates back in local time, while a
-    // remembered card's are UTC.
-    final (due, was) = (now?.nextDue, p.item.nextDue);
-    return now != null && now.active && due!.year == was.year && due.month == was.month && due.day == was.day;
+    return now != null && now.active && now.nextDue == p.item.nextDue;
   }
 
   /// Makes the change card [card] of message [message] suggested.
