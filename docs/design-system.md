@@ -174,6 +174,20 @@ figures fade to rose over `fast` once the week is ahead of its plan. Figures wri
 never overshoot, since a number that reads wrong for a moment is a wrong
 number.
 
+The coach has a face (`CoachAvatar`): the titanium orb Bajety, in the total
+card's own shades with a graphite face, or one of three finance people,
+Aina, Hafiz and Mei, drawn in code. Each mood (idle, thinking, happy,
+concerned, cheer, hello, stare) morphs its mouth, brows and eyes from the
+last over 420 ms with `easeOutBack`, and every change starts with a jelly
+wobble on a looser spring than the app's (damping 0.42, stiffness 220).
+Happy and cheer hop, concerned shakes, cheer sparkles, thinking floats a
+thought bubble or circling sparks, and a tap says hello. At rest it breathes
+and blinks every three to five seconds, and stops after a minute with
+nothing happening. It sits in its own `RepaintBoundary`; with reduce motion
+on, or `animate` off for the small faces beside old replies, it is a still
+picture. The people's skin, hair and clothes are artwork in fixed colours,
+like a card's face, on a background tint from the theme.
+
 Insights shows where the money went as a ring (`CategoryRing`): every
 category of money out, fixed ones labelled Fixed, the total in the middle and
 a key with each one's amount and share. Slices take their colours by size, so
