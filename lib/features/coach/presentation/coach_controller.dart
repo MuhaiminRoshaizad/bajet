@@ -58,6 +58,10 @@ class CoachController extends Notifier<CoachChat> {
   var _declined = 0, _repeats = 0;
   DateTime? _lastAskedAt;
 
+  /// Cards whose change is being made, so a second tap meanwhile does not
+  /// make it twice.
+  final _confirming = <(int, int)>{};
+
   /// How many of the messages, from the top, came back from memory or Undo
   /// rather than being said just now; the screen springs in only the rest.
   int settled = 0;
@@ -83,6 +87,9 @@ class CoachController extends Notifier<CoachChat> {
   Future<void> ask(String question) async {
     final text = question.trim();
     if (text.isEmpty || state.sending) return;
+    // Busy from the first moment, so a second send while this one is still
+    // being saved is not taken as another question.
+    state = CoachChat(messages: state.messages, sending: true);
     final now = DateTime.now();
     final answered = state.messages.length >= 2 && !state.messages.last.fromUser;
     final previous = answered ? state.messages.lastWhere((m) => m.fromUser).text : null;
@@ -165,7 +172,16 @@ class CoachController extends Notifier<CoachChat> {
   /// Does what card [card] of message [message] suggested.
   Future<void> confirm(int message, int card) async {
     final c = state.messages[message].cards[card];
-    if (c.state != CardState.waiting) return;
+    if (c.state != CardState.waiting || !_confirming.add((message, card))) return;
+    try {
+      await _make(message, card, c);
+    } finally {
+      _confirming.remove((message, card));
+    }
+  }
+
+  /// Makes the change card [card] of message [message] suggested.
+  Future<void> _make(int message, int card, CoachCard c) async {
     final undoId = switch (c.proposal) {
       LogProposal(:final draft) => await ref.read(ledgerRepositoryProvider).add(draft),
       MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note) =>
