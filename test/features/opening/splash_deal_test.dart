@@ -3,7 +3,10 @@
 // apart. After changing the timeline, regenerate it with
 //   flutter test test/features/opening/splash_deal_test.dart --dart-define=UPDATE_SPLASH=true
 // The wordmark's outlines in fixtures/wordmark_glyphs.json come from
-// assets/fonts/Figtree-ExtraBold.ttf through fontTools' SVGPathPen.
+// assets/fonts/Figtree-ExtraBold.ttf through fontTools' SVGPathPen, with
+// each glyph's advance and the font's hhea ascender and descender. Letters
+// are placed from those, not from TextPainter, whose widths and rounded line
+// height differ slightly between Linux and Windows.
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -96,18 +99,20 @@ Future<String> generate() async {
   // The wordmark: each letter laid out as bajet lays it out, rising from
   // behind its own line.
   final glyphs = jsonDecode(File('test/features/opening/fixtures/wordmark_glyphs.json').readAsStringSync()) as Map<String, dynamic>;
-  final scale = wordmarkStyle.fontSize! / (glyphs['unitsPerEm'] as num);
+  final size = wordmarkStyle.fontSize!;
+  final scale = size / (glyphs['unitsPerEm'] as num);
   final letters = 'bajet'.split('');
-  final painters = [
-    for (final l in letters) TextPainter(text: TextSpan(text: l, style: wordmarkStyle), textDirection: TextDirection.ltr, textScaler: TextScaler.noScaling)..layout(),
-  ];
-  final total = painters.fold(0.0, (s, p) => s + p.width + 1);
+  // As Flutter lays out each letter at height 1: its advance plus the
+  // letter spacing across, the font size high, the ascender's share of it
+  // above the baseline.
+  final widths = [for (final l in letters) ((glyphs['glyphs'] as Map)[l]['advance'] as num) * scale + wordmarkStyle.letterSpacing!];
+  final ascender = glyphs['ascender'] as num, descender = glyphs['descender'] as num;
+  final total = widths.fold(0.0, (s, w) => s + w + 1);
   var x = _mid - total / 2;
   final top = plan.wordTop;
   for (final (i, l) in letters.indexed) {
-    final p = painters[i];
-    final box = Rect.fromLTWH(x, top, p.width + 1, p.height);
-    final baseline = top + p.computeDistanceToActualBaseline(TextBaseline.alphabetic);
+    final box = Rect.fromLTWH(x, top, widths[i] + 1, size);
+    final baseline = top + size * ascender / (ascender - descender);
     final frames = [for (final t in times) plan.letter(i, t)];
     vector.write('        <group>\n'
         '            <clip-path android:pathData="M${_n(box.left)},${_n(box.top)}h${_n(box.width)}v${_n(box.height)}h-${_n(box.width)}z" />\n'
@@ -117,7 +122,7 @@ Future<String> generate() async {
         '                </group>\n            </group>\n        </group>\n');
     anims.add(_Anim('letter$i')..add('translateY', [for (final f in frames) f.drop * wordmarkStyle.fontSize!]));
     anims.add(_Anim('glyph$i')..add('fillAlpha', [for (final f in frames) f.opacity]));
-    x += p.width + 1;
+    x += widths[i] + 1;
   }
 
   // The titanium line under the word, drawing out from the middle.

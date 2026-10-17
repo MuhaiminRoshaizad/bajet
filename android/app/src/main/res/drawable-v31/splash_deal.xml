@@ -19,7 +19,7 @@
             <path android:name="card2Chip" android:fillColor="#121418" android:fillAlpha="0" android:pathData="M117.815,140.886h11.961a0.875,0.875 0 0 1 0.875,0.875v9.075a0.875,0.875 0 0 1 -0.875,0.875h-11.961a0.875,0.875 0 0 1 -0.875,-0.875v-9.075a0.875,0.875 0 0 1 0.875,-0.875z" />
         </group>
         <group>
-            <clip-path android:pathData="M106.441,180.08h18.286v28h-18.286z" />
+            <clip-path android:pathData="M106.441,180.08h18.286v27.88h-18.286z" />
             <group android:name="letter0" android:translateY="32.062">
                 <group android:translateX="106.941" android:translateY="202.152" android:scaleX="0.028" android:scaleY="-0.028">
                     <path android:name="glyph0" android:fillColor="#E3E9EE" android:fillAlpha="0" android:pathData="M349 -12Q301 -12 264.5 7.5Q228 27 205 64L199 0H51V700H207V440Q256 512 349 512Q454 512 514.5 442.0Q575 372 575 250Q575 128 514.5 58.0Q454 -12 349 -12ZM309 132Q354 132 383.0 165.0Q412 198 413 250Q412 302 383.5 335.0Q355 368 310 368Q264 368 235.5 335.0Q207 302 207 250Q207 198 235.5 165.0Q264 132 309 132Z" />
@@ -27,7 +27,7 @@
             </group>
         </group>
         <group>
-            <clip-path android:pathData="M124.727,180.08h16.613v28h-16.613z" />
+            <clip-path android:pathData="M124.727,180.08h16.613v27.88h-16.613z" />
             <group android:name="letter1" android:translateY="32.062">
                 <group android:translateX="125.227" android:translateY="202.152" android:scaleX="0.028" android:scaleY="-0.028">
                     <path android:name="glyph1" android:fillColor="#E3E9EE" android:fillAlpha="0" android:pathData="M212 -12Q123 -12 74.0 27.5Q25 67 25 141Q25 220 76.0 259.0Q127 298 219 298H341Q336 337 317.5 360.0Q299 383 258 383Q229 383 208.0 370.0Q187 357 173 334L37 379Q62 434 116.0 473.0Q170 512 256 512Q373 512 434.5 448.0Q496 384 496 279L494 0H348L346 51Q303 -12 212 -12ZM246 106Q288 106 316.0 132.5Q344 159 344 195V198H278Q227 198 205.5 184.0Q184 170 184 145Q184 127 200.0 116.5Q216 106 246 106Z" />
@@ -35,7 +35,7 @@
             </group>
         </group>
         <group>
-            <clip-path android:pathData="M141.339,180.08h9.949v28h-9.949z" />
+            <clip-path android:pathData="M141.339,180.08h9.949v27.88h-9.949z" />
             <group android:name="letter2" android:translateY="32.062">
                 <group android:translateX="141.839" android:translateY="202.152" android:scaleX="0.028" android:scaleY="-0.028">
                     <path android:name="glyph2" android:fillColor="#E3E9EE" android:fillAlpha="0" android:pathData="M160 560Q124 560 97.0 587.0Q70 614 70 650Q70 687 97.0 714.0Q124 741 160 741Q197 741 224.0 714.0Q251 687 251 650Q251 614 224.0 587.0Q197 560 160 560ZM49 -215Q-16 -215 -66 -182L-2 -53Q24 -70 44 -70Q82 -70 82 -18V500H238V-29Q238 -118 188.5 -166.5Q139 -215 49 -215Z" />
@@ -43,7 +43,7 @@
             </group>
         </group>
         <group>
-            <clip-path android:pathData="M151.289,180.08h17.17v28h-17.17z" />
+            <clip-path android:pathData="M151.289,180.08h17.17v27.88h-17.17z" />
             <group android:name="letter3" android:translateY="32.062">
                 <group android:translateX="151.789" android:translateY="202.152" android:scaleX="0.028" android:scaleY="-0.028">
                     <path android:name="glyph3" android:fillColor="#E3E9EE" android:fillAlpha="0" android:pathData="M291 -12Q213 -12 153.0 21.0Q93 54 59.0 113.5Q25 173 25 250Q25 328 59.0 387.0Q93 446 153.5 479.0Q214 512 293 512Q364 512 421.0 478.0Q478 444 511.5 376.5Q545 309 545 210H187Q192 167 222.0 141.5Q252 116 295 116Q332 116 357.0 132.5Q382 149 393 174L531 127Q501 55 435.5 21.5Q370 -12 291 -12ZM191 314H382Q376 358 346.5 376.0Q317 394 288 394Q258 394 227.5 376.5Q197 359 191 314Z" />
@@ -51,7 +51,7 @@
             </group>
         </group>
         <group>
-            <clip-path android:pathData="M168.459,180.08h13.1v28h-13.1z" />
+            <clip-path android:pathData="M168.459,180.08h13.1v27.88h-13.1z" />
             <group android:name="letter4" android:translateY="32.062">
                 <group android:translateX="168.959" android:translateY="202.152" android:scaleX="0.028" android:scaleY="-0.028">
                     <path android:name="glyph4" android:fillColor="#E3E9EE" android:fillAlpha="0" android:pathData="M266 -12Q177 -12 133.5 30.5Q90 73 90 152V369H12V500H90V656H246V500H360V369H246V191Q246 133 291 133Q311 133 334 149L388 35Q364 15 331.0 1.5Q298 -12 266 -12Z" />
