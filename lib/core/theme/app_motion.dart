@@ -12,4 +12,9 @@ abstract final class AppMotion {
 
   /// How far a card travels upward on entry, in logical pixels.
   static const double rise = 18;
+
+  /// The bounce for a shape settling on a new value: it passes the value by
+  /// about a tenth and settles in under a second. Figures in words never use
+  /// it, since a number that overshoots reads wrong for a moment.
+  static final spring = SpringDescription.withDampingRatio(mass: 1, stiffness: 180, ratio: 0.6);
 }

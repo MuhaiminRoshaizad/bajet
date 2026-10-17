@@ -13,11 +13,11 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
 import '../../ledger/domain/ledger_models.dart';
-import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/insights.dart';
+import 'category_ring.dart';
 import 'insights_providers.dart';
 import 'period_picker.dart';
 
@@ -86,7 +86,17 @@ class InsightsScreen extends ConsumerWidget {
                 children: [
                   _Totals(i: i),
                   SoftCard(child: _Split(i: i)),
-                  if (i.flexibleByCategory.isNotEmpty) SoftCard(child: _ByCategory(i: i, categories: categories)),
+                  if (i.outByCategory.isNotEmpty)
+                    SoftCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _Title('Where the money went'),
+                          const SizedBox(height: AppSpacing.l),
+                          CategoryRing(byCategory: i.outByCategory, categories: categories),
+                        ],
+                      ),
+                    ),
                   SoftCard(child: _LastDays(days: i.lastDays)),
                   SoftCard(child: _Habits(i: i)),
                   const _GoalProgress(),
@@ -243,55 +253,6 @@ class _Split extends StatelessWidget {
                 Expanded(child: Text('${p.$1} · ${p.$2}', style: const TextStyle(fontSize: 13))),
                 Text(Money.format(p.$3), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFeatures: [FontFeature.tabularFigures()])),
               ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ByCategory extends StatelessWidget {
-  const _ByCategory({required this.i, required this.categories});
-
-  final Insights i;
-  final Map<String, Category> categories;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final top = i.flexibleByCategory.first.$2;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _Title('Where the flexible money went'),
-        const SizedBox(height: AppSpacing.m),
-        for (final (key, amount) in i.flexibleByCategory)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.m),
-            child: Semantics(
-              label: '${categories[key]?.label ?? key} ${Money.format(amount)}',
-              excludeSemantics: true,
-              child: Row(
-                children: [
-                  CategoryBubble(categoryKey: key, tint: categoryTint(categories[key]), size: 32),
-                  const SizedBox(width: AppSpacing.m),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: Text(categories[key]?.label ?? key, overflow: TextOverflow.ellipsis)),
-                            Text(Money.format(amount), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        SoftMeter(value: amount / top, color: c.tintInk(categoryTint(categories[key])), height: 10),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
       ],

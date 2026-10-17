@@ -156,6 +156,7 @@ space around them, or their shadows run into each other.
 | `enter`            | 480 ms     | Cards rising into place, sheets      |
 | `stagger`          | 55 ms      | Delay between consecutive cards      |
 | `rise`             | 18 px      | Distance a card travels on entry     |
+| `spring`           | stiffness 180, damping 0.6 | A shape settling on a new value |
 
 When a screen opens, its cards rise and fade in one after another. `RiseIn`
 in `core/widgets/rise_in.dart` does this for any list of cards. Tabs keep their
@@ -164,9 +165,20 @@ keys its entrance on it, replaying it each visit without resetting scroll.
 When the system's reduce-motion setting is on (`MediaQuery.disableAnimationsOf`),
 all of it is skipped and content appears in place.
 
+A chart that changes value settles on it with `AppMotion.spring`, passing it
+by about a tenth first, like a needle with some weight: Insights' category
+ring swells a touch past its size as it sweeps in. Figures written in words
+never overshoot, since a number that reads wrong for a moment is a wrong
+number.
+
+Insights shows where the money went as a ring (`CategoryRing`): every
+category of money out, fixed ones labelled Fixed, the total in the middle and
+a key with each one's amount and share. Slices take their colours by size, so
+neighbours never match; past six, the smallest share one "Everything else".
+
 ### Account cards in motion
 
-The one place the app bounces. Today stacks the total with at most two
+Where the app bounces most. Today stacks the total with at most two
 accounts peeking out behind it. Your accounts leaves the total on Today and
 shows every account overlapped like a wallet, each with a strip for its name
 and balance (wider above a cash wallet, so its bills never cover a balance);
