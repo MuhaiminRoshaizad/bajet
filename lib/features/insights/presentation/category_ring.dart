@@ -54,7 +54,7 @@ class _CategoryRingState extends State<CategoryRing> with SingleTickerProviderSt
     if (MediaQuery.disableAnimationsOf(context)) {
       _sweep.value = 1;
     } else {
-      _sweep.animateWith(SpringSimulation(AppMotion.spring, 0, 1, 0));
+      _sweep.animateWith(SpringSimulation(AppMotion.spring, 0, 1, 0, snapToEnd: true));
     }
   }
 
