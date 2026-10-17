@@ -672,7 +672,7 @@ class Account extends DataClass implements Insertable<Account> {
   final String? nickname;
   final int openingBalance;
 
-  /// The card's colour as ARGB, and its text colour when the owner picked one
+  /// The card's colour as ARGB, and its text colour when the user picked one
   /// (such as gold on black); otherwise text follows the card's lightness.
   final int color;
   final int? inkColor;
@@ -5204,6 +5204,752 @@ class FavouritesCompanion extends UpdateCompanion<Favourite> {
   }
 }
 
+class $CoachSettingsTable extends CoachSettings
+    with TableInfo<$CoachSettingsTable, CoachSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CoachSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _faceMeta = const VerificationMeta('face');
+  @override
+  late final GeneratedColumn<String> face = GeneratedColumn<String>(
+    'face',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('bajety'),
+  );
+  static const VerificationMeta _personalityMeta = const VerificationMeta(
+    'personality',
+  );
+  @override
+  late final GeneratedColumn<String> personality = GeneratedColumn<String>(
+    'personality',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('friendly'),
+  );
+  static const VerificationMeta _rememberMeta = const VerificationMeta(
+    'remember',
+  );
+  @override
+  late final GeneratedColumn<bool> remember = GeneratedColumn<bool>(
+    'remember',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("remember" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, face, personality, remember];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'coach_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CoachSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('face')) {
+      context.handle(
+        _faceMeta,
+        face.isAcceptableOrUnknown(data['face']!, _faceMeta),
+      );
+    }
+    if (data.containsKey('personality')) {
+      context.handle(
+        _personalityMeta,
+        personality.isAcceptableOrUnknown(
+          data['personality']!,
+          _personalityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('remember')) {
+      context.handle(
+        _rememberMeta,
+        remember.isAcceptableOrUnknown(data['remember']!, _rememberMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CoachSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CoachSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      face: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}face'],
+      )!,
+      personality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}personality'],
+      )!,
+      remember: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}remember'],
+      )!,
+    );
+  }
+
+  @override
+  $CoachSettingsTable createAlias(String alias) {
+    return $CoachSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class CoachSetting extends DataClass implements Insertable<CoachSetting> {
+  final int id;
+
+  /// Which avatar draws the coach, by its key, such as "bajety".
+  final String face;
+
+  /// Which personality it talks in, by its key, such as "friendly".
+  final String personality;
+  final bool remember;
+  const CoachSetting({
+    required this.id,
+    required this.face,
+    required this.personality,
+    required this.remember,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['face'] = Variable<String>(face);
+    map['personality'] = Variable<String>(personality);
+    map['remember'] = Variable<bool>(remember);
+    return map;
+  }
+
+  CoachSettingsCompanion toCompanion(bool nullToAbsent) {
+    return CoachSettingsCompanion(
+      id: Value(id),
+      face: Value(face),
+      personality: Value(personality),
+      remember: Value(remember),
+    );
+  }
+
+  factory CoachSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CoachSetting(
+      id: serializer.fromJson<int>(json['id']),
+      face: serializer.fromJson<String>(json['face']),
+      personality: serializer.fromJson<String>(json['personality']),
+      remember: serializer.fromJson<bool>(json['remember']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'face': serializer.toJson<String>(face),
+      'personality': serializer.toJson<String>(personality),
+      'remember': serializer.toJson<bool>(remember),
+    };
+  }
+
+  CoachSetting copyWith({
+    int? id,
+    String? face,
+    String? personality,
+    bool? remember,
+  }) => CoachSetting(
+    id: id ?? this.id,
+    face: face ?? this.face,
+    personality: personality ?? this.personality,
+    remember: remember ?? this.remember,
+  );
+  CoachSetting copyWithCompanion(CoachSettingsCompanion data) {
+    return CoachSetting(
+      id: data.id.present ? data.id.value : this.id,
+      face: data.face.present ? data.face.value : this.face,
+      personality: data.personality.present
+          ? data.personality.value
+          : this.personality,
+      remember: data.remember.present ? data.remember.value : this.remember,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoachSetting(')
+          ..write('id: $id, ')
+          ..write('face: $face, ')
+          ..write('personality: $personality, ')
+          ..write('remember: $remember')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, face, personality, remember);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CoachSetting &&
+          other.id == this.id &&
+          other.face == this.face &&
+          other.personality == this.personality &&
+          other.remember == this.remember);
+}
+
+class CoachSettingsCompanion extends UpdateCompanion<CoachSetting> {
+  final Value<int> id;
+  final Value<String> face;
+  final Value<String> personality;
+  final Value<bool> remember;
+  const CoachSettingsCompanion({
+    this.id = const Value.absent(),
+    this.face = const Value.absent(),
+    this.personality = const Value.absent(),
+    this.remember = const Value.absent(),
+  });
+  CoachSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.face = const Value.absent(),
+    this.personality = const Value.absent(),
+    this.remember = const Value.absent(),
+  });
+  static Insertable<CoachSetting> custom({
+    Expression<int>? id,
+    Expression<String>? face,
+    Expression<String>? personality,
+    Expression<bool>? remember,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (face != null) 'face': face,
+      if (personality != null) 'personality': personality,
+      if (remember != null) 'remember': remember,
+    });
+  }
+
+  CoachSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? face,
+    Value<String>? personality,
+    Value<bool>? remember,
+  }) {
+    return CoachSettingsCompanion(
+      id: id ?? this.id,
+      face: face ?? this.face,
+      personality: personality ?? this.personality,
+      remember: remember ?? this.remember,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (face.present) {
+      map['face'] = Variable<String>(face.value);
+    }
+    if (personality.present) {
+      map['personality'] = Variable<String>(personality.value);
+    }
+    if (remember.present) {
+      map['remember'] = Variable<bool>(remember.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoachSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('face: $face, ')
+          ..write('personality: $personality, ')
+          ..write('remember: $remember')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CoachMessagesTable extends CoachMessages
+    with TableInfo<$CoachMessagesTable, CoachMessage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CoachMessagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
+  @override
+  late final GeneratedColumn<int> sentAt = GeneratedColumn<int>(
+    'sent_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fromUserMeta = const VerificationMeta(
+    'fromUser',
+  );
+  @override
+  late final GeneratedColumn<bool> fromUser = GeneratedColumn<bool>(
+    'from_user',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("from_user" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _faceMeta = const VerificationMeta('face');
+  @override
+  late final GeneratedColumn<String> face = GeneratedColumn<String>(
+    'face',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lookedMeta = const VerificationMeta('looked');
+  @override
+  late final GeneratedColumn<String> looked = GeneratedColumn<String>(
+    'looked',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _cardsMeta = const VerificationMeta('cards');
+  @override
+  late final GeneratedColumn<String> cards = GeneratedColumn<String>(
+    'cards',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    sentAt,
+    fromUser,
+    body,
+    face,
+    looked,
+    cards,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'coach_messages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CoachMessage> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('sent_at')) {
+      context.handle(
+        _sentAtMeta,
+        sentAt.isAcceptableOrUnknown(data['sent_at']!, _sentAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sentAtMeta);
+    }
+    if (data.containsKey('from_user')) {
+      context.handle(
+        _fromUserMeta,
+        fromUser.isAcceptableOrUnknown(data['from_user']!, _fromUserMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fromUserMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('face')) {
+      context.handle(
+        _faceMeta,
+        face.isAcceptableOrUnknown(data['face']!, _faceMeta),
+      );
+    }
+    if (data.containsKey('looked')) {
+      context.handle(
+        _lookedMeta,
+        looked.isAcceptableOrUnknown(data['looked']!, _lookedMeta),
+      );
+    }
+    if (data.containsKey('cards')) {
+      context.handle(
+        _cardsMeta,
+        cards.isAcceptableOrUnknown(data['cards']!, _cardsMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CoachMessage map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CoachMessage(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      sentAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sent_at'],
+      )!,
+      fromUser: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}from_user'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      face: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}face'],
+      ),
+      looked: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}looked'],
+      )!,
+      cards: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cards'],
+      )!,
+    );
+  }
+
+  @override
+  $CoachMessagesTable createAlias(String alias) {
+    return $CoachMessagesTable(attachedDatabase, alias);
+  }
+}
+
+class CoachMessage extends DataClass implements Insertable<CoachMessage> {
+  final int id;
+
+  /// When it was sent, in milliseconds since the epoch, for the day labels
+  /// and for spotting a question sent twice in a row.
+  final int sentAt;
+  final bool fromUser;
+  final String body;
+
+  /// The avatar that said it, so a reply keeps its face after a switch.
+  final String? face;
+
+  /// What the coach looked up for a reply, one label a line.
+  final String looked;
+
+  /// The reply's suggestion cards and what became of them, as JSON.
+  final String cards;
+  const CoachMessage({
+    required this.id,
+    required this.sentAt,
+    required this.fromUser,
+    required this.body,
+    this.face,
+    required this.looked,
+    required this.cards,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['sent_at'] = Variable<int>(sentAt);
+    map['from_user'] = Variable<bool>(fromUser);
+    map['body'] = Variable<String>(body);
+    if (!nullToAbsent || face != null) {
+      map['face'] = Variable<String>(face);
+    }
+    map['looked'] = Variable<String>(looked);
+    map['cards'] = Variable<String>(cards);
+    return map;
+  }
+
+  CoachMessagesCompanion toCompanion(bool nullToAbsent) {
+    return CoachMessagesCompanion(
+      id: Value(id),
+      sentAt: Value(sentAt),
+      fromUser: Value(fromUser),
+      body: Value(body),
+      face: face == null && nullToAbsent ? const Value.absent() : Value(face),
+      looked: Value(looked),
+      cards: Value(cards),
+    );
+  }
+
+  factory CoachMessage.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CoachMessage(
+      id: serializer.fromJson<int>(json['id']),
+      sentAt: serializer.fromJson<int>(json['sentAt']),
+      fromUser: serializer.fromJson<bool>(json['fromUser']),
+      body: serializer.fromJson<String>(json['body']),
+      face: serializer.fromJson<String?>(json['face']),
+      looked: serializer.fromJson<String>(json['looked']),
+      cards: serializer.fromJson<String>(json['cards']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'sentAt': serializer.toJson<int>(sentAt),
+      'fromUser': serializer.toJson<bool>(fromUser),
+      'body': serializer.toJson<String>(body),
+      'face': serializer.toJson<String?>(face),
+      'looked': serializer.toJson<String>(looked),
+      'cards': serializer.toJson<String>(cards),
+    };
+  }
+
+  CoachMessage copyWith({
+    int? id,
+    int? sentAt,
+    bool? fromUser,
+    String? body,
+    Value<String?> face = const Value.absent(),
+    String? looked,
+    String? cards,
+  }) => CoachMessage(
+    id: id ?? this.id,
+    sentAt: sentAt ?? this.sentAt,
+    fromUser: fromUser ?? this.fromUser,
+    body: body ?? this.body,
+    face: face.present ? face.value : this.face,
+    looked: looked ?? this.looked,
+    cards: cards ?? this.cards,
+  );
+  CoachMessage copyWithCompanion(CoachMessagesCompanion data) {
+    return CoachMessage(
+      id: data.id.present ? data.id.value : this.id,
+      sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
+      fromUser: data.fromUser.present ? data.fromUser.value : this.fromUser,
+      body: data.body.present ? data.body.value : this.body,
+      face: data.face.present ? data.face.value : this.face,
+      looked: data.looked.present ? data.looked.value : this.looked,
+      cards: data.cards.present ? data.cards.value : this.cards,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoachMessage(')
+          ..write('id: $id, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('fromUser: $fromUser, ')
+          ..write('body: $body, ')
+          ..write('face: $face, ')
+          ..write('looked: $looked, ')
+          ..write('cards: $cards')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, sentAt, fromUser, body, face, looked, cards);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CoachMessage &&
+          other.id == this.id &&
+          other.sentAt == this.sentAt &&
+          other.fromUser == this.fromUser &&
+          other.body == this.body &&
+          other.face == this.face &&
+          other.looked == this.looked &&
+          other.cards == this.cards);
+}
+
+class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
+  final Value<int> id;
+  final Value<int> sentAt;
+  final Value<bool> fromUser;
+  final Value<String> body;
+  final Value<String?> face;
+  final Value<String> looked;
+  final Value<String> cards;
+  const CoachMessagesCompanion({
+    this.id = const Value.absent(),
+    this.sentAt = const Value.absent(),
+    this.fromUser = const Value.absent(),
+    this.body = const Value.absent(),
+    this.face = const Value.absent(),
+    this.looked = const Value.absent(),
+    this.cards = const Value.absent(),
+  });
+  CoachMessagesCompanion.insert({
+    this.id = const Value.absent(),
+    required int sentAt,
+    required bool fromUser,
+    required String body,
+    this.face = const Value.absent(),
+    this.looked = const Value.absent(),
+    this.cards = const Value.absent(),
+  }) : sentAt = Value(sentAt),
+       fromUser = Value(fromUser),
+       body = Value(body);
+  static Insertable<CoachMessage> custom({
+    Expression<int>? id,
+    Expression<int>? sentAt,
+    Expression<bool>? fromUser,
+    Expression<String>? body,
+    Expression<String>? face,
+    Expression<String>? looked,
+    Expression<String>? cards,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (sentAt != null) 'sent_at': sentAt,
+      if (fromUser != null) 'from_user': fromUser,
+      if (body != null) 'body': body,
+      if (face != null) 'face': face,
+      if (looked != null) 'looked': looked,
+      if (cards != null) 'cards': cards,
+    });
+  }
+
+  CoachMessagesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? sentAt,
+    Value<bool>? fromUser,
+    Value<String>? body,
+    Value<String?>? face,
+    Value<String>? looked,
+    Value<String>? cards,
+  }) {
+    return CoachMessagesCompanion(
+      id: id ?? this.id,
+      sentAt: sentAt ?? this.sentAt,
+      fromUser: fromUser ?? this.fromUser,
+      body: body ?? this.body,
+      face: face ?? this.face,
+      looked: looked ?? this.looked,
+      cards: cards ?? this.cards,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (sentAt.present) {
+      map['sent_at'] = Variable<int>(sentAt.value);
+    }
+    if (fromUser.present) {
+      map['from_user'] = Variable<bool>(fromUser.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (face.present) {
+      map['face'] = Variable<String>(face.value);
+    }
+    if (looked.present) {
+      map['looked'] = Variable<String>(looked.value);
+    }
+    if (cards.present) {
+      map['cards'] = Variable<String>(cards.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoachMessagesCompanion(')
+          ..write('id: $id, ')
+          ..write('sentAt: $sentAt, ')
+          ..write('fromUser: $fromUser, ')
+          ..write('body: $body, ')
+          ..write('face: $face, ')
+          ..write('looked: $looked, ')
+          ..write('cards: $cards')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5217,6 +5963,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WeeklyRulesTable weeklyRules = $WeeklyRulesTable(this);
   late final $GoalsTable goals = $GoalsTable(this);
   late final $FavouritesTable favourites = $FavouritesTable(this);
+  late final $CoachSettingsTable coachSettings = $CoachSettingsTable(this);
+  late final $CoachMessagesTable coachMessages = $CoachMessagesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5232,6 +5980,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     weeklyRules,
     goals,
     favourites,
+    coachSettings,
+    coachMessages,
   ];
 }
 
@@ -9657,6 +10407,433 @@ typedef $$FavouritesTableProcessedTableManager =
       Favourite,
       PrefetchHooks Function({bool categoryKey})
     >;
+typedef $$CoachSettingsTableCreateCompanionBuilder =
+    CoachSettingsCompanion Function({
+      Value<int> id,
+      Value<String> face,
+      Value<String> personality,
+      Value<bool> remember,
+    });
+typedef $$CoachSettingsTableUpdateCompanionBuilder =
+    CoachSettingsCompanion Function({
+      Value<int> id,
+      Value<String> face,
+      Value<String> personality,
+      Value<bool> remember,
+    });
+
+class $$CoachSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $CoachSettingsTable> {
+  $$CoachSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get face => $composableBuilder(
+    column: $table.face,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get personality => $composableBuilder(
+    column: $table.personality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get remember => $composableBuilder(
+    column: $table.remember,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CoachSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CoachSettingsTable> {
+  $$CoachSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get face => $composableBuilder(
+    column: $table.face,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get personality => $composableBuilder(
+    column: $table.personality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get remember => $composableBuilder(
+    column: $table.remember,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CoachSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CoachSettingsTable> {
+  $$CoachSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get face =>
+      $composableBuilder(column: $table.face, builder: (column) => column);
+
+  GeneratedColumn<String> get personality => $composableBuilder(
+    column: $table.personality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get remember =>
+      $composableBuilder(column: $table.remember, builder: (column) => column);
+}
+
+class $$CoachSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CoachSettingsTable,
+          CoachSetting,
+          $$CoachSettingsTableFilterComposer,
+          $$CoachSettingsTableOrderingComposer,
+          $$CoachSettingsTableAnnotationComposer,
+          $$CoachSettingsTableCreateCompanionBuilder,
+          $$CoachSettingsTableUpdateCompanionBuilder,
+          (
+            CoachSetting,
+            BaseReferences<_$AppDatabase, $CoachSettingsTable, CoachSetting>,
+          ),
+          CoachSetting,
+          PrefetchHooks Function()
+        > {
+  $$CoachSettingsTableTableManager(_$AppDatabase db, $CoachSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CoachSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CoachSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CoachSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> face = const Value.absent(),
+                Value<String> personality = const Value.absent(),
+                Value<bool> remember = const Value.absent(),
+              }) => CoachSettingsCompanion(
+                id: id,
+                face: face,
+                personality: personality,
+                remember: remember,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> face = const Value.absent(),
+                Value<String> personality = const Value.absent(),
+                Value<bool> remember = const Value.absent(),
+              }) => CoachSettingsCompanion.insert(
+                id: id,
+                face: face,
+                personality: personality,
+                remember: remember,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CoachSettingsTable, CoachSetting>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CoachSettingsTable,
+                    CoachSetting
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CoachSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CoachSettingsTable,
+      CoachSetting,
+      $$CoachSettingsTableFilterComposer,
+      $$CoachSettingsTableOrderingComposer,
+      $$CoachSettingsTableAnnotationComposer,
+      $$CoachSettingsTableCreateCompanionBuilder,
+      $$CoachSettingsTableUpdateCompanionBuilder,
+      (
+        CoachSetting,
+        BaseReferences<_$AppDatabase, $CoachSettingsTable, CoachSetting>,
+      ),
+      CoachSetting,
+      PrefetchHooks Function()
+    >;
+typedef $$CoachMessagesTableCreateCompanionBuilder =
+    CoachMessagesCompanion Function({
+      Value<int> id,
+      required int sentAt,
+      required bool fromUser,
+      required String body,
+      Value<String?> face,
+      Value<String> looked,
+      Value<String> cards,
+    });
+typedef $$CoachMessagesTableUpdateCompanionBuilder =
+    CoachMessagesCompanion Function({
+      Value<int> id,
+      Value<int> sentAt,
+      Value<bool> fromUser,
+      Value<String> body,
+      Value<String?> face,
+      Value<String> looked,
+      Value<String> cards,
+    });
+
+class $$CoachMessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $CoachMessagesTable> {
+  $$CoachMessagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get fromUser => $composableBuilder(
+    column: $table.fromUser,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get face => $composableBuilder(
+    column: $table.face,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get looked => $composableBuilder(
+    column: $table.looked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cards => $composableBuilder(
+    column: $table.cards,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CoachMessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CoachMessagesTable> {
+  $$CoachMessagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sentAt => $composableBuilder(
+    column: $table.sentAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get fromUser => $composableBuilder(
+    column: $table.fromUser,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get face => $composableBuilder(
+    column: $table.face,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get looked => $composableBuilder(
+    column: $table.looked,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cards => $composableBuilder(
+    column: $table.cards,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CoachMessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CoachMessagesTable> {
+  $$CoachMessagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sentAt =>
+      $composableBuilder(column: $table.sentAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get fromUser =>
+      $composableBuilder(column: $table.fromUser, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get face =>
+      $composableBuilder(column: $table.face, builder: (column) => column);
+
+  GeneratedColumn<String> get looked =>
+      $composableBuilder(column: $table.looked, builder: (column) => column);
+
+  GeneratedColumn<String> get cards =>
+      $composableBuilder(column: $table.cards, builder: (column) => column);
+}
+
+class $$CoachMessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CoachMessagesTable,
+          CoachMessage,
+          $$CoachMessagesTableFilterComposer,
+          $$CoachMessagesTableOrderingComposer,
+          $$CoachMessagesTableAnnotationComposer,
+          $$CoachMessagesTableCreateCompanionBuilder,
+          $$CoachMessagesTableUpdateCompanionBuilder,
+          (
+            CoachMessage,
+            BaseReferences<_$AppDatabase, $CoachMessagesTable, CoachMessage>,
+          ),
+          CoachMessage,
+          PrefetchHooks Function()
+        > {
+  $$CoachMessagesTableTableManager(_$AppDatabase db, $CoachMessagesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CoachMessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CoachMessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CoachMessagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> sentAt = const Value.absent(),
+                Value<bool> fromUser = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String?> face = const Value.absent(),
+                Value<String> looked = const Value.absent(),
+                Value<String> cards = const Value.absent(),
+              }) => CoachMessagesCompanion(
+                id: id,
+                sentAt: sentAt,
+                fromUser: fromUser,
+                body: body,
+                face: face,
+                looked: looked,
+                cards: cards,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int sentAt,
+                required bool fromUser,
+                required String body,
+                Value<String?> face = const Value.absent(),
+                Value<String> looked = const Value.absent(),
+                Value<String> cards = const Value.absent(),
+              }) => CoachMessagesCompanion.insert(
+                id: id,
+                sentAt: sentAt,
+                fromUser: fromUser,
+                body: body,
+                face: face,
+                looked: looked,
+                cards: cards,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CoachMessagesTable, CoachMessage>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $CoachMessagesTable,
+                    CoachMessage
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CoachMessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CoachMessagesTable,
+      CoachMessage,
+      $$CoachMessagesTableFilterComposer,
+      $$CoachMessagesTableOrderingComposer,
+      $$CoachMessagesTableAnnotationComposer,
+      $$CoachMessagesTableCreateCompanionBuilder,
+      $$CoachMessagesTableUpdateCompanionBuilder,
+      (
+        CoachMessage,
+        BaseReferences<_$AppDatabase, $CoachMessagesTable, CoachMessage>,
+      ),
+      CoachMessage,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9681,4 +10858,8 @@ class $AppDatabaseManager {
       $$GoalsTableTableManager(_db, _db.goals);
   $$FavouritesTableTableManager get favourites =>
       $$FavouritesTableTableManager(_db, _db.favourites);
+  $$CoachSettingsTableTableManager get coachSettings =>
+      $$CoachSettingsTableTableManager(_db, _db.coachSettings);
+  $$CoachMessagesTableTableManager get coachMessages =>
+      $$CoachMessagesTableTableManager(_db, _db.coachMessages);
 }

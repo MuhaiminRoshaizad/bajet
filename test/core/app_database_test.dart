@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 7);
+    expect(db.schemaVersion, 8);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -160,5 +160,22 @@ void main() {
     // A card added afterwards starts matte too.
     final id = await old.into(old.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: 'New', color: 3));
     expect((await (old.select(old.accounts)..where((a) => a.id.equals(id))).getSingle()).finish, CardFinish.matte);
+  });
+
+  test('a version 7 database gains the coach tables, empty, and keeps its entries', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v7.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO accounts (kind, name, opening_balance, color) VALUES ('bank', 'Bank', 1000, 1)");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key, account_id) VALUES ('2026-07-01', 'expense', 450, 'food', 1)");
+      raw.execute('PRAGMA user_version = 7');
+    }));
+    addTearDown(old.close);
+    expect(await old.select(old.coachMessages).get(), isEmpty);
+    expect(await old.select(old.coachSettings).get(), isEmpty);
+    expect((await old.select(old.entries).getSingle()).amount, 450);
+    await old.into(old.coachSettings).insert(const CoachSettingsCompanion());
+    final row = await old.select(old.coachSettings).getSingle();
+    expect((row.face, row.personality, row.remember), ('bajety', 'friendly', true));
   });
 }

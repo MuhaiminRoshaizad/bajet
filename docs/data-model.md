@@ -184,6 +184,31 @@ Shortcuts that fill in the logger. They never log on their own.
 | `amount`       | int  | Pre-filled, editable |
 | `sort_order`   | int  |                      |
 
+### `coach_settings`
+How the coach looks and talks, and whether it remembers. One row, written
+the first time any of it changes; until then the defaults below hold.
+
+| Column        | Type | Notes                                         |
+|---------------|------|-----------------------------------------------|
+| `id`          | int  | Always 1                                      |
+| `face`        | text | Avatar key: `bajety`, `aina`, `hafiz`, `mei`; default `bajety` |
+| `personality` | text | Personality key; default `friendly`           |
+| `remember`    | bool | Keep the chat between launches; default true  |
+
+### `coach_messages`
+The remembered chat, oldest first. It never leaves the phone: the backup
+file does not carry this table or `coach_settings`.
+
+| Column     | Type | Notes                                                  |
+|------------|------|--------------------------------------------------------|
+| `id`       | int  | Primary key                                            |
+| `sent_at`  | int  | Milliseconds since the epoch                           |
+| `from_user`| bool | False for the coach's replies                          |
+| `body`     | text | What was said                                          |
+| `face`     | text | The avatar that replied; null for the user's messages  |
+| `looked`   | text | What the coach looked up, one label a line             |
+| `cards`    | text | Suggestion cards and their outcome, as JSON; empty if none |
+
 ## Defaults on a new install
 
 Eight expense categories (Food, Transport, Pets, Family, Gifts, Bills, Personal,
@@ -246,7 +271,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 6. Any change to a table bumps it and adds a step to
+`schemaVersion` is 8. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -259,3 +284,4 @@ data on the phone is left as it was.
 | 5       | `entries.planned_event_id` and `planned_event_on`, for spending against an event |
 | 6       | `accounts` and `transfers`; `entries.account_id` and `recurring_items.account_id`; the total card's look on `app_settings`, whose `opening_balance` moves to a first account, "Main account", which every existing entry and bill joins |
 | 7       | Brushed metal retired: `accounts.finish` and `app_settings.total_card_finish` turn `brushed` into `matte`, which becomes their default |
+| 8       | `coach_settings` and `coach_messages`, both new and empty, for the coach's look, personality and remembered chat |

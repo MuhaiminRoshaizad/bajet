@@ -197,3 +197,41 @@ class Favourites extends Table {
   IntColumn get amount => integer().check(amount.isBiggerThanValue(0))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 }
+
+/// How the coach looks and talks, and whether it remembers. One row, written
+/// the first time the user changes any of it; until then the defaults hold.
+class CoachSettings extends Table {
+  IntColumn get id => integer().withDefault(const Constant(1))();
+
+  /// Which avatar draws the coach, by its key, such as "bajety".
+  TextColumn get face => text().withDefault(const Constant('bajety'))();
+
+  /// Which personality it talks in, by its key, such as "friendly".
+  TextColumn get personality => text().withDefault(const Constant('friendly'))();
+  BoolColumn get remember => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// The remembered chat with the coach, oldest first. It stays on the phone:
+/// a backup file never carries it (decision 024).
+class CoachMessages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// When it was sent, in milliseconds since the epoch, for the day labels
+  /// and for spotting a question sent twice in a row.
+  IntColumn get sentAt => integer()();
+  BoolColumn get fromUser => boolean()();
+  TextColumn get body => text()();
+
+  /// The avatar that said it, so a reply keeps its face after a switch.
+  TextColumn get face => text().nullable()();
+
+  /// What the coach looked up for a reply, one label a line.
+  TextColumn get looked => text().withDefault(const Constant(''))();
+
+  /// The reply's suggestion cards and what became of them, as JSON.
+  TextColumn get cards => text().withDefault(const Constant(''))();
+}
+
