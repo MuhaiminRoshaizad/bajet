@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_version.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -142,6 +143,18 @@ class SettingsScreen extends ConsumerWidget {
                 title: 'Appearance',
                 value: _themeNames[ref.watch(themeModeProvider)]!,
                 onTap: () => showModalBottomSheet<void>(context: context, useSafeArea: true, builder: (_) => const _AppearanceSheet()),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          CardGroup(
+            children: [
+              SettingsRow(
+                icon: Icons.info_outline_rounded,
+                tint: Tint.neutral,
+                title: 'About bajet',
+                value: 'Version $appVersion · build $appBuild',
+                onTap: () => showLicensePage(context: context, applicationName: 'bajet', applicationVersion: '$appVersion ($appBuild)'),
               ),
             ],
           ),

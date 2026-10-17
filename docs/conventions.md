@@ -76,6 +76,10 @@ installed or released, whatever the name does, and it never resets.
 Release phases map onto the app version: v1 is `1.0.0`, v1.1 is `1.1.0`, and
 so on. A fix inside a phase is a patch, such as `1.1.1`.
 
+The same version lives in `lib/app/app_version.dart`, which Settings → About
+bajet shows; `test/app/app_version_test.dart` fails if it ever differs from
+`pubspec.yaml`, so a release bumps both in the same commit.
+
 ### Database schema: `AppDatabase.schemaVersion`
 
 A plain integer, as drift requires. Any table change adds one and comes with a
