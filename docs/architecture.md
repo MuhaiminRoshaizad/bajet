@@ -225,4 +225,4 @@ build hook at build time. The app itself never downloads anything.
 | v1.2  | What-if sliders, launcher shortcuts                                   |
 | v1.3  | Coach                                                                 |
 | v1.4  | Accounts and transfers, deleting accounts, logging forgotten days, app lock, the opening animation, the week dial, past weeks and months, the category ring, reports by account, saving files to the phone, demo mode (`--dart-define=BAJET_DEMO=true`, in-memory made-up data) and CI on every push; the coach looks up any period and suggests changes to confirm |
-| v1.5  | The coach's avatars, personalities, memory and gatekeeper             |
+| v1.5  | The coach as a character: four coaches to pick from (Bajety and three finance people) with moods that react to the chat, six personalities, one chat remembered on the phone, a gatekeeper that turns away off-topic messages, attacks and spam, springy chat motion, and capitals at the start of every name and note |

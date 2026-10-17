@@ -34,7 +34,11 @@ own API key; without a key, nothing leaves the phone.
 - **Coach** answers questions about your money by looking up the figures it
   needs, any week, month, entry, account or the plan, using your own
   Anthropic key, up to ten a day. It can suggest logging a spend, moving money
-  or marking a bill paid, which happens only when you tap to confirm. The
+  or marking a bill paid, which happens only when you tap to confirm. Pick
+  who coaches you, Bajety the titanium orb or one of three finance people,
+  and how they talk, from friendly to roasting; their face reacts as you
+  chat. The chat is remembered on the phone only, and messages that are not
+  about your money are turned away on the phone, costing nothing. The
   week's summary can also be copied to paste anywhere.
 - **Settings** holds every amount and rule: allowance and buffer, goals, bills
   and income, one-off events, the weekly rhythm, favourites, backups, and a
@@ -44,7 +48,7 @@ own API key; without a key, nothing leaves the phone.
 
 ## Status
 
-Version 1.4 is in daily use on Android, with a demo mode for screenshots and
+Version 1.5 is in daily use on Android, with a demo mode for screenshots and
 CI on every push; see
 [release phases](docs/architecture.md#release-phases).
 
