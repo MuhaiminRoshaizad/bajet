@@ -607,19 +607,37 @@ class FakeCoachKeys implements CoachKeyStore {
   Future<void> recordUse(DateTime day) async => used[day] = (used[day] ?? 0) + 1;
 }
 
-/// Answers with [reply], or throws [failWith]; records what it was sent.
+/// Asks for each lookup queued in [lookups], one a turn, then answers with
+/// [reply]; or throws [failWith]. Records every request it was sent.
 class FakeCoach implements CoachClient {
   String reply = 'You are on track.';
   CoachProblem? failWith;
-  String? lastSystem;
-  List<CoachMessage>? lastConversation;
+  final lookups = <(String, Map<String, Object?>)>[];
+  final requests = <CoachRequest>[];
+
+  String? get lastSystem => requests.lastOrNull?.system;
+
+  /// The tool results bajet sent back for the last question, joined.
+  String get lookedUp => [
+        for (final m in requests.lastOrNull?.messages ?? const <Map<String, Object?>>[])
+          if (m['content'] is List)
+            for (final b in m['content'] as List)
+              if (b is Map && b['type'] == 'tool_result') b['content'],
+      ].join('\n');
 
   @override
-  Future<String> ask({required String apiKey, required String system, required List<CoachMessage> conversation}) async {
-    lastSystem = system;
-    lastConversation = conversation;
+  Future<CoachTurn> send({required String apiKey, required CoachRequest request}) async {
+    requests.add(request);
     if (failWith != null) throw CoachException(failWith!);
-    return reply;
+    if (lookups.isNotEmpty) {
+      final (name, input) = lookups.removeAt(0);
+      return CoachTurn(stopReason: 'tool_use', content: [
+        {'type': 'tool_use', 'id': 'toolu_${requests.length}', 'name': name, 'input': input},
+      ]);
+    }
+    return CoachTurn(stopReason: 'end_turn', content: [
+      {'type': 'text', 'text': reply},
+    ]);
   }
 }
 

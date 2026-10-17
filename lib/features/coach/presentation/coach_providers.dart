@@ -1,16 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
-import '../../insights/domain/insights.dart';
-import '../../insights/presentation/insights_providers.dart';
+import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../plan/presentation/runway_screen.dart';
-import '../../report/domain/report.dart';
-import '../../report/presentation/report_providers.dart';
 import '../data/anthropic_coach_client.dart';
 import '../data/secure_coach_key_store.dart';
 import '../domain/coach_client.dart';
+import '../domain/coach_lookups.dart';
 import '../domain/week_summary.dart';
 
 final coachClientProvider = Provider<CoachClient>((ref) => AnthropicCoachClient());
@@ -57,25 +55,28 @@ final weekSummaryProvider = Provider<String?>((ref) {
   );
 });
 
-/// What the coach is told about the owner's money: the week in detail and
-/// the month so far. Null until everything has loaded.
-final coachContextProvider = Provider<String?>((ref) {
-  final week = ref.watch(weekSummaryProvider);
-  const thisMonth = (period: InsightsPeriod.month, offset: 0);
-  final month = ref.watch(insightsForProvider(thisMonth));
-  final accounts = ref.watch(reportAccountsProvider(thisMonth));
-  final balance = ref.watch(balanceProvider).value;
+/// Everything the coach may look up, as of now. Null until it has loaded.
+final coachDataProvider = Provider<CoachData?>((ref) {
   final settings = ref.watch(settingsProvider).value;
+  final balance = ref.watch(balanceProvider).value;
+  final entries = ref.watch(allEntriesProvider).value;
   final categories = ref.watch(categoriesProvider).value;
-  if (week == null || month == null || accounts == null || balance == null || settings == null || categories == null) return null;
-  final monthText = reportText(
-    i: month,
-    accounts: accounts,
+  final accounts = ref.watch(accountsProvider).value;
+  final rules = ref.watch(rulesProvider).value;
+  final recurring = ref.watch(recurringProvider).value;
+  if (settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null) {
+    return null;
+  }
+  return CoachData(
+    today: ref.watch(todayProvider),
+    settings: settings,
     balance: balance,
-    weeklyCap: settings.weeklyCap,
-    buffer: settings.buffer,
-    categories: {for (final c in categories) c.key: c},
-    goal: null,
+    entries: entries,
+    categories: categories,
+    accounts: accounts,
+    rules: rules,
+    recurring: recurring,
+    projection: ref.watch(projectionProvider),
+    upcoming: ref.watch(upcomingProvider) ?? const [],
   );
-  return '$week\n\nThis month so far:\n$monthText';
 });

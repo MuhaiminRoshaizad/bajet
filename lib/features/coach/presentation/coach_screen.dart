@@ -59,7 +59,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
-    ref.watch(coachContextProvider);
+    ref.watch(coachDataProvider);
     // Keep the newest message in view as the conversation grows.
     ref.listen(coachControllerProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,7 +112,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                 ? EmptyState(
                     icon: Icons.forum_outlined,
                     title: 'Ask about your money',
-                    message: "The coach answers from this week's and this month's figures, using your own Anthropic API key.",
+                    message: 'The coach looks up your own figures to answer, using your own Anthropic API key.',
                     actionLabel: 'Add your key',
                     onAction: () => context.push(Routes.coachKey),
                     secondaryLabel: "Copy this week's summary",
@@ -132,8 +132,8 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                               const Text('Ask about your money', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                               const SizedBox(height: AppSpacing.xs),
                               Text(
-                                'The coach reads this week and this month and answers from those figures. '
-                                'Each question sends them to Anthropic with your key.',
+                                'The coach looks up your weeks, months, accounts and plan to answer. Each question sends '
+                                'only what it looked up to Anthropic with your key.',
                                 style: TextStyle(color: c.muted, height: 1.4),
                               ),
                             ],
@@ -190,7 +190,17 @@ class _Bubble extends StatelessWidget {
                     ),
                     child: text,
                   )
-                : SoftCard(padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m), radius: 20, child: text),
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SoftCard(padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m), radius: 20, child: text),
+                      if (message.looked.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.s, 0),
+                          child: Text('Looked at: ${message.looked.join(' · ')}', style: TextStyle(color: c.muted, fontSize: 12)),
+                        ),
+                    ],
+                  ),
           ),
         ),
       ),

@@ -55,11 +55,14 @@ void main() {
     final world = await openCoach(tester);
     expect(find.text('10 left today'), findsOneWidget);
 
+    world.coach.lookups.add(('bajet_overview', const {}));
     await ask(tester, 'How did this week go?');
     expect(find.text('How did this week go?'), findsOneWidget);
     expect(find.text('You are on track.'), findsOneWidget);
-    expect(world.coach.lastSystem, contains('Balance: RM1,488.00'));
-    expect(world.coach.lastSystem, contains('This month so far:'));
+    // The figures arrive as a lookup's result, never in the instructions.
+    expect(world.coach.lookedUp, contains('Balance: RM1,488.00'));
+    expect(world.coach.lastSystem, isNot(contains('RM1,488.00')));
+    expect(find.text('Looked at: This week'), findsOneWidget);
     expect(find.text('9 left today'), findsOneWidget);
   });
 
@@ -81,6 +84,6 @@ void main() {
     world.coachKeys.used[testToday] = coachDailyLimit;
     await ask(tester, 'One more?');
     expect(find.textContaining("That's today's 10 questions"), findsOneWidget);
-    expect(world.coach.lastConversation, isNull);
+    expect(world.coach.requests, isEmpty);
   });
 }

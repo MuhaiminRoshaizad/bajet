@@ -370,5 +370,7 @@ inline line of text where it is.
   suggested questions while it is empty. The header counts the questions left
   today. A failed question says why (offline, key refused, busy) and offers
   Try again; nothing is counted until an answer arrives. The conversation is
-  never stored. Without a key, the tab explains and links to Settings → Coach.
+  never stored. Under each reply, "Looked at:" names what the coach looked up
+  for it, such as "This week · September 2026". Without a key, the tab
+  explains and links to Settings → Coach.
 - Touch targets are at least 48 dp.

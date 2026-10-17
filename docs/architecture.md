@@ -83,7 +83,7 @@ A folder under `core/` appears only once two features need it.
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
-| `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day, given the week and month as context; the week's summary can still be copied |
+| `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day. The model reads the owner's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
 | `opening` | The opening played on a cold start: its timeline as plain data, the titanium cards and the lock screen's fan; the overlay that plays it lives in `app/` because it draws Today's and the lock screen's cards |
 | `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, and the owner's lock choices |
 | `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
@@ -138,11 +138,23 @@ restored settings row is what moves the router on.
 
 ## Network
 
-The only network traffic is the coach: one HTTPS request to
-`api.anthropic.com/v1/messages` per question, made from the phone with the
-owner's own key, carrying the question and a short text summary of the week
-and month. Nothing else leaves the phone, and without a key nothing does at
-all. `INTERNET` is in the manifest for this alone.
+The only network traffic is the coach: HTTPS requests to
+`api.anthropic.com/v1/messages`, made from the phone with the owner's own
+key. A question is one request, plus one more for each round of lookups the
+model asks for (at most four, decision 022); each carries the conversation
+and the results of the lookups so far, never the whole database. Nothing
+else leaves the phone, and without a key nothing does at all. `INTERNET` is
+in the manifest for this alone.
+
+The coach's lookups (`coachLookups`) are Anthropic tool definitions:
+`bajet_overview`, `bajet_period`, `bajet_entries`, `bajet_accounts` and
+`bajet_plan`. `runLookup` answers them from a `CoachData` snapshot that
+`coachDataProvider` builds from the loaded providers, and `coachAnswer`
+runs the loop: send, run any lookups the reply asks for, send their results
+back as `tool_result` blocks with the assistant turn unchanged, and after
+four rounds send `tool_choice: none` so the model must answer. Requests use
+`claude-sonnet-5-5` at `effort: low` with server-side `fallbacks: "default"`;
+a `refusal` stop reason becomes `CoachProblem.refused`.
 
 ## Platforms
 

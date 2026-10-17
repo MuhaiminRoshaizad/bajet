@@ -15,12 +15,11 @@ class AnthropicCoachClient implements CoachClient {
 
   static final _endpoint = Uri.parse('https://api.anthropic.com/v1/messages');
 
-  /// Capable enough to reason about a budget, and kinder to a personal key
-  /// than the largest model.
-  static const model = 'claude-sonnet-5-5';
-
   @override
-  Future<String> ask({required String apiKey, required String system, required List<CoachMessage> conversation}) async {
+  Future<CoachTurn> send({required String apiKey, required CoachRequest request}) async {
+    // Sonnet 5.5 can retry a declined question on another model itself; the
+    // other models take the refusal as final.
+    final fallback = request.model.startsWith('claude-sonnet');
     final http.Response response;
     try {
       response = await _http
@@ -29,15 +28,22 @@ class AnthropicCoachClient implements CoachClient {
             headers: {
               'x-api-key': apiKey,
               'anthropic-version': '2023-06-01',
+              if (fallback) 'anthropic-beta': 'server-side-fallback-2026-07-01',
               'content-type': 'application/json',
             },
             body: jsonEncode({
-              'model': model,
-              'max_tokens': 700,
-              'system': system,
-              'messages': [
-                for (final m in conversation) {'role': m.fromOwner ? 'user' : 'assistant', 'content': m.text},
-              ],
+              'model': request.model,
+              'max_tokens': request.maxTokens,
+              'system': request.system,
+              'messages': request.messages,
+              if (request.tools.isNotEmpty) 'tools': request.tools,
+              if (request.tools.isNotEmpty && request.noMoreTools) 'tool_choice': {'type': 'none'},
+              if (request.thinkingOff) 'thinking': {'type': 'disabled'},
+              'output_config': {
+                'effort': request.effort,
+                if (request.outputSchema != null) 'format': {'type': 'json_schema', 'schema': request.outputSchema},
+              },
+              if (fallback) 'fallbacks': 'default',
             }),
           )
           .timeout(const Duration(seconds: 60));
@@ -51,12 +57,13 @@ class AnthropicCoachClient implements CoachClient {
     switch (response.statusCode) {
       case 200:
         final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, Object?>;
-        final text = [
-          for (final block in (body['content'] as List<Object?>? ?? const []))
-            if (block is Map && block['type'] == 'text') block['text'] as String,
-        ].join('\n').trim();
-        if (text.isEmpty) throw const CoachException(CoachProblem.other);
-        return text;
+        final stop = body['stop_reason'] as String? ?? 'end_turn';
+        // A declined question can come back with no content at all.
+        if (stop == 'refusal') throw const CoachException(CoachProblem.refused);
+        return CoachTurn(
+          stopReason: stop,
+          content: [for (final b in (body['content'] as List<Object?>? ?? const [])) if (b is Map) b.cast<String, Object?>()],
+        );
       case 401 || 403:
         throw const CoachException(CoachProblem.badKey);
       case 429 || 529 || 503:

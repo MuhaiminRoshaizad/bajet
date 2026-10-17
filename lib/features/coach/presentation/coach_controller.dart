@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../domain/coach_answer.dart';
 import '../domain/coach_client.dart';
+import '../domain/coach_lookups.dart';
 import '../domain/coach_prompt.dart';
 import 'coach_providers.dart';
 
@@ -40,18 +42,24 @@ class CoachController extends Notifier<CoachChat> {
     final store = ref.read(coachKeyStoreProvider);
     final today = ref.read(todayProvider);
     final key = await ref.read(coachKeyProvider.future);
-    final context = ref.read(coachContextProvider);
+    final data = ref.read(coachDataProvider);
     if (key == null) return _fail('Add your Anthropic key under Settings → Coach first.');
-    if (context == null) return _fail('Your figures are still loading. Try again in a moment.');
+    if (data == null) return _fail('Your figures are still loading. Try again in a moment.');
     if (await store.usedOn(today) >= coachDailyLimit) {
       return _fail("That's today's $coachDailyLimit questions. The coach is back tomorrow.");
     }
     state = CoachChat(messages: state.messages, sending: true);
     try {
-      final reply = await ref.read(coachClientProvider).ask(apiKey: key, system: coachSystemPrompt(context), conversation: state.messages);
+      final answer = await coachAnswer(
+        client: ref.read(coachClientProvider),
+        apiKey: key,
+        system: coachSystemPrompt(today),
+        conversation: state.messages,
+        lookup: (name, input) => runLookup(name, input, data),
+      );
       await store.recordUse(today);
       ref.invalidate(coachUsedTodayProvider);
-      state = CoachChat(messages: [...state.messages, CoachMessage(fromOwner: false, text: reply)]);
+      state = CoachChat(messages: [...state.messages, CoachMessage(fromOwner: false, text: answer.text, looked: answer.looked)]);
     } on CoachException catch (e) {
       _fail(e.message);
     }

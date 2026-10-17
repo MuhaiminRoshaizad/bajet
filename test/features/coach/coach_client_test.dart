@@ -9,37 +9,86 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-const _turns = [CoachMessage(fromOwner: true, text: 'How is my week?')];
+const _request = CoachRequest(
+  model: 'claude-sonnet-5-5',
+  system: 'Be brief.',
+  messages: [
+    {'role': 'user', 'content': 'How is my week?'},
+  ],
+  tools: [
+    {'name': 'bajet_accounts', 'description': 'Accounts.', 'input_schema': {'type': 'object', 'properties': {}}},
+  ],
+);
 
-Future<String> askWith(MockClient mock) =>
-    AnthropicCoachClient(mock).ask(apiKey: 'test-key', system: 'Be brief.', conversation: _turns);
+Future<CoachTurn> sendWith(MockClient mock, [CoachRequest request = _request]) => AnthropicCoachClient(mock).send(apiKey: 'test-key', request: request);
+
+http.Response reply(Map<String, Object?> body) => http.Response(jsonEncode(body), 200);
 
 void main() {
-  test('sends the key, the version header and the conversation, and reads the text back', () async {
+  test('sends the key, the version, the tools and a low effort, with fallback on for Sonnet', () async {
     late http.Request sent;
-    final reply = await askWith(MockClient((request) async {
+    final turn = await sendWith(MockClient((request) async {
       sent = request;
-      return http.Response(jsonEncode({
+      return reply({
+        'stop_reason': 'end_turn',
         'content': [
+          {'type': 'thinking', 'thinking': ''},
           {'type': 'text', 'text': 'You are on track.'},
         ],
-      }), 200);
+      });
     }));
-    expect(reply, 'You are on track.');
+    expect(turn.text, 'You are on track.');
     expect(sent.url.toString(), 'https://api.anthropic.com/v1/messages');
     expect(sent.headers['x-api-key'], 'test-key');
     expect(sent.headers['anthropic-version'], '2023-06-01');
+    expect(sent.headers['anthropic-beta'], 'server-side-fallback-2026-07-01');
     final body = jsonDecode(sent.body) as Map<String, Object?>;
     expect(body['system'], 'Be brief.');
-    expect(body['messages'], [
-      {'role': 'user', 'content': 'How is my week?'},
-    ]);
+    expect(body['messages'], _request.messages);
+    expect((body['tools'] as List).single, containsPair('name', 'bajet_accounts'));
+    expect(body['output_config'], {'effort': 'low'});
+    expect(body['fallbacks'], 'default');
+    expect(body.containsKey('tool_choice'), isFalse);
+  });
+
+  test('reads a lookup request, and can tell the model to stop looking things up', () async {
+    late Map<String, Object?> body;
+    final turn = await sendWith(
+      MockClient((request) async {
+        body = jsonDecode(request.body) as Map<String, Object?>;
+        return reply({
+          'stop_reason': 'tool_use',
+          'content': [
+            {'type': 'tool_use', 'id': 'toolu_1', 'name': 'bajet_accounts', 'input': {}},
+          ],
+        });
+      }),
+      CoachRequest(model: 'claude-sonnet-5-5', system: 'Be brief.', messages: _request.messages, tools: _request.tools, noMoreTools: true),
+    );
+    expect(turn.calls.single.$2, 'bajet_accounts');
+    expect(body['tool_choice'], {'type': 'none'});
+  });
+
+  test('a classifier asks for JSON with thinking off, and gets no fallback', () async {
+    late http.Request sent;
+    await sendWith(
+      MockClient((request) async {
+        sent = request;
+        return reply({'stop_reason': 'end_turn', 'content': [{'type': 'text', 'text': '{"kind":"money"}'}]});
+      }),
+      const CoachRequest(model: 'claude-haiku-5-5', system: 'Sort it.', messages: [{'role': 'user', 'content': 'hi'}], thinkingOff: true, outputSchema: {'type': 'object'}),
+    );
+    final body = jsonDecode(sent.body) as Map<String, Object?>;
+    expect(body['thinking'], {'type': 'disabled'});
+    expect(body['output_config'], {'effort': 'low', 'format': {'type': 'json_schema', 'schema': {'type': 'object'}}});
+    expect(sent.headers.containsKey('anthropic-beta'), isFalse);
+    expect(body.containsKey('fallbacks'), isFalse);
   });
 
   test('turns failures into problems the owner can act on', () async {
     Future<CoachProblem> problem(MockClient mock) async {
       try {
-        await askWith(mock);
+        await sendWith(mock);
       } on CoachException catch (e) {
         return e.problem;
       }
@@ -49,6 +98,7 @@ void main() {
     expect(await problem(MockClient((_) async => http.Response('{}', 401))), CoachProblem.badKey);
     expect(await problem(MockClient((_) async => http.Response('{}', 429))), CoachProblem.busy);
     expect(await problem(MockClient((_) async => http.Response('{}', 500))), CoachProblem.other);
+    expect(await problem(MockClient((_) async => reply({'stop_reason': 'refusal', 'content': []}))), CoachProblem.refused);
     expect(await problem(MockClient((_) async => throw const SocketException('no route'))), CoachProblem.offline);
   });
 

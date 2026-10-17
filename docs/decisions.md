@@ -307,3 +307,21 @@ stretch is as long as the money it stands for, so 012's reason still holds.
 **Costs:** a day over its own plan no longer shows on Today; the dial only
 turns rose once the week is ahead of its plan for today. Insights' last
 fourteen days still compare each day with its plan.
+
+## 022: The coach looks things up instead of being handed a summary
+
+**Decided:** the coach no longer gets a fixed summary of the week and month
+in its instructions. It reads the owner's figures through five read-only
+lookups that run on the phone (overview, any week or month, entries,
+accounts, the plan), called through Anthropic's tool use, at most four rounds
+a question. The instructions hold no personal data at all.
+
+**Why:** a fixed summary could not answer anything outside it, such as last
+month, a single entry or one account, and it sent the same figures with
+every question whether they were needed or not. Lookup results travel inside
+`tool_result` blocks, which is where Anthropic recommends untrusted text
+goes, so a note the owner typed reads as data rather than as an instruction.
+
+**Costs:** a question that needs lookups makes two to five requests instead
+of one, so it is slower and costs a little more, still on the owner's own
+key and still within 10 questions a day.
