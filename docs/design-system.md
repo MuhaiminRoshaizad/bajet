@@ -280,7 +280,9 @@ inline line of text where it is.
   raised tiles (`DetailTile`); the receipt tile opens a sheet with Camera and
   Photos as large tiles, and once one is attached, a look at it and Remove.
   The day is today unless the owner taps it and picks another
-  in the calendar, from the opening date up to today.
+  in the calendar, any day of the past year up to today. A day before the
+  opening date shows a line under the tiles saying it counts in that week
+  and Insights but not in the balance (decision 020).
 - When a planned expense event falls within two weeks of the entry's day, a
   spend can be marked *For* it. The pill then shows what is left of that
   event's budget instead of the day's plan, and the spend stays out of the

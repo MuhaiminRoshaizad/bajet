@@ -268,3 +268,21 @@ second sooner.
 second, the two light sheens and the moving point on the line are gone
 (an animated vector cannot move a gradient), and the whole opening is
 drawn at 0.82 of its size to stay inside the circle Android shows.
+
+## 020: Days before setting up can be logged
+
+**Decided:** the logger's calendar reaches back a year instead of stopping
+at the opening date. An entry dated before the opening date counts as
+spending in its week, Insights and History, but never in a balance, and
+the logger says so under the day.
+
+**Why:** the owner forgot to log a few days and then set up again, which
+moved the opening date to that day, so those days could not be picked at
+all. The balance typed at setup was what the bank showed then, after that
+spending had already left it, so counting those entries again would take
+the money off twice. Leaving them out of the balance only, which the
+balance query already did, records the spending without that.
+
+**Costs:** "All" in Insights now starts at the earliest entry rather than
+the opening date. Asking for the balance on an earlier day instead was
+rejected: nobody remembers last week's bank balance.

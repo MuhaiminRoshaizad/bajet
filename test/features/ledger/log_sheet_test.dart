@@ -193,6 +193,33 @@ void main() {
     expect(world.entries.single.day, DateTime.utc(2026, 6, 28));
   });
 
+  testWidgets('a day forgotten before setting up can be logged, and leaves the balance alone', (tester) async {
+    // Set up on 01/07 with RM1,500.00, which was already after this lunch.
+    final world = await pumpApp(tester);
+    final before = world.accounts.single.balance;
+    await openLogger(tester);
+    await typeKeys(tester, '1200');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('before-opening')), findsNothing);
+
+    final dayButton = find.byKey(const ValueKey('day-tile'));
+    await tester.ensureVisible(dayButton);
+    await tester.tap(dayButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Previous month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('29'));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('This is before you set up bajet on 01/07/2026.'), findsOneWidget);
+
+    await tester.tap(find.text('Log RM12.00'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.day, DateTime.utc(2026, 6, 29));
+    expect(world.accounts.single.balance, before);
+  });
+
   testWidgets('a spend can be for a nearby event, and counts against its budget', (tester) async {
     final world = await pumpApp(tester, seed: (w) {
       w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: DateTime.utc(2026, 7, 10));

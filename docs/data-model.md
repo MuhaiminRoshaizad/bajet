@@ -25,7 +25,7 @@ One row, created during first-run setup.
 | Column            | Type | Notes                                     |
 |-------------------|------|-------------------------------------------|
 | `id`                | int  | Always 1                                  |
-| `opening_date`      | day  | Entries before this date are ignored      |
+| `opening_date`      | day  | Balances ignore entries before this date; the week and Insights still count them (decision 020) |
 | `weekly_cap`        | int  | Flexible spending allowed per week        |
 | `buffer`            | int  | Minimum left after buying a goal          |
 | `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |

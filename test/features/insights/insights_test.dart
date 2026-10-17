@@ -14,7 +14,7 @@ Entry out(DateTime day, int amount, String category, [String? label]) =>
 final rules = [for (var w = 1; w <= 7; w++) WeeklyRule(weekday: w, label: 'Day', type: DayType.spend, plannedSpend: w <= 5 ? 1000 : 500)];
 final entries = [
   Entry(id: ++_id, day: d(7, 1), isIncome: true, amount: 300000, categoryKey: 'salary', label: 'Salary'),
-  out(d(6, 30), 999, 'food'), // before the opening date
+  out(d(6, 30), 999, 'food'), // logged back, before the opening date
   out(d(7, 3), 50000, 'bills', 'Rent'),
   out(d(7, 6), 800, 'food', 'Lunch'),
   out(d(7, 7), 1200, 'food', 'Lunch'),
@@ -66,13 +66,26 @@ void main() {
     expect((i.daysSoFar, i.zeroSpendDays, i.fullWeeks), (2, 1, 0));
   });
 
-  test('all time starts at the opening date and ignores anything before it', () {
+  test('all time starts at the earliest entry, even one logged back before the opening date', () {
     final i = run(InsightsPeriod.all);
-    expect(i.from, d(7, 1));
-    expect(i.moneyOut, 58150);
+    expect(i.from, d(6, 30));
+    expect(i.moneyOut, 58150 + 999);
   });
 
-  test('days before the opening date carry no plan or spending in the last fourteen', () {
+  test('with nothing logged before it, all time starts at the opening date', () {
+    final i = insights(
+      period: InsightsPeriod.all,
+      today: d(7, 15),
+      openingDate: d(7, 1),
+      weeklyCap: 5000,
+      entries: entries.where((e) => !e.day.isBefore(d(7, 1))).toList(),
+      categories: demoCategories,
+      rules: rules,
+    );
+    expect((i.from, i.moneyOut), (d(7, 1), 58150));
+  });
+
+  test('a day logged back before the opening date counts, and days before that carry nothing', () {
     final early = insights(
       period: InsightsPeriod.week,
       today: d(7, 3),
@@ -82,7 +95,8 @@ void main() {
       categories: demoCategories,
       rules: rules,
     ).lastDays;
-    expect(early.where((x) => x.date.isBefore(d(7, 1))).every((x) => x.planned == 0 && x.spent == 0), isTrue);
+    expect(early.where((x) => x.date.isBefore(d(6, 30))).every((x) => x.planned == 0 && x.spent == 0), isTrue);
+    expect(early.firstWhere((x) => x.date == d(6, 30)).spent, 999);
     expect(early.last.planned, 1000);
   });
 

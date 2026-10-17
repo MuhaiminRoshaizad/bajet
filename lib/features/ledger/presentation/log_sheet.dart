@@ -207,6 +207,12 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   String _categoryLabel(String key) =>
       ref.read(categoriesProvider).value?.firstWhere((c) => c.key == key).label ?? key;
 
+  /// The opening date when [day] falls before it, for the note under Day.
+  DateTime? _beforeOpening(DateTime day) {
+    final opening = ref.watch(settingsProvider).value?.openingDate;
+    return opening != null && day.isBefore(opening) ? opening : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -384,6 +390,15 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       ],
                     ),
                   ),
+                  if (_beforeOpening(_day) case final opening?)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.s, 0),
+                      child: Text(
+                        "This is before you set up bajet on ${Dates.full(opening)}. It counts in that week and Insights, but not in your balance, which already had it taken off.",
+                        key: const ValueKey('before-opening'),
+                        style: TextStyle(color: context.colors.muted, fontSize: 12.5, height: 1.4),
+                      ),
+                    ),
                   const SizedBox(height: AppSpacing.s),
                   if (widget.editing != null) ...[
                     const SizedBox(height: AppSpacing.s),
@@ -564,8 +579,10 @@ class _KindToggle extends StatelessWidget {
       );
 }
 
-/// Today unless changed. One tap opens the calendar for any day from the
-/// opening date, the first day the balance counts, up to today.
+/// Today unless changed. One tap opens the calendar for any day of the past
+/// year. A day before the opening date can be logged too, such as a meal
+/// forgotten before setting up; it counts as spending but not toward the
+/// balance (docs/decisions.md 020).
 class _DayTile extends ConsumerWidget {
   const _DayTile({required this.day, required this.onChanged});
 
@@ -575,7 +592,7 @@ class _DayTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final today = ref.watch(todayProvider);
-    final opening = ref.watch(settingsProvider).value?.openingDate ?? today;
+    final yearAgo = DateTime.utc(today.year - 1, today.month, today.day);
     final label = day == today
         ? 'Today'
         : day == DateTime.utc(today.year, today.month, today.day - 1)
@@ -590,7 +607,7 @@ class _DayTile extends ConsumerWidget {
         final picked = await showDatePicker(
           context: context,
           initialDate: day,
-          firstDate: opening.isAfter(day) ? day : opening,
+          firstDate: yearAgo.isAfter(day) ? day : yearAgo,
           lastDate: today,
           helpText: 'Day of this entry',
         );

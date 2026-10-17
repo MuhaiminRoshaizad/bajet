@@ -83,12 +83,19 @@ class Insights {
   bool get isEmpty => moneyIn == 0 && moneyOut == 0;
 }
 
-/// The first day of [period] ending on [today]. "All" starts at [openingDate].
-DateTime periodStart(InsightsPeriod period, DateTime today, DateTime openingDate) => switch (period) {
+/// The first day of [period] ending on [today]. "All" starts at [firstDay].
+DateTime periodStart(InsightsPeriod period, DateTime today, DateTime firstDay) => switch (period) {
       InsightsPeriod.week => weekStart(today),
       InsightsPeriod.month => DateTime.utc(today.year, today.month, 1),
-      InsightsPeriod.all => calendarDay(openingDate),
+      InsightsPeriod.all => calendarDay(firstDay),
     };
+
+/// The first day Insights knows about: the opening date, or an earlier day
+/// the owner logged after setting up, such as a meal they forgot. Those
+/// count as spending; only the balance leaves them out, since the starting
+/// balance already had them taken off (docs/decisions.md 020).
+DateTime firstDay(DateTime openingDate, List<Entry> entries) =>
+    entries.fold(calendarDay(openingDate), (first, e) => e.day.isBefore(first) ? calendarDay(e.day) : first);
 
 Insights insights({
   required InsightsPeriod period,
@@ -100,9 +107,10 @@ Insights insights({
   required List<WeeklyRule> rules,
 }) {
   final to = calendarDay(today);
-  var from = periodStart(period, to, openingDate);
-  // Nothing before the opening balance counts, whatever the period.
-  if (from.isBefore(calendarDay(openingDate))) from = calendarDay(openingDate);
+  final first = firstDay(openingDate, entries);
+  // Nothing before the first day counts, whatever the period.
+  var from = periodStart(period, to, first);
+  if (from.isBefore(first)) from = first;
   final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
   final planned = {for (final r in rules) r.weekday: r.plannedSpend};
   bool inRange(DateTime d) => !d.isBefore(from) && !d.isAfter(to);
@@ -118,9 +126,7 @@ Insights insights({
   }
 
   final days = [for (var d = from; !d.isAfter(to); d = DateTime.utc(d.year, d.month, d.day + 1)) d];
-  final opening = calendarDay(openingDate);
-  // The balance starts at the opening date, so nothing before it counts.
-  int spentOn(DateTime d) => d.isBefore(opening) ? 0 : flexibleSpent(entries, fixed, d, d);
+  int spentOn(DateTime d) => d.isBefore(first) ? 0 : flexibleSpent(entries, fixed, d, d);
   // Today is still under way, so it counts toward no habit yet.
   final finished = days.where((d) => d != to).toList();
 
@@ -155,7 +161,7 @@ Insights insights({
       for (var i = 13; i >= 0; i--)
         () {
           final d = DateTime.utc(to.year, to.month, to.day - i);
-          return DayAgainstPlan(d, spentOn(d), d.isBefore(opening) ? 0 : planned[d.weekday] ?? 0);
+          return DayAgainstPlan(d, spentOn(d), d.isBefore(first) ? 0 : planned[d.weekday] ?? 0);
         }(),
     ],
     zeroSpendDays: finished.where((d) => spentOn(d) == 0).length,
