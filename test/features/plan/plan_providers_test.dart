@@ -135,7 +135,7 @@ void main() {
     await plan().addGoal(name: 'Laptop', price: 10000, targetDate: d(2026, 10, 31));
     expect((await settle(projectionProvider))!.goals.single.leftAfterBuying, 100000 - 25000 - 10000);
 
-    await plan().setEventDone(id, done: true);
+    await plan().setEventDone(id, date: d(2026, 10, 20), done: true);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(container.read(projectionProvider)!.goals.single.leftAfterBuying, 100000 - 10000);
   });

@@ -69,10 +69,11 @@ abstract interface class PlanRepository {
     bool repeatsYearly = false,
   });
 
-  /// Marks an event as having happened. A one-off one stops being counted;
-  /// a yearly one moves on to next year's date. Logging the money itself
-  /// stays a normal entry.
-  Future<void> setEventDone(int id, {required bool done});
+  /// Marks the occurrence of an event on [date] as having happened. A
+  /// one-off one stops being counted; a yearly one moves on to next year's
+  /// date, but only from [date], so a second tap never skips a year.
+  /// Logging the money itself stays a normal entry.
+  Future<void> setEventDone(int id, {required DateTime date, required bool done});
 
   /// Changes an event's name, amount, category, date, whether it counts and
   /// whether it repeats.

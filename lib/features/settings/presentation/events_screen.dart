@@ -53,7 +53,7 @@ class EventsScreen extends ConsumerWidget {
                       ].join(' · '),
                     ),
                     trailing: TextButton(
-                      onPressed: () => ref.read(planRepositoryProvider).setEventDone(e.id, done: true),
+                      onPressed: () => ref.read(planRepositoryProvider).setEventDone(e.id, date: e.date, done: true),
                       child: const Text('Done'),
                     ),
                   ),

@@ -107,11 +107,20 @@ void main() {
     expect(await plan.confirmRecurring(404, due: d(2026, 7, 1), paidOn: d(2026, 7, 1)), isFalse);
   });
 
+  test('a second Done on a yearly event never skips a year', () async {
+    final id = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30), repeatsYearly: true);
+    await [
+      plan.setEventDone(id, date: d(2026, 10, 30), done: true),
+      plan.setEventDone(id, date: d(2026, 10, 30), done: true),
+    ].wait;
+    expect((await plan.watchEvents().first).single.date, d(2027, 10, 30));
+  });
+
   test('marking a yearly event done moves it on a year; a one-off one is done', () async {
     final yearly = await plan.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30), repeatsYearly: true);
     final once = await plan.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 11, 20));
-    await plan.setEventDone(yearly, done: true);
-    await plan.setEventDone(once, done: true);
+    await plan.setEventDone(yearly, date: d(2026, 10, 30), done: true);
+    await plan.setEventDone(once, date: d(2026, 11, 20), done: true);
     final events = {for (final e in await plan.watchEvents().first) e.id: e};
     expect((events[yearly]!.done, events[yearly]!.date, events[yearly]!.repeatsYearly), (false, d(2027, 10, 30), true));
     expect(events[once]!.done, isTrue);
@@ -132,7 +141,7 @@ void main() {
       expect((birthday.spent, birthday.outstanding), (7300, 2700));
 
       // Done moves it to next year, with a fresh budget.
-      await plan.setEventDone(id, done: true);
+      await plan.setEventDone(id, date: d(2026, 10, 30), done: true);
       birthday = (await plan.watchEvents().first).single;
       expect((birthday.date, birthday.spent, birthday.outstanding), (d(2027, 10, 30), 0, 10000));
     });

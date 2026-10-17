@@ -432,9 +432,9 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   }
 
   @override
-  Future<void> setEventDone(int id, {required bool done}) async => _events.value = [
+  Future<void> setEventDone(int id, {required DateTime date, required bool done}) async => _events.value = [
         for (final e in _events.value)
-          e.id == id
+          e.id == id && e.date == date
               ? done && e.repeatsYearly
                   ? e.copyWith(date: DateTime.utc(e.date.year + 1, e.date.month, e.date.day))
                   : e.copyWith(done: done)

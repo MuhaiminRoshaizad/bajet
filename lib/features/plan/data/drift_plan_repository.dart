@@ -204,8 +204,9 @@ class DriftPlanRepository implements PlanRepository {
           );
 
   @override
-  Future<void> setEventDone(int id, {required bool done}) => _db.transaction(() async {
+  Future<void> setEventDone(int id, {required DateTime date, required bool done}) => _db.transaction(() async {
         final event = await (_db.select(_db.plannedEvents)..where((e) => e.id.equals(id))).getSingle();
+        if (event.dueOn != date) return;
         final next = DateTime.utc(event.dueOn.year + 1, event.dueOn.month, event.dueOn.day);
         await (_db.update(_db.plannedEvents)..where((e) => e.id.equals(id)))
             .write(done && event.repeatsYearly ? PlannedEventsCompanion(dueOn: Value(next)) : PlannedEventsCompanion(done: Value(done)));
