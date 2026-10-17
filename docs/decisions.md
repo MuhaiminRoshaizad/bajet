@@ -103,7 +103,7 @@ spent on unknown days. Counting it against the weekly allowance would mark
 whichever day the check-in happens as over plan. Keeping it separate also lets
 Insights show how much went untracked, which is the habit worth watching.
 
-**Costs:** untracked spending never shows in the week strip. Insights
+**Costs:** untracked spending never shows in the week card. Insights
 surfaces it instead.
 
 ## 011: Receipts are files beside the database, not in it
@@ -124,6 +124,8 @@ is open, the half-written log is lost along with the photo, so there is
 nothing to recover the image into; the owner logs it again.
 
 ## 012: The week as bars, not a ring
+
+*Replaced by 021.*
 
 **Decided:** Today and the check-in show the week as one allowance bar and
 seven day columns, each filled to its spend with a mark at its plan. This
@@ -286,3 +288,22 @@ balance query already did, records the spending without that.
 **Costs:** "All" in Insights now starts at the earliest entry rather than
 the opening date. Asking for the balance on an earlier day instead was
 rejected: nobody remembers last week's bank balance.
+
+## 021: The week as a dial
+
+**Decided:** Today and the check-in show the week as a raised dial
+(`WeekDial`). Its arc fills with the week's flexible spending against the
+allowance, each spending day owns a stretch as long as its plan, a marker
+shows what the plan allows by tonight, and the centre says what is left.
+Under it, one line divides what is left by the spending days still to come.
+It replaces the allowance bar and day columns of 012.
+
+**Why:** with nothing spent, the columns were empty blocks with plan marks
+floating over them, days off took up columns that meant nothing, and the
+card said the same amount twice. The owner wanted the week at a glance and
+what they can still spend per day. Unlike the ring 012 replaced, every
+stretch is as long as the money it stands for, so 012's reason still holds.
+
+**Costs:** a day over its own plan no longer shows on Today; the dial only
+turns rose once the week is ahead of its plan for today. Insights' last
+fourteen days still compare each day with its plan.

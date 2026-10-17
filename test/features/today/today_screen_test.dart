@@ -22,13 +22,15 @@ void main() {
     expect(find.text('No goal yet'), findsOneWidget);
   });
 
-  testWidgets('the week strip counts flexible spending against the allowance', (tester) async {
+  testWidgets('the week dial counts flexible spending against the allowance', (tester) async {
     await pumpApp(tester, seed: (w) {
       // Monday of this week, flexible; and a bill, which does not count.
       w.add(EntryDraft(day: d(2026, 6, 29), isIncome: false, amount: 1500, categoryKey: 'transport'));
       w.add(EntryDraft(day: testToday, isIncome: false, amount: 9000, categoryKey: 'bills'));
     });
-    expect(find.text('RM35.00 left this week'), findsOneWidget);
+    expect(find.text('RM35.00'), findsOneWidget);
+    expect(find.text('left this week'), findsOneWidget);
+    expect(find.text('Spent RM15.00 of RM50'), findsOneWidget);
   });
 
   testWidgets('a goal shows days left, what is left after buying and its status', (tester) async {

@@ -18,7 +18,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../today/presentation/today_providers.dart';
-import '../../today/presentation/week_strip.dart';
+import '../../today/presentation/week_dial.dart';
 
 /// The weekly look back: does bajet's balance match the bank, and how did
 /// the week go against the rhythm. Any gap can be logged on the spot.
@@ -106,7 +106,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.l),
-          if (days != null && spent != null && cap != null) SoftCard(child: WeekStrip(days: days, spent: spent, cap: cap)),
+          if (days != null && spent != null && cap != null) SoftCard(child: WeekDial(days: days, spent: spent, cap: cap)),
           const SizedBox(height: AppSpacing.l),
           OutlinedButton.icon(
             onPressed: () => context.push('${Routes.report}?period=week'),

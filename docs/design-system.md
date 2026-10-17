@@ -167,7 +167,10 @@ all of it is skipped and content appears in place.
 
 A chart that changes value settles on it with `AppMotion.spring`, passing it
 by about a tenth first, like a needle with some weight: Insights' category
-ring swells a touch past its size as it sweeps in. Figures written in words
+ring swells a touch past its size as it sweeps in, and the week dial on Today
+springs past a newly logged amount, glows over the stretch just added for
+500 ms, and dips to 0.97 as if pressed before springing back. Its arc and
+figures fade to rose over `fast` once the week is ahead of its plan. Figures written in words
 never overshoot, since a number that reads wrong for a moment is a wrong
 number.
 
