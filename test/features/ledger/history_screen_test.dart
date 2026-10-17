@@ -65,6 +65,22 @@ void main() {
     expect(find.text("Within today's plan"), findsOneWidget);
   });
 
+  testWidgets('an entry from months back is judged against everything spent that day', (tester) async {
+    final old = DateTime.utc(testToday.year, testToday.month, testToday.day - 90);
+    await pumpApp(tester, seed: (w) {
+      w.saveRule(WeeklyRule(weekday: old.weekday, label: 'Weekday', type: DayType.spend, plannedSpend: 2000));
+      w.add(EntryDraft(day: old, isIncome: false, amount: 2000, categoryKey: 'food', label: 'Book'));
+      w.add(EntryDraft(day: old, isIncome: false, amount: 500, categoryKey: 'food', label: 'Snack'));
+      // Today lists only recent entries, and offers History once it has one.
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 450, categoryKey: 'food', label: 'Coffee'));
+    });
+    await openHistory(tester);
+    await tester.scrollUntilVisible(find.text('Snack'), 200);
+    await tester.tap(find.text('Snack'));
+    await tester.pumpAndSettle();
+    expect(find.text("RM5.00 over that day's RM20.00 plan"), findsOneWidget);
+  });
+
   testWidgets('swiping asks before deleting, and Keep leaves the entry', (tester) async {
     final world = await pumpApp(tester, seed: seedTwoDays);
     await openHistory(tester);

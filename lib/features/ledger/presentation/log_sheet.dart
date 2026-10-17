@@ -528,9 +528,10 @@ class _PlanHint extends ConsumerWidget {
     final c = context.colors;
     final categories = ref.watch(categoriesProvider).value;
     final rules = ref.watch(rulesProvider).value;
-    // An entry being edited is already logged; leave it out so it is not
-    // counted twice, once as logged and once as the amount typed.
-    final entries = ref.watch(recentEntriesProvider).value?.where((e) => e.id != editing?.id);
+    // Every entry, since the day can be up to a year back. An entry being
+    // edited is already logged; leave it out so it is not counted twice,
+    // once as logged and once as the amount typed.
+    final entries = ref.watch(allEntriesProvider).value?.where((e) => e.id != editing?.id);
     final category = categories?.where((x) => x.key == categoryKey).firstOrNull;
     if (isIncome || amount == 0 || category == null || category.isFixed || rules == null || entries == null) {
       return const SizedBox(height: 28);
