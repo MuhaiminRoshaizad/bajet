@@ -12,6 +12,7 @@ Future<CoachAnswer> answer(FakeCoach coach, {LookupResult Function(String, Map<S
       apiKey: 'test-key',
       system: 'Be brief.',
       conversation: _question,
+      tools: coachLookups,
       lookup: lookup ?? (name, _) => LookupResult('figures from $name', name == 'bajet_accounts' ? 'Accounts' : name),
     );
 

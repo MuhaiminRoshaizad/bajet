@@ -16,8 +16,8 @@ class CoachAnswer {
   final List<String> looked;
 }
 
-/// Answers the last question in [conversation], letting the model call the
-/// lookups and running each one with [lookup]. Results go back inside
+/// Answers the last question in [conversation], letting the model call
+/// [tools] and running each call with [lookup]. Results go back inside
 /// tool_result blocks, the place Anthropic keeps untrusted data, and after
 /// [coachMaxLookups] rounds the model must answer with what it has.
 Future<CoachAnswer> coachAnswer({
@@ -25,6 +25,7 @@ Future<CoachAnswer> coachAnswer({
   required String apiKey,
   required String system,
   required List<CoachMessage> conversation,
+  required List<CoachLookup> tools,
   required LookupResult Function(String name, Map<String, Object?> input) lookup,
 }) async {
   final messages = <Map<String, Object?>>[
@@ -38,7 +39,7 @@ Future<CoachAnswer> coachAnswer({
         model: coachModel,
         system: system,
         messages: messages,
-        tools: [for (final l in coachLookups) l.toJson()],
+        tools: [for (final l in tools) l.toJson()],
         noMoreTools: round >= coachMaxLookups,
       ),
     );
@@ -55,7 +56,7 @@ Future<CoachAnswer> coachAnswer({
         for (final (id, name, input) in calls)
           () {
             final r = lookup(name, input);
-            if (!r.failed && !looked.contains(r.label)) looked.add(r.label);
+            if (!r.failed && !r.label.startsWith('A suggestion') && !looked.contains(r.label)) looked.add(r.label);
             return {'type': 'tool_result', 'tool_use_id': id, 'content': r.text, if (r.failed) 'is_error': true};
           }(),
       ],

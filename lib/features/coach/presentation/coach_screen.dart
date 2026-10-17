@@ -3,13 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
+import '../domain/coach_proposals.dart';
 import 'coach_controller.dart';
 import 'coach_providers.dart';
 
@@ -139,7 +142,16 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                             ],
                           ),
                         ),
-                      for (final m in chat.messages) _Bubble(message: m),
+                      for (final (i, m) in chat.messages.indexed) ...[
+                        _Bubble(message: m),
+                        for (final (j, card) in m.cards.indexed)
+                          _ProposalCard(
+                            card: card,
+                            onConfirm: () => ref.read(coachControllerProvider.notifier).confirm(i, j),
+                            onDecline: () => ref.read(coachControllerProvider.notifier).decline(i, j),
+                            onUndo: () => ref.read(coachControllerProvider.notifier).undo(i, j),
+                          ),
+                      ],
                       if (chat.sending) const _Thinking(),
                       if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider.notifier).retry() : null),
                     ],
@@ -201,6 +213,73 @@ class _Bubble extends StatelessWidget {
                         ),
                     ],
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A change the coach suggested: what it would do, and the buttons that
+/// decide it. Nothing is written until Confirm is tapped.
+class _ProposalCard extends StatelessWidget {
+  const _ProposalCard({required this.card, required this.onConfirm, required this.onDecline, required this.onUndo});
+
+  final CoachCard card;
+  final VoidCallback onConfirm, onDecline, onUndo;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final p = card.proposal;
+    final done = card.state == CardState.done;
+    final settled = card.state == CardState.declined || card.state == CardState.undone;
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(done ? '✓ ${card.outcome}' : card.outcome, style: TextStyle(color: done ? c.good : c.muted, fontWeight: FontWeight.w700, fontSize: 13)),
+        const SizedBox(height: AppSpacing.xs),
+        Text(Money.format(p.amount), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()])),
+        for (final (label, value) in p.rows)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Row(
+              children: [
+                Text(label, style: TextStyle(color: c.muted)),
+                const SizedBox(width: AppSpacing.m),
+                Expanded(child: Text(value, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+          ),
+        if (card.state == CardState.waiting) ...[
+          const SizedBox(height: AppSpacing.m),
+          Row(
+            children: [
+              Expanded(child: OutlinedButton(onPressed: onDecline, style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)), child: const Text('Not now'))),
+              const SizedBox(width: AppSpacing.s),
+              Expanded(child: FilledButton(onPressed: onConfirm, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)), child: Text(card.action))),
+            ],
+          ),
+        ] else if (card.canUndo)
+          Align(alignment: Alignment.centerRight, child: TextButton(onPressed: onUndo, child: const Text('Undo'))),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
+          child: AnimatedOpacity(
+            opacity: settled ? 0.6 : 1,
+            duration: AppMotion.fast,
+            child: done
+                ? Container(
+                    padding: const EdgeInsets.all(AppSpacing.l),
+                    decoration: BoxDecoration(color: c.goodSurface, borderRadius: BorderRadius.circular(20)),
+                    child: body,
+                  )
+                : SoftCard(padding: const EdgeInsets.all(AppSpacing.l), radius: 20, child: body),
           ),
         ),
       ),

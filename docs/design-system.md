@@ -373,4 +373,10 @@ inline line of text where it is.
   never stored. Under each reply, "Looked at:" names what the coach looked up
   for it, such as "This week · September 2026". Without a key, the tab
   explains and links to Settings → Coach.
+- A change the coach suggests arrives as a card under its reply: the
+  question ("Log this spend?"), the amount large, then what, from which
+  account and which day, with Not now and the action (Log it, Move it, Mark
+  paid). Nothing is written until the action is tapped. A done card turns
+  green with a tick and offers Undo, except a bill marked paid; a declined
+  or undone card fades and stays in the chat as a record.
 - Touch targets are at least 48 dp.

@@ -325,3 +325,20 @@ goes, so a note the user typed reads as data rather than as an instruction.
 **Costs:** a question that needs lookups makes two to five requests instead
 of one, so it is slower and costs a little more, still on the user's own
 key and still within 10 questions a day.
+
+## 023: The coach suggests changes; only the user's tap makes them
+
+**Decided:** the coach can suggest logging a spend or income, moving money
+between accounts, or marking a bill paid. Each suggestion is checked by the
+app and shown as a card; nothing is written until the user taps it. The
+coach cannot delete anything, change settings, rules, goals or bills, or
+touch the key.
+
+**Why:** a coach that can only talk makes the user retype what it already
+worked out, but one that writes on its own can be talked into a wrong entry
+by a typo, a misread or text hidden in a note. A card keeps the convenience
+and leaves every change to the user, and the app's own checks mean a
+wrong amount or account never even reaches one.
+
+**Costs:** a change takes one tap more than if the coach just did it, and a
+move larger than the source account holds has to be made by hand.

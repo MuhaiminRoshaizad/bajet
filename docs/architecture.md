@@ -156,6 +156,18 @@ four rounds send `tool_choice: none` so the model must answer. Requests use
 `claude-sonnet-5-5` at `effort: low` with server-side `fallbacks: "default"`;
 a `refusal` stop reason becomes `CoachProblem.refused`.
 
+The coach changes nothing itself (decision 023). Three more tools,
+`proposalTools` in `coach_proposals.dart`, only suggest: `bajet_propose_log`,
+`bajet_propose_move` and `bajet_propose_bill_paid`. `propose` checks each
+against the same `CoachData` (a real category and account, an amount above
+RM0.00 and at most RM100,000.00, a move no larger than the source account
+holds, a day no later than today and within the last year, an active bill)
+and either returns a `CoachProposal` or tells the model why not. A
+proposal becomes a `CoachCard` on the reply; `CoachController.confirm`
+writes it through the ledger, account or plan repository, and `undo`
+deletes the entry or transfer it made. A bill marked paid has no Undo, as
+with Today's Paid button.
+
 ## Platforms
 
 Android now; iOS later, since iOS builds need macOS tooling. Dart code must

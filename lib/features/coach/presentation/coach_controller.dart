@@ -1,10 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../accounts/presentation/account_providers.dart';
+import '../../ledger/presentation/ledger_providers.dart';
+import '../../plan/presentation/plan_providers.dart';
 import '../domain/coach_answer.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_lookups.dart';
 import '../domain/coach_prompt.dart';
+import '../domain/coach_proposals.dart';
 import 'coach_providers.dart';
 
 class CoachChat {
@@ -50,19 +54,66 @@ class CoachController extends Notifier<CoachChat> {
     }
     state = CoachChat(messages: state.messages, sending: true);
     try {
+      final cards = <CoachCard>[];
       final answer = await coachAnswer(
         client: ref.read(coachClientProvider),
         apiKey: key,
         system: coachSystemPrompt(today),
         conversation: state.messages,
-        lookup: (name, input) => runLookup(name, input, data),
+        tools: [...coachLookups, ...proposalTools],
+        lookup: (name, input) {
+          if (!name.startsWith('bajet_propose_')) return runLookup(name, input, data);
+          final (result, proposal) = propose(name, input, data);
+          if (proposal != null) cards.add(CoachCard(proposal));
+          return result;
+        },
       );
       await store.recordUse(today);
       ref.invalidate(coachUsedTodayProvider);
-      state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: answer.text, looked: answer.looked)]);
+      state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards)]);
     } on CoachException catch (e) {
       _fail(e.message);
     }
+  }
+
+  /// Does what card [card] of message [message] suggested.
+  Future<void> confirm(int message, int card) async {
+    final c = state.messages[message].cards[card];
+    if (c.state != CardState.waiting) return;
+    final undoId = switch (c.proposal) {
+      LogProposal(:final draft) => await ref.read(ledgerRepositoryProvider).add(draft),
+      MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note) =>
+        await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note),
+      BillPaidProposal(:final item) => await ref.read(planRepositoryProvider).confirmRecurring(item.id, paidOn: ref.read(todayProvider)).then((_) => null),
+    };
+    _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
+  }
+
+  void decline(int message, int card) {
+    final c = state.messages[message].cards[card];
+    if (c.state == CardState.waiting) _setCard(message, card, c.copyWith(state: CardState.declined));
+  }
+
+  /// Takes back what a confirmed card did.
+  Future<void> undo(int message, int card) async {
+    final c = state.messages[message].cards[card];
+    if (!c.canUndo) return;
+    switch (c.proposal) {
+      case LogProposal():
+        await ref.read(ledgerRepositoryProvider).delete(c.undoId!);
+      case MoveProposal():
+        await ref.read(accountRepositoryProvider).deleteTransfer(c.undoId!);
+      case BillPaidProposal():
+        return;
+    }
+    _setCard(message, card, c.copyWith(state: CardState.undone));
+  }
+
+  void _setCard(int message, int card, CoachCard updated) {
+    final messages = [...state.messages];
+    final cards = [...messages[message].cards]..[card] = updated;
+    messages[message] = messages[message].withCards(cards);
+    state = CoachChat(messages: messages, sending: state.sending, error: state.error);
   }
 
   void _fail(String message) => state = CoachChat(messages: state.messages, error: message);

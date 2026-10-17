@@ -66,6 +66,39 @@ void main() {
     expect(find.text('9 left today'), findsOneWidget);
   });
 
+  testWidgets('a change the coach suggests waits for a tap, then can be undone', (tester) async {
+    final world = await openCoach(tester);
+    world.coach
+      ..lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 12, 'category': 'Food', 'label': 'Lunch'}))
+      ..reply = 'I have put it up for you to confirm.';
+    await ask(tester, 'Log RM12 lunch');
+    expect(world.coach.lookedUp, contains('Nothing is logged unless they tap Log it.'));
+    expect(find.text('Log this spend?'), findsOneWidget);
+    expect(find.text('RM12.00'), findsOneWidget);
+    expect(world.entries, hasLength(1), reason: 'only the seeded entry until the tap');
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Log it'));
+    await tester.pumpAndSettle();
+    expect(find.text('✓ Logged'), findsOneWidget);
+    expect(world.entries.where((e) => e.label == 'Lunch' && e.amount == 1200), hasLength(1));
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Undone, nothing changed'), findsOneWidget);
+    expect(world.entries.where((e) => e.label == 'Lunch'), isEmpty);
+  });
+
+  testWidgets('Not now leaves everything as it was', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 12, 'category': 'Food'}));
+    await ask(tester, 'Log RM12');
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(find.text('Not done'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Log it'), findsNothing);
+    expect(world.entries, hasLength(1));
+  });
+
   testWidgets('a failed question says why and can be sent again', (tester) async {
     final world = await openCoach(tester);
     world.coach.failWith = CoachProblem.offline;

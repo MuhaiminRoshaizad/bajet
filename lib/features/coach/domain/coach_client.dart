@@ -1,12 +1,19 @@
+import 'coach_proposals.dart';
+
 /// One turn of the conversation with the coach.
 class CoachMessage {
-  const CoachMessage({required this.fromUser, required this.text, this.looked = const []});
+  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const []});
 
   final bool fromUser;
   final String text;
 
   /// For a reply: what the coach looked up to give it, as the user reads it.
   final List<String> looked;
+
+  /// For a reply: the changes it suggested, each waiting for the user's tap.
+  final List<CoachCard> cards;
+
+  CoachMessage withCards(List<CoachCard> cards) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards);
 }
 
 enum CoachProblem { offline, badKey, busy, refused, other }
