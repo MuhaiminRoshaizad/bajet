@@ -146,7 +146,13 @@ Projection project({
     spent += spend;
 
     for (final item in recurring) {
-      if (item.active && _dueOn(item, day)) move(item.signedAmount);
+      if (!item.active) continue;
+      if (day == start) {
+        for (var n = _unpaidBefore(item, start); n > 0; n--) {
+          move(item.signedAmount);
+        }
+      }
+      if (_dueOn(item, day)) move(item.signedAmount);
     }
     for (final amount in eventsOn[day] ?? const <int>[]) {
       move(amount);
@@ -165,6 +171,19 @@ Projection project({
     days.add(ProjectedDay(day, running, beforeGoals));
   }
   return Projection(days, outcomes);
+}
+
+/// How many months of a bill fell due before [start] and are still unpaid,
+/// since `nextDue` never moved past them. They are charged on [start]: the
+/// plan never leans on a bill coming late. Late income is not counted, for
+/// the same reason it is counted only on the last day it may arrive.
+int _unpaidBefore(RecurringItem item, DateTime start) {
+  if (item.isIncome) return 0;
+  var n = 0;
+  for (var due = calendarDay(item.nextDue); due.isBefore(start); due = DateTime.utc(due.year, due.month + 1, due.day)) {
+    n++;
+  }
+  return n;
 }
 
 /// Recurring items fall on the same day of each month from [RecurringItem.nextDue]

@@ -87,6 +87,18 @@ void main() {
     expect(p.goals.single.leftAfterBuying, 590300);
   });
 
+  test('a bill gone unpaid past its day is charged today, once a month it was missed; late pay is not counted', () {
+    final p = run(items: [
+      // Due 10/09 and 10/10 and never marked paid: both still owed.
+      RecurringItem(id: 4, name: 'Phone', amount: 6000, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 9, 10)),
+      RecurringItem(id: 1, name: 'Salary', amount: 300000, categoryKey: 'salary', isIncome: true, nextDue: d(2026, 10, 10)),
+    ]);
+    // 1,800.00 − 10.00 planned today − 2 × 60.00 owed.
+    expect(balanceOn(p, d(2026, 10, 14)), 167000);
+    // The next phone bill falls on 10/11, beside the next pay.
+    expect(balanceOn(p, d(2026, 11, 10)) - balanceOn(p, d(2026, 11, 9)), 300000 - 6000 - 1000);
+  });
+
   test('a yearly event is counted every year it falls before buy day', () {
     final p = project(
       balance: 100000,

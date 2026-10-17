@@ -75,6 +75,11 @@ early. A bill due on the 15th but paid on the 11th, before the opening balance
 was taken, would otherwise be charged twice. `nextDue` states exactly which
 occurrences are still to come.
 
+A bill whose `nextDue` has passed unpaid is still owed, so the projection
+charges it today, once for each month missed, rather than skipping it. Late
+pay is not counted until it is marked received, for the same reason pay
+counts only on the last day it may arrive.
+
 ## 009: A soft, neumorphic surface
 
 **Decided:** cards and controls share the background colour and stand out
