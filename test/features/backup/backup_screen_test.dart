@@ -108,6 +108,15 @@ void main() {
     expect(backups.restored, isNull);
   });
 
+  testWidgets('a backup whose entries are not a list still opens the question, for restore to judge', (tester) async {
+    final (files, _) = await pumpBackup(tester);
+    files.toPick = jsonEncode({'app': 'bajet', 'format': 1, 'entries': 'oops'});
+    await tester.tap(find.text('Restore from a backup file'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('The backup holds 0 entries.'), findsOneWidget);
+  });
+
   testWidgets('cancelling the picker changes nothing', (tester) async {
     final (_, backups) = await pumpBackup(tester);
     await tester.tap(find.text('Restore from a backup file'));

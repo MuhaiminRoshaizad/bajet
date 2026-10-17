@@ -82,6 +82,14 @@ void main() {
     expect(await DriftBackupRepository(target).export(), before);
   });
 
+  test('a backup whose rows break the rules, such as an amount of zero, is refused without losing anything', () async {
+    await fill(target);
+    final before = await DriftBackupRepository(target).export();
+    final entry = {...((before['entries']! as List).first as Map<String, Object?>), 'amount': 0};
+    await expectLater(DriftBackupRepository(target).restore({...before, 'entries': [entry]}), throwsA(isA<BackupFormatException>()));
+    expect(await DriftBackupRepository(target).export(), before);
+  });
+
   test('restoring a backup from before the Untracked category adds it back', () async {
     await fill(source);
     final backup = await DriftBackupRepository(source).export();

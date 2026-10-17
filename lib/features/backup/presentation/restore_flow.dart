@@ -32,7 +32,8 @@ Future<void> pickAndRestore(BuildContext context, WidgetRef ref, {required bool 
     say('That file is not a bajet backup.');
     return;
   }
-  final entries = (backup['entries'] as List<Object?>?)?.length ?? 0;
+  // Read for the count only; restore checks the file as a whole.
+  final entries = switch (backup['entries']) { final List<Object?> l => l.length, _ => 0 };
   final holds = 'The backup holds $entries ${entries == 1 ? 'entry' : 'entries'}.';
   final c = context.colors;
   final confirmed = await showDialog<bool>(

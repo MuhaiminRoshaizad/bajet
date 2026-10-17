@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart' show SqliteException;
 
 import '../../../core/database/app_database.dart';
 import '../domain/backup_repository.dart';
@@ -292,6 +293,10 @@ class DriftBackupRepository implements BackupRepository {
       throw const BackupFormatException('This backup is damaged or incomplete.');
     } on ArgumentError {
       throw const BackupFormatException('This backup contains values bajet does not recognise.');
+    } on SqliteException {
+      // Rows of the right shape that break the database's own rules, such as
+      // an amount of zero or a category that does not exist.
+      throw const BackupFormatException('This backup is damaged or incomplete.');
     }
   }
 
