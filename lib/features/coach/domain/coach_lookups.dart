@@ -185,9 +185,9 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
   if (from == null || to == null || to.isBefore(from)) {
     return const LookupResult('from and to must be days as yyyy-mm-dd, from no later than to.', 'Entries', failed: true);
   }
-  final wantCategory = (input['category'] as String?)?.trim().toLowerCase();
-  final wantAccount = (input['account'] as String?)?.trim().toLowerCase();
-  final kind = input['kind'] as String? ?? 'both';
+  final wantCategory = _text(input['category'])?.trim().toLowerCase();
+  final wantAccount = _text(input['account'])?.trim().toLowerCase();
+  final kind = _text(input['kind']) ?? 'both';
   final accountName = {for (final a in d.accounts) a.id: a.called};
   final firstAccount = d.accounts.isEmpty ? null : d.accounts.first.id;
   final picked = [
@@ -241,6 +241,10 @@ String _plan(CoachData d, Map<String, Category> categories) {
       '- ${Dates.full(u.date)} ${u.name}: ${u.signedAmount > 0 ? '+' : '−'}${Money.format(u.signedAmount.abs())}${u.counted ? '' : ' (not counted by Runway)'}',
   ].join('\n');
 }
+
+/// A text input, or null when the model sent something else: tools are not
+/// strict, so its input can stray from the schema.
+String? _text(Object? v) => v is String ? v : null;
 
 int _int(Object? v) => switch (v) { int i => i, num n => n.round(), String s => int.tryParse(s) ?? 0, _ => 0 };
 
