@@ -47,7 +47,9 @@ class AnthropicCoachClient implements CoachClient {
             }),
           )
           .timeout(const Duration(seconds: 60));
-    } on SocketException {
+    } on IOException {
+      // Sockets, and the secure handshake a wifi sign-in page breaks, which
+      // package:http passes through unwrapped.
       throw const CoachException(CoachProblem.offline);
     } on http.ClientException {
       throw const CoachException(CoachProblem.offline);
@@ -56,14 +58,10 @@ class AnthropicCoachClient implements CoachClient {
     }
     switch (response.statusCode) {
       case 200:
-        final body = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, Object?>;
-        final stop = body['stop_reason'] as String? ?? 'end_turn';
+        final (stop, content) = _read(response);
         // A declined question can come back with no content at all.
         if (stop == 'refusal') throw const CoachException(CoachProblem.refused);
-        return CoachTurn(
-          stopReason: stop,
-          content: [for (final b in (body['content'] as List<Object?>? ?? const [])) if (b is Map) b.cast<String, Object?>()],
-        );
+        return CoachTurn(stopReason: stop, content: content);
       case 401 || 403:
         throw const CoachException(CoachProblem.badKey);
       case 429 || 529 || 503:
@@ -71,5 +69,26 @@ class AnthropicCoachClient implements CoachClient {
       default:
         throw const CoachException(CoachProblem.other);
     }
+  }
+
+  /// The stop reason and content blocks of a 200 reply. Anything that is not
+  /// the API's JSON, such as a wifi sign-in page, is a problem to report
+  /// rather than a crash.
+  static (String, List<Map<String, Object?>>) _read(http.Response response) {
+    final Object? body;
+    try {
+      body = jsonDecode(utf8.decode(response.bodyBytes));
+    } on FormatException {
+      throw const CoachException(CoachProblem.other);
+    }
+    return switch (body) {
+      {'content': final List<Object?> content} => (
+          body['stop_reason'] as String? ?? 'end_turn',
+          [for (final b in content) if (b is Map<String, Object?>) b],
+        ),
+      // A refusal may carry no content at all.
+      {'stop_reason': 'refusal'} => ('refusal', const []),
+      _ => throw const CoachException(CoachProblem.other),
+    };
   }
 }

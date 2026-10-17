@@ -100,6 +100,12 @@ void main() {
     expect(await problem(MockClient((_) async => http.Response('{}', 500))), CoachProblem.other);
     expect(await problem(MockClient((_) async => reply({'stop_reason': 'refusal', 'content': []}))), CoachProblem.refused);
     expect(await problem(MockClient((_) async => throw const SocketException('no route'))), CoachProblem.offline);
+    expect(await problem(MockClient((_) async => reply({'stop_reason': 'refusal'}))), CoachProblem.refused);
+    // Wifi that wants a sign-in first breaks the secure handshake, or answers
+    // with its own page; neither is a crash.
+    expect(await problem(MockClient((_) async => throw const HandshakeException('CERTIFICATE_VERIFY_FAILED'))), CoachProblem.offline);
+    expect(await problem(MockClient((_) async => http.Response('<html>Sign in to the wifi</html>', 200))), CoachProblem.other);
+    expect(await problem(MockClient((_) async => http.Response('{"content": "not a list"}', 200))), CoachProblem.other);
   });
 
   test('the key and the day count live in secure storage, and the count resets each day', () async {
