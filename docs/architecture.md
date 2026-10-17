@@ -142,8 +142,8 @@ The only network traffic is the coach: HTTPS requests to
 `api.anthropic.com/v1/messages`, made from the phone with the user's own
 key. A question is one quick request to `claude-haiku-5-5`, the gatekeeper
 (decision 025), then one to the coach, plus one more for each round of
-lookups the model asks for (at most four, decision 022); each carries the conversation
-and the results of the lookups so far, never the whole database. Nothing
+lookups the model asks for (at most four, decision 022); each carries the last 20 messages
+of the chat and the results of the lookups so far, never the whole database. Nothing
 else leaves the phone, and without a key nothing does at all. `INTERNET` is
 in the manifest for this alone.
 
@@ -177,6 +177,14 @@ essay (`replyLooksWrong`) is shown as a `declineLine` instead. Both line
 sets get firmer the more often they are used. `test/eval/coach_eval_test.dart`
 sends real attacks to the real models; it runs only by hand with
 `--dart-define=COACH_EVAL_KEY=...`, so CI skips it.
+
+The chat is one ongoing conversation (decision 026). `CoachController` keeps
+it in `coach_messages` through `CoachChatRepository` while the memory switch
+is on, loading it at start, and sends the model only the last 20 messages
+(`forModel`). Older ones stay on the phone; the `bajet_past_chats` lookup
+searches them when a question needs them. Turning memory off forgets what
+was kept, and Forget everything clears it with an Undo. Neither the chat nor
+the coach settings go into a backup.
 
 The coach changes nothing itself (decision 023). Three more tools,
 `proposalTools` in `coach_proposals.dart`, only suggest: `bajet_propose_log`,

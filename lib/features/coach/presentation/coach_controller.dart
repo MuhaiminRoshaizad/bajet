@@ -8,6 +8,7 @@ import '../domain/coach_answer.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_guard.dart';
 import '../domain/coach_lookups.dart';
+import '../domain/coach_memory.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
@@ -26,18 +27,31 @@ class CoachChat {
   bool get canRetry => error != null && messages.isNotEmpty && messages.last.fromUser;
 }
 
-/// The conversation on the Coach tab. Held in memory only: it is gone when
-/// the app closes, and nothing of it is stored.
+/// The conversation on the Coach tab: one ongoing chat, remembered on the
+/// phone while the memory switch is on (decision 026), and gone when the
+/// app closes while it is off.
 class CoachController extends Notifier<CoachChat> {
   @override
-  CoachChat build() => const CoachChat();
+  CoachChat build() {
+    _load();
+    return const CoachChat();
+  }
 
   /// Messages turned away today and repeats in a row, so the coach's
   /// replies to them get firmer each time.
   var _declined = 0, _repeats = 0;
   DateTime? _lastAskedAt;
 
-  CoachPersonality get _personality => (ref.read(coachSettingsProvider).value ?? const CoachSettings()).personality;
+  CoachSettings get _settings => ref.read(coachSettingsProvider).value ?? const CoachSettings();
+  CoachPersonality get _personality => _settings.personality;
+
+  Future<void> _load() async {
+    final settings = await ref.read(coachSettingsProvider.future);
+    if (!settings.remember) return;
+    final remembered = await ref.read(coachChatRepositoryProvider).load();
+    // Anything said while loading stays after what was remembered.
+    state = CoachChat(messages: [...remembered, ...state.messages], sending: state.sending, error: state.error);
+  }
 
   Future<void> ask(String question) async {
     final text = question.trim();
@@ -47,7 +61,7 @@ class CoachController extends Notifier<CoachChat> {
     final previous = answered ? state.messages.lastWhere((m) => m.fromUser).text : null;
     final repeat = isRepeat(text, previous, now.difference(_lastAskedAt ?? now));
     _lastAskedAt = now;
-    state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: true, text: text)]);
+    await _add(CoachMessage(fromUser: true, text: text, sentAt: now));
     if (repeat) {
       // Asked again within a minute: answered on the phone, costing nothing
       // and counting against nothing.
@@ -79,14 +93,17 @@ class CoachController extends Notifier<CoachChat> {
       // Turned away on the phone, in the coach's own voice: the message never
       // reaches the coach and costs no question.
       if (kind == GateKind.offTopic || kind == GateKind.attack) return _reply(declineLine(_personality, _declined++));
+      final conversation = forModel(state.messages);
+      final older = state.messages.sublist(0, state.messages.length - conversation.length);
       final cards = <CoachCard>[];
       final answer = await coachAnswer(
         client: client,
         apiKey: key,
         system: coachSystemPrompt(today, _personality),
-        conversation: state.messages,
-        tools: [...coachLookups, ...proposalTools],
+        conversation: conversation,
+        tools: [...coachLookups, if (older.isNotEmpty) pastChatsLookup, ...proposalTools],
         lookup: (name, input) {
+          if (name == pastChatsLookup.name) return searchPastChats(input, older);
           if (!name.startsWith('bajet_propose_')) return runLookup(name, input, data);
           final (result, proposal) = propose(name, input, data);
           if (proposal != null) cards.add(CoachCard(proposal));
@@ -96,7 +113,7 @@ class CoachController extends Notifier<CoachChat> {
       await store.recordUse(today);
       ref.invalidate(coachUsedTodayProvider);
       if (replyLooksWrong(answer.text)) return _reply(declineLine(_personality, _declined++));
-      state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards)]);
+      await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: DateTime.now(), face: _settings.face));
     } on CoachException catch (e) {
       _fail(e.message);
     }
@@ -112,12 +129,12 @@ class CoachController extends Notifier<CoachChat> {
         await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note),
       BillPaidProposal(:final item) => await ref.read(planRepositoryProvider).confirmRecurring(item.id, paidOn: ref.read(todayProvider)).then((_) => null),
     };
-    _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
+    await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
   }
 
-  void decline(int message, int card) {
+  Future<void> decline(int message, int card) async {
     final c = state.messages[message].cards[card];
-    if (c.state == CardState.waiting) _setCard(message, card, c.copyWith(state: CardState.declined));
+    if (c.state == CardState.waiting) await _setCard(message, card, c.copyWith(state: CardState.declined));
   }
 
   /// Takes back what a confirmed card did.
@@ -132,17 +149,62 @@ class CoachController extends Notifier<CoachChat> {
       case BillPaidProposal():
         return;
     }
-    _setCard(message, card, c.copyWith(state: CardState.undone));
+    await _setCard(message, card, c.copyWith(state: CardState.undone));
   }
 
-  void _setCard(int message, int card, CoachCard updated) {
+  /// Empties the chat and what is remembered of it, and returns what went,
+  /// for Undo. The user's entries and figures are never touched.
+  Future<List<CoachMessage>> forget() async {
+    final gone = state.messages;
+    await ref.read(coachChatRepositoryProvider).clear();
+    state = const CoachChat();
+    return gone;
+  }
+
+  /// Puts back a chat [forget] took away.
+  Future<void> unforget(List<CoachMessage> messages) async {
+    if (_settings.remember) await ref.read(coachChatRepositoryProvider).restore(messages);
+    state = CoachChat(messages: [...messages, ...state.messages]);
+  }
+
+  /// Turning memory off forgets what was kept, though the chat on screen
+  /// stays until the app closes. Turning it on keeps the chat from here.
+  Future<void> setRemember(bool remember) async {
+    final repo = ref.read(coachChatRepositoryProvider);
+    await ref.read(coachSettingsRepositoryProvider).saveSettings(_settings.copyWith(remember: remember));
+    if (!remember) {
+      await repo.clear();
+      state = CoachChat(messages: [
+        for (final m in state.messages) CoachMessage(fromUser: m.fromUser, text: m.text, looked: m.looked, cards: m.cards, sentAt: m.sentAt, face: m.face),
+      ]);
+      return;
+    }
+    final kept = [for (final m in state.messages) m.withId(await repo.add(m))];
+    state = CoachChat(messages: kept, sending: state.sending, error: state.error);
+  }
+
+  Future<void> _setCard(int message, int card, CoachCard updated) async {
     final messages = [...state.messages];
     final cards = [...messages[message].cards]..[card] = updated;
     messages[message] = messages[message].withCards(cards);
     state = CoachChat(messages: messages, sending: state.sending, error: state.error);
+    final id = messages[message].id;
+    if (id != null) await ref.read(coachChatRepositoryProvider).saveCards(id, messages[message]);
   }
 
-  void _reply(String text) => state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: text)]);
+  /// Adds [m] to the chat, and to memory while it is on.
+  Future<void> _add(CoachMessage m) async {
+    // A reply ends the wait for one.
+    state = CoachChat(messages: [...state.messages, m], sending: m.fromUser && state.sending);
+    if (!_settings.remember) return;
+    final id = await ref.read(coachChatRepositoryProvider).add(m);
+    final at = state.messages.lastIndexOf(m);
+    if (at < 0) return;
+    final messages = [...state.messages]..[at] = m.withId(id);
+    state = CoachChat(messages: messages, sending: state.sending, error: state.error);
+  }
+
+  Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: DateTime.now(), face: _settings.face));
 
   void _fail(String message) => state = CoachChat(messages: state.messages, error: message);
 }

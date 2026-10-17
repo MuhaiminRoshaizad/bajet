@@ -97,6 +97,89 @@ class CoachCard {
   CoachCard copyWith({required CardState state, int? undoId}) => CoachCard(proposal, state: state, undoId: undoId ?? this.undoId);
 }
 
+/// A card as JSON, to be remembered with its message.
+Map<String, Object?> cardToJson(CoachCard c) => {
+      'state': c.state.name,
+      if (c.undoId != null) 'undoId': c.undoId,
+      ...switch (c.proposal) {
+        LogProposal(:final draft, :final categoryName, :final accountName) => {
+            'kind': 'log',
+            'day': _iso(draft.day),
+            'income': draft.isIncome,
+            'amount': draft.amount,
+            'category': draft.categoryKey,
+            'label': draft.label,
+            'account': draft.accountId,
+            'categoryName': categoryName,
+            'accountName': accountName,
+          },
+        MoveProposal(:final fromId, :final toId, :final fromName, :final toName, :final amount, :final day, :final note) => {
+            'kind': 'move',
+            'from': fromId,
+            'to': toId,
+            'fromName': fromName,
+            'toName': toName,
+            'amount': amount,
+            'day': _iso(day),
+            'note': note,
+          },
+        BillPaidProposal(:final item) => {
+            'kind': 'bill',
+            'id': item.id,
+            'name': item.name,
+            'amount': item.amount,
+            'category': item.categoryKey,
+            'income': item.isIncome,
+            'due': _iso(item.nextDue),
+          },
+      },
+    };
+
+/// A remembered card, or null if it cannot be read, which drops just that
+/// card rather than the chat.
+CoachCard? cardFromJson(Map<String, Object?> j) {
+  try {
+    final state = CardState.values.byName(j['state']! as String);
+    final CoachProposal p = switch (j['kind']) {
+      'log' => LogProposal(
+          EntryDraft(
+            day: _day(j['day']! as String)!,
+            isIncome: j['income']! as bool,
+            amount: j['amount']! as int,
+            categoryKey: j['category']! as String,
+            label: j['label'] as String?,
+            accountId: j['account'] as int?,
+          ),
+          j['categoryName']! as String,
+          j['accountName']! as String,
+        ),
+      'move' => MoveProposal(
+          fromId: j['from']! as int,
+          toId: j['to']! as int,
+          fromName: j['fromName']! as String,
+          toName: j['toName']! as String,
+          amount: j['amount']! as int,
+          day: _day(j['day']! as String)!,
+          note: j['note'] as String?,
+        ),
+      'bill' => BillPaidProposal(RecurringItem(
+          id: j['id']! as int,
+          name: j['name']! as String,
+          amount: j['amount']! as int,
+          categoryKey: j['category']! as String,
+          isIncome: j['income']! as bool,
+          nextDue: _day(j['due']! as String)!,
+        )),
+      _ => throw const FormatException('unknown card'),
+    };
+    return CoachCard(p, state: state, undoId: j['undoId'] as int?);
+  } on Object {
+    return null;
+  }
+}
+
+String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 /// The largest single amount the coach may suggest, so a slip of the model
 /// ("RM50,000" for "RM50") never even reaches a card.
 const proposalLimit = 10000000;

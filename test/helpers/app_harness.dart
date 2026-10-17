@@ -52,6 +52,7 @@ Future<FakeWorld> pumpApp(
       coachKeyStoreProvider.overrideWithValue(world.coachKeys),
       coachClientProvider.overrideWithValue(world.coach),
       coachSettingsRepositoryProvider.overrideWithValue(world.coachSettings),
+      coachChatRepositoryProvider.overrideWithValue(world.coachChat),
       planRepositoryProvider.overrideWithValue(world),
       accountRepositoryProvider.overrideWithValue(world),
       photoColoursProvider.overrideWithValue(world.photos),

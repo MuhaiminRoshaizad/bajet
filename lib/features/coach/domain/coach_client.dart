@@ -1,11 +1,20 @@
 import 'coach_proposals.dart';
+import 'coach_settings.dart';
 
 /// One turn of the conversation with the coach.
 class CoachMessage {
-  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const []});
+  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const [], this.id, this.sentAt, this.face});
 
   final bool fromUser;
   final String text;
+
+  /// Where it is remembered, once it is; null while memory is off.
+  final int? id;
+  final DateTime? sentAt;
+
+  /// For a reply: the avatar that gave it, so it keeps its face after a
+  /// switch.
+  final CoachFace? face;
 
   /// For a reply: what the coach looked up to give it, as the user reads it.
   final List<String> looked;
@@ -13,7 +22,9 @@ class CoachMessage {
   /// For a reply: the changes it suggested, each waiting for the user's tap.
   final List<CoachCard> cards;
 
-  CoachMessage withCards(List<CoachCard> cards) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards);
+  CoachMessage withCards(List<CoachCard> cards) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face);
+
+  CoachMessage withId(int id) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face);
 }
 
 enum CoachProblem { offline, badKey, busy, refused, other }

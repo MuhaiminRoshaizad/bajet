@@ -9,10 +9,11 @@ import '../../helpers/fake_repositories.dart';
 
 const testKey = 'sk-ant-test-0123456789abcdefghij';
 
-Future<FakeWorld> openCoach(WidgetTester tester, {bool withKey = true}) async {
+Future<FakeWorld> openCoach(WidgetTester tester, {bool withKey = true, void Function(FakeWorld)? seed}) async {
   final world = await pumpApp(tester, seed: (w) {
     if (withKey) w.coachKeys.key = testKey;
     w.add(EntryDraft(day: testToday, isIncome: false, amount: 1200, categoryKey: 'food'));
+    seed?.call(w);
   });
   await tester.tap(find.byKey(const ValueKey('tab-Coach')));
   await tester.pumpAndSettle();

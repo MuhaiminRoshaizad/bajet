@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
+import '../domain/coach_memory.dart';
 import '../domain/coach_settings.dart';
+import 'coach_controller.dart';
 import 'coach_providers.dart';
 
 /// Settings → Coach: where the user's own Anthropic key goes in or comes
@@ -145,6 +148,8 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
           ],
           const SizedBox(height: AppSpacing.xxl),
           const _PersonalityPicker(),
+          const SizedBox(height: AppSpacing.xxl),
+          const _Memory(),
         ],
       ),
     );
@@ -184,6 +189,60 @@ class _PersonalityPicker extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+/// Whether the chat is remembered, and the way to forget it.
+class _Memory extends ConsumerWidget {
+  const _Memory();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final remember = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).remember;
+    final count = ref.watch(coachControllerProvider).messages.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CardGroup(
+          label: 'Memory',
+          children: [
+            SwitchListTile(
+              title: const Text('Remember our chats', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(
+                'Kept on this phone only, never in a backup. Each question sends the last $coachMemoryWindow messages, and the coach '
+                'searches older ones only when you ask about them. Turning this off forgets what was kept.',
+                style: TextStyle(color: c.muted, height: 1.4),
+              ),
+              value: remember,
+              onChanged: (on) => ref.read(coachControllerProvider.notifier).setRemember(on),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.m),
+        OutlinedButton(
+          onPressed: count == 0 ? null : () => _forget(context, ref, count),
+          style: OutlinedButton.styleFrom(foregroundColor: c.bad, side: BorderSide(color: c.bad), minimumSize: const Size.fromHeight(52)),
+          child: Text(count == 0 ? 'Nothing to forget' : 'Forget everything ($count ${count == 1 ? 'message' : 'messages'})'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _forget(BuildContext context, WidgetRef ref, int count) async {
+    final sure = await confirmDelete(
+      context,
+      title: 'Forget everything?',
+      message: 'The coach forgets all $count ${count == 1 ? 'message' : 'messages'} and the chat empties. Your entries, accounts and figures stay exactly as they are.',
+      action: 'Forget',
+    );
+    if (!sure || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = ref.read(coachControllerProvider.notifier);
+    final gone = await controller.forget();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: const Text('Chat forgotten'), action: SnackBarAction(label: 'Undo', onPressed: () => controller.unforget(gone))));
   }
 }
 

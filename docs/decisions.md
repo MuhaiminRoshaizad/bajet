@@ -382,3 +382,21 @@ phone also means spam and off-topic questions cost the user nothing.
 gatekeeper wrong in the strict direction can turn away an odd money
 question, which the user then has to rephrase. When its answer cannot be
 read, the message goes on to the coach rather than being refused.
+
+## 026: One remembered chat, kept on the phone
+
+**Decided:** the Coach tab is one ongoing chat rather than separate
+sessions. While Remember our chats is on, the default, it is kept in
+bajet's own database on the phone, never in a backup and never on a
+server. Each question sends the last 20 messages; older ones are searched
+on the phone only when a question needs them. Turning memory off forgets
+what was kept, and Forget everything clears it with an Undo.
+
+**Why:** a coach that forgets everything when the app closes cannot say
+"food is down since you asked on Saturday", and separate sessions would
+each start blank, with more screens to manage for one person's money.
+Keeping the chat on the phone and sending only a recent window holds both
+the privacy of decision 014 and the cost of each question down.
+
+**Costs:** the chat takes a little room in the database, and a restored
+backup starts the conversation fresh, since the backup does not carry it.

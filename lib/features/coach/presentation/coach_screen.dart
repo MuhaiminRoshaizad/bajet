@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/database/database_provider.dart';
+import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
@@ -13,6 +15,7 @@ import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
+import '../domain/coach_settings.dart';
 import 'coach_controller.dart';
 import 'coach_providers.dart';
 
@@ -59,11 +62,12 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final c = context.colors;
     final hasKey = ref.watch(coachKeyProvider).value != null;
     final chat = ref.watch(coachControllerProvider);
+    final today = ref.watch(todayProvider);
+    final remember = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).remember;
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
     ref.watch(coachDataProvider);
-    ref.watch(coachSettingsProvider);
     // Keep the newest message in view as the conversation grows.
     ref.listen(coachControllerProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -143,7 +147,20 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                             ],
                           ),
                         ),
+                      if (chat.messages.isNotEmpty && remember)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.lock_outline_rounded, size: 14, color: c.muted),
+                              const SizedBox(width: AppSpacing.xs),
+                              Flexible(child: Text('Remembered on this phone only', textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12))),
+                            ],
+                          ),
+                        ),
                       for (final (i, m) in chat.messages.indexed) ...[
+                        if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
                         _Bubble(message: m),
                         for (final (j, card) in m.cards.indexed)
                           _ProposalCard(
@@ -169,6 +186,30 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
       ),
     );
   }
+}
+
+/// "Today", "Yesterday" or a day such as "Sat 17/10" above the first
+/// message of each day, or null when the day has not changed.
+String? _dayLabel(List<CoachMessage> messages, int i, DateTime today) {
+  final at = messages[i].sentAt;
+  if (at == null) return null;
+  final day = DateTime.utc(at.year, at.month, at.day);
+  final before = i == 0 ? null : messages[i - 1].sentAt;
+  if (before != null && DateTime.utc(before.year, before.month, before.day) == day) return null;
+  final gap = today.difference(day).inDays;
+  return gap == 0 ? 'Today' : gap == 1 ? 'Yesterday' : '${Dates.weekday(day)} ${Dates.short(day)}';
+}
+
+class _DayLabel extends StatelessWidget {
+  const _DayLabel(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.l, bottom: AppSpacing.xs),
+        child: Center(child: Text(label, style: TextStyle(color: context.colors.muted, fontSize: 12, fontWeight: FontWeight.w700))),
+      );
 }
 
 class _Bubble extends StatelessWidget {
@@ -298,7 +339,7 @@ class _Thinking extends StatelessWidget {
           children: [
             const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)),
             const SizedBox(width: AppSpacing.s),
-            Text('The coach is thinking…', style: TextStyle(color: context.colors.muted)),
+            Flexible(child: Text('The coach is thinking…', style: TextStyle(color: context.colors.muted))),
           ],
         ),
       );

@@ -369,8 +369,12 @@ inline line of text where it is.
 - The coach is a chat with the question box pinned to the bottom and three
   suggested questions while it is empty. The header counts the questions left
   today. A failed question says why (offline, key refused, busy) and offers
-  Try again; nothing is counted until an answer arrives. The conversation is
-  never stored. Under each reply, "Looked at:" names what the coach looked up
+  Try again; nothing is counted until an answer arrives. It is one ongoing
+  chat, not separate sessions: with memory on (the default) it is still there
+  after a restart, with "Remembered on this phone only" at the top and a day
+  label (Today, Yesterday, Sat 17/10) above the first message of each day.
+  Settings → Coach has the Remember our chats switch and Forget everything,
+  which asks first and offers Undo. Under each reply, "Looked at:" names what the coach looked up
   for it, such as "This week · September 2026". Without a key, the tab
   explains and links to Settings → Coach.
 - Settings → Coach puts the key first, since nothing works without it, then
