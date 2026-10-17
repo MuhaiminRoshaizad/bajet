@@ -380,7 +380,10 @@ among them. The fixed rules (decision 024), lookups that carry data as data
 (022) and changes that need a tap (023) already limit what a broken coach
 could do; the gatekeeper stops most attempts before they reach the coach,
 and the reply check catches what slips through. Turning messages away on the
-phone also means spam and off-topic questions cost the user nothing.
+phone also means spam and off-topic questions never use up a question; each
+still costs the gatekeeper's small request, so after three turned away in a
+row the coach takes two minutes off and answers whatever arrives meanwhile
+on the phone, asking no one.
 
 **Costs:** each real question makes one extra, small request, and a
 gatekeeper wrong in the strict direction can turn away an odd money

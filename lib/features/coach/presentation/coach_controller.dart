@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
+import '../../../core/dates/clock.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -57,10 +58,13 @@ class CoachController extends Notifier<CoachChat> {
   /// replies to them get firmer each time.
   var _declined = 0, _repeats = 0;
   DateTime? _lastAskedAt;
+  final _spam = SpamPause();
 
   /// Cards whose change is being made, so a second tap meanwhile does not
   /// make it twice.
   final _confirming = <(int, int)>{};
+
+  DateTime get _now => ref.read(clockProvider)();
 
   /// How many of the messages, from the top, came back from memory or Undo
   /// rather than being said just now; the screen springs in only the rest.
@@ -90,7 +94,7 @@ class CoachController extends Notifier<CoachChat> {
     // Busy from the first moment, so a second send while this one is still
     // being saved is not taken as another question.
     state = CoachChat(messages: state.messages, sending: true);
-    final now = DateTime.now();
+    final now = _now;
     final answered = state.messages.length >= 2 && !state.messages.last.fromUser;
     final previous = answered ? state.messages.lastWhere((m) => m.fromUser).text : null;
     final repeat = isRepeat(text, previous, now.difference(_lastAskedAt ?? now));
@@ -103,6 +107,10 @@ class CoachController extends Notifier<CoachChat> {
       return _reply(repeatLine(_personality, _repeats++));
     }
     _repeats = 0;
+    if (_spam.isOn(now)) {
+      _mood(_unimpressed);
+      return _reply(pauseLine(_personality));
+    }
     await _answer();
   }
 
@@ -129,9 +137,11 @@ class CoachController extends Notifier<CoachChat> {
       // Turned away on the phone, in the coach's own voice: the message never
       // reaches the coach and costs no question.
       if (kind == GateKind.offTopic || kind == GateKind.attack) {
+        _spam.turnedAway(_now);
         _mood(_unimpressed);
         return _reply(declineLine(_personality, _declined++));
       }
+      _spam.heard();
       final conversation = forModel(state.messages);
       final older = state.messages.sublist(0, state.messages.length - conversation.length);
       final cards = <CoachCard>[];
@@ -163,7 +173,7 @@ class CoachController extends Notifier<CoachChat> {
         return _reply(declineLine(_personality, _declined++));
       }
       _mood(CoachMood.happy);
-      await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: DateTime.now(), face: _settings.face));
+      await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: _now, face: _settings.face));
     } on CoachException catch (e) {
       _fail(e.message);
     }
@@ -215,7 +225,7 @@ class CoachController extends Notifier<CoachChat> {
       text: face == CoachFace.bajety
           ? 'Bajety here. Is that a new Verity? No lah. I remember everything we said.'
           : "Hi, ${face.label} here. I've read our chat, so carry on.",
-      sentAt: DateTime.now(),
+      sentAt: _now,
       face: face,
     ));
   }
@@ -294,7 +304,7 @@ class CoachController extends Notifier<CoachChat> {
     state = CoachChat(messages: messages, sending: state.sending, reading: state.reading, error: state.error);
   }
 
-  Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: DateTime.now(), face: _settings.face));
+  Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: _now, face: _settings.face));
 
   void _fail(String message) {
     _mood(CoachMood.concerned);

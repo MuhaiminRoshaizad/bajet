@@ -80,7 +80,8 @@ void main() {
     expect(world.coach.requests.last.tools.map((t) => t['name']), contains('bajet_past_chats'));
     expect(world.coach.requests.last.messages.length, lessThanOrEqualTo(coachMemoryWindow));
     expect(world.coachChat.saved.last.text, 'You are on track.');
-    expect(find.text('Today'), findsOneWidget);
+    // Today's question opens under its own day; the Today tab is not it.
+    expect(find.descendant(of: find.byType(ListView).first, matching: find.text('Today')), findsOneWidget);
   });
 
   testWidgets('Forget everything empties the chat after asking, and Undo brings it back', (tester) async {

@@ -82,6 +82,33 @@ String declineLine(CoachPersonality p, int times) => _pick(_decline[p]!, times);
 /// What it says to a question asked again within a minute.
 String repeatLine(CoachPersonality p, int times) => _pick(_repeat[p]!, times);
 
+/// What it says while it takes a breather from a run of messages it turned
+/// away.
+String pauseLine(CoachPersonality p) => _pause[p]!;
+
+/// Three messages turned away in a row and the coach takes two minutes off:
+/// whatever arrives meanwhile is answered on the phone without asking the
+/// gatekeeper, so spam stops costing even its small request. A message the
+/// coach hears ends the run.
+class SpamPause {
+  static const limit = 3;
+  static const length = Duration(minutes: 2);
+
+  var _inRow = 0;
+  DateTime? _until;
+
+  bool isOn(DateTime now) => _until != null && now.isBefore(_until!);
+
+  void turnedAway(DateTime now) {
+    if (++_inRow >= limit) {
+      _until = now.add(length);
+      _inRow = 0;
+    }
+  }
+
+  void heard() => _inRow = 0;
+}
+
 String _pick(List<String> lines, int times) => lines[times.clamp(0, lines.length - 1)];
 
 const _decline = {
@@ -115,6 +142,15 @@ const _decline = {
     'That falls outside what I can help with. Is there anything about your budget I can look at?',
     'I am only able to advise on your bajet finances.',
   ],
+};
+
+const _pause = {
+  CoachPersonality.friendly: "Okay, I'm taking a two-minute teh break. Come back with a money question after, ya?",
+  CoachPersonality.strict: 'Two minutes. Then ask about your money.',
+  CoachPersonality.cheerleader: 'Halftime! Two minutes to catch our breath, then back to your budget!',
+  CoachPersonality.roaster: "Bro, I'm muting you for two minutes. Think about your spending meanwhile.",
+  CoachPersonality.seesEverything: "I'll just sit here quietly for two minutes. Watching 😉",
+  CoachPersonality.professional: 'I will be available again in two minutes for questions about your finances.',
 };
 
 const _repeat = {

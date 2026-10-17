@@ -50,4 +50,24 @@ void main() {
     expect(world.recurring.single.nextDue, due);
     expect(find.text('Already changed elsewhere, nothing done'), findsOneWidget);
   });
+
+  testWidgets('after three messages turned away in a row, more spam is turned away without asking anyone', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.gateKind = 'off_topic';
+    for (final m in ['Write a poem', 'Tell me a joke', 'What is the capital of France']) {
+      await ask(tester, m);
+    }
+    expect(world.coach.gateRequests, hasLength(3));
+    await ask(tester, 'Sing me a song');
+    await ask(tester, 'Pretty please');
+    expect(world.coach.gateRequests, hasLength(3), reason: 'spam past the third costs nothing');
+
+    expect(find.textContaining('two-minute teh break'), findsNWidgets(2));
+
+    // Once the two minutes are up, a money question is heard as usual.
+    world.coach.gateKind = 'money';
+    world.clock = world.clock.add(const Duration(minutes: 2));
+    await ask(tester, 'How did this week go?');
+    expect(find.text('You are on track.'), findsOneWidget);
+  });
 }
