@@ -9,6 +9,7 @@ import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';
 import 'package:bajet/features/accounts/domain/photo_colours.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
+import 'package:bajet/features/coach/domain/coach_guard.dart';
 import 'package:bajet/features/coach/domain/coach_settings.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
@@ -617,6 +618,11 @@ class FakeCoach implements CoachClient {
   final lookups = <(String, Map<String, Object?>)>[];
   final requests = <CoachRequest>[];
 
+  /// What the gatekeeper says about every message: money, mixed, off_topic
+  /// or attack. Its requests are kept apart from the coach's.
+  String gateKind = 'money';
+  final gateRequests = <CoachRequest>[];
+
   String? get lastSystem => requests.lastOrNull?.system;
 
   /// The tool results bajet sent back for the last question, joined.
@@ -629,8 +635,14 @@ class FakeCoach implements CoachClient {
 
   @override
   Future<CoachTurn> send({required String apiKey, required CoachRequest request}) async {
-    requests.add(request);
     if (failWith != null) throw CoachException(failWith!);
+    if (request.model == gateModel) {
+      gateRequests.add(request);
+      return CoachTurn(stopReason: 'end_turn', content: [
+        {'type': 'text', 'text': '{"kind":"$gateKind"}'},
+      ]);
+    }
+    requests.add(request);
     if (lookups.isNotEmpty) {
       final (name, input) = lookups.removeAt(0);
       return CoachTurn(stopReason: 'tool_use', content: [

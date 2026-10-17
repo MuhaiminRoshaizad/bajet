@@ -6,6 +6,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/coach_answer.dart';
 import '../domain/coach_client.dart';
+import '../domain/coach_guard.dart';
 import '../domain/coach_lookups.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
@@ -31,10 +32,28 @@ class CoachController extends Notifier<CoachChat> {
   @override
   CoachChat build() => const CoachChat();
 
+  /// Messages turned away today and repeats in a row, so the coach's
+  /// replies to them get firmer each time.
+  var _declined = 0, _repeats = 0;
+  DateTime? _lastAskedAt;
+
+  CoachPersonality get _personality => (ref.read(coachSettingsProvider).value ?? const CoachSettings()).personality;
+
   Future<void> ask(String question) async {
     final text = question.trim();
     if (text.isEmpty || state.sending) return;
+    final now = DateTime.now();
+    final answered = state.messages.length >= 2 && !state.messages.last.fromUser;
+    final previous = answered ? state.messages.lastWhere((m) => m.fromUser).text : null;
+    final repeat = isRepeat(text, previous, now.difference(_lastAskedAt ?? now));
+    _lastAskedAt = now;
     state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: true, text: text)]);
+    if (repeat) {
+      // Asked again within a minute: answered on the phone, costing nothing
+      // and counting against nothing.
+      return _reply(repeatLine(_personality, _repeats++));
+    }
+    _repeats = 0;
     await _answer();
   }
 
@@ -55,11 +74,16 @@ class CoachController extends Notifier<CoachChat> {
     }
     state = CoachChat(messages: state.messages, sending: true);
     try {
+      final client = ref.read(coachClientProvider);
+      final kind = await gate(client, key, state.messages.last.text);
+      // Turned away on the phone, in the coach's own voice: the message never
+      // reaches the coach and costs no question.
+      if (kind == GateKind.offTopic || kind == GateKind.attack) return _reply(declineLine(_personality, _declined++));
       final cards = <CoachCard>[];
       final answer = await coachAnswer(
-        client: ref.read(coachClientProvider),
+        client: client,
         apiKey: key,
-        system: coachSystemPrompt(today, (ref.read(coachSettingsProvider).value ?? const CoachSettings()).personality),
+        system: coachSystemPrompt(today, _personality),
         conversation: state.messages,
         tools: [...coachLookups, ...proposalTools],
         lookup: (name, input) {
@@ -71,6 +95,7 @@ class CoachController extends Notifier<CoachChat> {
       );
       await store.recordUse(today);
       ref.invalidate(coachUsedTodayProvider);
+      if (replyLooksWrong(answer.text)) return _reply(declineLine(_personality, _declined++));
       state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards)]);
     } on CoachException catch (e) {
       _fail(e.message);
@@ -116,6 +141,8 @@ class CoachController extends Notifier<CoachChat> {
     messages[message] = messages[message].withCards(cards);
     state = CoachChat(messages: messages, sending: state.sending, error: state.error);
   }
+
+  void _reply(String text) => state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: text)]);
 
   void _fail(String message) => state = CoachChat(messages: state.messages, error: message);
 }

@@ -377,6 +377,10 @@ inline line of text where it is.
   the personality as a radio list: each option's name, one line about it,
   and what it would say about the same RM45 of bubble tea, so the
   difference shows rather than being described.
+- A message the coach will not take, such as asking for code, or a question
+  asked again within a minute, gets a reply in the chosen personality's own
+  voice straight away, without the typing wait, and it grows firmer the more
+  it is pushed. These replies cost nothing and leave the day's count alone.
 - A change the coach suggests arrives as a card under its reply: the
   question ("Log this spend?"), the amount large, then what, from which
   account and which day, with Not now and the action (Log it, Move it, Mark

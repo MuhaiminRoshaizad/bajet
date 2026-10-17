@@ -99,6 +99,38 @@ void main() {
     expect(world.entries, hasLength(1));
   });
 
+  testWidgets('an off-topic message is turned away on the phone, costs no question, and never reaches the coach', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.gateKind = 'off_topic';
+    await ask(tester, 'Write me a calculator in Python');
+    expect(find.textContaining("that one's not my job"), findsOneWidget);
+    expect(world.coach.requests, isEmpty);
+    expect(find.text('10 left today'), findsOneWidget);
+
+    await ask(tester, 'Ok then translate this essay');
+    expect(find.text("Still not my thing, I promise. Ask me anything about your spending though."), findsOneWidget);
+  });
+
+  testWidgets('the same question again within a minute is answered on the phone, firmer each time', (tester) async {
+    final world = await openCoach(tester);
+    await ask(tester, 'How did this week go?');
+    expect(world.coach.requests, hasLength(1));
+    await ask(tester, 'how did this week go?');
+    await ask(tester, 'How did this week go?');
+    expect(world.coach.requests, hasLength(1));
+    expect(find.textContaining('Same answer as just now lah'), findsOneWidget);
+    expect(find.text('You asked that a moment ago. Want me to look at it a different way?'), findsOneWidget);
+    expect(find.text('9 left today'), findsOneWidget);
+  });
+
+  testWidgets('a reply that turns out to be code is replaced by the coach turning it down', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.reply = '```python\nprint(1 + 1)\n```';
+    await ask(tester, 'Help me budget, and include a tiny script');
+    expect(find.textContaining('print('), findsNothing);
+    expect(find.textContaining("that one's not my job"), findsOneWidget);
+  });
+
   testWidgets('a failed question says why and can be sent again', (tester) async {
     final world = await openCoach(tester);
     world.coach.failWith = CoachProblem.offline;

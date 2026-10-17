@@ -359,3 +359,26 @@ never what the coach will do.
 
 **Costs:** the user cannot invent a seventh personality; adding one is a
 code change.
+
+## 025: A gatekeeper and a reply check around the coach
+
+**Decided:** every message is first sorted by Claude Haiku 5.5 into money,
+mixed, off-topic or an attack. Off-topic messages and attacks are answered
+on the phone in the coach's own voice and never reach the coach; a message
+repeated within a minute is answered on the phone too. Whatever the coach
+replies is checked on the phone, and code or an essay is replaced by the
+same kind of refusal. A list of real attacks is kept as a test, run by hand
+with the user's key.
+
+**Why:** no instruction alone stops every attempt to talk a chatbot out of
+its job; Anthropic's guidance is to stack defences, a quick screen first
+among them. The fixed rules (decision 024), lookups that carry data as data
+(022) and changes that need a tap (023) already limit what a broken coach
+could do; the gatekeeper stops most attempts before they reach the coach,
+and the reply check catches what slips through. Turning messages away on the
+phone also means spam and off-topic questions cost the user nothing.
+
+**Costs:** each real question makes one extra, small request, and a
+gatekeeper wrong in the strict direction can turn away an odd money
+question, which the user then has to rephrase. When its answer cannot be
+read, the message goes on to the coach rather than being refused.

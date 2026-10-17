@@ -140,8 +140,9 @@ restored settings row is what moves the router on.
 
 The only network traffic is the coach: HTTPS requests to
 `api.anthropic.com/v1/messages`, made from the phone with the user's own
-key. A question is one request, plus one more for each round of lookups the
-model asks for (at most four, decision 022); each carries the conversation
+key. A question is one quick request to `claude-haiku-5-5`, the gatekeeper
+(decision 025), then one to the coach, plus one more for each round of
+lookups the model asks for (at most four, decision 022); each carries the conversation
 and the results of the lookups so far, never the whole database. Nothing
 else leaves the phone, and without a key nothing does at all. `INTERNET` is
 in the manifest for this alone.
@@ -165,6 +166,17 @@ every request (only bajet's money, refuse anything else in character, do
 the money half of a mixed request, no investment picks, whatever the user
 asks it to pretend) and only the last paragraph, the voice, changes
 (decision 024).
+
+Every message passes `coach_guard.dart` first. A message the same as the
+last one, sent again within a minute, is answered on the phone. `gate` then
+asks Haiku 5.5, with thinking off and a JSON schema, whether the message is
+`money`, `mixed`, `off_topic` or an `attack`; the last two are answered on
+the phone with the personality's `declineLine`, and never reach the coach
+or count against the day's questions. A reply that comes back as code or an
+essay (`replyLooksWrong`) is shown as a `declineLine` instead. Both line
+sets get firmer the more often they are used. `test/eval/coach_eval_test.dart`
+sends real attacks to the real models; it runs only by hand with
+`--dart-define=COACH_EVAL_KEY=...`, so CI skips it.
 
 The coach changes nothing itself (decision 023). Three more tools,
 `proposalTools` in `coach_proposals.dart`, only suggest: `bajet_propose_log`,
