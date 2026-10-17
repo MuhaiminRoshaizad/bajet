@@ -16,7 +16,7 @@ const _icons = <String, IconData>{
   'refund': Icons.undo_rounded,
 };
 
-/// Categories are data the owner can add to, so unknown keys fall back to a
+/// Categories are data the user can add to, so unknown keys fall back to a
 /// neutral icon rather than failing.
 IconData categoryIcon(String key) => _icons[key] ?? Icons.more_horiz_rounded;
 

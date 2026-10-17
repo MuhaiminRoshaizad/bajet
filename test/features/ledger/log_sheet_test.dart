@@ -16,7 +16,7 @@ final amountField = find.byKey(const ValueKey('amount'));
 final receiptTile = find.byKey(const ValueKey('receipt-tile'));
 
 /// Types [keys] on the number pad after whatever the amount already holds,
-/// as the owner does: each digit fills in from the right.
+/// as the user does: each digit fills in from the right.
 Future<void> typeKeys(WidgetTester tester, String keys) async {
   final held = tester.widget<TextField>(amountField).controller!.text.replaceAll(RegExp(r'\D'), '');
   await tester.enterText(amountField, held + keys);

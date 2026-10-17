@@ -17,7 +17,7 @@ import 'photo_match_screen.dart';
 import 'provider_picker.dart';
 
 /// Changes how [account]'s card looks: its finish, colour and nickname. Its
-/// balance changes only through what is logged. Returns the owner's choice
+/// balance changes only through what is logged. Returns the user's choice
 /// when they asked to delete the account instead; the caller deletes it once
 /// it has closed whatever showed the card.
 Future<DeleteChoice?> showCardDesigner(BuildContext context, Account account) =>
@@ -140,7 +140,7 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
         _name = provider;
         _provider.text = provider;
         // A new card starts near the provider's colour; one being edited
-        // keeps the colour the owner gave it.
+        // keeps the colour the user gave it.
         if (_newKind case final kind?) {
           final swatch = startingSwatch(kind, provider);
           _color = swatch.color;

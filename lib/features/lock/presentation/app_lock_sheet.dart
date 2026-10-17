@@ -7,7 +7,7 @@ import '../domain/app_lock.dart';
 import 'lock_providers.dart';
 
 /// Whether the phone has a fingerprint, face or screen lock to check, asked
-/// afresh each time the sheet opens, since the owner may have just added one.
+/// afresh each time the sheet opens, since the user may have just added one.
 final lockAvailableProvider = FutureProvider.autoDispose<bool>((ref) => ref.watch(deviceAuthProvider).isAvailable());
 
 /// What Settings shows under App lock.

@@ -60,7 +60,7 @@ void main() {
     expect(find.byTooltip('Settings'), findsOneWidget);
   });
 
-  test('the App lock line follows the owner\'s setting', () {
+  test('the App lock line follows the user\'s setting', () {
     expect(leaveLockLine(const LockSettings()), isNull);
     expect(leaveLockLine(const LockSettings(enabled: true, grace: LockGrace.immediately)), "App lock is on, so you'll need your fingerprint to get back in.");
     expect(leaveLockLine(const LockSettings(enabled: true, grace: LockGrace.fiveMinutes)), "If you're away for more than 5 minutes, you'll need your fingerprint to get back in.");

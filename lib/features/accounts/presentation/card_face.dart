@@ -18,7 +18,7 @@ const _radius = BorderRadius.all(Radius.circular(16));
 const _designWidth = 330.0;
 
 /// Text on a card follows its colour, dark on light and white on dark,
-/// unless the owner picked one, such as gold on black.
+/// unless the user picked one, such as gold on black.
 Color cardInk(CardLook look) => look.ink != null ? Color(look.ink!) : inkOn(Color(look.color));
 
 Color inkOn(Color color) => color.computeLuminance() > 0.32 ? const Color(0xFF14110A) : Colors.white;

@@ -61,7 +61,7 @@ class _AccountViewScreenState extends ConsumerState<AccountViewScreen> {
     super.dispose();
   }
 
-  /// Opens the card's designer. If the owner deleted the account from it,
+  /// Opens the card's designer. If the user deleted the account from it,
   /// the page flies the card home first, so the card leaves Your accounts
   /// where they can see it go.
   Future<void> _edit(Account account, List<Account> all) async {

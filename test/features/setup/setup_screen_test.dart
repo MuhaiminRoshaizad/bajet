@@ -148,7 +148,7 @@ void main() {
     expect(decoration().prefixText, 'RM');
   });
 
-  testWidgets('the buy day calendar opens with no day chosen for the owner', (tester) async {
+  testWidgets('the buy day calendar opens with no day chosen for the user', (tester) async {
     await pumpApp(tester, setUpDone: false);
     await fillMoneyStep(tester);
 

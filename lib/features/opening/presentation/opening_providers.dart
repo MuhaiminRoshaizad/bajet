@@ -19,7 +19,7 @@ class OpeningController extends Notifier<bool> {
   @override
   bool build() => ref.watch(playOpeningProvider);
 
-  /// At the end, or straight away when the owner taps to skip. Either way
+  /// At the end, or straight away when the user taps to skip. Either way
   /// the screen underneath may make its entrance, if it has not yet.
   void finish() {
     if (!state) return;

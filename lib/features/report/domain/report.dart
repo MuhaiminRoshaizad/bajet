@@ -10,7 +10,7 @@ List<Entry> entriesIn(Insights i, List<Entry> entries) =>
     [...entries.where((e) => !e.day.isBefore(i.from) && !e.day.isAfter(i.to))]..sort((a, b) => a.day.compareTo(b.day) != 0 ? a.day.compareTo(b.day) : a.id.compareTo(b.id));
 
 /// One account over a report's period: money logged in and out of it, and
-/// what it holds now. Moves between the owner's own accounts are neither.
+/// what it holds now. Moves between the user's own accounts are neither.
 class AccountLine {
   const AccountLine(this.id, this.name, this.moneyIn, this.moneyOut, this.balance);
 

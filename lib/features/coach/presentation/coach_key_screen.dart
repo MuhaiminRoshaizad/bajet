@@ -7,7 +7,7 @@ import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
 import 'coach_providers.dart';
 
-/// Settings → Coach: where the owner's own Anthropic key goes in or comes
+/// Settings → Coach: where the user's own Anthropic key goes in or comes
 /// out. The key is never shown again once saved.
 class CoachKeyScreen extends ConsumerStatefulWidget {
   const CoachKeyScreen({super.key});

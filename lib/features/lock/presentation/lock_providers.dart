@@ -24,8 +24,8 @@ class LockSettingsController extends Notifier<LockSettings> {
   @override
   LockSettings build() => ref.watch(initialLockSettingsProvider);
 
-  /// Turns the lock on only after the phone has checked it is the owner, so
-  /// it can never be switched on in a way the owner cannot get past.
+  /// Turns the lock on only after the phone has checked it is the user, so
+  /// it can never be switched on in a way the user cannot get past.
   Future<AuthOutcome> enable() async {
     final outcome = await ref.read(deviceAuthProvider).authenticate(title: 'Turn on App lock', reason: 'bajet will ask for this each time it opens.');
     if (outcome == AuthOutcome.passed) await _save(state.copyWith(enabled: true));
@@ -46,7 +46,7 @@ final lockSettingsProvider = NotifierProvider<LockSettingsController, LockSettin
 
 /// Whether the lock screen is covering the app. Locked on a cold start when
 /// the lock is on, and again on coming back after longer away than the
-/// owner's grace. Time in a screen bajet opened itself does not count.
+/// user's grace. Time in a screen bajet opened itself does not count.
 class AppLockController extends Notifier<bool> {
   DateTime? _awaySince;
 
@@ -75,7 +75,7 @@ class AppLockController extends Notifier<bool> {
   void unlock() => state = false;
 
   /// For a phone that no longer has anything to check: the lock turns off
-  /// and the app opens, rather than locking the owner out of their own data.
+  /// and the app opens, rather than locking the user out of their own data.
   Future<void> turnOffAndOpen() async {
     await ref.read(lockSettingsProvider.notifier).disable();
     unlock();

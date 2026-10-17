@@ -61,7 +61,7 @@ String finishLabel(CardFinish finish) => switch (finish) {
     };
 
 /// The swatch a new account starts on: near a provider's own colour when it
-/// has a well-known one, slate otherwise, brown leather for cash. The owner
+/// has a well-known one, slate otherwise, brown leather for cash. The user
 /// can change it straight away.
 CardSwatch startingSwatch(AccountKind kind, String provider) {
   if (kind == AccountKind.cash) return leatherSwatches[1];

@@ -91,7 +91,7 @@ class AccountList extends StatefulWidget {
   final double arrived;
   final ValueChanged<Account>? onTap;
 
-  /// Every account's id in the order the owner dragged them into.
+  /// Every account's id in the order the user dragged them into.
   final ValueChanged<List<int>>? onReorder;
 
   /// Accounts whose cards are in flight elsewhere, so they hold their place

@@ -44,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Version 6 keeps money in accounts. The one starting balance becomes the
   /// first account's, and every entry and bill so far belongs to it; the
-  /// owner names it and adds the others afterwards.
+  /// user names it and adds the others afterwards.
   Future<void> _moveToAccounts(Migrator m) async {
     await m.createTable(accounts);
     await m.createTable(transfers);
@@ -84,7 +84,7 @@ class AppDatabase extends _$AppDatabase {
     return first.id;
   }
 
-  /// The categories the app logs into itself, which the owner never picks:
+  /// The categories the app logs into itself, which the user never picks:
   /// goal purchases and money found missing at a check-in. Added if absent,
   /// so older installs and older backups gain any added since.
   Future<void> ensureBuiltInCategories() => batch((b) {
@@ -97,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
         }
       });
 
-  /// Starting values a new install needs before the owner edits them. They
+  /// Starting values a new install needs before the user edits them. They
   /// are deliberately generic; balances, bills, goals and favourites come from
   /// setup or a backup import.
   Future<void> _seedDefaults() async {

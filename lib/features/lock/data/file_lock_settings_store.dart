@@ -25,7 +25,7 @@ class FileLockSettingsStore implements LockSettingsStore {
   static String format(LockSettings s) => '${s.enabled ? 'on' : 'off'} ${s.grace.name}';
 
   /// Anything unreadable falls back to the lock being off, never to a lock
-  /// the owner cannot get past.
+  /// the user cannot get past.
   static LockSettings parse(String text) {
     final words = text.trim().split(' ');
     return LockSettings(

@@ -62,7 +62,7 @@ class Accounts extends Table {
   TextColumn get nickname => text().nullable()();
   IntColumn get openingBalance => integer().withDefault(const Constant(0))();
 
-  /// The card's colour as ARGB, and its text colour when the owner picked one
+  /// The card's colour as ARGB, and its text colour when the user picked one
   /// (such as gold on black); otherwise text follows the card's lightness.
   IntColumn get color => integer()();
   IntColumn get inkColor => integer().nullable()();

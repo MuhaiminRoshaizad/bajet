@@ -13,7 +13,7 @@ import '../domain/coach_prompt.dart';
 import 'coach_controller.dart';
 import 'coach_providers.dart';
 
-/// Ask about your money. Answers come from Anthropic using the owner's own
+/// Ask about your money. Answers come from Anthropic using the user's own
 /// key; the question box stays pinned to the bottom of the screen.
 class CoachScreen extends ConsumerStatefulWidget {
   const CoachScreen({super.key});
@@ -166,7 +166,7 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final mine = message.fromOwner;
+    final mine = message.fromUser;
     final text = SelectableText(message.text, style: TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45));
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.m),

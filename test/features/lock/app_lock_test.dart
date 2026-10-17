@@ -68,7 +68,7 @@ void main() {
     expect(find.text('Use phone PIN'), findsOneWidget);
   });
 
-  testWidgets('a phone with nothing left to check turns the lock off rather than locking the owner out', (tester) async {
+  testWidgets('a phone with nothing left to check turns the lock off rather than locking the user out', (tester) async {
     final world = await pumpLocked(tester, outcomes: [AuthOutcome.unavailable]);
     expect(find.text('App lock is off'), findsOneWidget);
     await tester.tap(find.text('Open bajet'));

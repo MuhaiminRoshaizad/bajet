@@ -13,11 +13,11 @@ class CoachChat {
   final List<CoachMessage> messages;
   final bool sending;
 
-  /// Why the last question got no answer, worded for the owner.
+  /// Why the last question got no answer, worded for the user.
   final String? error;
 
   /// The last question is waiting for an answer that failed.
-  bool get canRetry => error != null && messages.isNotEmpty && messages.last.fromOwner;
+  bool get canRetry => error != null && messages.isNotEmpty && messages.last.fromUser;
 }
 
 /// The conversation on the Coach tab. Held in memory only: it is gone when
@@ -29,7 +29,7 @@ class CoachController extends Notifier<CoachChat> {
   Future<void> ask(String question) async {
     final text = question.trim();
     if (text.isEmpty || state.sending) return;
-    state = CoachChat(messages: [...state.messages, CoachMessage(fromOwner: true, text: text)]);
+    state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: true, text: text)]);
     await _answer();
   }
 
@@ -59,7 +59,7 @@ class CoachController extends Notifier<CoachChat> {
       );
       await store.recordUse(today);
       ref.invalidate(coachUsedTodayProvider);
-      state = CoachChat(messages: [...state.messages, CoachMessage(fromOwner: false, text: answer.text, looked: answer.looked)]);
+      state = CoachChat(messages: [...state.messages, CoachMessage(fromUser: false, text: answer.text, looked: answer.looked)]);
     } on CoachException catch (e) {
       _fail(e.message);
     }

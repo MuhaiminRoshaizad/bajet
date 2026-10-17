@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_repositories.dart';
 
-const _question = [CoachMessage(fromOwner: true, text: 'Where is my money?')];
+const _question = [CoachMessage(fromUser: true, text: 'Where is my money?')];
 
 Future<CoachAnswer> answer(FakeCoach coach, {LookupResult Function(String, Map<String, Object?>)? lookup}) => coachAnswer(
       client: coach,

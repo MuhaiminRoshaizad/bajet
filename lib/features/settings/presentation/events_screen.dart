@@ -107,7 +107,7 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final picked = await showDatePicker(
       context: context,
       // Nothing is preselected until a day is chosen, so the calendar never
-      // suggests a date the owner did not pick.
+      // suggests a date the user did not pick.
       initialDate: _date,
       firstDate: DateTime(today.year, today.month, today.day),
       lastDate: DateTime(today.year + 5),

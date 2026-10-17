@@ -92,7 +92,7 @@ background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
 Each account is drawn as a card 1.9 times as wide as it is tall
 (`cardAspectRatio`), a little wider than a real bank card's 1.59, so cards take
 less of the screen; the radius is 16 px (`card_face.dart`). A card is one
-colour the owner picked, lit from the top left, under one of six finishes
+colour the user picked, lit from the top left, under one of six finishes
 (`card_finishes.dart`): matte, gloss (a fixed diagonal sheen), mirror (a
 bright band of polished metal), pearl (a milky pink-to-blue shimmer),
 frosted glass (fine frost with an etched edge) or guilloché (engraved
@@ -102,7 +102,7 @@ between cards on the account view, from scrolling Your accounts, and from
 a finger dragged across the designer's preview; there is no motion sensor.
 Only those two repaint when it changes (`finishMoves`), and the frost and
 suede textures are small squares made once and tiled. Text is dark on light cards and white on dark ones unless
-the owner picked its colour, such as gold on black. The provider's name is
+the user picked its colour, such as gold on black. The provider's name is
 plain text, at the top and again as the wordmark; there are no logos or
 issuers' card designs, which are trademarks. Cash is a stitched leather or suede
 wallet instead, with one to five plain green bills sticking out of the top
@@ -121,7 +121,7 @@ colour (`startingSwatch`). The sheet goes in the order it is filled in:
 provider, amount, nickname, then finish, colour and photo match, with its
 Add or Save button pinned below the scroll. "Match my card" (or "Match my
 wallet") asks, with two large buttons, to take or choose a photo of the
-owner's real card, then shows it full screen (`PhotoMatchScreen`) with a
+user's real card, then shows it full screen (`PhotoMatchScreen`) with a
 card-shaped frame, 80% of the photo's width and 1.9 times as wide as tall.
 The three most common colours inside the frame (`commonColours`) are offered
 first, and a tap or drag anywhere takes the colour under the finger,
@@ -129,7 +129,7 @@ averaged over the pixels around it and shown in a magnifier held above it,
 with a selection click as it changes. The photo is read at most 480 px on
 its long side and held in memory only; only the chosen colour is saved, and
 the picker's copy is deleted at once, so no card number is ever kept. These card
-colours are the owner's data, so they are the one place colours do not come
+colours are the user's data, so they are the one place colours do not come
 from the theme; the total card, with no colour of its own, takes the app's
 surface.
 
@@ -294,7 +294,7 @@ inline line of text where it is.
   pad. Under the note, the day and the receipt sit as a matched pair of
   raised tiles (`DetailTile`); the receipt tile opens a sheet with Camera and
   Photos as large tiles, and once one is attached, a look at it and Remove.
-  The day is today unless the owner taps it and picks another
+  The day is today unless the user taps it and picks another
   in the calendar, any day of the past year up to today. A day before the
   opening date shows a line under the tiles saying it counts in that week
   and Insights but not in the balance (decision 020).
@@ -324,7 +324,7 @@ inline line of text where it is.
   three favourites, and the widget shows what is left of the week with a
   Log button and two favourites. Each opens the logger, filled in where it
   names a favourite. The widget never shows the balance, since a home
-  screen is seen by anyone holding the phone. Favourites are the owner's own, managed under
+  screen is seen by anyone holding the phone. Favourites are the user's own, managed under
   Settings → Favourites and reachable from the logger's Edit link.
 - Destructive actions ask for confirmation, then offer undo. In History,
   swiping an entry left asks before deleting it; tapping it edits it in the
@@ -338,7 +338,7 @@ inline line of text where it is.
   list with their date and price.
 - The Sunday check-in compares bajet's balance with the bank. Money missing
   from the bank is logged in one tap as Untracked, with undo; extra money in
-  the bank opens the logger as income, filled in, so the owner still picks
+  the bank opens the logger as income, filled in, so the user still picks
   what it was. Today shows a check-in card on Sundays; Settings always links
   to it.
 - Insights and the report pick their range with `PeriodPicker`: Week, Month
@@ -355,7 +355,7 @@ inline line of text where it is.
   the preview runs. Every format names each entry's account and lists money
   out by every category, fixed ones marked; with two or more accounts, text
   and PDF also give each account's money in and out for the period and what
-  it holds now (`byAccount`). Moves between the owner's own accounts are
+  it holds now (`byAccount`). Moves between the user's own accounts are
   neither in nor out. The balance shown is today's, whatever the period.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;

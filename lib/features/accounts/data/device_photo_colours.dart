@@ -34,7 +34,7 @@ class DevicePhotoColours implements PhotoColours {
       return sample;
     } finally {
       // The picker leaves a scaled copy in the app's cache, which goes now.
-      // Only a file inside that cache is ever deleted, so the owner's own
+      // Only a file inside that cache is ever deleted, so the user's own
       // photo can never be.
       final cache = (await getTemporaryDirectory()).absolute.path;
       final copy = File(picked.path).absolute;

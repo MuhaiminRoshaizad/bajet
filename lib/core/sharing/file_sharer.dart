@@ -8,7 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import '../platform/outside_app.dart';
 
 /// Hands a file or a piece of text to the system share sheet, where the
-/// owner can send it to a chat or another app, or saves a file straight into
+/// user can send it to a chat or another app, or saves a file straight into
 /// a folder they pick. Behind this interface so screens can be tested
 /// without the platform screens.
 abstract interface class FileSharer {
@@ -20,7 +20,7 @@ abstract interface class FileSharer {
   bool get canSave;
 
   /// Opens the system's "Save to" screen with [fileName] filled in and
-  /// writes the file where the owner picks. False if they cancelled.
+  /// writes the file where the user picks. False if they cancelled.
   Future<bool> saveFile(List<int> bytes, String fileName, String mimeType);
 }
 

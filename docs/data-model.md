@@ -196,7 +196,7 @@ re-added whenever the database opens and after every restore
 with no planned spend; finishing setup then spreads the weekly allowance over
 the seven days (`spreadOverWeek`), so no day starts planned at RM0.00 while the
 week allows more. There are no favourites, goals or recurring items until
-the owner adds them or imports a backup.
+the user adds them or imports a backup.
 
 ## Receipts
 

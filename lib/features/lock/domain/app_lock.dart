@@ -10,7 +10,7 @@ enum LockGrace {
   final String label;
 }
 
-/// The owner's app lock choices. Off until the owner turns it on.
+/// The user's app lock choices. Off until the user turns it on.
 class LockSettings {
   const LockSettings({this.enabled = false, this.grace = LockGrace.oneMinute});
 
@@ -31,7 +31,7 @@ abstract interface class LockSettingsStore {
   Future<void> write(LockSettings settings);
 }
 
-/// How an attempt to prove it is the owner ended.
+/// How an attempt to prove it is the user ended.
 enum AuthOutcome {
   passed,
 
@@ -60,7 +60,7 @@ abstract interface class DeviceAuth {
 
 /// Whether Android may keep a picture of bajet for the app switcher. While
 /// the lock is on it may not, so the switcher shows a blank card instead of
-/// the balance. Screenshots the owner takes still work.
+/// the balance. Screenshots the user takes still work.
 abstract interface class RecentsPrivacy {
   Future<void> hideFromRecents(bool hidden);
 }

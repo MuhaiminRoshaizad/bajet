@@ -121,7 +121,7 @@ Android Auto Backup alongside the database.
 backup restored on another phone keeps the entries and loses the pictures;
 the entry then shows a placeholder. If Android closes bajet while the camera
 is open, the half-written log is lost along with the photo, so there is
-nothing to recover the image into; the owner logs it again.
+nothing to recover the image into; the user logs it again.
 
 ## 012: The week as bars, not a ring
 
@@ -156,25 +156,25 @@ one parser serves both the widget and the shortcuts.
 
 **Costs:** a third-party dependency with native code. Through AndroidX
 WorkManager it adds four install-time permissions (wake lock, network state,
-start at boot, foreground service), none of which Android asks the owner
+start at boot, foreground service), none of which Android asks the user
 about and none of which is internet access. The widget shows the week's
 remaining allowance only; the balance stays inside the app.
 
-## 014: The coach runs on the owner's own key
+## 014: The coach runs on the user's own key
 
 **Decided:** the in-app coach calls Anthropic's Messages API directly from
-the phone with an API key the owner pastes into Settings → Coach, stored in
+the phone with an API key the user pastes into Settings → Coach, stored in
 secure storage, with at most 10 questions a day.
 
 **Why:** with no bajet server, there is nowhere else a key could live, and a
 key shipped inside the app would be readable by anyone who unpacks it. The
-owner's own key keeps the cost and the account in the owner's hands. The
+user's own key keeps the cost and the account in the user's hands. The
 daily cap protects that bill from a stuck retry or a long evening of
 questions.
 
 **Costs:** this is the app's only use of the network, and what is sent (the
 question plus a summary of the week and month) goes to Anthropic under the
-owner's account. The Coach screen says so before the first question. A
+user's account. The Coach screen says so before the first question. A
 backup does not carry the key, so it is entered again after a restore.
 
 ## 015: Pay and bills that move around count cautiously
@@ -214,7 +214,7 @@ face or screen lock through `local_auth`, published by the Flutter team.
 bajet keeps no PIN of its own, and the phone's PIN, pattern or password is
 always accepted when the fingerprint fails.
 
-**Why:** the phone already holds a credential the owner knows and Android
+**Why:** the phone already holds a credential the user knows and Android
 already guards it, so a second PIN would only be something else to forget.
 A first-party package is the safest bet for code that has to follow every
 Android and iOS release.
@@ -229,7 +229,7 @@ as readable as before.
 While the lock is on, Android 13 and later keep no picture of bajet for the
 app switcher (`setRecentsScreenshotEnabled`), so the switcher shows a blank
 card. `FLAG_SECURE` would cover older phones too, but it also blocks every
-screenshot the owner takes, so it is not used.
+screenshot the user takes, so it is not used.
 
 ## 018: bajet plays its opening itself
 
@@ -278,7 +278,7 @@ at the opening date. An entry dated before the opening date counts as
 spending in its week, Insights and History, but never in a balance, and
 the logger says so under the day.
 
-**Why:** the owner forgot to log a few days and then set up again, which
+**Why:** the user forgot to log a few days and then set up again, which
 moved the opening date to that day, so those days could not be picked at
 all. The balance typed at setup was what the bank showed then, after that
 spending had already left it, so counting those entries again would take
@@ -300,7 +300,7 @@ It replaces the allowance bar and day columns of 012.
 
 **Why:** with nothing spent, the columns were empty blocks with plan marks
 floating over them, days off took up columns that meant nothing, and the
-card said the same amount twice. The owner wanted the week at a glance and
+card said the same amount twice. The user wanted the week at a glance and
 what they can still spend per day. Unlike the ring 012 replaced, every
 stretch is as long as the money it stands for, so 012's reason still holds.
 
@@ -311,7 +311,7 @@ fourteen days still compare each day with its plan.
 ## 022: The coach looks things up instead of being handed a summary
 
 **Decided:** the coach no longer gets a fixed summary of the week and month
-in its instructions. It reads the owner's figures through five read-only
+in its instructions. It reads the user's figures through five read-only
 lookups that run on the phone (overview, any week or month, entries,
 accounts, the plan), called through Anthropic's tool use, at most four rounds
 a question. The instructions hold no personal data at all.
@@ -320,8 +320,8 @@ a question. The instructions hold no personal data at all.
 month, a single entry or one account, and it sent the same figures with
 every question whether they were needed or not. Lookup results travel inside
 `tool_result` blocks, which is where Anthropic recommends untrusted text
-goes, so a note the owner typed reads as data rather than as an instruction.
+goes, so a note the user typed reads as data rather than as an instruction.
 
 **Costs:** a question that needs lookups makes two to five requests instead
-of one, so it is slower and costs a little more, still on the owner's own
+of one, so it is slower and costs a little more, still on the user's own
 key and still within 10 questions a day.

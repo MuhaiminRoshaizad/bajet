@@ -39,7 +39,7 @@ String? leaveLockLine(LockSettings lock) => !lock.enabled
         ? "App lock is on, so you'll need your fingerprint to get back in."
         : "If you're away for more than ${lock.grace.label}, you'll need your fingerprint to get back in.";
 
-/// True when the owner chose Leave. Leaving loses nothing, so Leave is the
+/// True when the user chose Leave. Leaving loses nothing, so Leave is the
 /// ordinary filled button, not the warning colour.
 Future<bool> confirmLeave(BuildContext context, LockSettings lock) async {
   final c = context.colors;

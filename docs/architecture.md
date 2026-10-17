@@ -24,7 +24,7 @@ See [decisions](decisions.md#001-local-first-no-login).
 ### Network
 
 Release builds declare no `INTERNET` permission. Fonts are bundled. The only
-planned network feature is the coach (v1.3), which will use the owner's own API
+planned network feature is the coach (v1.3), which will use the user's own API
 key held in secure storage.
 
 ## Layers
@@ -83,9 +83,9 @@ A folder under `core/` appears only once two features need it.
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
-| `coach`  | The Coach tab: questions answered by Anthropic with the owner's own key from Settings → Coach, up to 10 a day. The model reads the owner's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
+| `coach`  | The Coach tab: questions answered by Anthropic with the user's own key from Settings → Coach, up to 10 a day. The model reads the user's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
 | `opening` | The opening played on a cold start: its timeline as plain data, the titanium cards and the lock screen's fan; the overlay that plays it lives in `app/` because it draws Today's and the lock screen's cards |
-| `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, and the owner's lock choices |
+| `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, and the user's lock choices |
 | `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
 
 Shared providers live beside what they provide: `databaseProvider` and
@@ -119,7 +119,7 @@ restored settings row is what moves the router on.
 
 - **Database:** drift over SQLite, opened with `drift_flutter`. Money is stored
   as integer sen.
-- **Android Auto Backup:** on. Android copies app data to the owner's Google
+- **Android Auto Backup:** on. Android copies app data to the user's Google
   Drive about once a day, while the phone is idle, charging and on Wi-Fi.
   The coach's API key is left out (`res/xml/backup_rules.xml` and
   `data_extraction_rules.xml`): it is encrypted with a Keystore key that is
@@ -128,18 +128,18 @@ restored settings row is what moves the router on.
   `flutter_secure_storage` (Android Keystore, iOS Keychain). It never enters
   the database, a backup file or the code.
 - **JSON export and import:** Settings → Backup exports every table as one
-  JSON file, saved where the owner picks or sent through the share sheet, and
+  JSON file, saved where the user picks or sent through the share sheet, and
   restores one picked with the system file picker, after confirming. Saving
   (also offered for PDF and CSV reports) opens Android's own "Save to" screen
   through `MainActivity`'s files channel, so it needs no storage permission;
-  on iPhone the share sheet's Save to Files does the same job. It is the backup the owner controls, and the
+  on iPhone the share sheet's Save to Files does the same job. It is the backup the user controls, and the
   way a set-up plan is loaded onto a new phone. See the
   [backup format](data-model.md#backup-format).
 
 ## Network
 
 The only network traffic is the coach: HTTPS requests to
-`api.anthropic.com/v1/messages`, made from the phone with the owner's own
+`api.anthropic.com/v1/messages`, made from the phone with the user's own
 key. A question is one request, plus one more for each round of lookups the
 model asks for (at most four, decision 022); each carries the conversation
 and the results of the lookups so far, never the whole database. Nothing

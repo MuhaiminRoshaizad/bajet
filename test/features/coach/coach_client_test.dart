@@ -85,7 +85,7 @@ void main() {
     expect(body.containsKey('fallbacks'), isFalse);
   });
 
-  test('turns failures into problems the owner can act on', () async {
+  test('turns failures into problems the user can act on', () async {
     Future<CoachProblem> problem(MockClient mock) async {
       try {
         await sendWith(mock);

@@ -1,17 +1,17 @@
 /// One turn of the conversation with the coach.
 class CoachMessage {
-  const CoachMessage({required this.fromOwner, required this.text, this.looked = const []});
+  const CoachMessage({required this.fromUser, required this.text, this.looked = const []});
 
-  final bool fromOwner;
+  final bool fromUser;
   final String text;
 
-  /// For a reply: what the coach looked up to give it, as the owner reads it.
+  /// For a reply: what the coach looked up to give it, as the user reads it.
   final List<String> looked;
 }
 
 enum CoachProblem { offline, badKey, busy, refused, other }
 
-/// Why a question got no answer, worded for the owner.
+/// Why a question got no answer, worded for the user.
 class CoachException implements Exception {
   const CoachException(this.problem);
 
@@ -83,7 +83,7 @@ abstract interface class CoachClient {
   Future<CoachTurn> send({required String apiKey, required CoachRequest request});
 }
 
-/// Where the owner's own API key and today's use of it are kept.
+/// Where the user's own API key and today's use of it are kept.
 abstract interface class CoachKeyStore {
   Future<String?> readKey();
   Future<void> saveKey(String key);
@@ -95,5 +95,5 @@ abstract interface class CoachKeyStore {
 }
 
 /// Questions the coach answers per day, so a forgotten loop or a curious
-/// afternoon cannot run up the owner's bill.
+/// afternoon cannot run up the user's bill.
 const coachDailyLimit = 10;

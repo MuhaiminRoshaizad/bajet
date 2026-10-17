@@ -13,7 +13,7 @@ import '../../../core/widgets/confirm_delete.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 
-/// What the owner is saving for, funded in priority order.
+/// What the user is saving for, funded in priority order.
 class GoalsScreen extends ConsumerWidget {
   const GoalsScreen({super.key});
 
@@ -190,7 +190,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
     final picked = await showDatePicker(
       context: context,
       // Nothing is preselected until a day is chosen, so the calendar never
-      // suggests a date the owner did not pick.
+      // suggests a date the user did not pick.
       initialDate: _date,
       firstDate: DateTime(today.year, today.month, today.day + 1),
       lastDate: DateTime(today.year + 10),

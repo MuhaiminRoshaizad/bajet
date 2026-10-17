@@ -3,7 +3,7 @@ import '../../plan/domain/plan_models.dart';
 
 enum InsightsPeriod { week, month, all }
 
-/// A label the owner logs often, and what it usually costs.
+/// A label the user logs often, and what it usually costs.
 class FrequentItem {
   const FrequentItem(this.label, this.count, this.average);
 
@@ -110,7 +110,7 @@ int earliestOffset(InsightsPeriod period, DateTime today, DateTime firstDay) => 
     };
 
 /// The first day Insights knows about: the opening date, or an earlier day
-/// the owner logged after setting up, such as a meal they forgot. Those
+/// the user logged after setting up, such as a meal they forgot. Those
 /// count as spending; only the balance leaves them out, since the starting
 /// balance already had them taken off (docs/decisions.md 020).
 DateTime firstDay(DateTime openingDate, List<Entry> entries) =>

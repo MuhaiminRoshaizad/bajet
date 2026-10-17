@@ -207,7 +207,7 @@ List<int> spreadOverWeek(int weekly) => spreadEvenly(weekly, 7);
 ///
 /// Days that were an even split (no more than a sen apart) are split evenly
 /// again, so the result never depends on the order days were switched; amounts
-/// the owner typed unevenly keep their shape and only share what moved.
+/// the user typed unevenly keep their shape and only share what moved.
 List<WeeklyRule> withRule(List<WeeklyRule> rules, WeeklyRule changed) {
   final before = rules.firstWhere((r) => r.weekday == changed.weekday);
   final starts = before.type == DayType.zero && changed.type != DayType.zero;

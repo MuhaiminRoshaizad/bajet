@@ -6,7 +6,7 @@ enum ReceiptSource { camera, gallery }
 /// name. Behind this interface so screens can be tested without the camera,
 /// the gallery or the file system.
 abstract interface class ReceiptStore {
-  /// Lets the owner take or pick a photo, keeps a compressed copy, and
+  /// Lets the user take or pick a photo, keeps a compressed copy, and
   /// returns its file name; null if they cancelled.
   Future<String?> pick(ReceiptSource source);
 

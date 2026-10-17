@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Where the owner's light or dark choice is kept between launches.
+/// Where the user's light or dark choice is kept between launches.
 abstract interface class ThemeModeStore {
   Future<ThemeMode> read();
   Future<void> write(ThemeMode mode);

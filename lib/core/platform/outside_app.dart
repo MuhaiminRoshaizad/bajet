@@ -1,7 +1,7 @@
 /// Screens bajet opens itself that belong to another app or to the system:
 /// the camera, the file picker, the share sheet and the fingerprint prompt.
 /// While one is open, bajet goes to the background, and the app lock must
-/// not count that as the owner leaving (docs/decisions.md 017).
+/// not count that as the user leaving (docs/decisions.md 017).
 abstract final class OutsideApp {
   static var _open = 0;
 

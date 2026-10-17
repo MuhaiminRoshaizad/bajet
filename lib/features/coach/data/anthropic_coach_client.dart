@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../domain/coach_client.dart';
 
-/// The coach through Anthropic's Messages API, called with the owner's own
+/// The coach through Anthropic's Messages API, called with the user's own
 /// key straight from the phone; there is no bajet server in between.
 class AnthropicCoachClient implements CoachClient {
   AnthropicCoachClient([http.Client? client]) : _http = client ?? http.Client();

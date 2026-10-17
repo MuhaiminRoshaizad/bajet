@@ -11,7 +11,7 @@ import 'backup_files.dart';
 
 final backupRepositoryProvider = Provider<BackupRepository>((ref) => DriftBackupRepository(ref.watch(databaseProvider)));
 
-/// Lets the owner pick a backup file, confirms, and restores it. Used from
+/// Lets the user pick a backup file, confirms, and restores it. Used from
 /// Settings and from first-run setup, so a new phone can start from a backup.
 /// [replacing] is false on a fresh install, where there is nothing to lose.
 Future<void> pickAndRestore(BuildContext context, WidgetRef ref, {required bool replacing}) async {

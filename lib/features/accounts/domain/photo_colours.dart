@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 enum PhotoSource { camera, gallery }
 
-/// Takes a photo of the owner's own card, for its colour. The photo is held
+/// Takes a photo of the user's own card, for its colour. The photo is held
 /// in memory only, small, while a colour is picked from it; it is never
 /// written anywhere the app keeps, so no card number sits in the app, its
 /// backups or an export.

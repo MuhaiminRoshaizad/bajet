@@ -39,6 +39,8 @@ English only, as plain strings. There is no localisation layer.
 - Riverpod providers end in `Provider`; notifiers end in `Controller`.
 - One state-management approach app-wide: Riverpod.
 - Comments explain why, not what.
+- Docs and comments call the person using bajet "the user", the voice of
+  product docs; never "the owner" or the first person of whoever wrote them.
 
 ## Data and privacy
 

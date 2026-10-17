@@ -6,7 +6,7 @@ track.
 
 bajet is offline-first: everything is stored on the device and there is no
 account. The only network use is the optional coach, which sends a question
-and a summary of the week and month to Anthropic with the owner's own API key;
+and a summary of the week and month to Anthropic with the user's own API key;
 without a key, nothing leaves the phone.
 
 ## What it does

@@ -14,7 +14,7 @@ class LocalDeviceAuth implements DeviceAuth {
   Future<AuthOutcome> authenticate({required String title, required String reason}) async {
     try {
       // The PIN screen can be an activity of its own, which sends bajet to
-      // the background; that is not the owner leaving.
+      // the background; that is not the user leaving.
       final passed = await OutsideApp.run(() => _auth.authenticate(
             localizedReason: reason,
             authMessages: [AndroidAuthMessages(signInTitle: title, signInHint: 'Use your fingerprint or phone PIN')],

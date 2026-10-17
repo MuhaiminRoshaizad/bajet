@@ -8,7 +8,7 @@ import '../domain/account_models.dart';
 import '../domain/account_repository.dart';
 import 'account_choice.dart';
 
-/// The owner's answer to deleting an account: the account its history moves
+/// The user's answer to deleting an account: the account its history moves
 /// to, or null when that goes too.
 class DeleteChoice {
   const DeleteChoice({this.moveTo});
@@ -20,7 +20,7 @@ String _called(Account a) => a.called;
 
 /// Asks before [account] is deleted. One never used gets a plain confirm;
 /// one with history asks where that goes, moving it by default so no past
-/// figure changes. Null when the owner kept it.
+/// figure changes. Null when the user kept it.
 Future<DeleteChoice?> askDeleteAccount(BuildContext context, AccountRepository repo, Account account, List<Account> all) async {
   final use = await repo.accountUse(account.id);
   if (!context.mounted) return null;

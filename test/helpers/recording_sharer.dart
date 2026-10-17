@@ -11,7 +11,7 @@ class RecordingSharer implements FileSharer {
   String? savedName;
   String? savedText;
 
-  /// What the "Save to" screen answers: false as if the owner cancelled.
+  /// What the "Save to" screen answers: false as if the user cancelled.
   bool saves = true;
 
   @override

@@ -5,14 +5,14 @@ library;
 enum AccountKind { cash, bank, ewallet }
 
 /// What an upgraded install's balance, or an older backup's, is filed under
-/// until the owner says where it really is: a neutral slate card.
+/// until the user says where it really is: a neutral slate card.
 const firstAccountName = 'Main account';
 const firstAccountColor = 0xFF4A5866;
 
 /// How a card is drawn. Leather and suede are the cash wallet's.
 enum CardFinish { matte, gloss, mirror, pearl, frosted, guilloche, leather, suede }
 
-/// A card's colours as ARGB. [ink] is the text colour when the owner picked
+/// A card's colours as ARGB. [ink] is the text colour when the user picked
 /// one, such as gold on black; otherwise the text follows the card's
 /// lightness.
 class CardLook {
@@ -57,7 +57,7 @@ class Account {
   final int balance;
   final CardLook look;
 
-  /// What the owner calls it: the nickname if it has one.
+  /// What the user calls it: the nickname if it has one.
   String get called => nickname ?? name;
 
   Account copyWith({String? name, String? Function()? nickname, CardLook? look}) => Account(

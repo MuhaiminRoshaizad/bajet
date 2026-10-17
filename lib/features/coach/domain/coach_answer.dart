@@ -28,7 +28,7 @@ Future<CoachAnswer> coachAnswer({
   required LookupResult Function(String name, Map<String, Object?> input) lookup,
 }) async {
   final messages = <Map<String, Object?>>[
-    for (final m in conversation) {'role': m.fromOwner ? 'user' : 'assistant', 'content': m.text},
+    for (final m in conversation) {'role': m.fromUser ? 'user' : 'assistant', 'content': m.text},
   ];
   final looked = <String>[];
   for (var round = 0;; round++) {
