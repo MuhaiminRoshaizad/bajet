@@ -23,6 +23,12 @@ without a custom pattern.
   `RinggitCentsFormatter` in `core/validation/` does this for text fields, and
   `RinggitCentsFormatter.parse` reads the sen back.
 
+## Text fields
+
+- Every name and note starts with a capital: `TextCapitalization.sentences`
+  asks the keyboard for a shift, and `CapitaliseFirstFormatter` makes sure,
+  since some keyboards ignore the hint and a `DropdownMenu` cannot give it.
+
 ## Generated code
 
 drift output (`*.g.dart`) is committed, and regenerated with

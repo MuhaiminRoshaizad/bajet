@@ -6,6 +6,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
@@ -235,6 +236,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                 controller: _name,
                 maxLength: 40,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [CapitaliseFirstFormatter()],
                 textInputAction: TextInputAction.next,
                 autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                 validator: (v) => (v ?? '').trim().isEmpty ? 'Give the goal a name' : null,

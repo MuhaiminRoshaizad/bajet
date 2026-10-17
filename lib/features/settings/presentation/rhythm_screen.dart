@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
@@ -202,6 +203,7 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
                 controller: _label,
                 maxLength: 24,
                 textCapitalization: TextCapitalization.sentences,
+                inputFormatters: const [CapitaliseFirstFormatter()],
                 autovalidateMode: AutovalidateMode.onUserInteractionIfError,
                 validator: (v) => (v ?? '').trim().isEmpty ? 'Give the day a name' : null,
                 decoration: InputDecoration(

@@ -6,6 +6,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../accounts/presentation/account_providers.dart';
@@ -219,6 +220,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           TextFormField(
             controller: _goalName,
             textCapitalization: TextCapitalization.sentences,
+            inputFormatters: const [CapitaliseFirstFormatter()],
             textInputAction: TextInputAction.next,
             maxLength: 40,
             autovalidateMode: AutovalidateMode.onUserInteractionIfError,

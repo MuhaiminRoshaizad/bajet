@@ -14,6 +14,7 @@ import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
@@ -608,6 +609,7 @@ class _Composer extends StatelessWidget {
                   maxLines: 4,
                   maxLength: 500,
                   textCapitalization: TextCapitalization.sentences,
+                  inputFormatters: const [CapitaliseFirstFormatter()],
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => onSend(),
                   decoration: const InputDecoration(hintText: 'Ask the coach…', counterText: ''),

@@ -59,6 +59,18 @@ void main() {
     expect(world.entries, isEmpty);
   });
 
+  testWidgets('a note starts with a capital, whatever the keyboard does', (tester) async {
+    final world = await pumpApp(tester);
+    await openLogger(tester);
+    await typeKeys(tester, '800');
+    await tester.tap(find.bySemanticsLabel('Food'));
+    await tester.enterText(find.widgetWithText(TextField, 'Note (optional)'), 'makan');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Log RM8.00'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.note, 'Makan');
+  });
+
   testWidgets('a favourite fills the logger but saves nothing on its own', (tester) async {
     final world = await pumpApp(tester, seed: (w) => w.favourites.add(label: 'Coffee', categoryKey: 'food', amount: 450));
     await openLogger(tester);

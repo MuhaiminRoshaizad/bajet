@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/validation/capitalise_first_formatter.dart';
 import '../domain/account_models.dart';
 import '../domain/known_providers.dart';
 import 'card_palette.dart';
@@ -78,6 +79,7 @@ class _ProviderPickerState extends State<ProviderPicker> {
         hintText: 'Search or choose',
         errorText: widget.errorText,
         textInputAction: TextInputAction.next,
+        inputFormatters: const [CapitaliseFirstFormatter()],
         filterCallback: _filter,
         onSelected: (row) {
           if (row == null || row.heading) return;

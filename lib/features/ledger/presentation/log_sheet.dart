@@ -13,6 +13,7 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/soft.dart';
@@ -375,6 +376,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     controller: _note,
                     maxLength: 60,
                     textCapitalization: TextCapitalization.sentences,
+                    inputFormatters: const [CapitaliseFirstFormatter()],
                     decoration: const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
                   ),
                   const SizedBox(height: AppSpacing.m),
