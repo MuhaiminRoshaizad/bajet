@@ -16,7 +16,9 @@ import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
+import 'coach_avatar.dart';
 import 'coach_controller.dart';
+import 'coach_picker.dart';
 import 'coach_providers.dart';
 
 /// Ask about your money. Answers come from Anthropic using the user's own
@@ -63,7 +65,10 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final hasKey = ref.watch(coachKeyProvider).value != null;
     final chat = ref.watch(coachControllerProvider);
     final today = ref.watch(todayProvider);
-    final remember = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).remember;
+    final settings = ref.watch(coachSettingsProvider).value ?? const CoachSettings();
+    final remember = settings.remember;
+    final mood = ref.watch(coachMoodProvider);
+    final idle = ref.watch(coachIdleMotionProvider);
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
@@ -85,31 +90,70 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
               height: 48,
               child: Row(
                 children: [
-                  Text('Coach', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-                  const SizedBox(width: AppSpacing.s),
-                  // All the spare width goes before the pill, so it and the copy
-                  // button sit at the edge; the pill may still shorten at large
-                  // text sizes.
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: !hasKey
-                          ? null
-                          : Semantics(
-                              label: '$used of $coachDailyLimit questions used today',
-                              excludeSemantics: true,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-                                decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-                                child: Text(
-                                  '${coachDailyLimit - used} left today',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  if (!hasKey)
+                    Text('Coach', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.5))
+                  else
+                    Expanded(
+                      child: Semantics(
+                        button: true,
+                        label: 'Your coach, ${settings.face.label}, ${settings.personality.label}. Switch coach',
+                        excludeSemantics: true,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppRadii.control),
+                          onTap: () => showCoachPicker(context),
+                          child: Row(
+                            children: [
+                              CoachAvatar(face: settings.face, mood: mood, size: 40, idle: idle),
+                              const SizedBox(width: AppSpacing.s),
+                              Flexible(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            settings.face.label,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.4),
+                                          ),
+                                        ),
+                                        Icon(Icons.expand_more_rounded, size: 20, color: c.muted),
+                                      ],
+                                    ),
+                                    Text(chat.sending ? 'thinking…' : settings.personality.label, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 12.5)),
+                                  ],
                                 ),
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  const SizedBox(width: AppSpacing.s),
+                  if (!hasKey) const Spacer(),
+                  if (hasKey)
+                    // Capped, so the coach's name keeps the spare width and the
+                    // pill and copy button stay at the edge; it shortens with
+                    // an ellipsis at large text sizes.
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 120),
+                      child: Semantics(
+                        label: '$used of $coachDailyLimit questions used today',
+                        excludeSemantics: true,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+                          decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
+                          child: Text(
+                            '${coachDailyLimit - used} left today',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ),
                   IconButton(onPressed: _copySummary, icon: const Icon(Icons.copy_rounded), tooltip: "Copy this week's summary"),
                 ],
               ),
@@ -131,19 +175,26 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                     padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
                     children: [
                       if (chat.messages.isEmpty)
-                        SoftWell(
-                          radius: AppRadii.card,
-                          padding: const EdgeInsets.all(AppSpacing.l + 2),
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.xxl),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Ask about your money', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                              CoachAvatar(face: settings.face, mood: mood, size: 112, idle: idle, onTap: () {}),
+                              const SizedBox(height: AppSpacing.l),
+                              Text("Hi, I'm ${settings.face.label}.", style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
                               const SizedBox(height: AppSpacing.xs),
                               Text(
-                                'The coach looks up your weeks, months, accounts and plan to answer. Each question sends '
-                                'only what it looked up to Anthropic with your key.',
+                                settings.face == CoachFace.bajety
+                                    ? "What's a bajety, is that a new Verity? No lah. I look up your weeks, months, accounts and plan to "
+                                        'answer, and I always check with you before changing a thing.'
+                                    : 'I look up your weeks, months, accounts and plan to answer, and I always check with you before '
+                                        'changing a thing.',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(color: c.muted, height: 1.4),
                               ),
+                              const SizedBox(height: AppSpacing.s),
+                              Text('Each question sends only what it looked up to Anthropic with your key.',
+                                  textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12.5)),
                             ],
                           ),
                         ),
@@ -161,7 +212,11 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         ),
                       for (final (i, m) in chat.messages.indexed) ...[
                         if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
-                        _Bubble(message: m),
+                        _Bubble(
+                          message: m,
+                          // A run of replies shows its face once, beside the last.
+                          face: m.fromUser || (i + 1 < chat.messages.length && !chat.messages[i + 1].fromUser) ? null : (m.face ?? settings.face),
+                        ),
                         for (final (j, card) in m.cards.indexed)
                           _ProposalCard(
                             card: card,
@@ -213,21 +268,20 @@ class _DayLabel extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message});
+  const _Bubble({required this.message, this.face});
 
   final CoachMessage message;
+
+  /// The coach who gave a reply, shown beside it; null for none.
+  final CoachFace? face;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final mine = message.fromUser;
     final text = SelectableText(message.text, style: TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45));
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.m),
-      child: Align(
-        alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
+    final bubble = ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * (mine ? 0.82 : 0.72)),
           child: Semantics(
             label: mine ? 'You asked' : 'The coach said',
             child: mine
@@ -256,8 +310,21 @@ class _Bubble extends StatelessWidget {
                     ],
                   ),
           ),
-        ),
-      ),
+        );
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.m),
+      child: mine
+          ? Align(alignment: Alignment.centerRight, child: bubble)
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // The space stays when the face is not shown, so a run of
+                // replies lines up.
+                SizedBox(width: 30, child: face == null ? null : CoachAvatar(face: face!, size: 30, animate: false)),
+                const SizedBox(width: AppSpacing.s),
+                Flexible(child: bubble),
+              ],
+            ),
     );
   }
 }
@@ -307,11 +374,12 @@ class _ProposalCard extends StatelessWidget {
       ],
     );
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s),
+      // Lined up with the reply bubbles, past the coach's face.
+      padding: const EdgeInsets.only(top: AppSpacing.s, left: 30 + AppSpacing.s),
       child: Align(
         alignment: Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
+          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.72),
           child: AnimatedOpacity(
             opacity: settled ? 0.6 : 1,
             duration: AppMotion.fast,

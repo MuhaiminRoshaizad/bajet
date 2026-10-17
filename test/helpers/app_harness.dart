@@ -2,6 +2,7 @@ import 'package:bajet/features/accounts/presentation/account_providers.dart';
 import 'package:bajet/app/app.dart';
 import 'package:bajet/core/database/database_provider.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
+import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:bajet/features/coach/presentation/coach_providers.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/ledger/presentation/ledger_providers.dart';
@@ -53,6 +54,7 @@ Future<FakeWorld> pumpApp(
       coachClientProvider.overrideWithValue(world.coach),
       coachSettingsRepositoryProvider.overrideWithValue(world.coachSettings),
       coachChatRepositoryProvider.overrideWithValue(world.coachChat),
+      coachIdleMotionProvider.overrideWithValue(false),
       planRepositoryProvider.overrideWithValue(world),
       accountRepositoryProvider.overrideWithValue(world),
       photoColoursProvider.overrideWithValue(world.photos),

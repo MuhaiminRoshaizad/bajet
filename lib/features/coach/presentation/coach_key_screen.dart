@@ -9,7 +9,9 @@ import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_memory.dart';
 import '../domain/coach_settings.dart';
+import 'coach_avatar.dart';
 import 'coach_controller.dart';
+import 'coach_picker.dart';
 import 'coach_providers.dart';
 
 /// Settings → Coach: where the user's own Anthropic key goes in or comes
@@ -147,6 +149,8 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
             ),
           ],
           const SizedBox(height: AppSpacing.xxl),
+          const _YourCoach(),
+          const SizedBox(height: AppSpacing.xxl),
           const _PersonalityPicker(),
           const SizedBox(height: AppSpacing.xxl),
           const _Memory(),
@@ -243,6 +247,30 @@ class _Memory extends ConsumerWidget {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: const Text('Chat forgotten'), action: SnackBarAction(label: 'Undo', onPressed: () => controller.unforget(gone))));
+  }
+}
+
+/// The coach's face, opening the same picker as the Coach tab's header.
+class _YourCoach extends ConsumerWidget {
+  const _YourCoach();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final face = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).face;
+    return CardGroup(
+      label: 'Your coach',
+      children: [
+        ListTile(
+          minTileHeight: 72,
+          leading: CoachAvatar(face: face, size: 44, idle: ref.watch(coachIdleMotionProvider)),
+          title: Text(face.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(face.look, style: TextStyle(color: c.muted)),
+          trailing: Icon(Icons.chevron_right_rounded, color: c.muted),
+          onTap: () => showCoachPicker(context),
+        ),
+      ],
+    );
   }
 }
 

@@ -12,7 +12,19 @@ import '../domain/coach_memory.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
+import 'coach_avatar.dart';
 import 'coach_providers.dart';
+
+/// What the coach's face is doing: thinking while it waits, then reacting
+/// to what happened.
+class CoachMoodController extends Notifier<CoachMood> {
+  @override
+  CoachMood build() => CoachMood.idle;
+
+  void set(CoachMood mood) => state = mood;
+}
+
+final coachMoodProvider = NotifierProvider<CoachMoodController, CoachMood>(CoachMoodController.new);
 
 class CoachChat {
   const CoachChat({this.messages = const [], this.sending = false, this.error});
@@ -45,6 +57,12 @@ class CoachController extends Notifier<CoachChat> {
   CoachSettings get _settings => ref.read(coachSettingsProvider).value ?? const CoachSettings();
   CoachPersonality get _personality => _settings.personality;
 
+  void _mood(CoachMood mood) => ref.read(coachMoodProvider.notifier).set(mood);
+
+  /// A message turned away or asked again: the knows-too-much voice stares,
+  /// the others look concerned.
+  CoachMood get _unimpressed => _personality == CoachPersonality.seesEverything ? CoachMood.stare : CoachMood.concerned;
+
   Future<void> _load() async {
     final settings = await ref.read(coachSettingsProvider.future);
     if (!settings.remember) return;
@@ -65,6 +83,7 @@ class CoachController extends Notifier<CoachChat> {
     if (repeat) {
       // Asked again within a minute: answered on the phone, costing nothing
       // and counting against nothing.
+      _mood(_unimpressed);
       return _reply(repeatLine(_personality, _repeats++));
     }
     _repeats = 0;
@@ -87,12 +106,16 @@ class CoachController extends Notifier<CoachChat> {
       return _fail("That's today's $coachDailyLimit questions. The coach is back tomorrow.");
     }
     state = CoachChat(messages: state.messages, sending: true);
+    _mood(CoachMood.thinking);
     try {
       final client = ref.read(coachClientProvider);
       final kind = await gate(client, key, state.messages.last.text);
       // Turned away on the phone, in the coach's own voice: the message never
       // reaches the coach and costs no question.
-      if (kind == GateKind.offTopic || kind == GateKind.attack) return _reply(declineLine(_personality, _declined++));
+      if (kind == GateKind.offTopic || kind == GateKind.attack) {
+        _mood(_unimpressed);
+        return _reply(declineLine(_personality, _declined++));
+      }
       final conversation = forModel(state.messages);
       final older = state.messages.sublist(0, state.messages.length - conversation.length);
       final cards = <CoachCard>[];
@@ -112,7 +135,11 @@ class CoachController extends Notifier<CoachChat> {
       );
       await store.recordUse(today);
       ref.invalidate(coachUsedTodayProvider);
-      if (replyLooksWrong(answer.text)) return _reply(declineLine(_personality, _declined++));
+      if (replyLooksWrong(answer.text)) {
+        _mood(_unimpressed);
+        return _reply(declineLine(_personality, _declined++));
+      }
+      _mood(CoachMood.happy);
       await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: DateTime.now(), face: _settings.face));
     } on CoachException catch (e) {
       _fail(e.message);
@@ -129,7 +156,24 @@ class CoachController extends Notifier<CoachChat> {
         await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note),
       BillPaidProposal(:final item) => await ref.read(planRepositoryProvider).confirmRecurring(item.id, paidOn: ref.read(todayProvider)).then((_) => null),
     };
+    _mood(CoachMood.cheer);
     await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
+  }
+
+  /// Switches the coach's face. The chat stays; the new face says hello in
+  /// it, so the switch is part of the record.
+  Future<void> switchFace(CoachFace face) async {
+    await ref.read(coachSettingsRepositoryProvider).saveSettings(_settings.copyWith(face: face));
+    if (state.messages.isEmpty) return;
+    _mood(CoachMood.hello);
+    await _add(CoachMessage(
+      fromUser: false,
+      text: face == CoachFace.bajety
+          ? 'Bajety here. Is that a new Verity? No lah. I remember everything we said.'
+          : "Hi, ${face.label} here. I've read our chat, so carry on.",
+      sentAt: DateTime.now(),
+      face: face,
+    ));
   }
 
   Future<void> decline(int message, int card) async {
@@ -206,7 +250,10 @@ class CoachController extends Notifier<CoachChat> {
 
   Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: DateTime.now(), face: _settings.face));
 
-  void _fail(String message) => state = CoachChat(messages: state.messages, error: message);
+  void _fail(String message) {
+    _mood(CoachMood.concerned);
+    state = CoachChat(messages: state.messages, error: message);
+  }
 }
 
 final coachControllerProvider = NotifierProvider<CoachController, CoachChat>(CoachController.new);

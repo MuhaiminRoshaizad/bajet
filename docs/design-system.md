@@ -381,8 +381,15 @@ inline line of text where it is.
   slider runs both ways, so its track is one colour rather than filling from
   the left.
 - The coach is a chat with the question box pinned to the bottom and three
-  suggested questions while it is empty. The header counts the questions left
-  today. A failed question says why (offline, key refused, busy) and offers
+  suggested questions while it is empty. The header shows the coach's face
+  and name over its personality; tapping it opens Choose your coach, a sheet
+  of the four faces that switches the look only, after which the new face
+  says hello in the chat. Picking Bajety offers Sees Everything. An empty
+  chat greets with a large face. Replies carry the face that gave them,
+  once per run, and the face reacts: thinking while waiting, happy at an
+  answer, concerned (or staring, for Sees Everything) at a message turned
+  away, cheering when a card is confirmed. The header also counts the
+  questions left today. A failed question says why (offline, key refused, busy) and offers
   Try again; nothing is counted until an answer arrives. It is one ongoing
   chat, not separate sessions: with memory on (the default) it is still there
   after a restart, with "Remembered on this phone only" at the top and a day
