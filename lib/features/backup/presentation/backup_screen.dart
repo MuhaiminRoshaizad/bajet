@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
@@ -20,15 +21,29 @@ class BackupScreen extends ConsumerStatefulWidget {
 class _BackupScreenState extends ConsumerState<BackupScreen> {
   bool _busy = false;
 
-  Future<void> _export() async {
+  /// Writes the backup file and hands it to [send]: the share sheet, or
+  /// the "Save to" screen.
+  Future<void> _export(Future<void> Function(FileSharer sharer, List<int> bytes, String name) send) async {
     setState(() => _busy = true);
     try {
       final backup = await ref.read(backupRepositoryProvider).export();
       final today = ref.read(todayProvider);
       final name = 'bajet-backup-${today.toIso8601String().substring(0, 10)}.json';
-      await ref.read(fileSharerProvider).shareFile(utf8.encode(const JsonEncoder.withIndent('  ').convert(backup)), name, 'application/json');
+      await send(ref.read(fileSharerProvider), utf8.encode(const JsonEncoder.withIndent('  ').convert(backup)), name);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _share(FileSharer sharer, List<int> bytes, String name) => sharer.shareFile(bytes, name, 'application/json');
+
+  Future<void> _save(FileSharer sharer, List<int> bytes, String name) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      if (!await sharer.saveFile(bytes, name, 'application/json')) return;
+      messenger.showSnackBar(SnackBar(content: Text('Saved $name')));
+    } on PlatformException {
+      messenger.showSnackBar(const SnackBar(content: Text('Could not save the file. Share it instead.')));
     }
   }
 
@@ -44,6 +59,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final canSave = ref.watch(fileSharerProvider).canSave;
     return Scaffold(
       appBar: AppBar(title: const Text('Backup')),
       body: ListView(
@@ -59,12 +75,29 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.l),
-          FilledButton.icon(
-            onPressed: _busy ? null : _export,
-            icon: const Icon(Icons.ios_share_rounded),
-            label: const Text('Export a backup file'),
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-          ),
+          // Saving is the main way out where it exists; sharing stays for
+          // sending the file to Drive or a chat.
+          if (canSave) ...[
+            FilledButton.icon(
+              onPressed: _busy ? null : () => _export(_save),
+              icon: const Icon(Icons.download_rounded),
+              label: const Text('Save a backup file'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            ),
+            const SizedBox(height: AppSpacing.m),
+            OutlinedButton.icon(
+              onPressed: _busy ? null : () => _export(_share),
+              icon: const Icon(Icons.ios_share_rounded),
+              label: const Text('Share a backup file'),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            ),
+          ] else
+            FilledButton.icon(
+              onPressed: _busy ? null : () => _export(_share),
+              icon: const Icon(Icons.ios_share_rounded),
+              label: const Text('Share a backup file'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            ),
           const SizedBox(height: AppSpacing.m),
           OutlinedButton.icon(
             onPressed: _busy ? null : _restore,

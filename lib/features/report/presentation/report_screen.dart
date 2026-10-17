@@ -41,33 +41,53 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     return 'bajet-report-${iso(i.from)}-to-${iso(i.to)}.$extension';
   }
 
-  Future<void> _share(Insights i, String text, List<Entry> entries, Map<String, Category> categories) async {
-    final sharer = ref.read(fileSharerProvider);
+  /// The PDF or CSV of [i]: its bytes, file name and type.
+  Future<(List<int>, String, String)> _file(Insights i, List<Entry> entries, Map<String, Category> categories) async {
+    if (_format == ReportFormat.csv) return (utf8.encode(reportCsv(entries, categories)), _fileName(i, 'csv'), 'text/csv');
+    final settings = ref.read(settingsProvider).value!;
+    final bytes = await reportPdf(
+      i: i,
+      entries: entries,
+      categories: categories,
+      balance: ref.read(balanceProvider).value ?? 0,
+      buffer: settings.buffer,
+      goal: ref.read(projectionProvider)?.goals.firstOrNull,
+      regular: await rootBundle.load('assets/fonts/Figtree-Regular.ttf'),
+      bold: await rootBundle.load('assets/fonts/Figtree-Bold.ttf'),
+    );
+    return (bytes, _fileName(i, 'pdf'), 'application/pdf');
+  }
+
+  Future<void> _busyWhile(Future<void> Function() task) async {
     setState(() => _busy = true);
     try {
-      switch (_format) {
-        case ReportFormat.text:
-          await sharer.shareText(text, subject: 'bajet report');
-        case ReportFormat.csv:
-          await sharer.shareFile(utf8.encode(reportCsv(entries, categories)), _fileName(i, 'csv'), 'text/csv');
-        case ReportFormat.pdf:
-          final settings = ref.read(settingsProvider).value!;
-          final bytes = await reportPdf(
-            i: i,
-            entries: entries,
-            categories: categories,
-            balance: ref.read(balanceProvider).value ?? 0,
-            buffer: settings.buffer,
-            goal: ref.read(projectionProvider)?.goals.firstOrNull,
-            regular: await rootBundle.load('assets/fonts/Figtree-Regular.ttf'),
-            bold: await rootBundle.load('assets/fonts/Figtree-Bold.ttf'),
-          );
-          await sharer.shareFile(bytes, _fileName(i, 'pdf'), 'application/pdf');
-      }
+      await task();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
+
+  Future<void> _share(Insights i, String text, List<Entry> entries, Map<String, Category> categories) => _busyWhile(() async {
+        final sharer = ref.read(fileSharerProvider);
+        if (_format == ReportFormat.text) return sharer.shareText(text, subject: 'bajet report');
+        final (bytes, name, type) = await _file(i, entries, categories);
+        await sharer.shareFile(bytes, name, type);
+      });
+
+  Future<void> _save(Insights i, List<Entry> entries, Map<String, Category> categories) => _busyWhile(() async {
+        final messenger = ScaffoldMessenger.of(context);
+        final (bytes, name, type) = await _file(i, entries, categories);
+        try {
+          if (!await ref.read(fileSharerProvider).saveFile(bytes, name, type)) return;
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text('Saved $name')));
+        } on PlatformException {
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(const SnackBar(content: Text('Could not save the file. Share it instead.')));
+        }
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +180,16 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                           },
                     icon: const Icon(Icons.copy_rounded),
                     label: const Text('Copy'),
+                    style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.m),
+              ] else if (ref.watch(fileSharerProvider).canSave) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: !ready || _busy ? null : () => _save(i, entries, categories),
+                    icon: const Icon(Icons.download_rounded),
+                    label: const Text('Save'),
                     style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
                   ),
                 ),

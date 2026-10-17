@@ -56,7 +56,7 @@ lib/
     money/              sen ↔ RM formatting, the only place money becomes text
     navigation/         route paths, so features can link without the router
     platform/           screens bajet opens outside itself (camera, pickers, share sheet)
-    sharing/            the share sheet, for backups and reports
+    sharing/            the share sheet and the "Save to" screen, for backups and reports
     theme/              colour, spacing, radii and motion tokens
     validation/         input formatters and validators
     widgets/            widgets shared by two or more features
@@ -78,7 +78,7 @@ A folder under `core/` appears only once two features need it.
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, the week strip, goal, recent entries |
 | `settings` | The Settings hub behind Today's gear: balance, accounts, allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites |
-| `backup` | JSON export through the share sheet and restore from a picked file |
+| `backup` | JSON export saved to a folder or through the share sheet, and restore from a picked file |
 | `checkin` | The Sunday check-in: compare each account with what it really holds (the bank app as a whole while there is one account), log any gap to that account, look back at the week |
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
@@ -127,8 +127,11 @@ restored settings row is what moves the router on.
   `flutter_secure_storage` (Android Keystore, iOS Keychain). It never enters
   the database, a backup file or the code.
 - **JSON export and import:** Settings → Backup exports every table as one
-  JSON file through the share sheet and restores one picked with the system
-  file picker, after confirming. It is the backup the owner controls, and the
+  JSON file, saved where the owner picks or sent through the share sheet, and
+  restores one picked with the system file picker, after confirming. Saving
+  (also offered for PDF and CSV reports) opens Android's own "Save to" screen
+  through `MainActivity`'s files channel, so it needs no storage permission;
+  on iPhone the share sheet's Save to Files does the same job. It is the backup the owner controls, and the
   way a set-up plan is loaded onto a new phone. See the
   [backup format](data-model.md#backup-format).
 

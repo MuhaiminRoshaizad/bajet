@@ -11,19 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class FakeSharer implements FileSharer {
-  String? shared;
-  String? sharedName;
-
-  @override
-  Future<void> shareFile(List<int> bytes, String fileName, String mimeType) async {
-    shared = utf8.decode(bytes);
-    sharedName = fileName;
-  }
-
-  @override
-  Future<void> shareText(String text, {String? subject}) async {}
-}
+import '../../helpers/recording_sharer.dart';
 
 class FakeFiles implements BackupFiles {
   String? toPick;
@@ -46,12 +34,12 @@ class FakeBackups implements BackupRepository {
 }
 
 /// The share sheet of the latest pumpBackup.
-late FakeSharer sharer;
+late RecordingSharer sharer;
 
 Future<(FakeFiles, FakeBackups)> pumpBackup(WidgetTester tester) async {
   final files = FakeFiles();
   final backups = FakeBackups();
-  sharer = FakeSharer();
+  sharer = RecordingSharer();
   await tester.pumpWidget(ProviderScope(
     overrides: [
       todayProvider.overrideWithValue(DateTime.utc(2026, 7, 1)),
@@ -65,12 +53,30 @@ Future<(FakeFiles, FakeBackups)> pumpBackup(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('exporting shares a dated JSON file', (tester) async {
+  testWidgets('a backup can be shared as a dated JSON file', (tester) async {
     await pumpBackup(tester);
-    await tester.tap(find.text('Export a backup file'));
+    await tester.tap(find.text('Share a backup file'));
     await tester.pumpAndSettle();
-    expect(sharer.sharedName, 'bajet-backup-2026-07-01.json');
-    expect(jsonDecode(sharer.shared!), {'app': 'bajet', 'format': backupFormatVersion, 'entries': []});
+    expect(sharer.fileName, 'bajet-backup-2026-07-01.json');
+    expect(jsonDecode(sharer.fileText!), {'app': 'bajet', 'format': backupFormatVersion, 'entries': []});
+  });
+
+  testWidgets('a backup can be saved straight to a folder, and says so', (tester) async {
+    await pumpBackup(tester);
+    await tester.tap(find.text('Save a backup file'));
+    await tester.pumpAndSettle();
+    expect(sharer.savedName, 'bajet-backup-2026-07-01.json');
+    expect(jsonDecode(sharer.savedText!), {'app': 'bajet', 'format': backupFormatVersion, 'entries': []});
+    expect(find.text('Saved bajet-backup-2026-07-01.json'), findsOneWidget);
+  });
+
+  testWidgets('cancelling the save leaves nothing behind', (tester) async {
+    await pumpBackup(tester);
+    sharer.saves = false;
+    await tester.tap(find.text('Save a backup file'));
+    await tester.pumpAndSettle();
+    expect(sharer.savedName, isNull);
+    expect(find.textContaining('Saved'), findsNothing);
   });
 
   testWidgets('restoring asks before replacing anything', (tester) async {

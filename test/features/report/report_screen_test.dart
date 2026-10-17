@@ -1,25 +1,10 @@
-import 'dart:convert';
 
 import 'package:bajet/core/sharing/file_sharer.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
-
-class RecordingSharer implements FileSharer {
-  String? text;
-  String? fileName;
-  String? fileText;
-
-  @override
-  Future<void> shareFile(List<int> bytes, String fileName, String mimeType) async {
-    this.fileName = fileName;
-    fileText = utf8.decode(bytes, allowMalformed: true);
-  }
-
-  @override
-  Future<void> shareText(String text, {String? subject}) async => this.text = text;
-}
+import '../../helpers/recording_sharer.dart';
 
 Future<RecordingSharer> openReport(WidgetTester tester) async {
   final sharer = RecordingSharer();
@@ -58,5 +43,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(sharer.fileName, 'bajet-report-2026-07-01-to-2026-07-01.csv');
     expect(sharer.fileText, contains('2026-07-01,expense,Food,Lunch,,8.00'));
+  });
+
+  testWidgets('a CSV can be saved straight to a folder; text has nothing to save', (tester) async {
+    final sharer = await openReport(tester);
+    expect(find.text('Save'), findsNothing);
+
+    await tester.tap(find.text('CSV'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(sharer.savedName, 'bajet-report-2026-07-01-to-2026-07-01.csv');
+    expect(sharer.savedText, contains('2026-07-01,expense,Food,Lunch,,8.00'));
+    expect(find.text('Saved bajet-report-2026-07-01-to-2026-07-01.csv'), findsOneWidget);
   });
 }
