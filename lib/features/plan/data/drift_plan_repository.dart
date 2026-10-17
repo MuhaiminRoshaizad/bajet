@@ -131,8 +131,9 @@ class DriftPlanRepository implements PlanRepository {
   }
 
   @override
-  Future<void> confirmRecurring(int id, {required DateTime paidOn}) => _db.transaction(() async {
-        final item = await (_db.select(_db.recurringItems)..where((r) => r.id.equals(id))).getSingle();
+  Future<bool> confirmRecurring(int id, {required DateTime due, required DateTime paidOn}) => _db.transaction(() async {
+        final item = await (_db.select(_db.recurringItems)..where((r) => r.id.equals(id))).getSingleOrNull();
+        if (item == null || !item.active || item.nextDue != due) return false;
         await _db.into(_db.entries).insert(
               EntriesCompanion.insert(
                 occurredOn: paidOn,
@@ -144,9 +145,9 @@ class DriftPlanRepository implements PlanRepository {
                 accountId: item.accountId,
               ),
             );
-        final due = item.nextDue;
         await (_db.update(_db.recurringItems)..where((r) => r.id.equals(id)))
             .write(RecurringItemsCompanion(nextDue: Value(DateTime.utc(due.year, due.month + 1, due.day))));
+        return true;
       });
 
   @override

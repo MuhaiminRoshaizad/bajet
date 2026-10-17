@@ -184,29 +184,27 @@ class CoachController extends Notifier<CoachChat> {
     final c = state.messages[message].cards[card];
     if (c.state != CardState.waiting || !_confirming.add((message, card))) return;
     try {
-      if (!_stillDue(c.proposal)) return await _setCard(message, card, c.copyWith(state: CardState.outdated));
       await _make(message, card, c);
     } finally {
       _confirming.remove((message, card));
     }
   }
 
-  /// A card waits in the chat, remembered, for as long as the user likes; a
-  /// bill paid meanwhile from the Plan tab must not be paid again.
-  bool _stillDue(CoachProposal p) {
-    if (p is! BillPaidProposal) return true;
-    final now = ref.read(coachDataProvider)?.recurring.where((r) => r.id == p.item.id).firstOrNull;
-    return now != null && now.active && now.nextDue == p.item.nextDue;
-  }
-
   /// Makes the change card [card] of message [message] suggested.
   Future<void> _make(int message, int card, CoachCard c) async {
-    final undoId = switch (c.proposal) {
-      LogProposal(:final draft) => await ref.read(ledgerRepositoryProvider).add(draft),
-      MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note) =>
-        await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note),
-      BillPaidProposal(:final item) => await ref.read(planRepositoryProvider).confirmRecurring(item.id, paidOn: ref.read(todayProvider)).then((_) => null),
-    };
+    final int? undoId;
+    switch (c.proposal) {
+      case LogProposal(:final draft):
+        undoId = await ref.read(ledgerRepositoryProvider).add(draft);
+      case MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note):
+        undoId = await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note);
+      case BillPaidProposal(:final item):
+        // A card waits in the remembered chat for as long as the user likes;
+        // a bill paid meanwhile from the Plan tab is not paid again.
+        final paid = await ref.read(planRepositoryProvider).confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider));
+        if (!paid) return _setCard(message, card, c.copyWith(state: CardState.outdated));
+        undoId = null;
+    }
     _mood(CoachMood.cheer);
     await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
   }

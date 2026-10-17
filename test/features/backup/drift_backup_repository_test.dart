@@ -39,7 +39,7 @@ void main() {
     await plan.saveSettings(PlanSettings(openingDate: d(2026, 7, 1), weeklyCap: 5000, buffer: 50000));
     await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.bank, name: firstAccountName, openingBalance: const Value(150000), color: 0xFF4A5866));
     final rent = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1));
-    await plan.confirmRecurring(rent, paidOn: d(2026, 7, 1));
+    await plan.confirmRecurring(rent, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
     await plan.addEvent(name: 'Bonus', isIncome: true, amount: 30000, categoryKey: 'salary', date: d(2026, 9, 1), countInProjection: false);
     await plan.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1));
     await ledger.add(EntryDraft(day: d(2026, 7, 2), isIncome: false, amount: 450, categoryKey: 'food', label: 'Coffee', note: 'Morning'));

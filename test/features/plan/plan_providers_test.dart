@@ -89,7 +89,7 @@ void main() {
     final id = await plan().addRecurring(name: 'Internet', isIncome: false, amount: 12900, categoryKey: 'bills', nextDue: d(2026, 10, 10));
 
     expect((await settle(dueRecurringProvider)).map((r) => r.id), [id]);
-    await plan().confirmRecurring(id, paidOn: today);
+    await plan().confirmRecurring(id, due: d(2026, 10, 10), paidOn: today);
 
     final item = (await plan().watchRecurring().first).single;
     expect(item.nextDue, d(2026, 11, 10));

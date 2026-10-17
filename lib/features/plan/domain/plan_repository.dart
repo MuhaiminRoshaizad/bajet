@@ -49,9 +49,12 @@ abstract interface class PlanRepository {
   /// confirmed entries refer to them.
   Future<void> setRecurringActive(int id, {required bool active});
 
-  /// Logs the occurrence due on [nextDue] as a real entry dated [paidOn] and
+  /// Logs the occurrence due on [due] as a real entry dated [paidOn] and
   /// moves the item's next due date forward one month, in one transaction.
-  Future<void> confirmRecurring(int id, {required DateTime paidOn});
+  /// Returns false and does nothing when [due] is no longer the next one,
+  /// because it was already paid, or the item is gone or paused, so a second
+  /// tap or an old card never pays twice.
+  Future<bool> confirmRecurring(int id, {required DateTime due, required DateTime paidOn});
 
   /// Every event, each with what has been spent against its next
   /// occurrence.

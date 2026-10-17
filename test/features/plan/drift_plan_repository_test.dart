@@ -84,7 +84,7 @@ void main() {
 
   test('deleting a bill keeps its confirmed payments, and undo links them again', () async {
     final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1), windowDays: 2);
-    await plan.confirmRecurring(id, paidOn: d(2026, 7, 1));
+    await plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
 
     final removal = await plan.deleteRecurring(id);
     expect(await plan.watchRecurring().first, isEmpty);
@@ -95,6 +95,16 @@ void main() {
     final back = (await plan.watchRecurring().first).single;
     expect((back.id, back.windowDays, back.nextDue), (id, 2, d(2026, 8, 1)));
     expect((await db.select(db.entries).getSingle()).recurringItemId, id);
+  });
+
+  test('a second tap, or an old card, never pays a bill twice', () async {
+    final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1));
+    final first = plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
+    final second = plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
+    expect(await [first, second].wait, [true, false]);
+    expect(await db.select(db.entries).get(), hasLength(1));
+    expect((await plan.watchRecurring().first).single.nextDue, d(2026, 8, 1));
+    expect(await plan.confirmRecurring(404, due: d(2026, 7, 1), paidOn: d(2026, 7, 1)), isFalse);
   });
 
   test('marking a yearly event done moves it on a year; a one-off one is done', () async {
@@ -156,7 +166,7 @@ void main() {
   test('a bill is paid from its own account, and moving it keeps what was paid where it was', () async {
     final cash = await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.cash, name: 'Cash', color: 0xFF6B3F24));
     final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1), accountId: cash);
-    await plan.confirmRecurring(id, paidOn: d(2026, 7, 1));
+    await plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
     expect((await db.select(db.entries).getSingle()).accountId, cash);
 
     final rent = (await plan.watchRecurring().first).single;

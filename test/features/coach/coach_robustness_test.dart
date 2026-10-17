@@ -41,7 +41,7 @@ void main() {
     await ask(tester, 'I paid the rent');
     expect(find.text('Mark this bill paid?'), findsOneWidget);
 
-    await world.confirmRecurring(rent, paidOn: testToday);
+    await world.confirmRecurring(rent, due: world.recurring.single.nextDue, paidOn: testToday);
     await tester.pumpAndSettle();
     final due = world.recurring.single.nextDue;
     await tester.tap(find.widgetWithText(FilledButton, 'Mark paid'));

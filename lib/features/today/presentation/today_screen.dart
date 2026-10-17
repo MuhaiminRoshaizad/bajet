@@ -187,7 +187,7 @@ class _DueCard extends ConsumerWidget {
             ),
           ),
           FilledButton.tonal(
-            onPressed: () => ref.read(planRepositoryProvider).confirmRecurring(item.id, paidOn: ref.read(todayProvider)),
+            onPressed: () => ref.read(planRepositoryProvider).confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider)),
             style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
             child: Text(item.isIncome ? 'Received' : 'Paid'),
           ),

@@ -370,14 +370,15 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
       ];
 
   @override
-  Future<void> confirmRecurring(int id, {required DateTime paidOn}) async {
-    final item = _recurring.value.firstWhere((r) => r.id == id);
+  Future<bool> confirmRecurring(int id, {required DateTime due, required DateTime paidOn}) async {
+    final item = _recurring.value.where((r) => r.id == id).firstOrNull;
+    if (item == null || !item.active || item.nextDue != due) return false;
     await add(EntryDraft(day: paidOn, isIncome: item.isIncome, amount: item.amount, categoryKey: 'bills', label: item.name, accountId: item.accountId));
-    final due = item.nextDue;
     _recurring.value = [
       for (final r in _recurring.value)
         r.id == id ? r.copyWith(nextDue: DateTime.utc(due.year, due.month + 1, due.day)) : r,
     ];
+    return true;
   }
 
   @override
