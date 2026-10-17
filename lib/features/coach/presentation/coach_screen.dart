@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +37,9 @@ class CoachScreen extends ConsumerStatefulWidget {
 class _CoachScreenState extends ConsumerState<CoachScreen> {
   final _question = TextEditingController();
   final _scroll = ScrollController();
+
+  /// How many messages were already there when the tab opened.
+  late final _openedWith = ref.read(coachControllerProvider).messages.length;
 
   @override
   void dispose() {
@@ -69,6 +76,9 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final remember = settings.remember;
     final mood = ref.watch(coachMoodProvider);
     final idle = ref.watch(coachIdleMotionProvider);
+    // What was on screen when it opened, or came back from memory, is already
+    // in place; only what is said from here springs in.
+    final settledCount = math.max(_openedWith, ref.read(coachControllerProvider.notifier).settled);
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
@@ -212,10 +222,15 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         ),
                       for (final (i, m) in chat.messages.indexed) ...[
                         if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
-                        _Bubble(
-                          message: m,
-                          // A run of replies shows its face once, beside the last.
-                          face: m.fromUser || (i + 1 < chat.messages.length && !chat.messages[i + 1].fromUser) ? null : (m.face ?? settings.face),
+                        _SpringIn(
+                          key: ValueKey(('message', i)),
+                          animate: i >= settledCount,
+                          alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
+                          child: _Bubble(
+                            message: m,
+                            // A run of replies shows its face once, beside the last.
+                            face: m.fromUser || (i + 1 < chat.messages.length && !chat.messages[i + 1].fromUser) ? null : (m.face ?? settings.face),
+                          ),
                         ),
                         for (final (j, card) in m.cards.indexed)
                           _ProposalCard(
@@ -225,7 +240,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                             onUndo: () => ref.read(coachControllerProvider.notifier).undo(i, j),
                           ),
                       ],
-                      if (chat.sending) const _Thinking(),
+                      if (chat.sending) _Thinking(reading: chat.reading),
                       if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider.notifier).retry() : null),
                     ],
                   ),
@@ -397,20 +412,138 @@ class _ProposalCard extends StatelessWidget {
   }
 }
 
-class _Thinking extends StatelessWidget {
-  const _Thinking();
+/// A new message arriving: it springs up from below at just over half its
+/// size, growing out of the side it was sent from, passing its size by a
+/// little and settling.
+class _SpringIn extends StatefulWidget {
+  const _SpringIn({super.key, required this.animate, required this.alignment, required this.child});
+
+  final bool animate;
+  final Alignment alignment;
+  final Widget child;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.m),
+  State<_SpringIn> createState() => _SpringInState();
+}
+
+class _SpringInState extends State<_SpringIn> with SingleTickerProviderStateMixin {
+  late final _t = AnimationController.unbounded(vsync: this, value: 1);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) {
+      _t.value = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+          _t.value = 1;
+        } else {
+          _t.animateWith(SpringSimulation(AppMotion.spring, 0, 1, 0, snapToEnd: true));
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _t.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _t,
+        child: widget.child,
+        builder: (context, child) {
+          final t = _t.value;
+          return Opacity(
+            opacity: (t * 2).clamp(0.0, 1.0),
+            child: Transform.translate(
+              offset: Offset(0, 24 * (1 - t)),
+              child: Transform.scale(scale: lerpDouble(0.55, 1, t), alignment: widget.alignment, child: child),
+            ),
+          );
+        },
+      );
+}
+
+/// The coach at work: three dots bobbing in a reply bubble, and what it is
+/// reading once it starts looking things up.
+class _Thinking extends StatefulWidget {
+  const _Thinking({required this.reading});
+
+  final String? reading;
+
+  @override
+  State<_Thinking> createState() => _ThinkingState();
+}
+
+class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixin {
+  late final _bob = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _bob.stop();
+    } else if (!_bob.isAnimating) {
+      _bob.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _bob.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final reading = widget.reading;
+    final status = reading == null
+        ? 'Thinking…'
+        : reading.startsWith('A suggestion')
+            ? 'Writing up a suggestion…'
+            // As the reply's own "Looked at:" line will say, label untouched.
+            : 'Looking at: $reading…';
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.m, left: 30 + AppSpacing.s),
+      child: Semantics(
+        liveRegion: true,
+        label: 'The coach is ${status[0].toLowerCase()}${status.substring(1)}',
+        excludeSemantics: true,
         child: Row(
           children: [
-            const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+            SoftCard(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m + 2),
+              radius: 20,
+              child: AnimatedBuilder(
+                animation: _bob,
+                builder: (context, _) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < 3; i++)
+                      Padding(
+                        padding: EdgeInsets.only(left: i == 0 ? 0 : 5),
+                        child: Transform.translate(
+                          // Each dot rises in turn, a third of a beat apart.
+                          offset: Offset(0, -4 * math.max(0.0, math.sin((_bob.value - i * 0.16) * math.pi * 2))),
+                          child: Container(width: 7, height: 7, decoration: BoxDecoration(color: c.muted, shape: BoxShape.circle)),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(width: AppSpacing.s),
-            Flexible(child: Text('The coach is thinking…', style: TextStyle(color: context.colors.muted))),
+            Flexible(child: Text(status, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 13))),
           ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _Problem extends StatelessWidget {

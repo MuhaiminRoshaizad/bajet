@@ -398,7 +398,14 @@ inline line of text where it is.
   once per run, and the face reacts: thinking while waiting, happy at an
   answer, concerned (or staring, for Sees Everything) at a message turned
   away, cheering when a card is confirmed. The header also counts the
-  questions left today. A failed question says why (offline, key refused, busy) and offers
+  questions left today.
+- A message said now springs in on `AppMotion.spring` from 24 pt below at
+  0.55 of its size, growing out of its own side, so older ones glide up as
+  the list scrolls; what came back from memory is simply there. While the
+  coach works, three dots bob in a reply bubble with "Thinking…" beside
+  them, then "Looking at: July 2026…" for each lookup, worded as the
+  reply's "Looked at:" line. Reduce motion turns both into plain
+  appearances. A failed question says why (offline, key refused, busy) and offers
   Try again; nothing is counted until an answer arrives. It is one ongoing
   chat, not separate sessions: with memory on (the default) it is still there
   after a restart, with "Remembered on this phone only" at the top and a day

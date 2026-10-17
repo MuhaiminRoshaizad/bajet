@@ -27,10 +27,14 @@ class CoachMoodController extends Notifier<CoachMood> {
 final coachMoodProvider = NotifierProvider<CoachMoodController, CoachMood>(CoachMoodController.new);
 
 class CoachChat {
-  const CoachChat({this.messages = const [], this.sending = false, this.error});
+  const CoachChat({this.messages = const [], this.sending = false, this.reading, this.error});
 
   final List<CoachMessage> messages;
   final bool sending;
+
+  /// What the coach is looking at while it works on an answer, such as
+  /// "This week"; null before its first lookup.
+  final String? reading;
 
   /// Why the last question got no answer, worded for the user.
   final String? error;
@@ -54,6 +58,10 @@ class CoachController extends Notifier<CoachChat> {
   var _declined = 0, _repeats = 0;
   DateTime? _lastAskedAt;
 
+  /// How many of the messages, from the top, came back from memory or Undo
+  /// rather than being said just now; the screen springs in only the rest.
+  int settled = 0;
+
   CoachSettings get _settings => ref.read(coachSettingsProvider).value ?? const CoachSettings();
   CoachPersonality get _personality => _settings.personality;
 
@@ -68,7 +76,8 @@ class CoachController extends Notifier<CoachChat> {
     if (!settings.remember) return;
     final remembered = await ref.read(coachChatRepositoryProvider).load();
     // Anything said while loading stays after what was remembered.
-    state = CoachChat(messages: [...remembered, ...state.messages], sending: state.sending, error: state.error);
+    settled = remembered.length;
+    state = CoachChat(messages: [...remembered, ...state.messages], sending: state.sending, reading: state.reading, error: state.error);
   }
 
   Future<void> ask(String question) async {
@@ -126,10 +135,17 @@ class CoachController extends Notifier<CoachChat> {
         conversation: conversation,
         tools: [...coachLookups, if (older.isNotEmpty) pastChatsLookup, ...proposalTools],
         lookup: (name, input) {
-          if (name == pastChatsLookup.name) return searchPastChats(input, older);
-          if (!name.startsWith('bajet_propose_')) return runLookup(name, input, data);
-          final (result, proposal) = propose(name, input, data);
-          if (proposal != null) cards.add(CoachCard(proposal));
+          final LookupResult result;
+          if (name == pastChatsLookup.name) {
+            result = searchPastChats(input, older);
+          } else if (!name.startsWith('bajet_propose_')) {
+            result = runLookup(name, input, data);
+          } else {
+            final (r, proposal) = propose(name, input, data);
+            if (proposal != null) cards.add(CoachCard(proposal));
+            result = r;
+          }
+          if (!result.failed) state = CoachChat(messages: state.messages, sending: true, reading: result.label);
           return result;
         },
       );
@@ -201,6 +217,7 @@ class CoachController extends Notifier<CoachChat> {
   Future<List<CoachMessage>> forget() async {
     final gone = state.messages;
     await ref.read(coachChatRepositoryProvider).clear();
+    settled = 0;
     state = const CoachChat();
     return gone;
   }
@@ -208,6 +225,7 @@ class CoachController extends Notifier<CoachChat> {
   /// Puts back a chat [forget] took away.
   Future<void> unforget(List<CoachMessage> messages) async {
     if (_settings.remember) await ref.read(coachChatRepositoryProvider).restore(messages);
+    settled = messages.length;
     state = CoachChat(messages: [...messages, ...state.messages]);
   }
 
@@ -245,7 +263,7 @@ class CoachController extends Notifier<CoachChat> {
     final at = state.messages.lastIndexOf(m);
     if (at < 0) return;
     final messages = [...state.messages]..[at] = m.withId(id);
-    state = CoachChat(messages: messages, sending: state.sending, error: state.error);
+    state = CoachChat(messages: messages, sending: state.sending, reading: state.reading, error: state.error);
   }
 
   Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: DateTime.now(), face: _settings.face));

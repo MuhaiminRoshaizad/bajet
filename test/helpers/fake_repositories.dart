@@ -625,6 +625,10 @@ class FakeCoach implements CoachClient {
   String gateKind = 'money';
   final gateRequests = <CoachRequest>[];
 
+  /// While set, each of the coach's own turns waits on it, so a test can
+  /// look at the screen mid-answer.
+  Completer<void>? hold;
+
   String? get lastSystem => requests.lastOrNull?.system;
 
   /// The tool results bajet sent back for the last question, joined.
@@ -645,6 +649,7 @@ class FakeCoach implements CoachClient {
       ]);
     }
     requests.add(request);
+    await hold?.future;
     if (lookups.isNotEmpty) {
       final (name, input) = lookups.removeAt(0);
       return CoachTurn(stopReason: 'tool_use', content: [
