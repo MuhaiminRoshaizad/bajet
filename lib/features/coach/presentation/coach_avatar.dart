@@ -156,6 +156,7 @@ class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin
         painter: _AvatarPainter(
           face: widget.face,
           colors: c,
+          dark: Theme.of(context).brightness == Brightness.dark,
           from: _from,
           to: _to,
           morph: _morph,
@@ -259,6 +260,12 @@ const _aina = _Person(style: _Hair.tudung, background: Tint.sky, skin: Color(0xF
 const _hafiz = _Person(style: _Hair.short, background: Tint.sage, skin: Color(0xFFB07850), skinShade: Color(0xFF986444), cloth: Color(0xFF26384F), cloth2: Color(0xFF1B2A3D), hair: Color(0xFF1F1A17), tie: Color(0xFFD98A3A), glasses: true);
 const _mei = _Person(style: _Hair.bob, background: Tint.apricot, skin: Color(0xFFF0C8A6), skinShade: Color(0xFFDCAE8A), cloth: Color(0xFF7C9A82), cloth2: Color(0xFF64806A), hair: Color(0xFF3A2A22));
 
+/// The total card's titanium on the dark page, where light silver stands out
+/// by itself; one step deeper on the light page, where it would melt into
+/// the background.
+const _orbLit = [Color(0xFFFFFFFF), Color(0xFFD8DBDF), Color(0xFF9AA0A8), Color(0xFF5F656D)];
+const _orbShaded = [Color(0xFFF4F6F8), Color(0xFFC3C8CE), Color(0xFF8A9199), Color(0xFF535960)];
+
 const _ink = Color(0xFF2A1D14);
 const _lips = Color(0xFF7A3B2E);
 const _graphite = Color(0xFF121418);
@@ -267,6 +274,7 @@ class _AvatarPainter extends CustomPainter {
   _AvatarPainter({
     required this.face,
     required this.colors,
+    required this.dark,
     required this.from,
     required this.to,
     required this.morph,
@@ -282,6 +290,10 @@ class _AvatarPainter extends CustomPainter {
 
   final CoachFace face;
   final AppColors colors;
+
+  /// Which theme it is drawn on: each coach keeps its colours, but its
+  /// outline is chosen so it stands out at 3:1 or more on either page.
+  final bool dark;
   final _Expression from, to;
   final Animation<double> morph, jelly, hop, shake, blink, breathe, orbit, spark;
   final double Function() hopHeight;
@@ -328,14 +340,16 @@ class _AvatarPainter extends CustomPainter {
     canvas.drawOval(
       body,
       Paint()
-        ..shader = const RadialGradient(
-          center: Alignment(-0.28, -0.4),
+        ..shader = RadialGradient(
+          center: const Alignment(-0.28, -0.4),
           radius: 0.78,
-          colors: [Color(0xFFFFFFFF), Color(0xFFD8DBDF), Color(0xFF9AA0A8), Color(0xFF5F656D)],
-          stops: [0, 0.35, 0.8, 1],
+          colors: dark ? _orbLit : _orbShaded,
+          stops: const [0, 0.35, 0.8, 1],
         ).createShader(body),
     );
-    canvas.drawOval(body.deflate(0.8), Paint()..color = const Color(0x8CFFFFFF)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+    // Its lit side is nearly the light page's colour, so a titanium rim holds
+    // the outline: 3.2:1 on the light page, 6:1 on the dark one.
+    canvas.drawOval(body.deflate(0.8), Paint()..color = dark ? const Color(0xFF9AA0A8) : const Color(0xFF7A818A)..style = PaintingStyle.stroke..strokeWidth = 1.6);
     canvas.save();
     _rotate(canvas, -28, const Offset(35, 28));
     canvas.drawOval(const Rect.fromLTRB(23, 21.5, 47, 34.5), fill..color = const Color(0xB3FFFFFF));
@@ -360,7 +374,7 @@ class _AvatarPainter extends CustomPainter {
     if (e.thinking) {
       canvas.save();
       _rotate(canvas, orbit.value * 360, const Offset(50, 50));
-      canvas.drawCircle(const Offset(50, 3), 3.2, fill..color = const Color(0xFFD8DBDF));
+      canvas.drawCircle(const Offset(50, 3), 3.2, fill..color = _glint);
       canvas.drawCircle(const Offset(97, 50), 2.4, fill..color = colors.primary);
       canvas.restore();
     }
@@ -495,15 +509,30 @@ class _AvatarPainter extends CustomPainter {
     }
     canvas.restore();
     canvas.restore();
+    // The background tint is within a shade of the page in both themes, so a
+    // ring of the same hue, deeper on light and brighter on dark, keeps the
+    // circle's edge at 3:1 or more.
+    canvas.drawOval(
+      const Rect.fromLTWH(0.8, 0.8, 98.4, 98.4),
+      Paint()
+        ..color = Color.lerp(colors.tintFill(p.background), colors.tintInk(p.background), dark ? 0.6 : 0.8)!
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
     if (e.thinking) {
       // A thought bubble rising at the top right, each puff pulsing in turn.
       for (final (i, (centre, r)) in const [(Offset(76, 20), 2.4), (Offset(82, 13), 3.2), (Offset(89, 7), 4.0)].indexed) {
         final pulse = 0.35 + 0.65 * (0.5 + 0.5 * math.sin((orbit.value - i * 0.15) * math.pi * 2));
-        canvas.drawCircle(centre, r, fill..color = Colors.white.withValues(alpha: pulse));
+        canvas.drawCircle(centre, r, fill..color = _glint.withValues(alpha: pulse));
       }
     }
     _sparkles(canvas, fill);
   }
+
+  /// Sparkles, thought puffs and the orbiting spark sit on the page, not on
+  /// the coach: white reads on the dark page, but on the light one it is
+  /// all but invisible, so there they take the muted ink instead.
+  Color get _glint => dark ? Colors.white : colors.muted;
 
   void _drawMouth(Canvas canvas, _Mouth m, Color colour, double width) {
     final path = Path()
@@ -522,7 +551,7 @@ class _AvatarPainter extends CustomPainter {
     canvas.save();
     canvas.translate(0, -6 * spark.value);
     for (final (centre, r) in const [(Offset(88, 22), 5.0), (Offset(13, 28), 3.6)]) {
-      canvas.drawPath(_star(centre, r), fill..color = const Color(0xFFFFFFFF).withValues(alpha: shine));
+      canvas.drawPath(_star(centre, r), fill..color = _glint.withValues(alpha: shine));
     }
     canvas.restore();
   }
@@ -539,5 +568,5 @@ class _AvatarPainter extends CustomPainter {
     ..close();
 
   @override
-  bool shouldRepaint(_AvatarPainter old) => old.face != face || old.from != from || old.to != to || old.colors != colors;
+  bool shouldRepaint(_AvatarPainter old) => old.face != face || old.from != from || old.to != to || old.colors != colors || old.dark != dark;
 }

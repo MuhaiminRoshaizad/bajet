@@ -188,6 +188,15 @@ on, or `animate` off for the small faces beside old replies, it is a still
 picture. The people's skin, hair and clothes are artwork in fixed colours,
 like a card's face, on a background tint from the theme.
 
+Every avatar keeps at least 3:1 against the page in both themes (WCAG 1.4.11,
+non-text contrast), since the tints and the orb's lit silver are within a
+shade of the page on their own. The orb is drawn one titanium step deeper on
+the light page (F4F6F8 / C3C8CE / 8A9199 / 535960) with a 7A818A rim, 3.2:1;
+on the dark page it keeps the card's shades with a 9AA0A8 rim, 6:1. A
+person's circle gets a ring in its own hue, the tint's ink mixed into its
+fill (80% on light, 60% on dark), about 3:1 and 5:1. Sparkles, thought
+puffs and the orbiting spark are white on dark and the muted ink on light.
+
 Insights shows where the money went as a ring (`CategoryRing`): every
 category of money out, fixed ones labelled Fixed, the total in the middle and
 a key with each one's amount and share. Slices take their colours by size, so
