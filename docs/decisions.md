@@ -342,3 +342,20 @@ wrong amount or account never even reaches one.
 
 **Costs:** a change takes one tap more than if the coach just did it, and a
 move larger than the source account holds has to be made by hand.
+
+## 024: Personalities are fixed presets around fixed rules
+
+**Decided:** the user picks how the coach talks from six personalities
+written in the app's code. Each is one paragraph of voice placed after the
+same rules, which keep the coach to the user's money in bajet, have it turn
+anything else down in its own voice, and hold whatever it is asked to
+pretend. There is no free-text personality.
+
+**Why:** a personality typed into Settings would be text the user writes
+straight into the coach's instructions, the easiest way to talk it out of
+its rules. Presets give the choice without that opening, and keeping the
+rules identical across them means a personality can only change the tone,
+never what the coach will do.
+
+**Costs:** the user cannot invent a seventh personality; adding one is a
+code change.

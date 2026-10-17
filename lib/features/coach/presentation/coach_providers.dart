@@ -6,13 +6,19 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../plan/presentation/runway_screen.dart';
 import '../data/anthropic_coach_client.dart';
+import '../data/drift_coach_settings_repository.dart';
 import '../data/secure_coach_key_store.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_lookups.dart';
+import '../domain/coach_settings.dart';
 import '../domain/week_summary.dart';
 
 final coachClientProvider = Provider<CoachClient>((ref) => AnthropicCoachClient());
 final coachKeyStoreProvider = Provider<CoachKeyStore>((ref) => const SecureCoachKeyStore());
+final coachSettingsRepositoryProvider = Provider<CoachSettingsRepository>((ref) => DriftCoachSettingsRepository(ref.watch(databaseProvider)));
+
+/// The coach's look, personality and memory setting.
+final coachSettingsProvider = StreamProvider<CoachSettings>((ref) => ref.watch(coachSettingsRepositoryProvider).watchSettings());
 
 /// The saved key, or null when there is none.
 class CoachKeyController extends AsyncNotifier<String?> {

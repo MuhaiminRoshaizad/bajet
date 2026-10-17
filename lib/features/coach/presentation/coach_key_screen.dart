@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
+import '../domain/coach_settings.dart';
 import 'coach_providers.dart';
 
 /// Settings → Coach: where the user's own Anthropic key goes in or comes
@@ -81,7 +83,7 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
             child: Text(
               'The coach uses your own Anthropic API key, from console.anthropic.com under API keys. '
               'Questions are billed to your Anthropic account, at most $coachDailyLimit a day. '
-              'Each one sends your question and a summary of this week and month to Anthropic. '
+              'Each one sends your question and only the figures the coach looks up to Anthropic. '
               'The key stays in this phone\'s secure storage and is never shown again or backed up.',
               style: TextStyle(color: c.ink, height: 1.45),
             ),
@@ -141,8 +143,47 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
               child: const Text('Remove the key'),
             ),
           ],
+          const SizedBox(height: AppSpacing.xxl),
+          const _PersonalityPicker(),
         ],
       ),
     );
   }
 }
+
+/// How the coach talks: one of the fixed personalities, each shown saying
+/// the same thing so the difference is plain.
+class _PersonalityPicker extends ConsumerWidget {
+  const _PersonalityPicker();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final settings = ref.watch(coachSettingsProvider).value ?? const CoachSettings();
+    return CardGroup(
+      label: 'Personality',
+      children: [
+        RadioGroup<CoachPersonality>(
+          groupValue: settings.personality,
+          onChanged: (p) {
+            if (p != null) ref.read(coachSettingsRepositoryProvider).saveSettings(settings.copyWith(personality: p));
+          },
+          child: Column(
+            children: [
+              for (final p in CoachPersonality.values)
+                RadioListTile(
+                  value: p,
+                  title: Text(p.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text('${p.about}\n"${p.sample}"', style: TextStyle(color: c.muted, height: 1.4)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+

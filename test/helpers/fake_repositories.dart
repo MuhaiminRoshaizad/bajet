@@ -9,6 +9,7 @@ import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';
 import 'package:bajet/features/accounts/domain/photo_colours.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
+import 'package:bajet/features/coach/domain/coach_settings.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
 import 'package:bajet/features/lock/domain/app_lock.dart';
@@ -79,6 +80,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final home = FakeHomeSurface();
   final coachKeys = FakeCoachKeys();
   final coach = FakeCoach();
+  final coachSettings = FakeCoachSettings();
   final themeModes = FakeThemeModes();
   final lockSettings = FakeLockSettings();
 
@@ -639,6 +641,19 @@ class FakeCoach implements CoachClient {
       {'type': 'text', 'text': reply},
     ]);
   }
+}
+
+/// Coach settings kept in memory, starting at the defaults.
+class FakeCoachSettings implements CoachSettingsRepository {
+  final _live = _Live<CoachSettings>(const CoachSettings());
+
+  CoachSettings get value => _live.value;
+
+  @override
+  Stream<CoachSettings> watchSettings() => _live.stream;
+
+  @override
+  Future<void> saveSettings(CoachSettings settings) async => _live.value = settings;
 }
 
 class FakeThemeModes implements ThemeModeStore {

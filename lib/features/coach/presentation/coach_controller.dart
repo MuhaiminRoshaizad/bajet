@@ -9,6 +9,7 @@ import '../domain/coach_client.dart';
 import '../domain/coach_lookups.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
+import '../domain/coach_settings.dart';
 import 'coach_providers.dart';
 
 class CoachChat {
@@ -58,7 +59,7 @@ class CoachController extends Notifier<CoachChat> {
       final answer = await coachAnswer(
         client: ref.read(coachClientProvider),
         apiKey: key,
-        system: coachSystemPrompt(today),
+        system: coachSystemPrompt(today, (ref.read(coachSettingsProvider).value ?? const CoachSettings()).personality),
         conversation: state.messages,
         tools: [...coachLookups, ...proposalTools],
         lookup: (name, input) {

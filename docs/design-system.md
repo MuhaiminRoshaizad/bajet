@@ -373,6 +373,10 @@ inline line of text where it is.
   never stored. Under each reply, "Looked at:" names what the coach looked up
   for it, such as "This week · September 2026". Without a key, the tab
   explains and links to Settings → Coach.
+- Settings → Coach puts the key first, since nothing works without it, then
+  the personality as a radio list: each option's name, one line about it,
+  and what it would say about the same RM45 of bubble tea, so the
+  difference shows rather than being described.
 - A change the coach suggests arrives as a card under its reply: the
   question ("Log this spend?"), the amount large, then what, from which
   account and which day, with Not now and the action (Log it, Move it, Mark

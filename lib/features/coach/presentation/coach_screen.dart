@@ -63,6 +63,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
     ref.watch(coachDataProvider);
+    ref.watch(coachSettingsProvider);
     // Keep the newest message in view as the conversation grows.
     ref.listen(coachControllerProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

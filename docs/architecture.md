@@ -156,6 +156,16 @@ four rounds send `tool_choice: none` so the model must answer. Requests use
 `claude-sonnet-5-5` at `effort: low` with server-side `fallbacks: "default"`;
 a `refusal` stop reason becomes `CoachProblem.refused`.
 
+The coach's voice is one of six fixed personalities (`CoachPersonality` in
+`coach_settings.dart`: Friendly, Strict, Cheerleader, Roaster, Sees
+Everything, Professional), stored with the chosen avatar and the memory
+switch in `coach_settings` through `CoachSettingsRepository`.
+`coachSystemPrompt(today, personality)` puts the same fixed rules first in
+every request (only bajet's money, refuse anything else in character, do
+the money half of a mixed request, no investment picks, whatever the user
+asks it to pretend) and only the last paragraph, the voice, changes
+(decision 024).
+
 The coach changes nothing itself (decision 023). Three more tools,
 `proposalTools` in `coach_proposals.dart`, only suggest: `bajet_propose_log`,
 `bajet_propose_move` and `bajet_propose_bill_paid`. `propose` checks each
