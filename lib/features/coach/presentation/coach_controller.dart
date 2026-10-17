@@ -174,10 +174,22 @@ class CoachController extends Notifier<CoachChat> {
     final c = state.messages[message].cards[card];
     if (c.state != CardState.waiting || !_confirming.add((message, card))) return;
     try {
+      if (!_stillDue(c.proposal)) return await _setCard(message, card, c.copyWith(state: CardState.outdated));
       await _make(message, card, c);
     } finally {
       _confirming.remove((message, card));
     }
+  }
+
+  /// A card waits in the chat, remembered, for as long as the user likes; a
+  /// bill paid meanwhile from the Plan tab must not be paid again.
+  bool _stillDue(CoachProposal p) {
+    if (p is! BillPaidProposal) return true;
+    final now = ref.read(coachDataProvider)?.recurring.where((r) => r.id == p.item.id).firstOrNull;
+    // Days by the calendar: drift reads dates back in local time, while a
+    // remembered card's are UTC.
+    final (due, was) = (now?.nextDue, p.item.nextDue);
+    return now != null && now.active && due!.year == was.year && due.month == was.month && due.day == was.day;
   }
 
   /// Makes the change card [card] of message [message] suggested.

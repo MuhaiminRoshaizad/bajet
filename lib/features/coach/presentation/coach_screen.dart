@@ -357,7 +357,7 @@ class _ProposalCard extends StatelessWidget {
     final c = context.colors;
     final p = card.proposal;
     final done = card.state == CardState.done;
-    final settled = card.state == CardState.declined || card.state == CardState.undone;
+    final settled = card.state == CardState.declined || card.state == CardState.undone || card.state == CardState.outdated;
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

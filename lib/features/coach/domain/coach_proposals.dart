@@ -65,7 +65,9 @@ class BillPaidProposal extends CoachProposal {
   List<(String, String)> get rows => [('Bill', item.name), ('Was due', Dates.full(item.nextDue))];
 }
 
-enum CardState { waiting, done, declined, undone }
+/// Where a card stands. [outdated] is a card that would no longer do what it
+/// said, because the same change was made somewhere else first.
+enum CardState { waiting, done, declined, undone, outdated }
 
 /// A proposal shown in the chat, and what the user did with it.
 class CoachCard {
@@ -92,6 +94,7 @@ class CoachCard {
         CardState.done => switch (proposal) { LogProposal() => 'Logged', MoveProposal() => 'Moved', BillPaidProposal() => 'Marked paid' },
         CardState.declined => 'Not done',
         CardState.undone => 'Undone, nothing changed',
+        CardState.outdated => 'Already changed elsewhere, nothing done',
       };
 
   CoachCard copyWith({required CardState state, int? undoId}) => CoachCard(proposal, state: state, undoId: undoId ?? this.undoId);

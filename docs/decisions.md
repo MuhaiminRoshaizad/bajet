@@ -340,6 +340,10 @@ by a typo, a misread or text hidden in a note. A card keeps the convenience
 and leaves every change to the user, and the app's own checks mean a
 wrong amount or account never even reaches one.
 
+A card can wait in the remembered chat for days. A bill card checks the bill
+again when tapped, and one already paid from the Plan tab meanwhile reads
+"Already changed elsewhere, nothing done" instead of paying it twice.
+
 **Costs:** a change takes one tap more than if the coach just did it, and a
 move larger than the source account holds has to be made by hand.
 
