@@ -135,4 +135,16 @@ void main() {
     expect(find.text('How a planned event works'), findsNothing);
     expect(on(), isTrue);
   });
+
+  testWidgets('the date of an event already passed can still be changed', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 6, 20)));
+    await openEvents(tester);
+    await tester.tap(find.text('Car service'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('20/06/2026'));
+    await tester.tap(find.text('20/06/2026'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('When'), findsOneWidget, reason: 'the calendar is open');
+  });
 }

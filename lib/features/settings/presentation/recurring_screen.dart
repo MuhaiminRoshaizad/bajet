@@ -160,7 +160,8 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     final firstAllowed = today.day <= 28 ? today : DateTime.utc(today.year, today.month + 1, 1);
     final picked = await showDatePicker(
       context: context,
-      initialDate: _nextDue ?? firstAllowed,
+      // An overdue item's date has passed and cannot be picked again.
+      initialDate: _nextDue == null || _nextDue!.isBefore(firstAllowed) ? firstAllowed : _nextDue,
       firstDate: DateTime(today.year, today.month, today.day),
       lastDate: DateTime(today.year + 1, today.month, today.day),
       // Monthly items stay on days 1 to 28 so every month has the day.

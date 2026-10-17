@@ -172,4 +172,19 @@ void main() {
     expect(world.achieved, isEmpty);
     expect(world.entries.single.label, 'Laptop');
   });
+
+  testWidgets('the buy day of a goal already passed can still be changed', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 6, 30), priority: 1));
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Goals'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Laptop'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Buy day 30/06/2026'));
+    await tester.tap(find.text('Buy day 30/06/2026'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Buy day'), findsOneWidget, reason: 'the calendar is open');
+  });
 }

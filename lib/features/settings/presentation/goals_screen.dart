@@ -191,8 +191,9 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
     final picked = await showDatePicker(
       context: context,
       // Nothing is preselected until a day is chosen, so the calendar never
-      // suggests a date the user did not pick.
-      initialDate: _date,
+      // suggests a date the user did not pick; nor is today or a date already
+      // passed, which cannot be picked again.
+      initialDate: _date == null || !_date!.isAfter(today) ? null : _date,
       firstDate: DateTime(today.year, today.month, today.day + 1),
       lastDate: DateTime(today.year + 10),
       helpText: 'Buy day',

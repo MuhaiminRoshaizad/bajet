@@ -189,4 +189,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.recurring.single.accountId, cash);
   });
+
+  testWidgets('the date of a bill already overdue can still be changed', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 6, 21)));
+    await openRecurring(tester);
+    await tester.tap(find.text('Rent'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Next due 21/06/2026'));
+    await tester.tap(find.text('Next due 21/06/2026'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Next due'), findsOneWidget, reason: 'the calendar is open');
+  });
 }
