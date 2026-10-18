@@ -48,6 +48,15 @@ class RuleCheck {
   final bool kept;
 }
 
+/// Flexible spending in one category over the week.
+class CategorySpend {
+  const CategorySpend(this.key, this.label, this.amount);
+
+  final String key;
+  final String label;
+  final int amount;
+}
+
 /// The week is judged against the target saved at the last check-in, when
 /// one was saved for today; otherwise this check-in only sets the baseline.
 enum WeekVerdict { onTrack, short, baseline }
@@ -103,8 +112,8 @@ class WeeklyCheckin {
   /// plans from [from] to Sunday.
   final int plan;
 
-  /// Flexible spending by category label, largest first.
-  final List<(String, int)> categories;
+  /// Flexible spending by category, largest first.
+  final List<CategorySpend> categories;
 
   /// Monday to Sunday.
   final List<CheckinDay> days;
@@ -240,7 +249,7 @@ WeeklyCheckin weeklyCheckin({
     // A whole week is held to the allowance; a first, shorter one to what
     // the rhythm plans for the days it covers.
     plan: week.from == monday ? weeklyCap : days.where((d) => d.state != CheckinDayState.noData).fold(0, (sum, d) => sum + d.planned),
-    categories: [for (final (key, amount) in week.flexibleByCategory) (labels[key] ?? key, amount)],
+    categories: [for (final (key, amount) in week.flexibleByCategory) CategorySpend(key, labels[key] ?? key, amount)],
     days: days,
     rules: ruleChecks,
     goal: goal,
@@ -290,7 +299,7 @@ String weeklyCheckinText(WeeklyCheckin w) {
     'THIS WEEK',
     'Spent ${Money.format(w.spent)} of ${Money.format(w.plan)}${w.from == w.monday ? '' : ' planned for these days'} '
         '(${Money.format(under.abs())} ${under >= 0 ? 'under' : 'over'})',
-    if (w.categories.isNotEmpty) '  ${w.categories.map((c) => '${c.$1} ${Money.format(c.$2)}').join(' · ')}',
+    if (w.categories.isNotEmpty) '  ${w.categories.map((c) => '${c.label} ${Money.format(c.amount)}').join(' · ')}',
     if (w.finished.isNotEmpty) 'Days: ${w.withinPlan} of ${w.finished.length} finished days within plan · ${w.noSpendDays} no-spend ${w.noSpendDays == 1 ? 'day' : 'days'}',
     if (w.days.any((d) => d.state == CheckinDayState.today)) '  Today counts once it is over',
     if (w.rules.isNotEmpty) 'Rules: ${w.rules.map((r) => '${r.name} ${r.kept ? 'kept' : 'missed'}').join(' · ')}',

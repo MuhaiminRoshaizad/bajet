@@ -11,7 +11,7 @@ void main() {
     final left = w.goal!.leftAfterBuying;
     expect((w.verdict, w.difference, w.goalSafe), (WeekVerdict.onTrack, 401745 - 392000, true));
     expect((w.spent, w.plan), (2150, 3000));
-    expect(w.categories, [('Food', 1550), ('Transport', 600)]);
+    expect([for (final c in w.categories) (c.key, c.label, c.amount)], [('food', 'Food', 1550), ('transport', 'Transport', 600)]);
     expect((w.finished.length, w.withinPlan, w.noSpendDays), (6, 6, 2));
     expect([for (final r in w.rules) (r.name, r.kept)], [('Fast (Mon)', true), ('Flex (Thu)', true), ('Rest (Sat)', true)]);
     expect((w.change, w.withUnconfirmed, w.daysToGo), (left - 170000, left + 30000, 76));
