@@ -48,13 +48,14 @@ WeeklyCheckin checkin({
   int balance = 401745,
   DateTime? opening,
   DateTime? today,
+  List<RecurringItem>? recurringItems,
 }) {
   final day = today ?? sunday;
   Projection run(WhatIf whatIf) => project(
         balance: balance,
         today: day,
         rules: rules,
-        recurring: recurring,
+        recurring: recurringItems ?? recurring,
         events: events,
         goals: goals,
         buffer: 100000,
@@ -73,7 +74,7 @@ WeeklyCheckin checkin({
     checkins: checkins,
     projection: run(WhatIf.none),
     unconfirmed: run(const WhatIf(countUnconfirmed: true)),
-    recurring: recurring,
+    recurring: recurringItems ?? recurring,
     events: events,
     goals: goals,
   );
