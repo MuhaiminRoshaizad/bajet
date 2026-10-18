@@ -61,6 +61,31 @@ void main() {
     );
   });
 
+  test('a week leaves out in against out, and every line with nothing to say', () {
+    // Only lunch: no pay, nothing fixed.
+    final week = insights(
+      period: InsightsPeriod.week,
+      today: d(7, 2),
+      openingDate: d(7, 2),
+      weeklyCap: 5000,
+      entries: [entries[1]],
+      categories: demoCategories,
+      rules: rules,
+    );
+    final text = reportText(i: week, accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
+    expect(text, contains('Money out: RM8.00\n\nMoney out by kind:\n- Flexible: RM8.00\n'));
+    for (final missing in ['Money in', 'Spent more than came in', 'Kept', 'Fixed', 'None']) {
+      expect(text, isNot(contains(missing)), reason: missing);
+    }
+  });
+
+  test('a period with nothing in it has no empty sections', () {
+    final quiet = insights(period: InsightsPeriod.month, today: d(7, 3), openingDate: d(7, 1), weeklyCap: 5000, entries: const [], categories: demoCategories, rules: rules);
+    final text = reportText(i: quiet, accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
+    expect(text, isNot(contains('Money out')));
+    expect(text, isNot(contains('Kept')));
+  });
+
   test('with one account there is no account breakdown to repeat the totals', () {
     final text = reportText(i: month(), accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
     expect(text, isNot(contains('By account')));

@@ -380,6 +380,9 @@ inline line of text where it is.
   and PDF also give each account's money in and out for the period and what
   it holds now (`byAccount`). Moves between the user's own accounts are
   neither in nor out. The balance shown is today's, whatever the period.
+  Lines with nothing to say, such as Fixed RM0.00, are left out, and a week
+  shows no Kept or "Spent more than came in", since a week rarely holds a
+  payday.
 - The current week is reported as the weekly check-in (`weeklyCheckin`),
   verdict first: the week against the target the last check-in saved for
   today, or "Baseline set" without one, and the goal judged apart from it,

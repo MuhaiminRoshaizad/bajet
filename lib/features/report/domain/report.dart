@@ -37,7 +37,8 @@ String accountOf(List<AccountLine> accounts, Entry e) =>
     accounts.where((a) => a.id == (e.accountId ?? accounts.first.id)).firstOrNull?.name ?? accounts.first.name;
 
 /// A plain-text report of [i], to paste into a chat or a note. [accounts]
-/// break it down by account once there is more than one.
+/// break it down by account once there is more than one. Lines with
+/// nothing to say, such as a total of RM0.00, are left out.
 String reportText({
   required Insights i,
   required List<AccountLine> accounts,
@@ -52,11 +53,13 @@ String reportText({
     'bajet report, ${Dates.full(i.from)} to ${Dates.full(i.to)}',
     '',
     'Balance today: ${Money.format(balance)}',
-    'Money in: ${Money.format(i.moneyIn)}',
-    'Money out: ${Money.format(i.moneyOut)}',
-    i.kept >= 0
-        ? 'Kept: ${Money.format(i.kept)}${share == null ? '' : ' ($share% of what came in)'}'
-        : 'Spent more than came in: ${Money.format(-i.kept)}',
+    if (i.moneyIn > 0) 'Money in: ${Money.format(i.moneyIn)}',
+    if (i.moneyOut > 0) 'Money out: ${Money.format(i.moneyOut)}',
+    // A week rarely holds a payday, so in against out says little about it.
+    if (i.period != InsightsPeriod.week && !i.isEmpty)
+      i.kept >= 0
+          ? 'Kept: ${Money.format(i.kept)}${share == null ? '' : ' ($share% of what came in)'}'
+          : 'Spent more than came in: ${Money.format(-i.kept)}',
     if (accounts.length > 1) ...[
       '',
       'By account:',
@@ -68,15 +71,16 @@ String reportText({
           'now ${Money.format(a.balance)}',
         ].join(', ')}',
     ],
-    '',
-    'Money out by kind:',
-    '- Fixed: ${Money.format(i.fixedOut)}',
-    '- Flexible: ${Money.format(i.flexibleOut)}',
-    if (i.untrackedOut > 0) '- Untracked: ${Money.format(i.untrackedOut)}',
-    '',
-    'Money out by category:',
-    if (i.outByCategory.isEmpty) '- None',
-    for (final (key, amount) in i.outByCategory) '- ${categoryName(categories, key)}: ${Money.format(amount)}',
+    if (i.moneyOut > 0) ...[
+      '',
+      'Money out by kind:',
+      if (i.fixedOut > 0) '- Fixed: ${Money.format(i.fixedOut)}',
+      if (i.flexibleOut > 0) '- Flexible: ${Money.format(i.flexibleOut)}',
+      if (i.untrackedOut > 0) '- Untracked: ${Money.format(i.untrackedOut)}',
+      '',
+      'Money out by category:',
+      for (final (key, amount) in i.outByCategory) '- ${categoryName(categories, key)}: ${Money.format(amount)}',
+    ],
     '',
     'Habits:',
     if (i.daysSoFar > 0) '- ${i.daysWithinPlan} of ${i.daysSoFar} days within plan',

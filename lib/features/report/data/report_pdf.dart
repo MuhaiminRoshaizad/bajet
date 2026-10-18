@@ -68,7 +68,12 @@ Future<Uint8List> reportPdf({
       pw.Row(children: [
         figure('Money in', Money.format(i.moneyIn), primary),
         figure('Money out', Money.format(i.moneyOut), ink),
-        figure(i.kept >= 0 ? 'Kept' : 'Spent more than came in', Money.format(i.kept.abs()), i.kept >= 0 ? keep : bad),
+        // A week rarely holds a payday, so it shows day-to-day spending
+        // rather than in against out.
+        if (i.period == InsightsPeriod.week)
+          figure('Day to day', Money.format(i.flexibleOut), ink)
+        else
+          figure(i.kept >= 0 ? 'Kept' : 'Spent more than came in', Money.format(i.kept.abs()), i.kept >= 0 ? keep : bad),
         figure('Untracked', Money.format(i.untrackedOut), i.untrackedOut > 0 ? bad : ink),
       ]),
       if (accounts.length > 1) ...[
@@ -84,16 +89,18 @@ Future<Uint8List> reportPdf({
           amounts: 3,
         ),
       ],
-      heading('Money out by kind'),
-      _table(
-        [
-          ['Fixed (bills, goals, events)', Money.format(i.fixedOut)],
-          ['Flexible (day to day)', Money.format(i.flexibleOut)],
-          if (i.untrackedOut > 0) ['Untracked', Money.format(i.untrackedOut)],
-        ],
-        line: line,
-        ink: ink,
-      ),
+      if (i.moneyOut > 0) ...[
+        heading('Money out by kind'),
+        _table(
+          [
+            if (i.fixedOut > 0) ['Fixed (bills, goals, events)', Money.format(i.fixedOut)],
+            if (i.flexibleOut > 0) ['Flexible (day to day)', Money.format(i.flexibleOut)],
+            if (i.untrackedOut > 0) ['Untracked', Money.format(i.untrackedOut)],
+          ],
+          line: line,
+          ink: ink,
+        ),
+      ],
       if (i.outByCategory.isNotEmpty) ...[
         heading('Money out by category'),
         _table([for (final (key, amount) in i.outByCategory) [categoryName(categories, key), Money.format(amount)]], line: line, ink: ink),

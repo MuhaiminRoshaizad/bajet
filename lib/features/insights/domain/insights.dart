@@ -27,6 +27,7 @@ class DayAgainstPlan {
 /// sen; every figure covers [from] to [to] inclusive.
 class Insights {
   const Insights({
+    required this.period,
     required this.from,
     required this.to,
     required this.moneyIn,
@@ -47,6 +48,7 @@ class Insights {
     required this.biggest,
   });
 
+  final InsightsPeriod period;
   final DateTime from;
   final DateTime to;
   final int moneyIn;
@@ -174,6 +176,7 @@ Insights insights({
       );
 
   return Insights(
+    period: period,
     from: from,
     to: to,
     moneyIn: sum(inPeriod.where((e) => e.isIncome)),
