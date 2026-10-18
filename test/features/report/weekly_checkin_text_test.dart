@@ -74,7 +74,7 @@ void main() {
       'First check-in · 3 days of data (16/10–18/10)',
       '',
       'CHECK-IN: BASELINE SET · goal SAFE (${Money.format(w.goal!.leftAfterBuying)} left after buying)',
-      'Balance RM4,017.45 · target for Sun 25/10 set at this check-in',
+      'Balance RM4,017.45 · target for Sun 25/10 set when the check-in is finished',
       'Bank match: not checked yet · starting adjustment RM12.30 (not counted as untracked)',
     ]);
     expect(text, contains('Spent RM5.50 of RM6.00 planned for these days (RM0.50 under)'));
@@ -96,5 +96,11 @@ void main() {
     final w = checkin(entries: week, checkins: [early]);
     expect((w.verdict, w.first), (WeekVerdict.baseline, false));
     expect(weeklyCheckinText(w), isNot(contains('First check-in')));
+  });
+
+  test('midweek the text shows the target still to come and judges nothing', () {
+    final text = weeklyCheckinText(checkin(today: d(10, 21), entries: week.where((e) => !e.day.isAfter(d(10, 21))).toList(), checkins: [lastWeek]));
+    expect(text, contains('CHECK-IN: IN PROGRESS · goal SAFE\nBalance RM4,017.45 · target RM3,920.00 on Sun 25/10\n'));
+    expect(text, contains('Next check-in: Sun 25/10, stay above RM3,920.00'));
   });
 }

@@ -385,7 +385,8 @@ inline line of text where it is.
   payday.
 - The current week is reported as the weekly check-in (`weeklyCheckin`),
   verdict first: the week against the target the last check-in saved for
-  today, or "Baseline set" without one, and the goal judged apart from it,
+  today, "In progress" before that day comes, or "Baseline set" with no
+  target coming, and the goal judged apart from it,
   then the week's spending against the allowance, finished days within plan
   (today counts once it is over), the rhythm's rules kept or missed, the
   goal, the next seven days and anything flagged. Lines with nothing to say

@@ -38,6 +38,7 @@ pw.Document checkinDocument({
   final (bandFill, bandInk, verdict) = switch (w.verdict) {
     WeekVerdict.onTrack => (colour(c.goodSurface), colour(c.good), 'ON TRACK'),
     WeekVerdict.short => (colour(c.badSurface), colour(c.bad), 'SHORT'),
+    WeekVerdict.inProgress => (colour(c.primarySoft), colour(c.primary), 'IN PROGRESS'),
     WeekVerdict.baseline => (colour(c.primarySoft), colour(c.primary), 'BASELINE SET'),
   };
   PdfColor tint(String key) => colour(c.tintInk(Tint.values.asNameMap()[categories[key]?.tint] ?? Tint.neutral));
@@ -100,13 +101,7 @@ pw.Document checkinDocument({
               if (safe != null) ...[pw.SizedBox(width: 6), pill('Goal ${safe ? 'SAFE' : 'SHORT'}', colour(safe ? c.good : c.bad), outline: true)],
             ]),
             pw.SizedBox(height: 6),
-            pw.Text(
-              switch (w.target) {
-                null => 'Balance ${Money.format(w.balance)} · target for ${Dates.dayShort(w.nextCheck)} set at this check-in',
-                final t => 'Balance ${Money.format(w.balance)} vs target ${Money.format(t)} (${signedMoney(w.difference!)})',
-              },
-              style: text(size: 10, colour: bandInk, strong: true),
-            ),
+            pw.Text(balanceLine(w), style: text(size: 10, colour: bandInk, strong: true)),
             pw.Text(
               [
                 'Bank match: ${switch (w.matched) { true => 'yes', false => 'no', null => 'not checked yet' }}',

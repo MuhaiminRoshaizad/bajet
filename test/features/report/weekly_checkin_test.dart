@@ -66,4 +66,10 @@ void main() {
     final w = checkin(entries: week, checkins: [early]);
     expect((w.verdict, w.first), (WeekVerdict.baseline, false));
   });
+
+  test("midweek, the last check-in's target still stands for its day and nothing is judged yet", () {
+    // Last Sunday's check-in set a target for the coming Sunday.
+    final w = checkin(today: d(10, 21), entries: week.where((e) => !e.day.isAfter(d(10, 21))).toList(), checkins: [lastWeek]);
+    expect((w.verdict, w.nextCheck, w.nextTarget), (WeekVerdict.inProgress, d(10, 25), 392000));
+  });
 }

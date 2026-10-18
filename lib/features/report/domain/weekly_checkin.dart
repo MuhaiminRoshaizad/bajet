@@ -62,9 +62,10 @@ class CategorySpend {
   final int amount;
 }
 
-/// The week is judged against the target saved at the last check-in, when
-/// one was saved for today; otherwise this check-in only sets the baseline.
-enum WeekVerdict { onTrack, short, baseline }
+/// The week is judged against the target the last check-in saved for today.
+/// Before that day it is still in progress; with no target coming, this
+/// check-in only sets the baseline.
+enum WeekVerdict { onTrack, short, inProgress, baseline }
 
 /// Everything the weekly check-in report says, worked out once for its
 /// text, PDF and share card. Amounts are sen.
@@ -75,6 +76,7 @@ class WeeklyCheckin {
     required this.first,
     required this.balance,
     required this.target,
+    required this.verdict,
     required this.matched,
     required this.untracked,
     required this.startingAdjustment,
@@ -88,7 +90,9 @@ class WeeklyCheckin {
     required this.withUnconfirmed,
     required this.buffer,
     required this.next,
+    required this.nextCheck,
     required this.nextTarget,
+    required this.saved,
     required this.entries,
   });
 
@@ -103,6 +107,7 @@ class WeeklyCheckin {
 
   /// The balance the last check-in expected today; null when none did.
   final int? target;
+  final WeekVerdict verdict;
 
   /// Whether every account matched at today's saved check-in; null until
   /// one is saved.
@@ -136,23 +141,25 @@ class WeeklyCheckin {
   /// What is planned over the next seven days, soonest first.
   final List<UpcomingItem> next;
 
-  /// What the plan expects at the next check-in, a week on.
+  /// The next check-in's day: the one the last check-in set a target for,
+  /// while it is still to come, or otherwise a week on.
+  final DateTime nextCheck;
+
+  /// What the plan expects on [nextCheck].
   final int nextTarget;
+
+  /// Today's check-in has been finished, so [nextTarget] is saved.
+  final bool saved;
 
   /// The week's entries, oldest first.
   final List<Entry> entries;
 
   DateTime get monday => weekStart(today);
   DateTime get sunday => DateTime.utc(monday.year, monday.month, monday.day + 6);
-  DateTime get nextCheck => DateTime.utc(today.year, today.month, today.day + 7);
 
   /// Days of data so far, today included.
   int get dataDays => today.difference(from).inDays + 1;
 
-  WeekVerdict get verdict => switch (target) {
-        null => WeekVerdict.baseline,
-        final t => balance >= t ? WeekVerdict.onTrack : WeekVerdict.short,
-      };
   int? get difference => target == null ? null : balance - target!;
   bool? get goalSafe => goal == null ? null : goal!.leftAfterBuying >= buffer;
   int? get daysToGo => goal == null ? null : calendarDay(goal!.goal.targetDate).difference(today).inDays;
@@ -239,14 +246,22 @@ WeeklyCheckin weeklyCheckin({
   final found = week.untrackedOut;
   final goal = projection.goals.firstOrNull;
   final withUnconfirmed = unconfirmed.goals.firstOrNull?.leftAfterBuying;
-  final nextCheck = DateTime.utc(today.year, today.month, today.day + 7);
+  final weekOn = DateTime.utc(today.year, today.month, today.day + 7);
+  final target = previous != null && previous.targetOn == today ? previous.nextTarget : null;
+  // The last check-in's target, for a day still to come, stands until then.
+  final pending = saved == null && previous != null && previous.targetOn.isAfter(today) ? previous : null;
   final lastLeft = previous?.leftAfterBuying;
   return WeeklyCheckin(
     today: today,
     from: week.from,
     first: first,
     balance: balance,
-    target: previous != null && previous.targetOn == today ? previous.nextTarget : null,
+    target: target,
+    verdict: switch (target) {
+      final t? => balance >= t ? WeekVerdict.onTrack : WeekVerdict.short,
+      null when pending != null => WeekVerdict.inProgress,
+      null => WeekVerdict.baseline,
+    },
     matched: saved?.matched,
     untracked: saved?.untracked ?? (first ? 0 : found),
     startingAdjustment: saved?.startingAdjustment ?? (first ? found : 0),
@@ -266,15 +281,25 @@ WeeklyCheckin weeklyCheckin({
       events: events,
       goals: goals,
       from: DateTime.utc(today.year, today.month, today.day + 1),
-      to: nextCheck,
+      to: weekOn,
     ),
-    nextTarget: saved?.nextTarget ?? projection.days.firstWhere((d) => d.date == nextCheck).balance,
+    nextCheck: pending?.targetOn ?? weekOn,
+    nextTarget: pending?.nextTarget ?? saved?.nextTarget ?? projection.days.firstWhere((d) => d.date == weekOn).balance,
+    saved: saved != null,
     entries: entriesIn(week, entries),
   );
 }
 
 /// `+RM8.50` or `−RM4.20`.
 String signedMoney(int sen) => '${sen < 0 ? '−' : '+'}${Money.format(sen.abs())}';
+
+/// The balance against the week's target, or where that target stands.
+String balanceLine(WeeklyCheckin w) => switch (w.verdict) {
+      WeekVerdict.onTrack || WeekVerdict.short => 'Balance ${Money.format(w.balance)} vs target ${Money.format(w.target!)} (${signedMoney(w.difference!)})',
+      WeekVerdict.inProgress => 'Balance ${Money.format(w.balance)} · target ${Money.format(w.nextTarget)} on ${Dates.dayShort(w.nextCheck)}',
+      WeekVerdict.baseline => 'Balance ${Money.format(w.balance)} · target for ${Dates.dayShort(w.nextCheck)} '
+          '${w.saved ? 'set at this check-in' : 'set when the check-in is finished'}',
+    };
 
 /// The check-in as plain text to paste into a chat, verdict first. Lines
 /// with nothing to say are left out.
@@ -290,12 +315,10 @@ String weeklyCheckinText(WeeklyCheckin w) {
     switch (w.verdict) {
       WeekVerdict.onTrack => 'CHECK-IN: ON TRACK ✓$goalState',
       WeekVerdict.short => 'CHECK-IN: SHORT ${Money.format(-w.difference!)} this week$goalState',
+      WeekVerdict.inProgress => 'CHECK-IN: IN PROGRESS$goalState',
       WeekVerdict.baseline => 'CHECK-IN: BASELINE SET$goalState${goal == null ? '' : ' (${Money.format(goal.leftAfterBuying)} left after buying)'}',
     },
-    switch (w.target) {
-      null => 'Balance ${Money.format(w.balance)} · target for ${Dates.dayShort(w.nextCheck)} set at this check-in',
-      final t => 'Balance ${Money.format(w.balance)} vs target ${Money.format(t)} (${signedMoney(w.difference!)})',
-    },
+    balanceLine(w),
     [
       'Bank match: ${switch (w.matched) { true => 'yes', false => 'no', null => 'not checked yet' }}',
       if (w.startingAdjustment > 0) 'starting adjustment ${Money.format(w.startingAdjustment)} (not counted as untracked)' else 'untracked ${Money.format(w.untracked)}',

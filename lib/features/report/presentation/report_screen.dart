@@ -98,7 +98,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   /// with the theme, so they are drawn in the light one.
   Future<Uint8List> _checkinPdf(WeeklyCheckin w, Map<String, Category> categories) async {
     final face = (ref.read(coachSettingsProvider).value ?? const CoachSettings()).face;
-    final mood = switch (w.verdict) { WeekVerdict.onTrack => CoachMood.happy, WeekVerdict.short => CoachMood.concerned, WeekVerdict.baseline => CoachMood.idle };
+    final mood = switch (w.verdict) {
+      WeekVerdict.onTrack => CoachMood.happy,
+      WeekVerdict.short => CoachMood.concerned,
+      WeekVerdict.inProgress || WeekVerdict.baseline => CoachMood.idle,
+    };
     final icon = await _draw(const AppIconTile(size: 30), const Size.square(30), pixelRatio: 6, light: true);
     final coach = await _draw(CoachAvatar(face: face, mood: mood, size: 46, animate: false, idle: false), const Size.square(46), pixelRatio: 6, light: true);
     final doc = checkinDocument(
