@@ -34,4 +34,15 @@ void main() {
     await show(tester, CheckinCard(w: checkin(entries: week, checkins: [rich])));
     expect(find.textContaining('further this week'), findsOneWidget);
   });
+
+  testWidgets('the card is a picture of fixed size, so large system text does not overflow it', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: Scaffold(body: Center(child: CheckinCard(w: checkin(entries: week, checkins: [lastWeek])))),
+      ),
+    ));
+    expect(tester.takeException(), isNull);
+  });
 }
