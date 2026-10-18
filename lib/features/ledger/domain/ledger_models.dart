@@ -125,6 +125,10 @@ const goalCategoryKey = 'goal';
 /// mark the week over its allowance.
 const untrackedCategoryKey = 'untracked';
 
+/// The built-in Food category. A fasting day is kept when nothing is spent
+/// in it, whatever else that day costs.
+const foodCategoryKey = 'food';
+
 /// Spending that counts toward the weekly cap: expenses outside fixed
 /// categories, from [from] to [to] inclusive.
 int flexibleSpent(Iterable<Entry> entries, Set<String> fixedKeys, DateTime from, DateTime to) => entries

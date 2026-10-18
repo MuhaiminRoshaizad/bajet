@@ -1,0 +1,260 @@
+import '../../../core/dates/dates.dart';
+import '../../../core/money/money.dart';
+import '../../checkin/domain/checkin.dart';
+import '../../insights/domain/insights.dart';
+import '../../ledger/domain/ledger_models.dart';
+import '../../plan/domain/plan_models.dart';
+import '../../plan/domain/projection.dart';
+import '../../plan/domain/upcoming.dart';
+import 'report.dart';
+
+/// Where a day of the check-in's week stands.
+enum CheckinDayState {
+  /// Before the first day bajet knows about.
+  noData,
+  finished,
+
+  /// Still under way, so it counts toward nothing yet.
+  today,
+
+  /// Later in the week than the check-in.
+  ahead,
+}
+
+/// One day of the week: its flexible spending against its plan, and the
+/// rhythm rule it follows.
+class CheckinDay {
+  const CheckinDay(this.date, this.spent, this.rule, this.state);
+
+  final DateTime date;
+  final int spent;
+  final WeeklyRule rule;
+  final CheckinDayState state;
+
+  int get planned => rule.plannedSpend;
+  bool get over => state == CheckinDayState.finished && spent > planned;
+}
+
+/// A rule of the rhythm on a finished day, such as a no-spending day, and
+/// whether it held.
+class RuleCheck {
+  const RuleCheck(this.name, this.how, this.kept);
+
+  /// The rhythm's own label and the weekday, such as `Rest (Sun)`.
+  final String name;
+
+  /// What keeping it means, such as `nothing spent`.
+  final String how;
+  final bool kept;
+}
+
+/// The week is judged against the target saved at the last check-in, when
+/// one was saved for today; otherwise this check-in only sets the baseline.
+enum WeekVerdict { onTrack, short, baseline }
+
+/// Everything the weekly check-in report says, worked out once for its
+/// text, PDF and share card. Amounts are sen.
+class WeeklyCheckin {
+  const WeeklyCheckin({
+    required this.today,
+    required this.from,
+    required this.first,
+    required this.balance,
+    required this.target,
+    required this.matched,
+    required this.untracked,
+    required this.startingAdjustment,
+    required this.spent,
+    required this.plan,
+    required this.categories,
+    required this.days,
+    required this.rules,
+    required this.goal,
+    required this.change,
+    required this.withUnconfirmed,
+    required this.buffer,
+    required this.next,
+    required this.nextTarget,
+    required this.entries,
+  });
+
+  final DateTime today;
+
+  /// The first day the week's figures cover: Monday, or a later first day.
+  final DateTime from;
+
+  /// No check-in was finished before this one.
+  final bool first;
+  final int balance;
+
+  /// The balance the last check-in expected today; null when none did.
+  final int? target;
+
+  /// Whether every account matched at today's saved check-in; null until
+  /// one is saved.
+  final bool? matched;
+  final int untracked;
+  final int startingAdjustment;
+
+  /// Flexible spending from [from] to today, today included.
+  final int spent;
+
+  /// The weekly allowance, or for a week that started late what the rhythm
+  /// plans from [from] to Sunday.
+  final int plan;
+
+  /// Flexible spending by category label, largest first.
+  final List<(String, int)> categories;
+
+  /// Monday to Sunday.
+  final List<CheckinDay> days;
+  final List<RuleCheck> rules;
+  final GoalOutcome? goal;
+
+  /// How much more the goal leaves after buying than at the last check-in.
+  final int? change;
+
+  /// What the goal leaves if unconfirmed income arrives too; null when that
+  /// changes nothing.
+  final int? withUnconfirmed;
+  final int buffer;
+
+  /// What is planned over the next seven days, soonest first.
+  final List<UpcomingItem> next;
+
+  /// What the plan expects at the next check-in, a week on.
+  final int nextTarget;
+
+  /// The week's entries, oldest first.
+  final List<Entry> entries;
+
+  DateTime get monday => weekStart(today);
+  DateTime get sunday => DateTime.utc(monday.year, monday.month, monday.day + 6);
+  DateTime get nextCheck => DateTime.utc(today.year, today.month, today.day + 7);
+
+  /// Days of data so far, today included.
+  int get dataDays => today.difference(from).inDays + 1;
+
+  WeekVerdict get verdict => switch (target) {
+        null => WeekVerdict.baseline,
+        final t => balance >= t ? WeekVerdict.onTrack : WeekVerdict.short,
+      };
+  int? get difference => target == null ? null : balance - target!;
+  bool? get goalSafe => goal == null ? null : goal!.leftAfterBuying >= buffer;
+  int? get daysToGo => goal == null ? null : calendarDay(goal!.goal.targetDate).difference(today).inDays;
+
+  List<CheckinDay> get finished => [...days.where((d) => d.state == CheckinDayState.finished)];
+  int get withinPlan => finished.where((d) => !d.over).length;
+  int get noSpendDays => finished.where((d) => d.spent == 0).length;
+  List<CheckinDay> get overDays => [...finished.where((d) => d.over)];
+
+  /// What needs a look; empty when nothing does.
+  List<String> get flags => [
+        if (untracked > 0) '${Money.format(untracked)} untracked, found at this check-in',
+        if (matched == false) 'Not every account matched',
+        if (overDays.isNotEmpty) '${_and([for (final d in overDays) Dates.weekday(d.date)])} went over ${overDays.length == 1 ? 'its' : 'their'} plan',
+        if (goalSafe == false) '${goal!.goal.name} leaves ${Money.format(goal!.leftAfterBuying)} after buying, under the ${Money.format(buffer)} buffer',
+      ];
+}
+
+String _and(List<String> items) => items.length < 2 ? items.join() : '${items.sublist(0, items.length - 1).join(', ')} and ${items.last}';
+
+/// The check-in of [today]'s week. [projection] runs at least a week on;
+/// [unconfirmed] is the same with unconfirmed income counted. [checkins]
+/// are every finished check-in, newest first.
+WeeklyCheckin weeklyCheckin({
+  required DateTime today,
+  required DateTime openingDate,
+  required int weeklyCap,
+  required int buffer,
+  required int balance,
+  required List<Entry> entries,
+  required List<Category> categories,
+  required List<WeeklyRule> rules,
+  required List<Checkin> checkins,
+  required Projection projection,
+  required Projection unconfirmed,
+  required List<RecurringItem> recurring,
+  required List<PlannedEvent> events,
+  required List<Goal> goals,
+}) {
+  final week = insights(
+    period: InsightsPeriod.week,
+    today: today,
+    openingDate: openingDate,
+    weeklyCap: weeklyCap,
+    entries: entries,
+    categories: categories,
+    rules: rules,
+  );
+  final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
+  final labels = {for (final c in categories) c.key: c.label};
+  final monday = weekStart(today);
+  final saved = checkins.where((c) => c.checkedOn == today).firstOrNull;
+  final previous = checkins.where((c) => c.checkedOn.isBefore(today)).firstOrNull;
+  final first = previous == null;
+
+  final days = [
+    for (var n = 0; n < 7; n++)
+      () {
+        final d = DateTime.utc(monday.year, monday.month, monday.day + n);
+        final state = d.isBefore(week.from)
+            ? CheckinDayState.noData
+            : d == today
+                ? CheckinDayState.today
+                : d.isAfter(today)
+                    ? CheckinDayState.ahead
+                    : CheckinDayState.finished;
+        final rule = rules.firstWhere((r) => r.weekday == d.weekday);
+        return CheckinDay(d, state == CheckinDayState.noData ? 0 : flexibleSpent(entries, fixed, d, d), rule, state);
+      }(),
+  ];
+
+  bool ateOn(DateTime d) => entries.any((e) => e.day == d && !e.isIncome && e.categoryKey == foodCategoryKey);
+  String name(CheckinDay d) => '${d.rule.label} (${Dates.weekday(d.date)})';
+  final ruleChecks = [
+    for (final d in days.where((d) => d.state == CheckinDayState.finished)) ...[
+      if (d.rule.isFastingDay) RuleCheck(name(d), 'no Food spending', !ateOn(d.date)),
+      if (d.rule.type == DayType.zero) RuleCheck(name(d), 'nothing spent', d.spent == 0),
+      if (d.rule.type == DayType.flex) RuleCheck(name(d), 'within ${Money.format(d.planned)}', !d.over),
+    ],
+  ];
+
+  // Money found untracked this week. At the first check-in it comes from an
+  // opening balance slightly off, not from missed logging (decision 027).
+  final found = week.untrackedOut;
+  final goal = projection.goals.firstOrNull;
+  final withUnconfirmed = unconfirmed.goals.firstOrNull?.leftAfterBuying;
+  final nextCheck = DateTime.utc(today.year, today.month, today.day + 7);
+  final lastLeft = previous?.leftAfterBuying;
+  return WeeklyCheckin(
+    today: today,
+    from: week.from,
+    first: first,
+    balance: balance,
+    target: previous != null && previous.targetOn == today ? previous.nextTarget : null,
+    matched: saved?.matched,
+    untracked: saved?.untracked ?? (first ? 0 : found),
+    startingAdjustment: saved?.startingAdjustment ?? (first ? found : 0),
+    spent: week.flexibleOut,
+    // A whole week is held to the allowance; a first, shorter one to what
+    // the rhythm plans for the days it covers.
+    plan: week.from == monday ? weeklyCap : days.where((d) => d.state != CheckinDayState.noData).fold(0, (sum, d) => sum + d.planned),
+    categories: [for (final (key, amount) in week.flexibleByCategory) (labels[key] ?? key, amount)],
+    days: days,
+    rules: ruleChecks,
+    goal: goal,
+    change: goal == null || lastLeft == null ? null : goal.leftAfterBuying - lastLeft,
+    withUnconfirmed: withUnconfirmed == goal?.leftAfterBuying ? null : withUnconfirmed,
+    buffer: buffer,
+    next: upcoming(
+      recurring: recurring,
+      events: events,
+      goals: goals,
+      from: DateTime.utc(today.year, today.month, today.day + 1),
+      to: nextCheck,
+    ),
+    nextTarget: saved?.nextTarget ?? projection.days.firstWhere((d) => d.date == nextCheck).balance,
+    entries: entriesIn(week, entries),
+  );
+}
