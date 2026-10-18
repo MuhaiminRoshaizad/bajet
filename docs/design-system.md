@@ -391,6 +391,13 @@ inline line of text where it is.
   goal, the next seven days and anything flagged. Lines with nothing to say
   are left out. A fasting day is kept when nothing is spent on Food that
   day; transport and bills do not break it.
+- The check-in's PDF (`checkinDocument`) is A4 in the light palette, led by
+  the app icon (`AppIconTile`) and with the coach's face beside the verdict,
+  happy on track, concerned when short. Both are the app's own widgets drawn
+  off screen (`widgetToPng`) in the light theme, since paper is light. The
+  summary comes first in blocks that never split across pages; the entries
+  follow and run on to more pages with their title and column names
+  repeated, never splitting a row.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;
   the thumbnail in the logger opens it full screen, pinch to zoom.

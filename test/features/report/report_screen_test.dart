@@ -44,6 +44,24 @@ void main() {
     expect(sharer.text, contains('- Food: RM8.00'));
   });
 
+  testWidgets("this week's PDF is the check-in, with the app's own drawings", (tester) async {
+    final sharer = await openReport(tester);
+    await tester.tap(find.text('PDF'));
+    await tester.pumpAndSettle();
+    expect(find.text('The check-in on one page, then every entry, to keep or print'), findsOneWidget);
+
+    // Drawing the icon and the coach takes real time, not the test's clock.
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Share PDF'));
+      for (var n = 0; n < 50 && sharer.fileName == null; n++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    expect(sharer.fileName, 'bajet-check-in-2026-07-01.pdf');
+    expect(sharer.fileText, startsWith('%PDF-'));
+  });
+
   testWidgets('CSV shares every entry in the period as a dated file', (tester) async {
     final sharer = await openReport(tester);
     await tester.tap(find.text('CSV'));

@@ -4,18 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/dates/clock.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/sharing/file_sharer.dart';
+import '../../../core/sharing/widget_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/soft.dart';
+import '../../coach/domain/coach_settings.dart';
+import '../../coach/presentation/coach_avatar.dart';
+import '../../coach/presentation/coach_providers.dart';
 import '../../insights/domain/insights.dart';
 import '../../insights/presentation/insights_providers.dart';
 import '../../insights/presentation/period_picker.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../opening/presentation/titanium_card.dart';
 import '../../plan/presentation/plan_providers.dart';
+import '../data/checkin_pdf.dart';
 import '../data/report_pdf.dart';
 import '../domain/report.dart';
 import '../domain/weekly_checkin.dart';
@@ -53,6 +61,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   Future<(List<int>, String, String)> _file(Insights i, List<Entry> entries, Map<String, Category> categories) async {
     final accounts = ref.read(reportAccountsProvider(_range))!;
     if (_format == ReportFormat.csv) return (utf8.encode(reportCsv(entries, categories, accounts)), _fileName(i, 'csv'), 'text/csv');
+    final checkin = _thisWeek ? ref.read(weeklyCheckinProvider) : null;
+    if (checkin != null) return (await _checkinPdf(checkin, categories), 'bajet-check-in-${checkin.today.toIso8601String().substring(0, 10)}.pdf', 'application/pdf');
     final settings = ref.read(settingsProvider).value!;
     final bytes = await reportPdf(
       i: i,
@@ -66,6 +76,29 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       bold: await rootBundle.load('assets/fonts/Figtree-Bold.ttf'),
     );
     return (bytes, _fileName(i, 'pdf'), 'application/pdf');
+  }
+
+  /// This week's check-in as a PDF, with the app icon and the coach's face
+  /// drawn as they are in the app. Paper is light, and the faces change
+  /// with the theme, so they are drawn in the light one.
+  Future<Uint8List> _checkinPdf(WeeklyCheckin w, Map<String, Category> categories) async {
+    final face = (ref.read(coachSettingsProvider).value ?? const CoachSettings()).face;
+    final mood = switch (w.verdict) { WeekVerdict.onTrack => CoachMood.happy, WeekVerdict.short => CoachMood.concerned, WeekVerdict.baseline => CoachMood.idle };
+    Future<Uint8List> draw(Widget child, double size) =>
+        widgetToPng(context, Theme(data: AppTheme.light(), child: child), size: Size.square(size), pixelRatio: 6);
+    final icon = await draw(const AppIconTile(size: 30), 30);
+    final coach = await draw(CoachAvatar(face: face, mood: mood, size: 46, animate: false, idle: false), 46);
+    final doc = checkinDocument(
+      w: w,
+      categories: categories,
+      icon: icon,
+      coach: coach,
+      coachName: face.label,
+      generatedAt: ref.read(clockProvider)(),
+      regular: await rootBundle.load('assets/fonts/Figtree-Regular.ttf'),
+      bold: await rootBundle.load('assets/fonts/Figtree-Bold.ttf'),
+    );
+    return doc.save();
   }
 
   Future<void> _busyWhile(Future<void> Function() task) async {
@@ -141,11 +174,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           RadioGroup<ReportFormat>(
             groupValue: _format,
             onChanged: (f) => setState(() => _format = f!),
-            child: const CardGroup(
+            child: CardGroup(
               children: [
-                RadioListTile(value: ReportFormat.text, title: Text('Text'), subtitle: Text('To paste into a chat or a note')),
-                RadioListTile(value: ReportFormat.pdf, title: Text('PDF'), subtitle: Text('A summary, then every entry, to keep or print')),
-                RadioListTile(value: ReportFormat.csv, title: Text('CSV'), subtitle: Text('Every entry, to open in a spreadsheet')),
+                const RadioListTile(value: ReportFormat.text, title: Text('Text'), subtitle: Text('To paste into a chat or a note')),
+                RadioListTile(
+                  value: ReportFormat.pdf,
+                  title: const Text('PDF'),
+                  subtitle: Text(_thisWeek ? 'The check-in on one page, then every entry, to keep or print' : 'A summary, then every entry, to keep or print'),
+                ),
+                const RadioListTile(value: ReportFormat.csv, title: Text('CSV'), subtitle: Text('Every entry, to open in a spreadsheet')),
               ],
             ),
           ),
