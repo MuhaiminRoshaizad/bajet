@@ -23,7 +23,8 @@ crosses a daylight-saving change.
 ## Algorithm
 
 From `today` to the latest goal's target date (or 30 days ahead with no goal),
-for each day:
+or on to `through` when that is later, for each day. The check-in passes a
+day a week ahead, so its target exists even when buy day falls sooner:
 
 1. Subtract that weekday's planned spend. On the first day, subtract only what
    is left of it after `flexSpentToday`, because logged spending is already in

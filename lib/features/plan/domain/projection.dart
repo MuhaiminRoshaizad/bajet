@@ -89,9 +89,9 @@ class Projection {
 }
 
 /// Simulates the balance one day at a time, from today to the last goal's
-/// target date, using only the plan: the weekly rhythm, recurring items,
-/// planned events and goal prices. Real logs enter only through [balance] and
-/// [flexSpentToday].
+/// target date, or on to [through] when that is later, using only the plan:
+/// the weekly rhythm, recurring items, planned events and goal prices. Real
+/// logs enter only through [balance] and [flexSpentToday].
 Projection project({
   required int balance,
   required DateTime today,
@@ -102,13 +102,15 @@ Projection project({
   required int buffer,
   int flexSpentToday = 0,
   int horizonDaysWithoutGoal = 30,
+  DateTime? through,
   WhatIf whatIf = WhatIf.none,
 }) {
   final start = calendarDay(today);
   final sortedGoals = [...goals]..sort((a, b) => a.priority.compareTo(b.priority));
-  final end = sortedGoals.isEmpty
+  final lastGoal = sortedGoals.isEmpty
       ? DateTime.utc(start.year, start.month, start.day + horizonDaysWithoutGoal)
       : sortedGoals.map((g) => calendarDay(g.targetDate)).reduce((a, b) => a.isAfter(b) ? a : b);
+  final end = through != null && through.isAfter(lastGoal) ? calendarDay(through) : lastGoal;
   final change = spreadOverWeek(whatIf.weeklyChange.abs());
   final planned = {
     for (final r in rules) r.weekday: math.max(0, r.plannedSpend + whatIf.weeklyChange.sign * change[r.weekday - 1]),

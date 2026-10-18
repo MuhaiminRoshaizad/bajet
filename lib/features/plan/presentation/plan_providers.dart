@@ -56,7 +56,13 @@ class WhatIfController extends Notifier<WhatIf> {
 final whatIfProvider = NotifierProvider<WhatIfController, WhatIf>(WhatIfController.new);
 
 /// The projection with a what-if applied.
-final projectionWithProvider = Provider.family<Projection?, WhatIf>((ref, whatIf) {
+final projectionWithProvider = Provider.family<Projection?, WhatIf>((ref, whatIf) => _project(ref, whatIf: whatIf));
+
+/// The projection as saved, run at least through [day], even past the last
+/// goal, for a balance the plan expects on that day.
+final projectionThroughProvider = Provider.family<Projection?, DateTime>((ref, day) => _project(ref, through: day));
+
+Projection? _project(Ref ref, {WhatIf whatIf = WhatIf.none, DateTime? through}) {
   final today = ref.watch(todayProvider);
   final balance = ref.watch(balanceProvider).value;
   final settings = ref.watch(settingsProvider).value;
@@ -78,6 +84,7 @@ final projectionWithProvider = Provider.family<Projection?, WhatIf>((ref, whatIf
     goals: goals!,
     buffer: settings!.buffer,
     flexSpentToday: flexibleSpent(entries!, fixed, today, today),
+    through: through,
     whatIf: whatIf,
   );
-});
+}

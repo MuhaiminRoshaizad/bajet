@@ -63,6 +63,14 @@ void main() {
     expect(p.goals.single.onTrack, isTrue);
   });
 
+  test('runs on past buy day when asked, leaving the outcome as it was', () {
+    final p = project(balance: 180000, today: d(2026, 10, 14), rules: rules, recurring: recurring, events: events, goals: [goal], buffer: 100000, through: d(2027, 2, 2));
+    expect(p.days.last.date, d(2027, 2, 2));
+    expect(p.goals.single.leftAfterBuying, 590300);
+    // Sunday rests, then Monday's plan and rent, then Tuesday's plan.
+    expect(balanceOn(p, d(2027, 2, 2)), 590300 - 1000 - 50000 - 1000);
+  });
+
   test('the outcome carries the sums that add up to what is left', () {
     // 109 days from Wed 14 Oct: 15 weeks at RM65 plus Wed to Sat at RM45;
     // four salaries; three rents and internet bills, four phone bills and
