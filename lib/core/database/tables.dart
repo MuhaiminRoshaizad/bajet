@@ -235,3 +235,34 @@ class CoachMessages extends Table {
   TextColumn get cards => text().withDefault(const Constant(''))();
 }
 
+/// One finished Sunday check-in, one a day: finishing again the same day
+/// replaces it. It keeps what the week's report compares against later,
+/// above all [nextTarget], the balance the plan expects a week on.
+class Checkins extends Table {
+  TextColumn get checkedOn => text().map(const DayConverter())();
+
+  /// What bajet held across every account when the check-in was finished.
+  IntColumn get balance => integer()();
+
+  /// Every account was compared with what it really holds and agreed.
+  BoolColumn get matched => boolean()();
+
+  /// Money logged as untracked at this check-in.
+  IntColumn get untracked => integer().withDefault(const Constant(0))();
+
+  /// The gap found at the very first check-in, from a starting balance that
+  /// was slightly off. It is not missed logging, so it is kept apart.
+  IntColumn get startingAdjustment => integer().withDefault(const Constant(0))();
+
+  /// Flexible spending that week, Monday to the check-in.
+  IntColumn get allowanceSpent => integer()();
+
+  /// What the first goal leaves after buying; null without a goal.
+  IntColumn get leftAfterBuying => integer().nullable()();
+
+  /// The balance the plan expected seven days after [checkedOn].
+  IntColumn get nextTarget => integer()();
+
+  @override
+  Set<Column> get primaryKey => {checkedOn};
+}

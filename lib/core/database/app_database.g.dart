@@ -5950,6 +5950,556 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
   }
 }
 
+class $CheckinsTable extends Checkins with TableInfo<$CheckinsTable, Checkin> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CheckinsTable(this.attachedDatabase, [this._alias]);
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime, String> checkedOn =
+      GeneratedColumn<String>(
+        'checked_on',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<DateTime>($CheckinsTable.$convertercheckedOn);
+  static const VerificationMeta _balanceMeta = const VerificationMeta(
+    'balance',
+  );
+  @override
+  late final GeneratedColumn<int> balance = GeneratedColumn<int>(
+    'balance',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _matchedMeta = const VerificationMeta(
+    'matched',
+  );
+  @override
+  late final GeneratedColumn<bool> matched = GeneratedColumn<bool>(
+    'matched',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("matched" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _untrackedMeta = const VerificationMeta(
+    'untracked',
+  );
+  @override
+  late final GeneratedColumn<int> untracked = GeneratedColumn<int>(
+    'untracked',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _startingAdjustmentMeta =
+      const VerificationMeta('startingAdjustment');
+  @override
+  late final GeneratedColumn<int> startingAdjustment = GeneratedColumn<int>(
+    'starting_adjustment',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _allowanceSpentMeta = const VerificationMeta(
+    'allowanceSpent',
+  );
+  @override
+  late final GeneratedColumn<int> allowanceSpent = GeneratedColumn<int>(
+    'allowance_spent',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _leftAfterBuyingMeta = const VerificationMeta(
+    'leftAfterBuying',
+  );
+  @override
+  late final GeneratedColumn<int> leftAfterBuying = GeneratedColumn<int>(
+    'left_after_buying',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nextTargetMeta = const VerificationMeta(
+    'nextTarget',
+  );
+  @override
+  late final GeneratedColumn<int> nextTarget = GeneratedColumn<int>(
+    'next_target',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    checkedOn,
+    balance,
+    matched,
+    untracked,
+    startingAdjustment,
+    allowanceSpent,
+    leftAfterBuying,
+    nextTarget,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'checkins';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Checkin> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('balance')) {
+      context.handle(
+        _balanceMeta,
+        balance.isAcceptableOrUnknown(data['balance']!, _balanceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_balanceMeta);
+    }
+    if (data.containsKey('matched')) {
+      context.handle(
+        _matchedMeta,
+        matched.isAcceptableOrUnknown(data['matched']!, _matchedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_matchedMeta);
+    }
+    if (data.containsKey('untracked')) {
+      context.handle(
+        _untrackedMeta,
+        untracked.isAcceptableOrUnknown(data['untracked']!, _untrackedMeta),
+      );
+    }
+    if (data.containsKey('starting_adjustment')) {
+      context.handle(
+        _startingAdjustmentMeta,
+        startingAdjustment.isAcceptableOrUnknown(
+          data['starting_adjustment']!,
+          _startingAdjustmentMeta,
+        ),
+      );
+    }
+    if (data.containsKey('allowance_spent')) {
+      context.handle(
+        _allowanceSpentMeta,
+        allowanceSpent.isAcceptableOrUnknown(
+          data['allowance_spent']!,
+          _allowanceSpentMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_allowanceSpentMeta);
+    }
+    if (data.containsKey('left_after_buying')) {
+      context.handle(
+        _leftAfterBuyingMeta,
+        leftAfterBuying.isAcceptableOrUnknown(
+          data['left_after_buying']!,
+          _leftAfterBuyingMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_target')) {
+      context.handle(
+        _nextTargetMeta,
+        nextTarget.isAcceptableOrUnknown(data['next_target']!, _nextTargetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nextTargetMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {checkedOn};
+  @override
+  Checkin map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Checkin(
+      checkedOn: $CheckinsTable.$convertercheckedOn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}checked_on'],
+        )!,
+      ),
+      balance: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}balance'],
+      )!,
+      matched: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}matched'],
+      )!,
+      untracked: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}untracked'],
+      )!,
+      startingAdjustment: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}starting_adjustment'],
+      )!,
+      allowanceSpent: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}allowance_spent'],
+      )!,
+      leftAfterBuying: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}left_after_buying'],
+      ),
+      nextTarget: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_target'],
+      )!,
+    );
+  }
+
+  @override
+  $CheckinsTable createAlias(String alias) {
+    return $CheckinsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, String> $convertercheckedOn =
+      const DayConverter();
+}
+
+class Checkin extends DataClass implements Insertable<Checkin> {
+  final DateTime checkedOn;
+
+  /// What bajet held across every account when the check-in was finished.
+  final int balance;
+
+  /// Every account was compared with what it really holds and agreed.
+  final bool matched;
+
+  /// Money logged as untracked at this check-in.
+  final int untracked;
+
+  /// The gap found at the very first check-in, from a starting balance that
+  /// was slightly off. It is not missed logging, so it is kept apart.
+  final int startingAdjustment;
+
+  /// Flexible spending that week, Monday to the check-in.
+  final int allowanceSpent;
+
+  /// What the first goal leaves after buying; null without a goal.
+  final int? leftAfterBuying;
+
+  /// The balance the plan expected seven days after [checkedOn].
+  final int nextTarget;
+  const Checkin({
+    required this.checkedOn,
+    required this.balance,
+    required this.matched,
+    required this.untracked,
+    required this.startingAdjustment,
+    required this.allowanceSpent,
+    this.leftAfterBuying,
+    required this.nextTarget,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    {
+      map['checked_on'] = Variable<String>(
+        $CheckinsTable.$convertercheckedOn.toSql(checkedOn),
+      );
+    }
+    map['balance'] = Variable<int>(balance);
+    map['matched'] = Variable<bool>(matched);
+    map['untracked'] = Variable<int>(untracked);
+    map['starting_adjustment'] = Variable<int>(startingAdjustment);
+    map['allowance_spent'] = Variable<int>(allowanceSpent);
+    if (!nullToAbsent || leftAfterBuying != null) {
+      map['left_after_buying'] = Variable<int>(leftAfterBuying);
+    }
+    map['next_target'] = Variable<int>(nextTarget);
+    return map;
+  }
+
+  CheckinsCompanion toCompanion(bool nullToAbsent) {
+    return CheckinsCompanion(
+      checkedOn: Value(checkedOn),
+      balance: Value(balance),
+      matched: Value(matched),
+      untracked: Value(untracked),
+      startingAdjustment: Value(startingAdjustment),
+      allowanceSpent: Value(allowanceSpent),
+      leftAfterBuying: leftAfterBuying == null && nullToAbsent
+          ? const Value.absent()
+          : Value(leftAfterBuying),
+      nextTarget: Value(nextTarget),
+    );
+  }
+
+  factory Checkin.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Checkin(
+      checkedOn: serializer.fromJson<DateTime>(json['checkedOn']),
+      balance: serializer.fromJson<int>(json['balance']),
+      matched: serializer.fromJson<bool>(json['matched']),
+      untracked: serializer.fromJson<int>(json['untracked']),
+      startingAdjustment: serializer.fromJson<int>(json['startingAdjustment']),
+      allowanceSpent: serializer.fromJson<int>(json['allowanceSpent']),
+      leftAfterBuying: serializer.fromJson<int?>(json['leftAfterBuying']),
+      nextTarget: serializer.fromJson<int>(json['nextTarget']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'checkedOn': serializer.toJson<DateTime>(checkedOn),
+      'balance': serializer.toJson<int>(balance),
+      'matched': serializer.toJson<bool>(matched),
+      'untracked': serializer.toJson<int>(untracked),
+      'startingAdjustment': serializer.toJson<int>(startingAdjustment),
+      'allowanceSpent': serializer.toJson<int>(allowanceSpent),
+      'leftAfterBuying': serializer.toJson<int?>(leftAfterBuying),
+      'nextTarget': serializer.toJson<int>(nextTarget),
+    };
+  }
+
+  Checkin copyWith({
+    DateTime? checkedOn,
+    int? balance,
+    bool? matched,
+    int? untracked,
+    int? startingAdjustment,
+    int? allowanceSpent,
+    Value<int?> leftAfterBuying = const Value.absent(),
+    int? nextTarget,
+  }) => Checkin(
+    checkedOn: checkedOn ?? this.checkedOn,
+    balance: balance ?? this.balance,
+    matched: matched ?? this.matched,
+    untracked: untracked ?? this.untracked,
+    startingAdjustment: startingAdjustment ?? this.startingAdjustment,
+    allowanceSpent: allowanceSpent ?? this.allowanceSpent,
+    leftAfterBuying: leftAfterBuying.present
+        ? leftAfterBuying.value
+        : this.leftAfterBuying,
+    nextTarget: nextTarget ?? this.nextTarget,
+  );
+  Checkin copyWithCompanion(CheckinsCompanion data) {
+    return Checkin(
+      checkedOn: data.checkedOn.present ? data.checkedOn.value : this.checkedOn,
+      balance: data.balance.present ? data.balance.value : this.balance,
+      matched: data.matched.present ? data.matched.value : this.matched,
+      untracked: data.untracked.present ? data.untracked.value : this.untracked,
+      startingAdjustment: data.startingAdjustment.present
+          ? data.startingAdjustment.value
+          : this.startingAdjustment,
+      allowanceSpent: data.allowanceSpent.present
+          ? data.allowanceSpent.value
+          : this.allowanceSpent,
+      leftAfterBuying: data.leftAfterBuying.present
+          ? data.leftAfterBuying.value
+          : this.leftAfterBuying,
+      nextTarget: data.nextTarget.present
+          ? data.nextTarget.value
+          : this.nextTarget,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Checkin(')
+          ..write('checkedOn: $checkedOn, ')
+          ..write('balance: $balance, ')
+          ..write('matched: $matched, ')
+          ..write('untracked: $untracked, ')
+          ..write('startingAdjustment: $startingAdjustment, ')
+          ..write('allowanceSpent: $allowanceSpent, ')
+          ..write('leftAfterBuying: $leftAfterBuying, ')
+          ..write('nextTarget: $nextTarget')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    checkedOn,
+    balance,
+    matched,
+    untracked,
+    startingAdjustment,
+    allowanceSpent,
+    leftAfterBuying,
+    nextTarget,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Checkin &&
+          other.checkedOn == this.checkedOn &&
+          other.balance == this.balance &&
+          other.matched == this.matched &&
+          other.untracked == this.untracked &&
+          other.startingAdjustment == this.startingAdjustment &&
+          other.allowanceSpent == this.allowanceSpent &&
+          other.leftAfterBuying == this.leftAfterBuying &&
+          other.nextTarget == this.nextTarget);
+}
+
+class CheckinsCompanion extends UpdateCompanion<Checkin> {
+  final Value<DateTime> checkedOn;
+  final Value<int> balance;
+  final Value<bool> matched;
+  final Value<int> untracked;
+  final Value<int> startingAdjustment;
+  final Value<int> allowanceSpent;
+  final Value<int?> leftAfterBuying;
+  final Value<int> nextTarget;
+  final Value<int> rowid;
+  const CheckinsCompanion({
+    this.checkedOn = const Value.absent(),
+    this.balance = const Value.absent(),
+    this.matched = const Value.absent(),
+    this.untracked = const Value.absent(),
+    this.startingAdjustment = const Value.absent(),
+    this.allowanceSpent = const Value.absent(),
+    this.leftAfterBuying = const Value.absent(),
+    this.nextTarget = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CheckinsCompanion.insert({
+    required DateTime checkedOn,
+    required int balance,
+    required bool matched,
+    this.untracked = const Value.absent(),
+    this.startingAdjustment = const Value.absent(),
+    required int allowanceSpent,
+    this.leftAfterBuying = const Value.absent(),
+    required int nextTarget,
+    this.rowid = const Value.absent(),
+  }) : checkedOn = Value(checkedOn),
+       balance = Value(balance),
+       matched = Value(matched),
+       allowanceSpent = Value(allowanceSpent),
+       nextTarget = Value(nextTarget);
+  static Insertable<Checkin> custom({
+    Expression<String>? checkedOn,
+    Expression<int>? balance,
+    Expression<bool>? matched,
+    Expression<int>? untracked,
+    Expression<int>? startingAdjustment,
+    Expression<int>? allowanceSpent,
+    Expression<int>? leftAfterBuying,
+    Expression<int>? nextTarget,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (checkedOn != null) 'checked_on': checkedOn,
+      if (balance != null) 'balance': balance,
+      if (matched != null) 'matched': matched,
+      if (untracked != null) 'untracked': untracked,
+      if (startingAdjustment != null) 'starting_adjustment': startingAdjustment,
+      if (allowanceSpent != null) 'allowance_spent': allowanceSpent,
+      if (leftAfterBuying != null) 'left_after_buying': leftAfterBuying,
+      if (nextTarget != null) 'next_target': nextTarget,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CheckinsCompanion copyWith({
+    Value<DateTime>? checkedOn,
+    Value<int>? balance,
+    Value<bool>? matched,
+    Value<int>? untracked,
+    Value<int>? startingAdjustment,
+    Value<int>? allowanceSpent,
+    Value<int?>? leftAfterBuying,
+    Value<int>? nextTarget,
+    Value<int>? rowid,
+  }) {
+    return CheckinsCompanion(
+      checkedOn: checkedOn ?? this.checkedOn,
+      balance: balance ?? this.balance,
+      matched: matched ?? this.matched,
+      untracked: untracked ?? this.untracked,
+      startingAdjustment: startingAdjustment ?? this.startingAdjustment,
+      allowanceSpent: allowanceSpent ?? this.allowanceSpent,
+      leftAfterBuying: leftAfterBuying ?? this.leftAfterBuying,
+      nextTarget: nextTarget ?? this.nextTarget,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (checkedOn.present) {
+      map['checked_on'] = Variable<String>(
+        $CheckinsTable.$convertercheckedOn.toSql(checkedOn.value),
+      );
+    }
+    if (balance.present) {
+      map['balance'] = Variable<int>(balance.value);
+    }
+    if (matched.present) {
+      map['matched'] = Variable<bool>(matched.value);
+    }
+    if (untracked.present) {
+      map['untracked'] = Variable<int>(untracked.value);
+    }
+    if (startingAdjustment.present) {
+      map['starting_adjustment'] = Variable<int>(startingAdjustment.value);
+    }
+    if (allowanceSpent.present) {
+      map['allowance_spent'] = Variable<int>(allowanceSpent.value);
+    }
+    if (leftAfterBuying.present) {
+      map['left_after_buying'] = Variable<int>(leftAfterBuying.value);
+    }
+    if (nextTarget.present) {
+      map['next_target'] = Variable<int>(nextTarget.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckinsCompanion(')
+          ..write('checkedOn: $checkedOn, ')
+          ..write('balance: $balance, ')
+          ..write('matched: $matched, ')
+          ..write('untracked: $untracked, ')
+          ..write('startingAdjustment: $startingAdjustment, ')
+          ..write('allowanceSpent: $allowanceSpent, ')
+          ..write('leftAfterBuying: $leftAfterBuying, ')
+          ..write('nextTarget: $nextTarget, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5965,6 +6515,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $FavouritesTable favourites = $FavouritesTable(this);
   late final $CoachSettingsTable coachSettings = $CoachSettingsTable(this);
   late final $CoachMessagesTable coachMessages = $CoachMessagesTable(this);
+  late final $CheckinsTable checkins = $CheckinsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5982,6 +6533,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     favourites,
     coachSettings,
     coachMessages,
+    checkins,
   ];
 }
 
@@ -10834,6 +11386,275 @@ typedef $$CoachMessagesTableProcessedTableManager =
       CoachMessage,
       PrefetchHooks Function()
     >;
+typedef $$CheckinsTableCreateCompanionBuilder =
+    CheckinsCompanion Function({
+      required DateTime checkedOn,
+      required int balance,
+      required bool matched,
+      Value<int> untracked,
+      Value<int> startingAdjustment,
+      required int allowanceSpent,
+      Value<int?> leftAfterBuying,
+      required int nextTarget,
+      Value<int> rowid,
+    });
+typedef $$CheckinsTableUpdateCompanionBuilder =
+    CheckinsCompanion Function({
+      Value<DateTime> checkedOn,
+      Value<int> balance,
+      Value<bool> matched,
+      Value<int> untracked,
+      Value<int> startingAdjustment,
+      Value<int> allowanceSpent,
+      Value<int?> leftAfterBuying,
+      Value<int> nextTarget,
+      Value<int> rowid,
+    });
+
+class $$CheckinsTableFilterComposer
+    extends Composer<_$AppDatabase, $CheckinsTable> {
+  $$CheckinsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<DateTime, DateTime, String> get checkedOn =>
+      $composableBuilder(
+        column: $table.checkedOn,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get balance => $composableBuilder(
+    column: $table.balance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get matched => $composableBuilder(
+    column: $table.matched,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get untracked => $composableBuilder(
+    column: $table.untracked,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startingAdjustment => $composableBuilder(
+    column: $table.startingAdjustment,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get allowanceSpent => $composableBuilder(
+    column: $table.allowanceSpent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leftAfterBuying => $composableBuilder(
+    column: $table.leftAfterBuying,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextTarget => $composableBuilder(
+    column: $table.nextTarget,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CheckinsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CheckinsTable> {
+  $$CheckinsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get checkedOn => $composableBuilder(
+    column: $table.checkedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get balance => $composableBuilder(
+    column: $table.balance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get matched => $composableBuilder(
+    column: $table.matched,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get untracked => $composableBuilder(
+    column: $table.untracked,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startingAdjustment => $composableBuilder(
+    column: $table.startingAdjustment,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get allowanceSpent => $composableBuilder(
+    column: $table.allowanceSpent,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leftAfterBuying => $composableBuilder(
+    column: $table.leftAfterBuying,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextTarget => $composableBuilder(
+    column: $table.nextTarget,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CheckinsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CheckinsTable> {
+  $$CheckinsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<DateTime, String> get checkedOn =>
+      $composableBuilder(column: $table.checkedOn, builder: (column) => column);
+
+  GeneratedColumn<int> get balance =>
+      $composableBuilder(column: $table.balance, builder: (column) => column);
+
+  GeneratedColumn<bool> get matched =>
+      $composableBuilder(column: $table.matched, builder: (column) => column);
+
+  GeneratedColumn<int> get untracked =>
+      $composableBuilder(column: $table.untracked, builder: (column) => column);
+
+  GeneratedColumn<int> get startingAdjustment => $composableBuilder(
+    column: $table.startingAdjustment,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get allowanceSpent => $composableBuilder(
+    column: $table.allowanceSpent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get leftAfterBuying => $composableBuilder(
+    column: $table.leftAfterBuying,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get nextTarget => $composableBuilder(
+    column: $table.nextTarget,
+    builder: (column) => column,
+  );
+}
+
+class $$CheckinsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CheckinsTable,
+          Checkin,
+          $$CheckinsTableFilterComposer,
+          $$CheckinsTableOrderingComposer,
+          $$CheckinsTableAnnotationComposer,
+          $$CheckinsTableCreateCompanionBuilder,
+          $$CheckinsTableUpdateCompanionBuilder,
+          (Checkin, BaseReferences<_$AppDatabase, $CheckinsTable, Checkin>),
+          Checkin,
+          PrefetchHooks Function()
+        > {
+  $$CheckinsTableTableManager(_$AppDatabase db, $CheckinsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CheckinsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CheckinsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CheckinsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<DateTime> checkedOn = const Value.absent(),
+                Value<int> balance = const Value.absent(),
+                Value<bool> matched = const Value.absent(),
+                Value<int> untracked = const Value.absent(),
+                Value<int> startingAdjustment = const Value.absent(),
+                Value<int> allowanceSpent = const Value.absent(),
+                Value<int?> leftAfterBuying = const Value.absent(),
+                Value<int> nextTarget = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CheckinsCompanion(
+                checkedOn: checkedOn,
+                balance: balance,
+                matched: matched,
+                untracked: untracked,
+                startingAdjustment: startingAdjustment,
+                allowanceSpent: allowanceSpent,
+                leftAfterBuying: leftAfterBuying,
+                nextTarget: nextTarget,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required DateTime checkedOn,
+                required int balance,
+                required bool matched,
+                Value<int> untracked = const Value.absent(),
+                Value<int> startingAdjustment = const Value.absent(),
+                required int allowanceSpent,
+                Value<int?> leftAfterBuying = const Value.absent(),
+                required int nextTarget,
+                Value<int> rowid = const Value.absent(),
+              }) => CheckinsCompanion.insert(
+                checkedOn: checkedOn,
+                balance: balance,
+                matched: matched,
+                untracked: untracked,
+                startingAdjustment: startingAdjustment,
+                allowanceSpent: allowanceSpent,
+                leftAfterBuying: leftAfterBuying,
+                nextTarget: nextTarget,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CheckinsTable, Checkin>(table),
+                  BaseReferences<_$AppDatabase, $CheckinsTable, Checkin>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CheckinsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CheckinsTable,
+      Checkin,
+      $$CheckinsTableFilterComposer,
+      $$CheckinsTableOrderingComposer,
+      $$CheckinsTableAnnotationComposer,
+      $$CheckinsTableCreateCompanionBuilder,
+      $$CheckinsTableUpdateCompanionBuilder,
+      (Checkin, BaseReferences<_$AppDatabase, $CheckinsTable, Checkin>),
+      Checkin,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10862,4 +11683,6 @@ class $AppDatabaseManager {
       $$CoachSettingsTableTableManager(_db, _db.coachSettings);
   $$CoachMessagesTableTableManager get coachMessages =>
       $$CoachMessagesTableTableManager(_db, _db.coachMessages);
+  $$CheckinsTableTableManager get checkins =>
+      $$CheckinsTableTableManager(_db, _db.checkins);
 }

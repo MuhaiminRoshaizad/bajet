@@ -209,6 +209,21 @@ file does not carry this table or `coach_settings`.
 | `looked`   | text | What the coach looked up, one label a line             |
 | `cards`    | text | Suggestion cards and their outcome, as JSON; empty if none |
 
+### `checkins`
+One finished Sunday check-in a day; finishing again the same day replaces
+it. Each row keeps what the next week's report is judged against.
+
+| Column                | Type | Notes                                                    |
+|-----------------------|------|----------------------------------------------------------|
+| `checked_on`          | text | Primary key, the day it was finished                     |
+| `balance`             | int  | What bajet held across every account                     |
+| `matched`             | bool | Every account was compared with what it really holds and agreed |
+| `untracked`           | int  | Money logged as untracked at this check-in; default 0    |
+| `starting_adjustment` | int  | The gap found at the very first check-in, kept apart from untracked; default 0 |
+| `allowance_spent`     | int  | Flexible spending that week, Monday to the check-in      |
+| `left_after_buying`   | int? | What the first goal leaves after buying; null without a goal |
+| `next_target`         | int  | The balance the plan expected seven days on              |
+
 ## Defaults on a new install
 
 Eight expense categories (Food, Transport, Pets, Family, Gifts, Bills, Personal,
@@ -271,7 +286,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 8. Any change to a table bumps it and adds a step to
+`schemaVersion` is 9. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -285,3 +300,4 @@ data on the phone is left as it was.
 | 6       | `accounts` and `transfers`; `entries.account_id` and `recurring_items.account_id`; the total card's look on `app_settings`, whose `opening_balance` moves to a first account, "Main account", which every existing entry and bill joins |
 | 7       | Brushed metal retired: `accounts.finish` and `app_settings.total_card_finish` turn `brushed` into `matte`, which becomes their default |
 | 8       | `coach_settings` and `coach_messages`, both new and empty, for the coach's look, personality and remembered chat |
+| 9       | `checkins`, new and empty, for the weekly check-in's targets |

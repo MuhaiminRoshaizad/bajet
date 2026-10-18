@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 8);
+    expect(db.schemaVersion, 9);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
   });
 
@@ -177,5 +177,40 @@ void main() {
     await old.into(old.coachSettings).insert(const CoachSettingsCompanion());
     final row = await old.select(old.coachSettings).getSingle();
     expect((row.face, row.personality, row.remember), ('bajety', 'friendly', true));
+  });
+
+  test('a version 8 database gains the check-ins table, empty, and keeps its entries', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v8.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO accounts (kind, name, opening_balance, color) VALUES ('bank', 'Bank', 1000, 1)");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key, account_id) VALUES ('2026-07-01', 'expense', 450, 'food', 1)");
+      raw.execute('PRAGMA user_version = 8');
+    }));
+    addTearDown(old.close);
+    expect(await old.select(old.checkins).get(), isEmpty);
+    expect((await old.select(old.entries).getSingle()).amount, 450);
+    await old.into(old.checkins).insert(CheckinsCompanion.insert(
+          checkedOn: DateTime.utc(2026, 7, 5),
+          balance: 100000,
+          matched: true,
+          allowanceSpent: 2150,
+          nextTarget: 98000,
+        ));
+    final row = await old.select(old.checkins).getSingle();
+    expect((row.checkedOn, row.untracked, row.startingAdjustment, row.leftAfterBuying), (DateTime.utc(2026, 7, 5), 0, 0, null));
+  });
+
+  test('a second check-in on the same day replaces the first', () async {
+    Future<void> save(int balance) => db.into(db.checkins).insertOnConflictUpdate(CheckinsCompanion.insert(
+          checkedOn: DateTime.utc(2026, 7, 5),
+          balance: balance,
+          matched: true,
+          allowanceSpent: 0,
+          nextTarget: balance,
+        ));
+    await save(100000);
+    await save(99000);
+    expect((await db.select(db.checkins).getSingle()).balance, 99000);
   });
 }

@@ -10,13 +10,13 @@ export 'tables.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites, CoachSettings, CoachMessages],
+  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites, CoachSettings, CoachMessages, Checkins],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -39,6 +39,7 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(coachSettings);
             await m.createTable(coachMessages);
           }
+          if (from < 9) await m.createTable(checkins);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
