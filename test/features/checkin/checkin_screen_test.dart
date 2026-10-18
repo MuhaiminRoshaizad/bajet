@@ -1,4 +1,5 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
+import 'package:bajet/features/checkin/domain/checkin.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,5 +79,66 @@ void main() {
     final e = world.entries.single;
     expect((e.amount, e.accountId), (450, cash));
     expect(world.accounts.firstWhere((a) => a.id == cash).balance, 8000);
+  });
+
+  Future<void> finish(WidgetTester tester) async {
+    await tester.ensureVisible(find.text('Finish check-in'));
+    await tester.tap(find.text('Finish check-in'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets("finishing saves the check-in with next week's target", (tester) async {
+    final world = await pumpApp(tester);
+    await openCheckin(tester);
+    await tester.enterText(bankField(), '150000');
+    await tester.pumpAndSettle();
+    await finish(tester);
+
+    final c = world.checkins.saved.single;
+    expect((c.checkedOn, c.balance, c.matched, c.untracked, c.startingAdjustment), (testToday, 150000, true, 0, 0));
+    // The demo rhythm plans nothing, so the plan expects the same balance.
+    expect(c.nextTarget, 150000);
+    expect(find.text('Update check-in'), findsOneWidget);
+    expect(find.text('Saved. Next week is judged against RM1,500.00 on Wed 08/07.'), findsOneWidget);
+  });
+
+  testWidgets('a check-in finished without comparing every account is not a match', (tester) async {
+    final world = await pumpApp(tester);
+    await openCheckin(tester);
+    await finish(tester);
+    expect(world.checkins.saved.single.matched, isFalse);
+  });
+
+  testWidgets('a gap at the first check-in is a starting adjustment, not untracked', (tester) async {
+    final world = await pumpApp(tester);
+    await openCheckin(tester);
+    await tester.enterText(bankField(), '148000');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Log RM20.00 as untracked'));
+    await tester.tap(find.text('Log RM20.00 as untracked'));
+    await tester.pumpAndSettle();
+    expect(find.text('Logged RM20.00 as a starting adjustment'), findsOneWidget);
+    expect(world.entries.single.label, 'Starting adjustment');
+
+    await finish(tester);
+    final c = world.checkins.saved.single;
+    expect((c.matched, c.startingAdjustment, c.untracked), (true, 2000, 0));
+  });
+
+  testWidgets('after an earlier check-in a gap is untracked', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.checkins.save(Checkin(checkedOn: DateTime.utc(2026, 6, 24), balance: 150000, matched: true, allowanceSpent: 0, nextTarget: 150000));
+    });
+    await openCheckin(tester);
+    await tester.enterText(bankField(), '148000');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Log RM20.00 as untracked'));
+    await tester.tap(find.text('Log RM20.00 as untracked'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.label, 'Untracked');
+
+    await finish(tester);
+    final c = world.checkins.saved.firstWhere((c) => c.checkedOn == testToday);
+    expect((c.startingAdjustment, c.untracked), (0, 2000));
   });
 }

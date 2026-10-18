@@ -7,4 +7,9 @@ void main() {
     expect(Dates.span(DateTime.utc(2026, 12, 30), DateTime.utc(2027, 1, 2)), '30/12/2026 to 02/01/2027');
     expect(Dates.span(DateTime.utc(2026, 10, 25), DateTime.utc(2026, 10, 25)), '25/10/2026');
   });
+
+  test('a day can lead with its weekday', () {
+    expect(Dates.dayFull(DateTime.utc(2027, 1, 9)), 'Sat 09/01/2027');
+    expect(Dates.dayShort(DateTime.utc(2026, 10, 25)), 'Sun 25/10');
+  });
 }

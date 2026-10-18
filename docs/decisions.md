@@ -412,3 +412,20 @@ the privacy of decision 014 and the cost of each question down.
 
 **Costs:** the chat takes a little room in the database, and a restored
 backup starts the conversation fresh, since the backup does not carry it.
+
+## 027: Each check-in sets the next week's target
+
+**Decided:** finishing the Sunday check-in saves it: the balance, whether
+every account matched, the money found untracked, the week's flexible
+spending, what the goal leaves after buying, and the balance the plan
+expects a week on. Next week's check-in is judged against that saved
+target, and the goal is judged apart from it. A gap found at the very
+first check-in is a starting adjustment, from an opening balance slightly
+off, and is not counted as missed logging.
+
+**Why:** a target recomputed every time the plan changes moves with the
+plan and judges nothing. Saving it when the week starts gives a fixed line
+to beat, and "since last check-in" figures need the last one kept.
+
+**Costs:** one small row a week, carried in backups. A target saved
+before the plan changed, such as a new bill, still stands for that week.

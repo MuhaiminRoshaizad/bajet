@@ -1,3 +1,5 @@
+import '../../plan/domain/projection.dart';
+
 /// One finished Sunday check-in. Amounts are sen.
 class Checkin {
   const Checkin({
@@ -46,4 +48,31 @@ abstract interface class CheckinRepository {
 
   /// Saves [checkin], replacing one already finished that day.
   Future<void> save(Checkin checkin);
+}
+
+/// The check-in finished on [today]: [balance] across every account, which
+/// [matched] the real ones or not, and [untrackedToday], the money logged as
+/// untracked today. At the [first] check-in that money is a starting
+/// adjustment rather than missed logging. The target is what [projection],
+/// run at least a week on, expects seven days from now.
+Checkin finishCheckin({
+  required DateTime today,
+  required int balance,
+  required bool matched,
+  required int untrackedToday,
+  required bool first,
+  required int allowanceSpent,
+  required Projection projection,
+}) {
+  final targetOn = DateTime.utc(today.year, today.month, today.day + 7);
+  return Checkin(
+    checkedOn: today,
+    balance: balance,
+    matched: matched,
+    untracked: first ? 0 : untrackedToday,
+    startingAdjustment: first ? untrackedToday : 0,
+    allowanceSpent: allowanceSpent,
+    leftAfterBuying: projection.goals.firstOrNull?.leftAfterBuying,
+    nextTarget: projection.days.firstWhere((d) => d.date == targetOn).balance,
+  );
 }

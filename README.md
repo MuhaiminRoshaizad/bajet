@@ -28,7 +28,7 @@ own API key; without a key, nothing leaves the phone.
 - **Reports** share any of those periods as text, a PDF or a CSV file, broken
   down by account and category, and PDFs, CSVs and backups save straight to
   the phone.
-- **Sunday check-in** compares the balance with the bank and logs any gap.
+- **Sunday check-in** compares the balance with the bank, logs any gap, and saves next week's target.
 - **Launcher shortcuts**: long-press the app icon to open the logger, empty
   or filled in from a favourite.
 - **Coach** answers questions about your money by looking up the figures it

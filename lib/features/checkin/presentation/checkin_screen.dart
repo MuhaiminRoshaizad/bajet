@@ -7,6 +7,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
@@ -16,9 +17,12 @@ import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
+import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../today/presentation/today_providers.dart';
 import '../../today/presentation/week_dial.dart';
+import '../domain/checkin.dart';
+import 'checkin_providers.dart';
 
 /// The weekly look back: does bajet's balance match the bank, and how did
 /// the week go against the rhythm. Any gap can be logged on the spot.
@@ -43,24 +47,53 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     super.dispose();
   }
 
+  /// No check-in was finished before today, so a gap found now comes from a
+  /// starting balance that was slightly off, not from missed logging.
+  bool get _first {
+    final today = ref.read(todayProvider);
+    return !(ref.read(checkinsProvider).value ?? const <Checkin>[]).any((c) => c.checkedOn.isBefore(today));
+  }
+
   Future<void> _logMissing(int amount, int accountId) async {
     final repo = ref.read(ledgerRepositoryProvider);
+    final first = _first;
     final id = await repo.add(EntryDraft(
       day: ref.read(todayProvider),
       isIncome: false,
       amount: amount,
       categoryKey: untrackedCategoryKey,
-      label: 'Untracked',
-      note: 'Found at check-in',
+      label: first ? 'Starting adjustment' : 'Untracked',
+      note: first ? 'Found at the first check-in' : 'Found at check-in',
       accountId: accountId,
     ));
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(SnackBar(
-        content: Text('Logged ${Money.format(amount)} as untracked'),
+        content: Text('Logged ${Money.format(amount)} as ${first ? 'a starting adjustment' : 'untracked'}'),
         action: SnackBarAction(label: 'Undo', onPressed: () => repo.delete(id)),
       ));
+  }
+
+  /// Saves the check-in, so next week is judged against the balance the plan
+  /// expects a week from now.
+  Future<void> _finish(List<Account> accounts, Projection projection) async {
+    final today = ref.read(todayProvider);
+    final entries = ref.read(recentEntriesProvider).value ?? const <Entry>[];
+    final checkin = finishCheckin(
+      today: today,
+      balance: ref.read(balanceProvider).value!,
+      matched: accounts.every((a) => (_typed[a.id]?.text ?? '').isNotEmpty && RinggitCentsFormatter.parse(_typed[a.id]!.text) == a.balance),
+      untrackedToday: entries.where((e) => e.day == today && e.categoryKey == untrackedCategoryKey).fold(0, (sum, e) => sum + e.amount),
+      first: _first,
+      allowanceSpent: ref.read(weekSpentProvider)!,
+      projection: projection,
+    );
+    await ref.read(checkinRepositoryProvider).save(checkin);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text('Check-in saved. Next target ${Money.format(checkin.nextTarget)} by ${Dates.dayShort(checkin.targetOn)}')));
   }
 
   @override
@@ -72,6 +105,9 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     final days = ref.watch(weekDaysProvider);
     final spent = ref.watch(weekSpentProvider);
     final cap = ref.watch(settingsProvider).value?.weeklyCap;
+    final projection = ref.watch(projectionThroughProvider(DateTime.utc(today.year, today.month, today.day + 7)));
+    final saved = ref.watch(checkinsProvider).value?.where((c) => c.checkedOn == today).firstOrNull;
+    final ready = projection != null && spent != null && ref.watch(balanceProvider).value != null && ref.watch(checkinsProvider).hasValue;
     // One account compares with the bank app as a whole; several each
     // compare with their own app or wallet.
     final single = accounts.length == 1;
@@ -108,6 +144,26 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
           const SizedBox(height: AppSpacing.l),
           if (days != null && spent != null && cap != null) SoftCard(child: WeekDial(days: days, spent: spent, cap: cap)),
           const SizedBox(height: AppSpacing.l),
+          FilledButton.icon(
+            onPressed: ready ? () => _finish(accounts, projection) : null,
+            icon: const Icon(Icons.check_rounded),
+            label: Text(saved == null ? 'Finish check-in' : 'Update check-in'),
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+          ),
+          AnimatedSize(
+            duration: AppMotion.enter,
+            curve: AppMotion.ease,
+            child: saved == null
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.s, AppSpacing.xs, 0),
+                    child: Text(
+                      'Saved. Next week is judged against ${Money.format(saved.nextTarget)} on ${Dates.dayShort(saved.targetOn)}.',
+                      style: TextStyle(color: c.muted),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: AppSpacing.m),
           OutlinedButton.icon(
             onPressed: () => context.push('${Routes.report}?period=week'),
             icon: const Icon(Icons.ios_share_rounded),

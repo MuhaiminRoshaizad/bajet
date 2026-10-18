@@ -11,6 +11,12 @@ abstract final class Dates {
   static String full(DateTime d) => _full.format(d);
   static String short(DateTime d) => _short.format(d);
 
+  /// `Sat 09/01/2027`.
+  static String dayFull(DateTime d) => '${weekday(d)} ${full(d)}';
+
+  /// `Sun 25/10`.
+  static String dayShort(DateTime d) => '${weekday(d)} ${short(d)}';
+
   /// `25/10 to 28/10/2026`, or the full first day when both are the same.
   static String span(DateTime first, DateTime last) {
     if (first == last) return full(first);
