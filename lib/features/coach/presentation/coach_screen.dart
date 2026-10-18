@@ -1,8 +1,6 @@
 import 'dart:math' as math;
-import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +15,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/soft.dart';
+import '../../../core/widgets/spring_in.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
@@ -223,7 +222,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         ),
                       for (final (i, m) in chat.messages.indexed) ...[
                         if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
-                        _SpringIn(
+                        SpringIn(
                           key: ValueKey(('message', i)),
                           animate: i >= settledCount,
                           alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
@@ -411,62 +410,6 @@ class _ProposalCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A new message arriving: it springs up from below at just over half its
-/// size, growing out of the side it was sent from, passing its size by a
-/// little and settling.
-class _SpringIn extends StatefulWidget {
-  const _SpringIn({super.key, required this.animate, required this.alignment, required this.child});
-
-  final bool animate;
-  final Alignment alignment;
-  final Widget child;
-
-  @override
-  State<_SpringIn> createState() => _SpringInState();
-}
-
-class _SpringInState extends State<_SpringIn> with SingleTickerProviderStateMixin {
-  late final _t = AnimationController.unbounded(vsync: this, value: 1);
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.animate) {
-      _t.value = 0;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
-          _t.value = 1;
-        } else {
-          _t.animateWith(SpringSimulation(AppMotion.spring, 0, 1, 0, snapToEnd: true));
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _t.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-        animation: _t,
-        child: widget.child,
-        builder: (context, child) {
-          final t = _t.value;
-          return Opacity(
-            opacity: (t * 2).clamp(0.0, 1.0),
-            child: Transform.translate(
-              offset: Offset(0, 24 * (1 - t)),
-              child: Transform.scale(scale: lerpDouble(0.55, 1, t), alignment: widget.alignment, child: child),
-            ),
-          );
-        },
-      );
 }
 
 /// The coach at work: three dots bobbing in a reply bubble, and what it is
