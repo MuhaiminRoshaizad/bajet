@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_colors.dart';
-import '../core/theme/app_spacing.dart';
 import '../features/lock/domain/app_lock.dart';
 import '../features/lock/presentation/lock_providers.dart';
 import '../features/opening/presentation/titanium_card.dart';
@@ -47,19 +46,7 @@ Future<bool> confirmLeave(BuildContext context, LockSettings lock) async {
   final leave = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      // The app icon: the titanium fan on its graphite tile.
-      icon: Center(
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.small + 4),
-            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF1F232A), graphite]),
-          ),
-          alignment: Alignment.center,
-          child: const FanMark(scale: .36),
-        ),
-      ),
+      icon: const Center(child: AppIconTile()),
       title: const Text('Leave bajet?'),
       content: Text(['Everything you\'ve logged is saved.', ?line].join(' '), textAlign: TextAlign.center, style: TextStyle(color: c.muted)),
       actions: [

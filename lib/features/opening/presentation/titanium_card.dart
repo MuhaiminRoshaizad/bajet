@@ -77,3 +77,22 @@ class FanMark extends StatelessWidget {
     );
   }
 }
+
+/// The app icon: the titanium fan on its graphite tile, [size] across.
+class AppIconTile extends StatelessWidget {
+  const AppIconTile({super.key, this.size = 56});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size * 16 / 56),
+          gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF1F232A), graphite]),
+        ),
+        alignment: Alignment.center,
+        child: FanMark(scale: .36 * size / 56),
+      );
+}
