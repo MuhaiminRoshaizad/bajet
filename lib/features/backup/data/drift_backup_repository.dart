@@ -133,6 +133,19 @@ class DriftBackupRepository implements BackupRepository {
             'accountId': e.accountId,
           },
       ],
+      'checkins': [
+        for (final c in await _db.select(_db.checkins).get())
+          {
+            'checkedOn': _day.toSql(c.checkedOn),
+            'balance': c.balance,
+            'matched': c.matched,
+            'untracked': c.untracked,
+            'startingAdjustment': c.startingAdjustment,
+            'allowanceSpent': c.allowanceSpent,
+            'leftAfterBuying': c.leftAfterBuying,
+            'nextTarget': c.nextTarget,
+          },
+      ],
     };
   }
 
@@ -144,6 +157,7 @@ class DriftBackupRepository implements BackupRepository {
       await _db.transaction(() async {
         // Children before parents, so foreign keys never point at nothing.
         for (final TableInfo<Table, Object?> t in [
+          _db.checkins,
           _db.entries,
           _db.favourites,
           _db.transfers,
@@ -283,6 +297,19 @@ class DriftBackupRepository implements BackupRepository {
                 plannedEventId: Value(e['plannedEventId'] as int?),
                 plannedEventOn: Value(e['plannedEventOn'] == null ? null : _day.fromSql(e['plannedEventOn']! as String)),
                 accountId: e['accountId']! as int,
+              ),
+          ]);
+          b.insertAll(_db.checkins, [
+            for (final c in _list(backup, 'checkins'))
+              CheckinsCompanion.insert(
+                checkedOn: _day.fromSql(c['checkedOn']! as String),
+                balance: c['balance']! as int,
+                matched: c['matched']! as bool,
+                untracked: Value(c['untracked']! as int),
+                startingAdjustment: Value(c['startingAdjustment']! as int),
+                allowanceSpent: c['allowanceSpent']! as int,
+                leftAfterBuying: Value(c['leftAfterBuying'] as int?),
+                nextTarget: c['nextTarget']! as int,
               ),
           ]);
         });

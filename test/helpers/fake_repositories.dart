@@ -8,6 +8,7 @@ import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';
 import 'package:bajet/features/accounts/domain/photo_colours.dart';
+import 'package:bajet/features/checkin/domain/checkin.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/coach/domain/coach_guard.dart';
 import 'package:bajet/features/coach/domain/coach_memory.dart';
@@ -84,6 +85,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final coach = FakeCoach();
   final coachSettings = FakeCoachSettings();
   final coachChat = FakeCoachChat();
+  final checkins = FakeCheckins();
   final themeModes = FakeThemeModes();
   final lockSettings = FakeLockSettings();
 
@@ -706,6 +708,20 @@ class FakeCoachSettings implements CoachSettingsRepository {
 
   @override
   Future<void> saveSettings(CoachSettings settings) async => _live.value = settings;
+}
+
+/// Finished check-ins kept in memory, newest first.
+class FakeCheckins implements CheckinRepository {
+  final _live = _Live<List<Checkin>>([]);
+
+  List<Checkin> get saved => _live.value;
+
+  @override
+  Stream<List<Checkin>> watchCheckins() => _live.stream;
+
+  @override
+  Future<void> save(Checkin checkin) async =>
+      _live.value = [...saved.where((c) => c.checkedOn != checkin.checkedOn), checkin]..sort((a, b) => b.checkedOn.compareTo(a.checkedOn));
 }
 
 class FakeThemeModes implements ThemeModeStore {

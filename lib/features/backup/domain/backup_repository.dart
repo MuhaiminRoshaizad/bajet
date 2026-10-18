@@ -9,8 +9,8 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// 6: `accounts` and `transfers`; entries and recurring items carry
 /// `accountId`; settings carry the total card's look instead of
 /// `openingBalance`, which becomes the first account's. 7: no `brushed`
-/// finish; cards that had it are `matte`.
-const backupFormatVersion = 7;
+/// finish; cards that had it are `matte`. 8: `checkins`.
+const backupFormatVersion = 8;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -94,6 +94,10 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
       ],
     };
     format = 7;
+  }
+  if (format == 7) {
+    b = {...b, 'format': 8, 'checkins': const <Object?>[]};
+    format = 8;
   }
   return b;
 }

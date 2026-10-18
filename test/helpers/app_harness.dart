@@ -3,6 +3,7 @@ import 'package:bajet/core/database/database_provider.dart';
 import 'package:bajet/core/dates/clock.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/accounts/presentation/account_providers.dart';
+import 'package:bajet/features/checkin/presentation/checkin_providers.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:bajet/features/coach/presentation/coach_providers.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
@@ -55,6 +56,7 @@ Future<FakeWorld> pumpApp(
       coachClientProvider.overrideWithValue(world.coach),
       coachSettingsRepositoryProvider.overrideWithValue(world.coachSettings),
       coachChatRepositoryProvider.overrideWithValue(world.coachChat),
+      checkinRepositoryProvider.overrideWithValue(world.checkins),
       coachIdleMotionProvider.overrideWithValue(false),
       planRepositoryProvider.overrideWithValue(world),
       accountRepositoryProvider.overrideWithValue(world),

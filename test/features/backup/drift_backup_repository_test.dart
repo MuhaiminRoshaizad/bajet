@@ -1,11 +1,13 @@
 import 'dart:convert';
 
-import 'package:bajet/core/database/app_database.dart';
+import 'package:bajet/core/database/app_database.dart' hide Checkin;
 import 'package:bajet/features/accounts/data/drift_account_repository.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart' as domain;
 import 'package:bajet/features/accounts/domain/account_models.dart' show firstAccountName;
 import 'package:bajet/features/backup/data/drift_backup_repository.dart';
 import 'package:bajet/features/backup/domain/backup_repository.dart';
+import 'package:bajet/features/checkin/data/drift_checkin_repository.dart';
+import 'package:bajet/features/checkin/domain/checkin.dart';
 import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/data/drift_plan_repository.dart';
@@ -44,6 +46,15 @@ void main() {
     await plan.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1));
     await ledger.add(EntryDraft(day: d(2026, 7, 2), isIncome: false, amount: 450, categoryKey: 'food', label: 'Coffee', note: 'Morning'));
     await DriftFavouriteRepository(db).add(label: 'Coffee', categoryKey: 'food', amount: 450);
+    await DriftCheckinRepository(db).save(Checkin(
+      checkedOn: d(2026, 7, 5),
+      balance: 99550,
+      matched: true,
+      startingAdjustment: 120,
+      allowanceSpent: 450,
+      leftAfterBuying: 52000,
+      nextTarget: 96000,
+    ));
   }
 
   test('a backup restored elsewhere reproduces every table', () async {
@@ -241,5 +252,14 @@ void main() {
     await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1200, categoryKey: 'food', receipt: 'r1.jpg'));
     await DriftBackupRepository(target).restore(jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>);
     expect((await DriftLedgerRepository(target).watchSince(d(2000, 1, 1)).first).single.receipt, 'r1.jpg');
+  });
+
+  test('a format 7 backup, from before saved check-ins, restores with none', () async {
+    await fill(source);
+    final v8 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    final v7 = {...v8, 'format': 7}..remove('checkins');
+    await DriftBackupRepository(target).restore(v7);
+    expect(await DriftCheckinRepository(target).watchCheckins().first, isEmpty);
+    expect(await DriftLedgerRepository(target).watchBalance().first, 150000 - 50000 - 450);
   });
 }

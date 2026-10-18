@@ -255,11 +255,11 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
 ```json
 {
   "app": "bajet",
-  "format": 7,
+  "format": 8,
   "settings": { "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000, "totalCardColor": null, "totalCardFinish": "matte" },
   "accounts": [], "transfers": [],
   "categories": [], "weeklyRules": [], "recurringItems": [],
-  "plannedEvents": [], "goals": [], "favourites": [], "entries": []
+  "plannedEvents": [], "goals": [], "favourites": [], "entries": [], "checkins": []
 }
 ```
 
@@ -278,6 +278,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 5      | Each entry carries `plannedEventId` and `plannedEventOn`; older files get null |
 | 6      | `accounts` and `transfers`; each entry and recurring item carries `accountId`; settings carry `totalCardColor` and `totalCardFinish` in place of `openingBalance`, which older files turn into one account, "Main account", that every entry and item belongs to |
 | 7      | No `brushed` finish: older files' brushed cards and total card restore as `matte` |
+| 8      | `checkins`, the finished check-ins; older files restore with none |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
