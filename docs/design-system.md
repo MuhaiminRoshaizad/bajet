@@ -380,6 +380,14 @@ inline line of text where it is.
   and PDF also give each account's money in and out for the period and what
   it holds now (`byAccount`). Moves between the user's own accounts are
   neither in nor out. The balance shown is today's, whatever the period.
+- The current week is reported as the weekly check-in (`weeklyCheckin`),
+  verdict first: the week against the target the last check-in saved for
+  today, or "Baseline set" without one, and the goal judged apart from it,
+  then the week's spending against the allowance, finished days within plan
+  (today counts once it is over), the rhythm's rules kept or missed, the
+  goal, the next seven days and anything flagged. Lines with nothing to say
+  are left out. A fasting day is kept when nothing is spent on Food that
+  day; transport and bills do not break it.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;
   the thumbnail in the logger opens it full screen, pinch to zoom.

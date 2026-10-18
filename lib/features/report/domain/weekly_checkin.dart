@@ -258,3 +258,56 @@ WeeklyCheckin weeklyCheckin({
     entries: entriesIn(week, entries),
   );
 }
+
+/// `+RM8.50` or `−RM4.20`.
+String signedMoney(int sen) => '${sen < 0 ? '−' : '+'}${Money.format(sen.abs())}';
+
+/// The check-in as plain text to paste into a chat, verdict first. Lines
+/// with nothing to say are left out.
+String weeklyCheckinText(WeeklyCheckin w) {
+  final goal = w.goal;
+  final safe = w.goalSafe;
+  final goalState = safe == null ? '' : ' · goal ${w.verdict == WeekVerdict.short && safe ? 'still ' : ''}${safe ? 'SAFE' : 'SHORT'}';
+  final under = w.plan - w.spent;
+  final lines = [
+    'bajet · weekly check-in · ${Dates.dayShort(w.monday)} – ${Dates.dayFull(w.sunday)}',
+    if (w.dataDays < 7) '${w.first ? 'First check-in · ' : ''}${w.dataDays} ${w.dataDays == 1 ? 'day' : 'days'} of data (${Dates.short(w.from)}–${Dates.short(w.today)})',
+    '',
+    switch (w.verdict) {
+      WeekVerdict.onTrack => 'CHECK-IN: ON TRACK ✓$goalState',
+      WeekVerdict.short => 'CHECK-IN: SHORT ${Money.format(-w.difference!)} this week$goalState',
+      WeekVerdict.baseline => 'CHECK-IN: BASELINE SET$goalState${goal == null ? '' : ' (${Money.format(goal.leftAfterBuying)} left after buying)'}',
+    },
+    switch (w.target) {
+      null => 'Balance ${Money.format(w.balance)} · target for ${Dates.dayShort(w.nextCheck)} set at this check-in',
+      final t => 'Balance ${Money.format(w.balance)} vs target ${Money.format(t)} (${signedMoney(w.difference!)})',
+    },
+    [
+      'Bank match: ${switch (w.matched) { true => 'yes', false => 'no', null => 'not checked yet' }}',
+      if (w.startingAdjustment > 0) 'starting adjustment ${Money.format(w.startingAdjustment)} (not counted as untracked)' else 'untracked ${Money.format(w.untracked)}',
+    ].join(' · '),
+    '',
+    'THIS WEEK',
+    'Spent ${Money.format(w.spent)} of ${Money.format(w.plan)}${w.from == w.monday ? '' : ' planned for these days'} '
+        '(${Money.format(under.abs())} ${under >= 0 ? 'under' : 'over'})',
+    if (w.categories.isNotEmpty) '  ${w.categories.map((c) => '${c.$1} ${Money.format(c.$2)}').join(' · ')}',
+    if (w.finished.isNotEmpty) 'Days: ${w.withinPlan} of ${w.finished.length} finished days within plan · ${w.noSpendDays} no-spend ${w.noSpendDays == 1 ? 'day' : 'days'}',
+    if (w.days.any((d) => d.state == CheckinDayState.today)) '  Today counts once it is over',
+    if (w.rules.isNotEmpty) 'Rules: ${w.rules.map((r) => '${r.name} ${r.kept ? 'kept' : 'missed'}').join(' · ')}',
+    if (goal != null) ...[
+      '',
+      'GOAL · ${goal.goal.name} · ${Money.format(goal.goal.price)} · ${Dates.dayFull(goal.goal.targetDate)} (${w.daysToGo} ${w.daysToGo == 1 ? 'day' : 'days'})',
+      'Left after buying: ${Money.format(goal.leftAfterBuying)}${w.change == null ? '' : ' (${signedMoney(w.change!)} since last check-in)'}',
+      if (w.withUnconfirmed != null) 'With unconfirmed income: ${Money.format(w.withUnconfirmed!)}',
+      if (w.buffer > 0) 'Buffer ${Money.format(w.buffer)}: ${safe! ? 'SAFE' : 'SHORT'}',
+    ],
+    '',
+    'NEXT 7 DAYS',
+    if (w.next.isEmpty) 'Nothing due',
+    for (final item in w.next)
+      '${Dates.dayShort(item.date).padRight(12)}${item.name.padRight(20)} ${signedMoney(item.signedAmount)}${item.counted ? '' : ' (unconfirmed)'}',
+    'Next check-in: ${Dates.dayShort(w.nextCheck)}, stay above ${Money.format(w.nextTarget)}',
+    if (w.flags.isNotEmpty) ...['', 'FLAGS', for (final f in w.flags) '- $f'],
+  ];
+  return lines.join('\n');
+}

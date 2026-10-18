@@ -24,8 +24,19 @@ Future<RecordingSharer> openReport(WidgetTester tester) async {
 
 void main() {
   // The opening date is today, so every period starts there.
-  testWidgets('the text report is previewed and shared as text', (tester) async {
+  testWidgets('this week is previewed and shared as the check-in', (tester) async {
     final sharer = await openReport(tester);
+    expect(find.textContaining('bajet · weekly check-in · Mon 29/06 – Sun 05/07/2026'), findsOneWidget);
+
+    await tester.tap(find.text('Share'));
+    await tester.pumpAndSettle();
+    expect(sharer.text, contains('  Food RM8.00'));
+  });
+
+  testWidgets('a month is shared as the general report', (tester) async {
+    final sharer = await openReport(tester);
+    await tester.tap(find.text('Month'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('bajet report, 01/07/2026 to 01/07/2026'), findsOneWidget);
 
     await tester.tap(find.text('Share'));

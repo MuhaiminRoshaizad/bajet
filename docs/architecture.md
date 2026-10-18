@@ -80,7 +80,7 @@ A folder under `core/` appears only once two features need it.
 | `settings` | The Settings hub behind Today's gear: balance, accounts, allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites, and About bajet with the installed version |
 | `backup` | JSON export saved to a folder or through the share sheet, and restore from a picked file |
 | `checkin` | The Sunday check-in: compare each account with what it really holds (the bank app as a whole while there is one account), log any gap to that account (a starting adjustment at the first one), look back at the week, and finish it to save next week's target (decision 027) |
-| `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV |
+| `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV; the current week as the weekly check-in |
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
 | `coach`  | The Coach tab: questions answered by Anthropic with the user's own key from Settings → Coach, up to 10 a day. The model reads the user's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |

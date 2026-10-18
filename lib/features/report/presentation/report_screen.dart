@@ -18,6 +18,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../data/report_pdf.dart';
 import '../domain/report.dart';
+import '../domain/weekly_checkin.dart';
 import 'report_providers.dart';
 
 enum ReportFormat { text, pdf, csv }
@@ -36,6 +37,10 @@ class ReportScreen extends ConsumerStatefulWidget {
 
 class _ReportScreenState extends ConsumerState<ReportScreen> {
   late InsightsRange _range = widget.initialRange;
+
+  /// The current week is reported as the Sunday check-in; past weeks and
+  /// longer periods as the general report.
+  bool get _thisWeek => _range.period == InsightsPeriod.week && _range.offset == 0;
   ReportFormat _format = ReportFormat.text;
   bool _busy = false;
 
@@ -74,7 +79,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   Future<void> _share(Insights i, String text, List<Entry> entries, Map<String, Category> categories) => _busyWhile(() async {
         final sharer = ref.read(fileSharerProvider);
-        if (_format == ReportFormat.text) return sharer.shareText(text, subject: 'bajet report');
+        if (_format == ReportFormat.text) return sharer.shareText(text, subject: _thisWeek ? 'bajet weekly check-in' : 'bajet report');
         final (bytes, name, type) = await _file(i, entries, categories);
         await sharer.shareFile(bytes, name, type);
       });
@@ -103,18 +108,21 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     final all = ref.watch(allEntriesProvider).value;
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
     final accounts = ref.watch(reportAccountsProvider(_range));
-    final ready = i != null && settings != null && balance != null && all != null && accounts != null;
+    final checkin = _thisWeek ? ref.watch(weeklyCheckinProvider) : null;
+    final ready = i != null && settings != null && balance != null && all != null && accounts != null && (checkin != null || !_thisWeek);
     final text = !ready
         ? ''
-        : reportText(
-            i: i,
-            accounts: accounts,
-            balance: balance,
-            weeklyCap: settings.weeklyCap,
-            buffer: settings.buffer,
-            categories: categories,
-            goal: ref.watch(projectionProvider)?.goals.firstOrNull,
-          );
+        : checkin != null
+            ? weeklyCheckinText(checkin)
+            : reportText(
+                i: i,
+                accounts: accounts,
+                balance: balance,
+                weeklyCap: settings.weeklyCap,
+                buffer: settings.buffer,
+                categories: categories,
+                goal: ref.watch(projectionProvider)?.goals.firstOrNull,
+              );
     final entries = ready ? entriesIn(i, all) : const <Entry>[];
 
     return Scaffold(
