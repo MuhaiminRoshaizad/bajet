@@ -35,10 +35,15 @@ class CheckinDay {
   bool get over => state == CheckinDayState.finished && spent > planned;
 }
 
+/// What a day of the rhythm asks.
+enum RuleKind { fasting, noSpending, flexible }
+
 /// A rule of the rhythm on a finished day, such as a no-spending day, and
 /// whether it held.
 class RuleCheck {
-  const RuleCheck(this.name, this.how, this.kept);
+  const RuleCheck(this.kind, this.name, this.how, this.kept);
+
+  final RuleKind kind;
 
   /// The rhythm's own label and the weekday, such as `Rest (Sun)`.
   final String name;
@@ -223,9 +228,9 @@ WeeklyCheckin weeklyCheckin({
   String name(CheckinDay d) => '${d.rule.label} (${Dates.weekday(d.date)})';
   final ruleChecks = [
     for (final d in days.where((d) => d.state == CheckinDayState.finished)) ...[
-      if (d.rule.isFastingDay) RuleCheck(name(d), 'no Food spending', !ateOn(d.date)),
-      if (d.rule.type == DayType.zero) RuleCheck(name(d), 'nothing spent', d.spent == 0),
-      if (d.rule.type == DayType.flex) RuleCheck(name(d), 'within ${Money.format(d.planned)}', !d.over),
+      if (d.rule.isFastingDay) RuleCheck(RuleKind.fasting, name(d), 'no Food spending', !ateOn(d.date)),
+      if (d.rule.type == DayType.zero) RuleCheck(RuleKind.noSpending, name(d), 'nothing spent', d.spent == 0),
+      if (d.rule.type == DayType.flex) RuleCheck(RuleKind.flexible, name(d), 'within ${Money.format(d.planned)}', !d.over),
     ],
   ];
 

@@ -1,6 +1,7 @@
 
 import 'package:bajet/core/sharing/file_sharer.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
+import 'package:bajet/features/report/presentation/checkin_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
@@ -60,6 +61,28 @@ void main() {
     });
     expect(sharer.fileName, 'bajet-check-in-2026-07-01.pdf');
     expect(sharer.fileText, startsWith('%PDF-'));
+  });
+
+  testWidgets("this week can be shared as an image of the week's card; a month cannot", (tester) async {
+    final sharer = await openReport(tester);
+    await tester.tap(find.text('Image'));
+    await tester.pumpAndSettle();
+    expect(find.byType(CheckinCard), findsOneWidget);
+
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Share image'));
+      for (var n = 0; n < 50 && sharer.fileName == null; n++) {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await tester.pump();
+      }
+    });
+    expect(sharer.fileName, 'bajet-check-in-2026-07-01.png');
+
+    // A month has no card, so the choice falls back to text.
+    await tester.tap(find.text('Month'));
+    await tester.pumpAndSettle();
+    expect(find.text('Image'), findsNothing);
+    expect(find.textContaining('bajet report, 01/07/2026'), findsOneWidget);
   });
 
   testWidgets('CSV shares every entry in the period as a dated file', (tester) async {

@@ -13,6 +13,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/soft.dart';
+import '../../../core/widgets/spring_in.dart';
 import '../../coach/domain/coach_settings.dart';
 import '../../coach/presentation/coach_avatar.dart';
 import '../../coach/presentation/coach_providers.dart';
@@ -27,9 +28,10 @@ import '../data/checkin_pdf.dart';
 import '../data/report_pdf.dart';
 import '../domain/report.dart';
 import '../domain/weekly_checkin.dart';
+import 'checkin_card.dart';
 import 'report_providers.dart';
 
-enum ReportFormat { text, pdf, csv }
+enum ReportFormat { text, pdf, csv, image }
 
 /// Shares a report of a week, a month or everything, as text to paste, a
 /// PDF to keep or a CSV for a spreadsheet.
@@ -57,12 +59,17 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     return 'bajet-report-${iso(i.from)}-to-${iso(i.to)}.$extension';
   }
 
-  /// The PDF or CSV of [i]: its bytes, file name and type.
+  /// The PDF, CSV or image of [i]: its bytes, file name and type.
   Future<(List<int>, String, String)> _file(Insights i, List<Entry> entries, Map<String, Category> categories) async {
     final accounts = ref.read(reportAccountsProvider(_range))!;
     if (_format == ReportFormat.csv) return (utf8.encode(reportCsv(entries, categories, accounts)), _fileName(i, 'csv'), 'text/csv');
     final checkin = _thisWeek ? ref.read(weeklyCheckinProvider) : null;
-    if (checkin != null) return (await _checkinPdf(checkin, categories), 'bajet-check-in-${checkin.today.toIso8601String().substring(0, 10)}.pdf', 'application/pdf');
+    if (checkin != null) {
+      final name = 'bajet-check-in-${checkin.today.toIso8601String().substring(0, 10)}';
+      // The card is shared as 1080 by 1350 pixels, in the theme on screen.
+      if (_format == ReportFormat.image) return (await _draw(CheckinCard(w: checkin), CheckinCard.size, pixelRatio: 3), '$name.png', 'image/png');
+      return (await _checkinPdf(checkin, categories), '$name.pdf', 'application/pdf');
+    }
     final settings = ref.read(settingsProvider).value!;
     final bytes = await reportPdf(
       i: i,
@@ -78,16 +85,22 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     return (bytes, _fileName(i, 'pdf'), 'application/pdf');
   }
 
+  /// [child] drawn off screen as a PNG, [size] points across, in the theme
+  /// on screen or, with [light], the light one. Material gives its text the
+  /// app's styles.
+  Future<Uint8List> _draw(Widget child, Size size, {required double pixelRatio, bool light = false}) {
+    final drawn = Material(type: MaterialType.transparency, child: child);
+    return widgetToPng(context, light ? Theme(data: AppTheme.light(), child: drawn) : drawn, size: size, pixelRatio: pixelRatio);
+  }
+
   /// This week's check-in as a PDF, with the app icon and the coach's face
   /// drawn as they are in the app. Paper is light, and the faces change
   /// with the theme, so they are drawn in the light one.
   Future<Uint8List> _checkinPdf(WeeklyCheckin w, Map<String, Category> categories) async {
     final face = (ref.read(coachSettingsProvider).value ?? const CoachSettings()).face;
     final mood = switch (w.verdict) { WeekVerdict.onTrack => CoachMood.happy, WeekVerdict.short => CoachMood.concerned, WeekVerdict.baseline => CoachMood.idle };
-    Future<Uint8List> draw(Widget child, double size) =>
-        widgetToPng(context, Theme(data: AppTheme.light(), child: child), size: Size.square(size), pixelRatio: 6);
-    final icon = await draw(const AppIconTile(size: 30), 30);
-    final coach = await draw(CoachAvatar(face: face, mood: mood, size: 46, animate: false, idle: false), 46);
+    final icon = await _draw(const AppIconTile(size: 30), const Size.square(30), pixelRatio: 6, light: true);
+    final coach = await _draw(CoachAvatar(face: face, mood: mood, size: 46, animate: false, idle: false), const Size.square(46), pixelRatio: 6, light: true);
     final doc = checkinDocument(
       w: w,
       categories: categories,
@@ -163,7 +176,14 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
-          PeriodPicker(range: _range, onChanged: (r) => setState(() => _range = r)),
+          PeriodPicker(
+            range: _range,
+            onChanged: (r) => setState(() {
+              _range = r;
+              // Only this week has a card to share.
+              if (!_thisWeek && _format == ReportFormat.image) _format = ReportFormat.text;
+            }),
+          ),
           if (ready)
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.s, AppSpacing.xs, 0),
@@ -183,11 +203,27 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   subtitle: Text(_thisWeek ? 'The check-in on one page, then every entry, to keep or print' : 'A summary, then every entry, to keep or print'),
                 ),
                 const RadioListTile(value: ReportFormat.csv, title: Text('CSV'), subtitle: Text('Every entry, to open in a spreadsheet')),
+                if (_thisWeek) const RadioListTile(value: ReportFormat.image, title: Text('Image'), subtitle: Text("A card of the week to post or send, in the app's colours")),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.l),
-          if (ready && _format == ReportFormat.text)
+          if (ready && _format == ReportFormat.image && checkin != null)
+            // The card itself, shrunk to fit; it springs in when picked.
+            SpringIn(
+              animate: true,
+              alignment: Alignment.topCenter,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadii.card),
+                    child: FittedBox(child: CheckinCard(w: checkin)),
+                  ),
+                ),
+              ),
+            )
+          else if (ready && _format == ReportFormat.text)
             SoftWell(
               radius: AppRadii.card,
               child: SelectableText(text, style: const TextStyle(fontSize: 13, height: 1.5, fontFeatures: [FontFeature.tabularFigures()])),
@@ -242,7 +278,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 child: FilledButton.icon(
                   onPressed: !ready || _busy ? null : () => _share(i, text, entries, categories),
                   icon: const Icon(Icons.ios_share_rounded),
-                  label: Text(switch (_format) { ReportFormat.text => 'Share', ReportFormat.pdf => 'Share PDF', ReportFormat.csv => 'Share CSV' }),
+                  label: Text(switch (_format) {
+                    ReportFormat.text => 'Share',
+                    ReportFormat.pdf => 'Share PDF',
+                    ReportFormat.csv => 'Share CSV',
+                    ReportFormat.image => 'Share image',
+                  }),
                   style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
                 ),
               ),

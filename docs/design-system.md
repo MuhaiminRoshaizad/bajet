@@ -398,6 +398,14 @@ inline line of text where it is.
   summary comes first in blocks that never split across pages; the entries
   follow and run on to more pages with their title and column names
   repeated, never splitting a row.
+- This week can also be shared as an image (`CheckinCard`), a 4:5 card in
+  the app's current theme, light or dark, shared as 1080 × 1350 pixels: the
+  week's spending against the allowance, a dot a day (filled within plan, a
+  ring for a day with nothing spent, red over plan, dashed for today, with a
+  small mark on a fasting day), fasting kept, untracked money, and the goal's
+  days to go and how far the week moved it. The preview springs in
+  (`SpringIn`) when Image is picked. The app icon carries a hairline in the
+  theme's line colour so the graphite tile stays clear of a dark card.
 - An entry can carry a receipt, attached in the logger from the camera or the
   gallery and always optional. Entries with one show a small receipt mark;
   the thumbnail in the logger opens it full screen, pinch to zoom.
