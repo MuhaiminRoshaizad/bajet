@@ -85,12 +85,12 @@ class _CoachPicker extends ConsumerWidget {
     Navigator.of(context).pop();
     if (face == settings.face) return;
     await controller.switchFace(face);
-    // Bajety's joke is the knows-too-much voice, so it offers it once picked.
+    // bajety's joke is the knows-too-much voice, so it offers it once picked.
     if (face == CoachFace.bajety && settings.personality != CoachPersonality.seesEverything) {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(
-          content: const Text('Bajety pairs well with Sees Everything 😉'),
+          content: const Text('bajety pairs well with Sees Everything 😉'),
           action: SnackBarAction(
             label: 'Use it',
             onPressed: () async {

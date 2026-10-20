@@ -12,9 +12,9 @@ void main() {
     await openCoach(tester);
     expect(header(tester).face, CoachFace.bajety);
     expect(find.text('Friendly'), findsOneWidget);
-    expect(find.text("Hi, I'm Bajety."), findsOneWidget);
+    expect(find.text("Hi, I'm bajety."), findsOneWidget);
     await ask(tester, 'How did this week go?');
-    expect(find.text("Hi, I'm Bajety."), findsNothing);
+    expect(find.text("Hi, I'm bajety."), findsNothing);
     expect(header(tester).mood, CoachMood.happy);
   });
 
@@ -35,13 +35,13 @@ void main() {
     expect(world.coachChat.saved.last.face, CoachFace.mei);
   });
 
-  testWidgets('picking Bajety offers its knows-too-much voice', (tester) async {
+  testWidgets('picking bajety offers its knows-too-much voice', (tester) async {
     final world = await openCoach(tester, seed: (w) => w.coachSettings.saveSettings(const CoachSettings(face: CoachFace.hafiz)));
     await tester.tap(find.bySemanticsLabel(RegExp('Switch coach')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Bajety'));
+    await tester.tap(find.text('bajety'));
     await tester.pumpAndSettle();
-    expect(find.text('Bajety pairs well with Sees Everything 😉'), findsOneWidget);
+    expect(find.text('bajety pairs well with Sees Everything 😉'), findsOneWidget);
     await tester.tap(find.text('Use it'));
     await tester.pumpAndSettle();
     expect(world.coachSettings.value.personality, CoachPersonality.seesEverything);

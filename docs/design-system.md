@@ -174,7 +174,7 @@ figures fade to rose over `fast` once the week is ahead of its plan. Figures wri
 never overshoot, since a number that reads wrong for a moment is a wrong
 number.
 
-The coach has a face (`CoachAvatar`): the titanium orb Bajety, in the total
+The coach has a face (`CoachAvatar`): the titanium orb bajety, in the total
 card's own shades with a graphite face, or one of three finance people,
 Aina, Hafiz and Mei, drawn in code. Each mood (idle, thinking, happy,
 concerned, cheer, hello, stare) morphs its mouth, brows and eyes from the
@@ -420,7 +420,7 @@ inline line of text where it is.
   suggested questions while it is empty. The header shows the coach's face
   and name over its personality; tapping it opens Choose your coach, a sheet
   of the four faces that switches the look only, after which the new face
-  says hello in the chat. Picking Bajety offers Sees Everything. An empty
+  says hello in the chat. Picking bajety offers Sees Everything. An empty
   chat greets with a large face. Replies carry the face that gave them,
   once per run, and the face reacts: thinking while waiting, happy at an
   answer, concerned (or staring, for Sees Everything) at a message turned

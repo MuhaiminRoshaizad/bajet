@@ -22,7 +22,7 @@ void main() {
     expect(CoachPersonality.seesEverything.voice, contains('😉'));
   });
 
-  test('settings start at Bajety and Friendly, are saved, and survive an unknown key', () async {
+  test('settings start at bajety and Friendly, are saved, and survive an unknown key', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     final repo = DriftCoachSettingsRepository(db);

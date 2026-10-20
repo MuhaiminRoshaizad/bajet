@@ -35,7 +35,7 @@ own API key; without a key, nothing leaves the phone.
   needs, any week, month, entry, account or the plan, using your own
   Anthropic key, up to ten a day. It can suggest logging a spend, moving money
   or marking a bill paid, which happens only when you tap to confirm. Pick
-  who coaches you, Bajety the titanium orb or one of three finance people,
+  who coaches you, bajety the titanium orb or one of three finance people,
   and how they talk, from friendly to roasting; their face reacts as you
   chat. The chat is remembered on the phone only, and messages that are not
   about your money are turned away on the phone, costing nothing. The

@@ -1,6 +1,6 @@
 /// Who draws the coach. The look only; how it talks is [CoachPersonality].
 enum CoachFace {
-  bajety('Bajety', 'Titanium orb'),
+  bajety('bajety', 'Titanium orb'),
   aina('Aina', 'Tudung, cream blazer'),
   hafiz('Hafiz', 'Glasses, navy blazer'),
   mei('Mei', 'Bob, sage blazer');
