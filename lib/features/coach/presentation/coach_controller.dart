@@ -13,6 +13,7 @@ import '../domain/coach_memory.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
+import '../domain/coach_thread.dart';
 import 'coach_avatar.dart';
 import 'coach_providers.dart';
 
@@ -44,7 +45,7 @@ class CoachChat {
   bool get canRetry => error != null && messages.isNotEmpty && messages.last.fromUser;
 }
 
-/// The conversation on the Coach tab: one ongoing chat, remembered on the
+/// The conversation on the Coach tab: the latest chat, remembered on the
 /// phone while the memory switch is on (decision 026), and gone when the
 /// app closes while it is off.
 class CoachController extends Notifier<CoachChat> {
@@ -66,6 +67,12 @@ class CoachController extends Notifier<CoachChat> {
 
   DateTime get _now => ref.read(clockProvider)();
 
+  /// The chat being talked in; null until something is said.
+  int? _threadId;
+
+  /// Where the chats are kept: on the phone, or for this session only.
+  CoachChatRepository get _repo => _settings.remember ? ref.read(coachChatRepositoryProvider) : ref.read(sessionCoachChatRepositoryProvider);
+
   /// How many of the messages, from the top, came back from memory or Undo
   /// rather than being said just now; the screen springs in only the rest.
   int settled = 0;
@@ -80,9 +87,11 @@ class CoachController extends Notifier<CoachChat> {
   CoachMood get _unimpressed => _personality == CoachPersonality.seesEverything ? CoachMood.stare : CoachMood.concerned;
 
   Future<void> _load() async {
-    final settings = await ref.read(coachSettingsProvider.future);
-    if (!settings.remember) return;
-    final remembered = await ref.read(coachChatRepositoryProvider).load();
+    await ref.read(coachSettingsProvider.future);
+    final latest = latestThread(await _repo.load());
+    if (latest == null) return;
+    _threadId = latest.id;
+    final remembered = latest.messages;
     // Anything said while loading stays after what was remembered.
     settled = remembered.length;
     state = CoachChat(messages: [...remembered, ...state.messages], sending: state.sending, reading: state.reading, error: state.error);
@@ -142,8 +151,9 @@ class CoachController extends Notifier<CoachChat> {
         return _reply(declineLine(_personality, _declined++));
       }
       _spam.heard();
-      final conversation = forModel(state.messages);
-      final older = state.messages.sublist(0, state.messages.length - conversation.length);
+      final said = spoken(state.messages);
+      final conversation = forModel(said);
+      final older = said.sublist(0, said.length - conversation.length);
       final cards = <CoachCard>[];
       final answer = await coachAnswer(
         client: client,
@@ -247,35 +257,34 @@ class CoachController extends Notifier<CoachChat> {
 
   /// Empties the chat and what is remembered of it, and returns what went,
   /// for Undo. The user's entries and figures are never touched.
-  Future<List<CoachMessage>> forget() async {
-    final gone = state.messages;
-    await ref.read(coachChatRepositoryProvider).clear();
+  Future<List<CoachThread>> forget() async {
+    final gone = await _repo.clear();
+    _threadId = null;
     settled = 0;
     state = const CoachChat();
     return gone;
   }
 
-  /// Puts back a chat [forget] took away.
-  Future<void> unforget(List<CoachMessage> messages) async {
-    if (_settings.remember) await ref.read(coachChatRepositoryProvider).restore(messages);
-    settled = messages.length;
-    state = CoachChat(messages: [...messages, ...state.messages]);
+  /// Puts back the chats [forget] took away.
+  Future<void> unforget(List<CoachThread> threads) async {
+    await _repo.restore(threads);
+    final latest = latestThread(threads);
+    if (latest == null) return;
+    _threadId = latest.id;
+    settled = latest.messages.length;
+    state = CoachChat(messages: latest.messages);
   }
 
-  /// Turning memory off forgets what was kept, though the chat on screen
-  /// stays until the app closes. Turning it on keeps the chat from here.
+  /// Turning memory off forgets what was kept, though the chats stay for
+  /// this session until the app closes. Turning it on keeps them from here.
   Future<void> setRemember(bool remember) async {
-    final repo = ref.read(coachChatRepositoryProvider);
+    final phone = ref.read(coachChatRepositoryProvider), session = ref.read(sessionCoachChatRepositoryProvider);
     await ref.read(coachSettingsRepositoryProvider).saveSettings(_settings.copyWith(remember: remember));
-    if (!remember) {
-      await repo.clear();
-      state = CoachChat(messages: [
-        for (final m in state.messages) CoachMessage(fromUser: m.fromUser, text: m.text, looked: m.looked, cards: m.cards, sentAt: m.sentAt, face: m.face),
-      ]);
-      return;
+    if (remember) {
+      await phone.restore(await session.clear());
+    } else {
+      await session.restore(await phone.clear());
     }
-    final kept = [for (final m in state.messages) m.withId(await repo.add(m))];
-    state = CoachChat(messages: kept, sending: state.sending, error: state.error);
   }
 
   Future<void> _setCard(int message, int card, CoachCard updated) async {
@@ -284,15 +293,21 @@ class CoachController extends Notifier<CoachChat> {
     messages[message] = messages[message].withCards(cards);
     state = CoachChat(messages: messages, sending: state.sending, error: state.error);
     final id = messages[message].id;
-    if (id != null) await ref.read(coachChatRepositoryProvider).saveCards(id, messages[message]);
+    if (id != null) await _repo.saveCards(id, messages[message]);
   }
 
-  /// Adds [m] to the chat, and to memory while it is on.
+  /// Adds [m] to the chat, starting one, named after [m], when there is none.
   Future<void> _add(CoachMessage m) async {
     // A reply ends the wait for one.
     state = CoachChat(messages: [...state.messages, m], sending: m.fromUser && state.sending);
-    if (!_settings.remember) return;
-    final id = await ref.read(coachChatRepositoryProvider).add(m);
+    _threadId ??= await _repo.createThread(CoachThread(
+      id: 0,
+      title: chatTitleFrom(m.text),
+      face: _settings.face,
+      personality: _personality,
+      createdAt: m.sentAt ?? _now,
+    ));
+    final id = await _repo.add(_threadId!, m);
     final at = state.messages.lastIndexOf(m);
     if (at < 0) return;
     final messages = [...state.messages]..[at] = m.withId(id);

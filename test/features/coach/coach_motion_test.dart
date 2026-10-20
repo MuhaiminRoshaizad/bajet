@@ -4,6 +4,7 @@ import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/fake_repositories.dart' show chatWith;
 import 'coach_screen_test.dart' show ask, openCoach;
 
 /// How large the bubble holding [text] is drawn, against its laid-out size.
@@ -35,9 +36,11 @@ void main() {
   });
 
   testWidgets('a remembered chat is already in place when the tab opens', (tester) async {
-    await openCoach(tester, seed: (w) => w.coachChat.saved.addAll([
-          CoachMessage(fromUser: true, text: 'Old question', sentAt: DateTime(2026, 7, 1, 9), id: 1),
-          CoachMessage(fromUser: false, text: 'Old answer', sentAt: DateTime(2026, 7, 1, 9), id: 2),
+    await openCoach(tester, seed: (w) => w.coachChat.restore([
+          chatWith([
+            CoachMessage(fromUser: true, text: 'Old question', sentAt: DateTime(2026, 7, 1, 9), id: 1),
+            CoachMessage(fromUser: false, text: 'Old answer', sentAt: DateTime(2026, 7, 1, 9), id: 2),
+          ]),
         ]));
     await tester.pump();
     expect(drawnScale(tester, 'Old question'), 1);

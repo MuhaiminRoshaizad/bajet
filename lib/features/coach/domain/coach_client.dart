@@ -3,7 +3,16 @@ import 'coach_settings.dart';
 
 /// One turn of the conversation with the coach.
 class CoachMessage {
-  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const [], this.id, this.sentAt, this.face});
+  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const [], this.id, this.sentAt, this.face, this.note = false});
+
+  /// A line in the chat that nobody said, such as "bajety is now Strict".
+  /// The coach is never sent it.
+  const CoachMessage.note(this.text, {this.sentAt, this.id})
+      : fromUser = false,
+        note = true,
+        face = null,
+        looked = const [],
+        cards = const [];
 
   final bool fromUser;
   final String text;
@@ -21,10 +30,12 @@ class CoachMessage {
 
   /// For a reply: the changes it suggested, each waiting for the user's tap.
   final List<CoachCard> cards;
+  final bool note;
 
-  CoachMessage withCards(List<CoachCard> cards) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face);
+  CoachMessage withCards(List<CoachCard> cards) =>
+      CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face, note: note);
 
-  CoachMessage withId(int id) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face);
+  CoachMessage withId(int id) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face, note: note);
 }
 
 enum CoachProblem { offline, badKey, busy, refused, other }

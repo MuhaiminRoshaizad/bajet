@@ -9,10 +9,12 @@ import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';
 import 'package:bajet/features/accounts/domain/photo_colours.dart';
 import 'package:bajet/features/checkin/domain/checkin.dart';
+import 'package:bajet/features/coach/data/memory_coach_chat_repository.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/coach/domain/coach_guard.dart';
 import 'package:bajet/features/coach/domain/coach_memory.dart';
 import 'package:bajet/features/coach/domain/coach_settings.dart';
+import 'package:bajet/features/coach/domain/coach_thread.dart';
 import 'package:bajet/features/launch/data/home_surface.dart';
 import 'package:bajet/features/launch/domain/launch_link.dart';
 import 'package:bajet/features/lock/domain/app_lock.dart';
@@ -84,7 +86,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final coachKeys = FakeCoachKeys();
   final coach = FakeCoach();
   final coachSettings = FakeCoachSettings();
-  final coachChat = FakeCoachChat();
+  final coachChat = MemoryCoachChatRepository();
   final checkins = FakeCheckins();
   final themeModes = FakeThemeModes();
   final lockSettings = FakeLockSettings();
@@ -665,36 +667,20 @@ class FakeCoach implements CoachClient {
   }
 }
 
-/// The remembered chat, kept in a list.
-class FakeCoachChat implements CoachChatRepository {
-  final saved = <CoachMessage>[];
-  var _next = 1;
+/// A chat holding [messages], named after its first question, for seeding.
+CoachThread chatWith(List<CoachMessage> messages, {int id = 1, CoachFace face = CoachFace.bajety, CoachPersonality personality = CoachPersonality.friendly}) =>
+    CoachThread(
+      id: id,
+      title: chatTitleFrom(messages.firstWhere((m) => m.fromUser, orElse: () => messages.first).text),
+      face: face,
+      personality: personality,
+      createdAt: messages.first.sentAt ?? DateTime(2026),
+      messages: messages,
+    );
 
-  @override
-  Future<List<CoachMessage>> load() async => [...saved];
-
-  @override
-  Future<int> add(CoachMessage m) async {
-    final id = _next++;
-    saved.add(m.withId(id));
-    return id;
-  }
-
-  @override
-  Future<void> saveCards(int id, CoachMessage m) async {
-    final at = saved.indexWhere((s) => s.id == id);
-    if (at >= 0) saved[at] = m;
-  }
-
-  @override
-  Future<List<CoachMessage>> clear() async {
-    final gone = [...saved];
-    saved.clear();
-    return gone;
-  }
-
-  @override
-  Future<void> restore(List<CoachMessage> messages) async => saved.insertAll(0, messages);
+extension SaidMessages on CoachChatRepository {
+  /// Every message kept, in every chat.
+  Future<List<CoachMessage>> said() async => [for (final t in await load()) ...t.messages];
 }
 
 /// Coach settings kept in memory, starting at the defaults.

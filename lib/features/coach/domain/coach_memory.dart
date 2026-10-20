@@ -1,31 +1,49 @@
 import '../../../core/dates/dates.dart';
 import 'coach_client.dart';
 import 'coach_lookups.dart';
+import 'coach_thread.dart';
 
 /// Messages sent with every question. Older ones stay on the phone, where the
 /// coach can search them with [pastChatsLookup] when a question needs them.
 const coachMemoryWindow = 20;
 
-/// The chat as the model gets it: the last [coachMemoryWindow] messages,
-/// starting at a question, since the conversation sent to the model has to.
+/// What was said in a chat, leaving out its notes, which nobody said.
+List<CoachMessage> spoken(List<CoachMessage> messages) => [for (final m in messages) if (!m.note) m];
+
+/// The chat as the model gets it: the last [coachMemoryWindow] messages
+/// said, starting at a question, since the conversation sent to the model
+/// has to.
 List<CoachMessage> forModel(List<CoachMessage> messages) {
-  final recent = messages.length <= coachMemoryWindow ? messages : messages.sublist(messages.length - coachMemoryWindow);
+  final said = spoken(messages);
+  final recent = said.length <= coachMemoryWindow ? said : said.sublist(said.length - coachMemoryWindow);
   final start = recent.indexWhere((m) => m.fromUser);
   return start < 0 ? const [] : recent.sublist(start);
 }
 
-/// Where the remembered chat is kept: on the phone only, never in a backup.
+/// Where the chats are kept: on the phone only, never in a backup. With
+/// memory off they live in a session store that goes when the app closes.
 abstract interface class CoachChatRepository {
-  /// Every remembered message, oldest first.
-  Future<List<CoachMessage>> load();
+  /// Every chat with its messages, oldest message first.
+  Future<List<CoachThread>> load();
 
-  /// Remembers [message] and returns its id.
-  Future<int> add(CoachMessage message);
+  /// Starts [thread], whose id is ignored, and returns the id it gets.
+  Future<int> createThread(CoachThread thread);
+
+  /// Saves [thread]'s name, pin, coach and personality.
+  Future<void> saveThread(CoachThread thread);
+
+  /// Forgets the chat [id] and everything said in it.
+  Future<void> deleteThread(int id);
+
+  /// Remembers [message] in chat [threadId] and returns its id.
+  Future<int> add(int threadId, CoachMessage message);
   Future<void> saveCards(int id, CoachMessage message);
 
-  /// Forgets everything and returns what was forgotten, for Undo.
-  Future<List<CoachMessage>> clear();
-  Future<void> restore(List<CoachMessage> messages);
+  /// Forgets every chat and returns them, for Undo.
+  Future<List<CoachThread>> clear();
+
+  /// Puts back chats [clear] or [deleteThread] took, with their ids.
+  Future<void> restore(List<CoachThread> threads);
 }
 
 const pastChatsLookup = CoachLookup(

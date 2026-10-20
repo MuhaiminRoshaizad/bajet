@@ -8,6 +8,7 @@ import '../../plan/presentation/runway_screen.dart';
 import '../data/anthropic_coach_client.dart';
 import '../data/drift_coach_chat_repository.dart';
 import '../data/drift_coach_settings_repository.dart';
+import '../data/memory_coach_chat_repository.dart';
 import '../data/secure_coach_key_store.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_lookups.dart';
@@ -18,6 +19,10 @@ import '../domain/week_summary.dart';
 final coachClientProvider = Provider<CoachClient>((ref) => AnthropicCoachClient());
 final coachKeyStoreProvider = Provider<CoachKeyStore>((ref) => const SecureCoachKeyStore());
 final coachChatRepositoryProvider = Provider<CoachChatRepository>((ref) => DriftCoachChatRepository(ref.watch(databaseProvider)));
+
+/// Chats while memory is off: kept for this session, gone when the app
+/// closes.
+final sessionCoachChatRepositoryProvider = Provider<CoachChatRepository>((ref) => MemoryCoachChatRepository());
 final coachSettingsRepositoryProvider = Provider<CoachSettingsRepository>((ref) => DriftCoachSettingsRepository(ref.watch(databaseProvider)));
 
 /// The coach's look, personality and memory setting.
