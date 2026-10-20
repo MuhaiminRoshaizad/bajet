@@ -1,15 +1,15 @@
 import 'package:bajet/features/coach/domain/coach_settings.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:bajet/features/coach/presentation/coach_chats.dart';
-import 'package:bajet/features/coach/presentation/coach_screen.dart';
+import 'package:bajet/features/coach/presentation/coach_chat_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_repositories.dart' show SaidMessages;
-import 'coach_screen_test.dart' show ask, openCoach;
+import 'coach_screen_test.dart' show ask, chatPage, openCoach;
 
-/// The face in the Coach tab's header.
-CoachAvatar header(WidgetTester tester) => tester.widget<CoachAvatar>(find.byType(CoachAvatar).first);
+/// The face at the top of the chat on screen.
+CoachAvatar header(WidgetTester tester) => tester.widget<CoachAvatar>(find.descendant(of: chatPage, matching: find.byType(CoachAvatar)).first);
 
 void main() {
   testWidgets('the header shows the coach, its personality, and a welcome until the first question', (tester) async {
@@ -59,8 +59,8 @@ void main() {
     await ask(tester, 'Write me some code');
     expect(header(tester).mood, CoachMood.concerned);
 
-    final app = ProviderScope.containerOf(tester.element(find.byType(CoachScreen)));
-    await app.read(coachChatsProvider.notifier).setCoach(app.read(coachChatsProvider).listed.single.id, personality: CoachPersonality.seesEverything);
+    final app = ProviderScope.containerOf(tester.element(chatPage));
+    await app.read(coachChatsProvider.notifier).setCoach(tester.widget<CoachChatScreen>(chatPage).chat, personality: CoachPersonality.seesEverything);
     await tester.pumpAndSettle();
     await ask(tester, 'Write me some more code');
     expect(header(tester).mood, CoachMood.stare);

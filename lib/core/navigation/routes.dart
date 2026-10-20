@@ -23,6 +23,9 @@ abstract final class Routes {
   static const insights = '/insights';
   static const coach = '/coach';
 
+  /// One chat with the coach, over the bottom bar.
+  static String coachChat(int id) => '/coach/chat/$id';
+
   /// Above the tabs, so it opens the same way from any of them. Takes
   /// `?period=week|month|all`.
   static const report = '/report';

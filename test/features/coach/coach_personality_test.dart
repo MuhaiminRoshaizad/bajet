@@ -38,8 +38,8 @@ void main() {
     expect((await repo.watchSettings().first).personality, CoachPersonality.friendly);
   });
 
-  testWidgets('a personality picked in Settings is the voice of the next answer', (tester) async {
-    final world = await openCoach(tester);
+  testWidgets('a personality picked in Settings is the voice of the next new chat', (tester) async {
+    final world = await openCoach(tester, open: false);
     await tester.tap(find.byKey(const ValueKey('tab-Today')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Settings'));
@@ -64,6 +64,8 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tab-Coach')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('new-chat')));
     await tester.pumpAndSettle();
     await ask(tester, 'How did this week go?');
     expect(world.coach.lastSystem, endsWith('Your voice: ${CoachPersonality.roaster.voice}'));

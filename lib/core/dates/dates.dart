@@ -7,6 +7,7 @@ abstract final class Dates {
   static final _weekday = DateFormat('EEE');
   static final _month = DateFormat('MMM');
   static final _monthYear = DateFormat('MMMM yyyy');
+  static final _time = DateFormat('HH:mm');
 
   static String full(DateTime d) => _full.format(d);
   static String short(DateTime d) => _short.format(d);
@@ -31,4 +32,7 @@ abstract final class Dates {
 
   /// `October 2026`.
   static String monthYear(DateTime d) => _monthYear.format(d);
+
+  /// `14:05`, on the 24-hour clock.
+  static String time(DateTime d) => _time.format(d);
 }

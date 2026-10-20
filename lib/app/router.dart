@@ -12,6 +12,7 @@ import '../features/accounts/presentation/accounts_screen.dart';
 import '../features/plan/presentation/plan_providers.dart';
 import '../features/backup/presentation/backup_screen.dart';
 import '../features/checkin/presentation/checkin_screen.dart';
+import '../features/coach/presentation/coach_chat_screen.dart';
 import '../features/coach/presentation/coach_key_screen.dart';
 import '../features/coach/presentation/coach_screen.dart';
 import '../features/insights/domain/insights.dart';
@@ -122,7 +123,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           ]),
           _branch(Routes.runway, const RunwayScreen()),
           _branch(Routes.insights, const InsightsScreen()),
-          _branch(Routes.coach, const CoachScreen()),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: Routes.coach,
+              builder: (context, state) => const CoachScreen(),
+              routes: [
+                GoRoute(
+                  path: 'chat/:id',
+                  parentNavigatorKey: root,
+                  builder: (context, state) => CoachChatScreen(chat: int.parse(state.pathParameters['id']!)),
+                ),
+              ],
+            ),
+          ]),
         ],
       ),
     ],

@@ -83,7 +83,7 @@ A folder under `core/` appears only once two features need it.
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV; the current week as the weekly check-in |
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
 | `insights` | The Insights tab: money in and out, fixed against flexible, categories, the last fourteen days and habits, for a week, a month or all time |
-| `coach`  | The Coach tab: questions answered by Anthropic with the user's own key from Settings → Coach, up to 10 a day. The model reads the user's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
+| `coach`  | The Coach tab: a list of chats, each opening on its own page, with questions answered by Anthropic with the user's own key from Settings → Coach, up to 10 a day. The model reads the user's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
 | `opening` | The opening played on a cold start: its timeline as plain data, the titanium cards and the lock screen's fan, and the cards' flight into Today's stack that the unlock shares; the overlay that plays it lives in `app/` because it draws Today's and the lock screen's cards |
 | `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, its fan flying into Today's stack once it passes, and the user's lock choices |
 | `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
@@ -100,7 +100,8 @@ shell's body runs under the bar (`extendBody`), so a tab's list pads its end
 with `underBar` rather than sitting in a bottom `SafeArea`. Routes are
 declared once in `lib/app/router.dart`; their paths live in
 `lib/core/navigation/routes.dart` so a feature can link to another without
-importing the router. History (`Routes.history`), the check-in (`Routes.checkin`)
+importing the router. A chat with the coach (`Routes.coachChat`) sits under
+the Coach branch the same way. History (`Routes.history`), the check-in (`Routes.checkin`)
 and Settings (`Routes.settings`) sit under Today's branch but open on the root
 navigator (`parentNavigatorKey`), so they and every page under them fill the
 screen without the bottom bar, which belongs to the four tabs alone. Your
@@ -162,7 +163,9 @@ a `refusal` stop reason becomes `CoachProblem.refused`.
 The coach's voice is one of six fixed personalities (`CoachPersonality` in
 `coach_settings.dart`: Friendly, Strict, Cheerleader, Roaster, Sees
 Everything, Professional), stored with the chosen avatar and the memory
-switch in `coach_settings` through `CoachSettingsRepository`.
+switch in `coach_settings` through `CoachSettingsRepository`. Those are
+the defaults a new chat starts with; each chat then keeps its own coach and
+personality.
 `coachSystemPrompt(today, personality)` puts the same fixed rules first in
 every request (only bajet's money, refuse anything else in character, do
 the money half of a mixed request, no investment picks, whatever the user
@@ -180,12 +183,22 @@ sets get firmer the more often they are used. `test/eval/coach_eval_test.dart`
 sends real attacks to the real models; it runs only by hand with
 `--dart-define=COACH_EVAL_KEY=...`, so CI skips it.
 
-The chat is one ongoing conversation (decision 026). `CoachController` keeps
-it in `coach_messages` through `CoachChatRepository` while the memory switch
-is on, loading it at start, and sends the model only the last 20 messages
-(`forModel`). Older ones stay on the phone; the `bajet_past_chats` lookup
-searches them when a question needs them. Turning memory off forgets what
-was kept, and Forget everything clears it with an Undo. Neither the chat nor
+The Coach tab lists chats (`CoachScreen`), pinned ones first, then the
+most recent; each opens on its own page (`CoachChatScreen`,
+`Routes.coachChat`) over the bottom bar. `CoachChatsController` holds every
+chat (`CoachThread`: name, pin, coach, personality and messages) and saves
+each change behind it through `CoachChatRepository`: to `coach_threads` and
+`coach_messages` while the memory switch is on (decision 026), and to a
+session-only `MemoryCoachChatRepository` while it is off, so switching moves
+the chats across rather than dropping them. A chat is named after its first
+question by the app, not the model, and a new chat left before anything is
+asked in it is dropped. `CoachController`, one per chat, runs the asking and
+answering in that chat's own coach and voice, and sends the model only the
+chat's last 20 messages (`forModel`). Its older messages and every other
+chat's stay on the phone; the `bajet_past_chats` lookup searches them when a
+question needs them. The pushback against spam (`CoachPushback`) is shared,
+so a new chat is no way round it. Turning memory off forgets what was kept,
+and Forget everything clears every chat with an Undo. Neither the chats nor
 the coach settings go into a backup.
 
 The coach changes nothing itself (decision 023). Three more tools,

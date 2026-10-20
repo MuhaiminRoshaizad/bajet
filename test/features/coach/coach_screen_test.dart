@@ -1,4 +1,5 @@
 import 'package:bajet/features/coach/domain/coach_client.dart';
+import 'package:bajet/features/coach/presentation/coach_chat_screen.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +10,11 @@ import '../../helpers/fake_repositories.dart';
 
 const testKey = 'sk-ant-test-0123456789abcdefghij';
 
-Future<FakeWorld> openCoach(WidgetTester tester, {bool withKey = true, void Function(FakeWorld)? seed}) async {
+/// A row in the chat list.
+final chatRows = find.byWidgetPredicate((w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith('chat-'));
+
+/// Opens the Coach tab and, with [open], its latest chat or a new one.
+Future<FakeWorld> openCoach(WidgetTester tester, {bool withKey = true, bool open = true, void Function(FakeWorld)? seed}) async {
   final world = await pumpApp(tester, seed: (w) {
     if (withKey) w.coachKeys.key = testKey;
     w.add(EntryDraft(day: testToday, isIncome: false, amount: 1200, categoryKey: 'food'));
@@ -17,11 +22,18 @@ Future<FakeWorld> openCoach(WidgetTester tester, {bool withKey = true, void Func
   });
   await tester.tap(find.byKey(const ValueKey('tab-Coach')));
   await tester.pumpAndSettle();
+  if (withKey && open) {
+    await tester.tap(chatRows.evaluate().isEmpty ? find.byKey(const ValueKey('new-chat')) : chatRows.first);
+    await tester.pumpAndSettle();
+  }
   return world;
 }
 
+/// The chat page on screen.
+final chatPage = find.byType(CoachChatScreen);
+
 Future<void> ask(WidgetTester tester, String question) async {
-  await tester.enterText(find.byType(TextField), question);
+  await tester.enterText(find.byKey(const ValueKey('coach-question')), question);
   await tester.tap(find.byTooltip('Send'));
   await tester.pumpAndSettle();
 }
@@ -45,7 +57,7 @@ void main() {
   });
 
   testWidgets("the copy button sits at the header's edge, in line with Insights' share button", (tester) async {
-    await openCoach(tester);
+    await openCoach(tester, open: false);
     final copy = tester.getTopRight(find.byTooltip("Copy this week's summary")).dx;
     await tester.tap(find.byKey(const ValueKey('tab-Insights')));
     await tester.pumpAndSettle();
@@ -54,7 +66,7 @@ void main() {
 
   testWidgets('a question is answered from the week and month, and counted', (tester) async {
     final world = await openCoach(tester);
-    expect(find.text('10 left today'), findsOneWidget);
+    expect(find.text('10 left today', skipOffstage: false), findsOneWidget);
 
     world.coach.lookups.add(('bajet_overview', const {}));
     await ask(tester, 'How did this week go?');
@@ -64,6 +76,9 @@ void main() {
     expect(world.coach.lookedUp, contains('Balance: RM1,488.00'));
     expect(world.coach.lastSystem, isNot(contains('RM1,488.00')));
     expect(find.text('Looked at: This week'), findsOneWidget);
+    // The count is on the list, which catches up once it is back in view.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     expect(find.text('9 left today'), findsOneWidget);
   });
 
@@ -106,7 +121,7 @@ void main() {
     await ask(tester, 'Write me a calculator in Python');
     expect(find.textContaining("that one's not my job"), findsOneWidget);
     expect(world.coach.requests, isEmpty);
-    expect(find.text('10 left today'), findsOneWidget);
+    expect(find.text('10 left today', skipOffstage: false), findsOneWidget);
 
     await ask(tester, 'Ok then translate this essay');
     expect(find.text("Still not my thing, I promise. Ask me anything about your spending though."), findsOneWidget);
@@ -121,6 +136,8 @@ void main() {
     expect(world.coach.requests, hasLength(1));
     expect(find.textContaining('Same answer as just now lah'), findsOneWidget);
     expect(find.text('You asked that a moment ago. Want me to look at it a different way?'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     expect(find.text('9 left today'), findsOneWidget);
   });
 
@@ -137,7 +154,7 @@ void main() {
     world.coach.failWith = CoachProblem.offline;
     await ask(tester, 'Am I on track?');
     expect(find.textContaining('No connection'), findsOneWidget);
-    expect(find.text('10 left today'), findsOneWidget);
+    expect(find.text('10 left today', skipOffstage: false), findsOneWidget);
 
     world.coach.failWith = null;
     await tester.tap(find.text('Try again'));

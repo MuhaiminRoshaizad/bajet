@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
 import '../../helpers/fake_repositories.dart';
-import 'coach_screen_test.dart' show ask, openCoach;
+import 'coach_screen_test.dart' show ask, chatPage, openCoach;
 
 CoachMessage said(bool user, String text, DateTime at) => CoachMessage(fromUser: user, text: text, sentAt: at, face: user ? null : CoachFace.aina);
 
@@ -120,7 +120,7 @@ void main() {
     expect(world.coach.requests.last.messages.length, lessThanOrEqualTo(coachMemoryWindow));
     expect((await world.coachChat.said()).last.text, 'You are on track.');
     // Today's question opens under its own day; the Today tab is not it.
-    expect(find.descendant(of: find.byType(ListView).first, matching: find.text('Today')), findsOneWidget);
+    expect(find.descendant(of: chatPage, matching: find.text('Today')), findsOneWidget);
   });
 
   testWidgets('Forget everything empties the chat after asking, and Undo brings it back', (tester) async {
@@ -128,6 +128,8 @@ void main() {
     await ask(tester, 'How did this week go?');
     expect(await world.coachChat.said(), hasLength(2));
 
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('tab-Today')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Settings'));
