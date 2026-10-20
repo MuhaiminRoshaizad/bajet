@@ -24,6 +24,9 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.primary,
     required this.onPrimary,
     required this.primarySoft,
+    required this.primaryLit,
+    required this.primaryDeep,
+    required this.mouldShadows,
     required this.keepSurface,
     required this.keep,
     required this.goodSurface,
@@ -50,6 +53,17 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color primary;
   final Color onPrimary;
   final Color primarySoft;
+
+  /// The primary blue a step lighter and a step deeper (OKLCH lightness
+  /// ±0.08), the lit side leaning 6° warmer and the shaded side 6° cooler,
+  /// so a filled button is moulded by the same top-left light as the
+  /// surfaces around it. White or [onPrimary] on either end clears 4.5:1.
+  final Color primaryLit;
+  final Color primaryDeep;
+
+  /// The shadow under a moulded button: a deep blue of its own on the light
+  /// page, near black on the dark one, where a blue glow would read as light.
+  final List<BoxShadow> mouldShadows;
 
   /// Money kept: the goal card, buffer line and savings figures.
   final Color keepSurface;
@@ -78,6 +92,12 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: Color(0xFF0C5F96),
     onPrimary: Color(0xFFFFFFFF),
     primarySoft: Color(0xFFD4ECFD),
+    primaryLit: Color(0xFF1F7CB0),
+    primaryDeep: Color(0xFF114778),
+    mouldShadows: [
+      BoxShadow(color: Color(0xD9FFFFFF), offset: Offset(-4, -4), blurRadius: 10),
+      BoxShadow(color: Color(0x4D213C59), offset: Offset(5, 7), blurRadius: 14),
+    ],
     keepSurface: Color(0xFFFDDFC2),
     keep: Color(0xFF88491A),
     goodSurface: Color(0xFFD0EED5),
@@ -124,6 +144,12 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: Color(0xFF79C0F1),
     onPrimary: Color(0xFF031C30),
     primarySoft: Color(0xFF193043),
+    primaryLit: Color(0xFF95D7FF),
+    primaryDeep: Color(0xFF6293C7),
+    mouldShadows: [
+      BoxShadow(color: Color(0x8C000000), offset: Offset(0, 6), blurRadius: 16),
+      BoxShadow(color: Color(0x59000000), offset: Offset(0, 2), blurRadius: 4),
+    ],
     keepSurface: Color(0xFF2D2217),
     keep: Color(0xFFEFC093),
     goodSurface: Color(0xFF1F3724),

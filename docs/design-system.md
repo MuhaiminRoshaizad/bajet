@@ -63,7 +63,7 @@ Purple and indigo are deliberately absent.
 
 bajet is soft UI: nothing is drawn on top of the background, it is moulded out
 of it. The light comes from the top left. `core/widgets/soft.dart` holds the
-only four ways to do this:
+ways to do this:
 
 | Widget       | Looks like                       | Used for                               |
 |--------------|----------------------------------|----------------------------------------|
@@ -71,12 +71,22 @@ only four ways to do this:
 | `SoftWell`   | Pressed in `AppDepth.well` (3 px) | Notices, readouts, tracks              |
 | `SoftButton` | Raised 3 px, sinks flat on press | Tiles, chips, the + button             |
 | `SoftMeter`  | A well with a coloured fill      | Progress toward a goal                 |
+| `MouldedButton` | A blue disc shaded by the same light | Filled round buttons             |
 
 A raised surface casts a `highlight` shadow up and left and a `shade` shadow
 down and right, each offset by its depth and blurred to twice that. Flutter has
 no inset shadow, so `SoftWell` paints one: the blurred outline of everything
 outside the shape, nudged inward and clipped to it. Text fields get the same
 idea more cheaply from the theme, as a `well` fill with no border.
+
+A filled button is the one thing not the background's colour, so a flat fill
+would sit on the page like a sticker. `MouldedButton` shades the primary blue
+instead: `primaryLit` at the top left, `primary` in the middle and
+`primaryDeep` at the bottom right, one OKLCH lightness step either side
+(±0.08), the lit side 6° warmer and the shaded side 6° cooler, as light warms
+what it touches. Its shadow, `mouldShadows`, is a deep blue on the light page
+and near black on the dark one, where a blue glow would read as light.
+An icon on it in `onPrimary` clears 4.5:1 across the whole fill in both themes.
 
 Depth is decoration, never the only signal, because a shadow drawn from the
 background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
