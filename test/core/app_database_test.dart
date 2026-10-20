@@ -60,8 +60,8 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 9);
-    expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals']));
+    expect(db.schemaVersion, 10);
+    expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
   test('a version 1 database gains the receipt column and keeps its entries', () async {
@@ -212,5 +212,30 @@ void main() {
     await save(100000);
     await save(99000);
     expect((await db.select(db.checkins).getSingle()).balance, 99000);
+  });
+
+  test('a version 9 chat becomes the first of version 10, named after its first question and coached as set', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v9.sql').readAsStringSync());
+      raw.execute("INSERT INTO coach_settings (id, face, personality, remember) VALUES (1, 'mei', 'strict', 1)");
+      raw.execute("INSERT INTO coach_messages (sent_at, from_user, body) VALUES (1760000000000, 1, 'Can I afford the laptop by January?')");
+      raw.execute("INSERT INTO coach_messages (sent_at, from_user, body, face) VALUES (1760000001000, 0, 'Yes, with a little room.', 'mei')");
+      raw.execute('PRAGMA user_version = 9');
+    }));
+    addTearDown(old.close);
+    final chat = await old.select(old.coachThreads).getSingle();
+    expect((chat.id, chat.title, chat.face, chat.personality, chat.pinned, chat.createdAt), (1, 'Can I afford the laptop by January?', 'mei', 'strict', false, 1760000000000));
+    final messages = await (old.select(old.coachMessages)..orderBy([(m) => OrderingTerm(expression: m.id)])).get();
+    expect([for (final m in messages) (m.threadId, m.body, m.note)], [(1, 'Can I afford the laptop by January?', false), (1, 'Yes, with a little room.', false)]);
+  });
+
+  test('a version 9 database with nothing said gains the chats table, empty', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v9.sql').readAsStringSync());
+      raw.execute('PRAGMA user_version = 9');
+    }));
+    addTearDown(old.close);
+    expect(await old.select(old.coachThreads).get(), isEmpty);
+    expect(await old.select(old.coachMessages).get(), isEmpty);
   });
 }

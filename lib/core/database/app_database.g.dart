@@ -5506,6 +5506,412 @@ class CoachSettingsCompanion extends UpdateCompanion<CoachSetting> {
   }
 }
 
+class $CoachThreadsTable extends CoachThreads
+    with TableInfo<$CoachThreadsTable, CoachThread> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CoachThreadsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pinnedMeta = const VerificationMeta('pinned');
+  @override
+  late final GeneratedColumn<bool> pinned = GeneratedColumn<bool>(
+    'pinned',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pinned" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _faceMeta = const VerificationMeta('face');
+  @override
+  late final GeneratedColumn<String> face = GeneratedColumn<String>(
+    'face',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _personalityMeta = const VerificationMeta(
+    'personality',
+  );
+  @override
+  late final GeneratedColumn<String> personality = GeneratedColumn<String>(
+    'personality',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    pinned,
+    face,
+    personality,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'coach_threads';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CoachThread> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('pinned')) {
+      context.handle(
+        _pinnedMeta,
+        pinned.isAcceptableOrUnknown(data['pinned']!, _pinnedMeta),
+      );
+    }
+    if (data.containsKey('face')) {
+      context.handle(
+        _faceMeta,
+        face.isAcceptableOrUnknown(data['face']!, _faceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_faceMeta);
+    }
+    if (data.containsKey('personality')) {
+      context.handle(
+        _personalityMeta,
+        personality.isAcceptableOrUnknown(
+          data['personality']!,
+          _personalityMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_personalityMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CoachThread map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CoachThread(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      pinned: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pinned'],
+      )!,
+      face: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}face'],
+      )!,
+      personality: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}personality'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CoachThreadsTable createAlias(String alias) {
+    return $CoachThreadsTable(attachedDatabase, alias);
+  }
+}
+
+class CoachThread extends DataClass implements Insertable<CoachThread> {
+  final int id;
+
+  /// Named after its first question unless the user renames it.
+  final String title;
+  final bool pinned;
+
+  /// The avatar and the personality this chat uses, by their keys.
+  final String face;
+  final String personality;
+
+  /// When it was started, in milliseconds since the epoch.
+  final int createdAt;
+  const CoachThread({
+    required this.id,
+    required this.title,
+    required this.pinned,
+    required this.face,
+    required this.personality,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    map['pinned'] = Variable<bool>(pinned);
+    map['face'] = Variable<String>(face);
+    map['personality'] = Variable<String>(personality);
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  CoachThreadsCompanion toCompanion(bool nullToAbsent) {
+    return CoachThreadsCompanion(
+      id: Value(id),
+      title: Value(title),
+      pinned: Value(pinned),
+      face: Value(face),
+      personality: Value(personality),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory CoachThread.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CoachThread(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      pinned: serializer.fromJson<bool>(json['pinned']),
+      face: serializer.fromJson<String>(json['face']),
+      personality: serializer.fromJson<String>(json['personality']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'pinned': serializer.toJson<bool>(pinned),
+      'face': serializer.toJson<String>(face),
+      'personality': serializer.toJson<String>(personality),
+      'createdAt': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  CoachThread copyWith({
+    int? id,
+    String? title,
+    bool? pinned,
+    String? face,
+    String? personality,
+    int? createdAt,
+  }) => CoachThread(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    pinned: pinned ?? this.pinned,
+    face: face ?? this.face,
+    personality: personality ?? this.personality,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  CoachThread copyWithCompanion(CoachThreadsCompanion data) {
+    return CoachThread(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      pinned: data.pinned.present ? data.pinned.value : this.pinned,
+      face: data.face.present ? data.face.value : this.face,
+      personality: data.personality.present
+          ? data.personality.value
+          : this.personality,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoachThread(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('pinned: $pinned, ')
+          ..write('face: $face, ')
+          ..write('personality: $personality, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, title, pinned, face, personality, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CoachThread &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.pinned == this.pinned &&
+          other.face == this.face &&
+          other.personality == this.personality &&
+          other.createdAt == this.createdAt);
+}
+
+class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<bool> pinned;
+  final Value<String> face;
+  final Value<String> personality;
+  final Value<int> createdAt;
+  const CoachThreadsCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.pinned = const Value.absent(),
+    this.face = const Value.absent(),
+    this.personality = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  CoachThreadsCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    this.pinned = const Value.absent(),
+    required String face,
+    required String personality,
+    required int createdAt,
+  }) : title = Value(title),
+       face = Value(face),
+       personality = Value(personality),
+       createdAt = Value(createdAt);
+  static Insertable<CoachThread> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<bool>? pinned,
+    Expression<String>? face,
+    Expression<String>? personality,
+    Expression<int>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (pinned != null) 'pinned': pinned,
+      if (face != null) 'face': face,
+      if (personality != null) 'personality': personality,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  CoachThreadsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? title,
+    Value<bool>? pinned,
+    Value<String>? face,
+    Value<String>? personality,
+    Value<int>? createdAt,
+  }) {
+    return CoachThreadsCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      pinned: pinned ?? this.pinned,
+      face: face ?? this.face,
+      personality: personality ?? this.personality,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (pinned.present) {
+      map['pinned'] = Variable<bool>(pinned.value);
+    }
+    if (face.present) {
+      map['face'] = Variable<String>(face.value);
+    }
+    if (personality.present) {
+      map['personality'] = Variable<String>(personality.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CoachThreadsCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('pinned: $pinned, ')
+          ..write('face: $face, ')
+          ..write('personality: $personality, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CoachMessagesTable extends CoachMessages
     with TableInfo<$CoachMessagesTable, CoachMessage> {
   @override
@@ -5523,6 +5929,20 @@ class $CoachMessagesTable extends CoachMessages
     requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _threadIdMeta = const VerificationMeta(
+    'threadId',
+  );
+  @override
+  late final GeneratedColumn<int> threadId = GeneratedColumn<int>(
+    'thread_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES coach_threads (id) ON DELETE CASCADE',
     ),
   );
   static const VerificationMeta _sentAtMeta = const VerificationMeta('sentAt');
@@ -5586,15 +6006,30 @@ class $CoachMessagesTable extends CoachMessages
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<bool> note = GeneratedColumn<bool>(
+    'note',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("note" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    threadId,
     sentAt,
     fromUser,
     body,
     face,
     looked,
     cards,
+    note,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5610,6 +6045,14 @@ class $CoachMessagesTable extends CoachMessages
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('thread_id')) {
+      context.handle(
+        _threadIdMeta,
+        threadId.isAcceptableOrUnknown(data['thread_id']!, _threadIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_threadIdMeta);
     }
     if (data.containsKey('sent_at')) {
       context.handle(
@@ -5653,6 +6096,12 @@ class $CoachMessagesTable extends CoachMessages
         cards.isAcceptableOrUnknown(data['cards']!, _cardsMeta),
       );
     }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
     return context;
   }
 
@@ -5665,6 +6114,10 @@ class $CoachMessagesTable extends CoachMessages
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
+      )!,
+      threadId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}thread_id'],
       )!,
       sentAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -5690,6 +6143,10 @@ class $CoachMessagesTable extends CoachMessages
         DriftSqlType.string,
         data['${effectivePrefix}cards'],
       )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}note'],
+      )!,
     );
   }
 
@@ -5701,6 +6158,7 @@ class $CoachMessagesTable extends CoachMessages
 
 class CoachMessage extends DataClass implements Insertable<CoachMessage> {
   final int id;
+  final int threadId;
 
   /// When it was sent, in milliseconds since the epoch, for the day labels
   /// and for spotting a question sent twice in a row.
@@ -5716,19 +6174,25 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
 
   /// The reply's suggestion cards and what became of them, as JSON.
   final String cards;
+
+  /// A line in the chat said by nobody, such as a change of personality.
+  final bool note;
   const CoachMessage({
     required this.id,
+    required this.threadId,
     required this.sentAt,
     required this.fromUser,
     required this.body,
     this.face,
     required this.looked,
     required this.cards,
+    required this.note,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['thread_id'] = Variable<int>(threadId);
     map['sent_at'] = Variable<int>(sentAt);
     map['from_user'] = Variable<bool>(fromUser);
     map['body'] = Variable<String>(body);
@@ -5737,18 +6201,21 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     }
     map['looked'] = Variable<String>(looked);
     map['cards'] = Variable<String>(cards);
+    map['note'] = Variable<bool>(note);
     return map;
   }
 
   CoachMessagesCompanion toCompanion(bool nullToAbsent) {
     return CoachMessagesCompanion(
       id: Value(id),
+      threadId: Value(threadId),
       sentAt: Value(sentAt),
       fromUser: Value(fromUser),
       body: Value(body),
       face: face == null && nullToAbsent ? const Value.absent() : Value(face),
       looked: Value(looked),
       cards: Value(cards),
+      note: Value(note),
     );
   }
 
@@ -5759,12 +6226,14 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CoachMessage(
       id: serializer.fromJson<int>(json['id']),
+      threadId: serializer.fromJson<int>(json['threadId']),
       sentAt: serializer.fromJson<int>(json['sentAt']),
       fromUser: serializer.fromJson<bool>(json['fromUser']),
       body: serializer.fromJson<String>(json['body']),
       face: serializer.fromJson<String?>(json['face']),
       looked: serializer.fromJson<String>(json['looked']),
       cards: serializer.fromJson<String>(json['cards']),
+      note: serializer.fromJson<bool>(json['note']),
     );
   }
   @override
@@ -5772,41 +6241,49 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'threadId': serializer.toJson<int>(threadId),
       'sentAt': serializer.toJson<int>(sentAt),
       'fromUser': serializer.toJson<bool>(fromUser),
       'body': serializer.toJson<String>(body),
       'face': serializer.toJson<String?>(face),
       'looked': serializer.toJson<String>(looked),
       'cards': serializer.toJson<String>(cards),
+      'note': serializer.toJson<bool>(note),
     };
   }
 
   CoachMessage copyWith({
     int? id,
+    int? threadId,
     int? sentAt,
     bool? fromUser,
     String? body,
     Value<String?> face = const Value.absent(),
     String? looked,
     String? cards,
+    bool? note,
   }) => CoachMessage(
     id: id ?? this.id,
+    threadId: threadId ?? this.threadId,
     sentAt: sentAt ?? this.sentAt,
     fromUser: fromUser ?? this.fromUser,
     body: body ?? this.body,
     face: face.present ? face.value : this.face,
     looked: looked ?? this.looked,
     cards: cards ?? this.cards,
+    note: note ?? this.note,
   );
   CoachMessage copyWithCompanion(CoachMessagesCompanion data) {
     return CoachMessage(
       id: data.id.present ? data.id.value : this.id,
+      threadId: data.threadId.present ? data.threadId.value : this.threadId,
       sentAt: data.sentAt.present ? data.sentAt.value : this.sentAt,
       fromUser: data.fromUser.present ? data.fromUser.value : this.fromUser,
       body: data.body.present ? data.body.value : this.body,
       face: data.face.present ? data.face.value : this.face,
       looked: data.looked.present ? data.looked.value : this.looked,
       cards: data.cards.present ? data.cards.value : this.cards,
+      note: data.note.present ? data.note.value : this.note,
     );
   }
 
@@ -5814,97 +6291,125 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
   String toString() {
     return (StringBuffer('CoachMessage(')
           ..write('id: $id, ')
+          ..write('threadId: $threadId, ')
           ..write('sentAt: $sentAt, ')
           ..write('fromUser: $fromUser, ')
           ..write('body: $body, ')
           ..write('face: $face, ')
           ..write('looked: $looked, ')
-          ..write('cards: $cards')
+          ..write('cards: $cards, ')
+          ..write('note: $note')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, sentAt, fromUser, body, face, looked, cards);
+  int get hashCode => Object.hash(
+    id,
+    threadId,
+    sentAt,
+    fromUser,
+    body,
+    face,
+    looked,
+    cards,
+    note,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CoachMessage &&
           other.id == this.id &&
+          other.threadId == this.threadId &&
           other.sentAt == this.sentAt &&
           other.fromUser == this.fromUser &&
           other.body == this.body &&
           other.face == this.face &&
           other.looked == this.looked &&
-          other.cards == this.cards);
+          other.cards == this.cards &&
+          other.note == this.note);
 }
 
 class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
   final Value<int> id;
+  final Value<int> threadId;
   final Value<int> sentAt;
   final Value<bool> fromUser;
   final Value<String> body;
   final Value<String?> face;
   final Value<String> looked;
   final Value<String> cards;
+  final Value<bool> note;
   const CoachMessagesCompanion({
     this.id = const Value.absent(),
+    this.threadId = const Value.absent(),
     this.sentAt = const Value.absent(),
     this.fromUser = const Value.absent(),
     this.body = const Value.absent(),
     this.face = const Value.absent(),
     this.looked = const Value.absent(),
     this.cards = const Value.absent(),
+    this.note = const Value.absent(),
   });
   CoachMessagesCompanion.insert({
     this.id = const Value.absent(),
+    required int threadId,
     required int sentAt,
     required bool fromUser,
     required String body,
     this.face = const Value.absent(),
     this.looked = const Value.absent(),
     this.cards = const Value.absent(),
-  }) : sentAt = Value(sentAt),
+    this.note = const Value.absent(),
+  }) : threadId = Value(threadId),
+       sentAt = Value(sentAt),
        fromUser = Value(fromUser),
        body = Value(body);
   static Insertable<CoachMessage> custom({
     Expression<int>? id,
+    Expression<int>? threadId,
     Expression<int>? sentAt,
     Expression<bool>? fromUser,
     Expression<String>? body,
     Expression<String>? face,
     Expression<String>? looked,
     Expression<String>? cards,
+    Expression<bool>? note,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (threadId != null) 'thread_id': threadId,
       if (sentAt != null) 'sent_at': sentAt,
       if (fromUser != null) 'from_user': fromUser,
       if (body != null) 'body': body,
       if (face != null) 'face': face,
       if (looked != null) 'looked': looked,
       if (cards != null) 'cards': cards,
+      if (note != null) 'note': note,
     });
   }
 
   CoachMessagesCompanion copyWith({
     Value<int>? id,
+    Value<int>? threadId,
     Value<int>? sentAt,
     Value<bool>? fromUser,
     Value<String>? body,
     Value<String?>? face,
     Value<String>? looked,
     Value<String>? cards,
+    Value<bool>? note,
   }) {
     return CoachMessagesCompanion(
       id: id ?? this.id,
+      threadId: threadId ?? this.threadId,
       sentAt: sentAt ?? this.sentAt,
       fromUser: fromUser ?? this.fromUser,
       body: body ?? this.body,
       face: face ?? this.face,
       looked: looked ?? this.looked,
       cards: cards ?? this.cards,
+      note: note ?? this.note,
     );
   }
 
@@ -5913,6 +6418,9 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (threadId.present) {
+      map['thread_id'] = Variable<int>(threadId.value);
     }
     if (sentAt.present) {
       map['sent_at'] = Variable<int>(sentAt.value);
@@ -5932,6 +6440,9 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     if (cards.present) {
       map['cards'] = Variable<String>(cards.value);
     }
+    if (note.present) {
+      map['note'] = Variable<bool>(note.value);
+    }
     return map;
   }
 
@@ -5939,12 +6450,14 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
   String toString() {
     return (StringBuffer('CoachMessagesCompanion(')
           ..write('id: $id, ')
+          ..write('threadId: $threadId, ')
           ..write('sentAt: $sentAt, ')
           ..write('fromUser: $fromUser, ')
           ..write('body: $body, ')
           ..write('face: $face, ')
           ..write('looked: $looked, ')
-          ..write('cards: $cards')
+          ..write('cards: $cards, ')
+          ..write('note: $note')
           ..write(')'))
         .toString();
   }
@@ -6514,6 +7027,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GoalsTable goals = $GoalsTable(this);
   late final $FavouritesTable favourites = $FavouritesTable(this);
   late final $CoachSettingsTable coachSettings = $CoachSettingsTable(this);
+  late final $CoachThreadsTable coachThreads = $CoachThreadsTable(this);
   late final $CoachMessagesTable coachMessages = $CoachMessagesTable(this);
   late final $CheckinsTable checkins = $CheckinsTable(this);
   @override
@@ -6532,9 +7046,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     goals,
     favourites,
     coachSettings,
+    coachThreads,
     coachMessages,
     checkins,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'coach_threads',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('coach_messages', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$AppSettingsTableCreateCompanionBuilder =
@@ -11145,26 +11670,374 @@ typedef $$CoachSettingsTableProcessedTableManager =
       CoachSetting,
       PrefetchHooks Function()
     >;
+typedef $$CoachThreadsTableCreateCompanionBuilder =
+    CoachThreadsCompanion Function({
+      Value<int> id,
+      required String title,
+      Value<bool> pinned,
+      required String face,
+      required String personality,
+      required int createdAt,
+    });
+typedef $$CoachThreadsTableUpdateCompanionBuilder =
+    CoachThreadsCompanion Function({
+      Value<int> id,
+      Value<String> title,
+      Value<bool> pinned,
+      Value<String> face,
+      Value<String> personality,
+      Value<int> createdAt,
+    });
+
+final class $$CoachThreadsTableReferences
+    extends BaseReferences<_$AppDatabase, $CoachThreadsTable, CoachThread> {
+  $$CoachThreadsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$CoachMessagesTable, List<CoachMessage>>
+  _coachMessagesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.coachMessages,
+    aliasName: 'coach_threads__id__coach_messages__thread_id',
+  );
+
+  $$CoachMessagesTableProcessedTableManager get coachMessagesRefs {
+    final manager = $$CoachMessagesTableTableManager(
+      $_db,
+      $_db.coachMessages,
+    ).filter((f) => f.threadId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_coachMessagesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CoachThreadsTableFilterComposer
+    extends Composer<_$AppDatabase, $CoachThreadsTable> {
+  $$CoachThreadsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pinned => $composableBuilder(
+    column: $table.pinned,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get face => $composableBuilder(
+    column: $table.face,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get personality => $composableBuilder(
+    column: $table.personality,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> coachMessagesRefs(
+    Expression<bool> Function($$CoachMessagesTableFilterComposer f) f,
+  ) {
+    final $$CoachMessagesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.coachMessages,
+      getReferencedColumn: (t) => t.threadId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoachMessagesTableFilterComposer(
+            $db: $db,
+            $table: $db.coachMessages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CoachThreadsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CoachThreadsTable> {
+  $$CoachThreadsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get pinned => $composableBuilder(
+    column: $table.pinned,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get face => $composableBuilder(
+    column: $table.face,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get personality => $composableBuilder(
+    column: $table.personality,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CoachThreadsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CoachThreadsTable> {
+  $$CoachThreadsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<bool> get pinned =>
+      $composableBuilder(column: $table.pinned, builder: (column) => column);
+
+  GeneratedColumn<String> get face =>
+      $composableBuilder(column: $table.face, builder: (column) => column);
+
+  GeneratedColumn<String> get personality => $composableBuilder(
+    column: $table.personality,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> coachMessagesRefs<T extends Object>(
+    Expression<T> Function($$CoachMessagesTableAnnotationComposer a) f,
+  ) {
+    final $$CoachMessagesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.coachMessages,
+      getReferencedColumn: (t) => t.threadId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoachMessagesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.coachMessages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CoachThreadsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CoachThreadsTable,
+          CoachThread,
+          $$CoachThreadsTableFilterComposer,
+          $$CoachThreadsTableOrderingComposer,
+          $$CoachThreadsTableAnnotationComposer,
+          $$CoachThreadsTableCreateCompanionBuilder,
+          $$CoachThreadsTableUpdateCompanionBuilder,
+          (CoachThread, $$CoachThreadsTableReferences),
+          CoachThread,
+          PrefetchHooks Function({bool coachMessagesRefs})
+        > {
+  $$CoachThreadsTableTableManager(_$AppDatabase db, $CoachThreadsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CoachThreadsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CoachThreadsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CoachThreadsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<bool> pinned = const Value.absent(),
+                Value<String> face = const Value.absent(),
+                Value<String> personality = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+              }) => CoachThreadsCompanion(
+                id: id,
+                title: title,
+                pinned: pinned,
+                face: face,
+                personality: personality,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String title,
+                Value<bool> pinned = const Value.absent(),
+                required String face,
+                required String personality,
+                required int createdAt,
+              }) => CoachThreadsCompanion.insert(
+                id: id,
+                title: title,
+                pinned: pinned,
+                face: face,
+                personality: personality,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$CoachThreadsTable, CoachThread>(table),
+                  $$CoachThreadsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({coachMessagesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (coachMessagesRefs) db.coachMessages,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (coachMessagesRefs)
+                    await $_getPrefetchedData<
+                      CoachThread,
+                      $CoachThreadsTable,
+                      CoachMessage
+                    >(
+                      currentTable: table,
+                      referencedTable: $$CoachThreadsTableReferences
+                          ._coachMessagesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CoachThreadsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).coachMessagesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.threadId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CoachThreadsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CoachThreadsTable,
+      CoachThread,
+      $$CoachThreadsTableFilterComposer,
+      $$CoachThreadsTableOrderingComposer,
+      $$CoachThreadsTableAnnotationComposer,
+      $$CoachThreadsTableCreateCompanionBuilder,
+      $$CoachThreadsTableUpdateCompanionBuilder,
+      (CoachThread, $$CoachThreadsTableReferences),
+      CoachThread,
+      PrefetchHooks Function({bool coachMessagesRefs})
+    >;
 typedef $$CoachMessagesTableCreateCompanionBuilder =
     CoachMessagesCompanion Function({
       Value<int> id,
+      required int threadId,
       required int sentAt,
       required bool fromUser,
       required String body,
       Value<String?> face,
       Value<String> looked,
       Value<String> cards,
+      Value<bool> note,
     });
 typedef $$CoachMessagesTableUpdateCompanionBuilder =
     CoachMessagesCompanion Function({
       Value<int> id,
+      Value<int> threadId,
       Value<int> sentAt,
       Value<bool> fromUser,
       Value<String> body,
       Value<String?> face,
       Value<String> looked,
       Value<String> cards,
+      Value<bool> note,
     });
+
+final class $$CoachMessagesTableReferences
+    extends BaseReferences<_$AppDatabase, $CoachMessagesTable, CoachMessage> {
+  $$CoachMessagesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CoachThreadsTable _threadIdTable(_$AppDatabase db) => db.coachThreads
+      .createAlias('coach_messages__thread_id__coach_threads__id');
+
+  $$CoachThreadsTableProcessedTableManager get threadId {
+    final $_column = $_itemColumn<int>('thread_id')!;
+
+    final manager = $$CoachThreadsTableTableManager(
+      $_db,
+      $_db.coachThreads,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_threadIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$CoachMessagesTableFilterComposer
     extends Composer<_$AppDatabase, $CoachMessagesTable> {
@@ -11209,6 +12082,34 @@ class $$CoachMessagesTableFilterComposer
     column: $table.cards,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CoachThreadsTableFilterComposer get threadId {
+    final $$CoachThreadsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.threadId,
+      referencedTable: $db.coachThreads,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoachThreadsTableFilterComposer(
+            $db: $db,
+            $table: $db.coachThreads,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CoachMessagesTableOrderingComposer
@@ -11254,6 +12155,34 @@ class $$CoachMessagesTableOrderingComposer
     column: $table.cards,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CoachThreadsTableOrderingComposer get threadId {
+    final $$CoachThreadsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.threadId,
+      referencedTable: $db.coachThreads,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoachThreadsTableOrderingComposer(
+            $db: $db,
+            $table: $db.coachThreads,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CoachMessagesTableAnnotationComposer
@@ -11285,6 +12214,32 @@ class $$CoachMessagesTableAnnotationComposer
 
   GeneratedColumn<String> get cards =>
       $composableBuilder(column: $table.cards, builder: (column) => column);
+
+  GeneratedColumn<bool> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  $$CoachThreadsTableAnnotationComposer get threadId {
+    final $$CoachThreadsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.threadId,
+      referencedTable: $db.coachThreads,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CoachThreadsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.coachThreads,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$CoachMessagesTableTableManager
@@ -11298,12 +12253,9 @@ class $$CoachMessagesTableTableManager
           $$CoachMessagesTableAnnotationComposer,
           $$CoachMessagesTableCreateCompanionBuilder,
           $$CoachMessagesTableUpdateCompanionBuilder,
-          (
-            CoachMessage,
-            BaseReferences<_$AppDatabase, $CoachMessagesTable, CoachMessage>,
-          ),
+          (CoachMessage, $$CoachMessagesTableReferences),
           CoachMessage,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool threadId})
         > {
   $$CoachMessagesTableTableManager(_$AppDatabase db, $CoachMessagesTable table)
     : super(
@@ -11319,52 +12271,96 @@ class $$CoachMessagesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<int> threadId = const Value.absent(),
                 Value<int> sentAt = const Value.absent(),
                 Value<bool> fromUser = const Value.absent(),
                 Value<String> body = const Value.absent(),
                 Value<String?> face = const Value.absent(),
                 Value<String> looked = const Value.absent(),
                 Value<String> cards = const Value.absent(),
+                Value<bool> note = const Value.absent(),
               }) => CoachMessagesCompanion(
                 id: id,
+                threadId: threadId,
                 sentAt: sentAt,
                 fromUser: fromUser,
                 body: body,
                 face: face,
                 looked: looked,
                 cards: cards,
+                note: note,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                required int threadId,
                 required int sentAt,
                 required bool fromUser,
                 required String body,
                 Value<String?> face = const Value.absent(),
                 Value<String> looked = const Value.absent(),
                 Value<String> cards = const Value.absent(),
+                Value<bool> note = const Value.absent(),
               }) => CoachMessagesCompanion.insert(
                 id: id,
+                threadId: threadId,
                 sentAt: sentAt,
                 fromUser: fromUser,
                 body: body,
                 face: face,
                 looked: looked,
                 cards: cards,
+                note: note,
               ),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
                   e.readTable<$CoachMessagesTable, CoachMessage>(table),
-                  BaseReferences<
-                    _$AppDatabase,
-                    $CoachMessagesTable,
-                    CoachMessage
-                  >(db, table, e),
+                  $$CoachMessagesTableReferences(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({threadId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (threadId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.threadId,
+                                referencedTable: $$CoachMessagesTableReferences
+                                    ._threadIdTable(db),
+                                referencedColumn: $$CoachMessagesTableReferences
+                                    ._threadIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -11379,12 +12375,9 @@ typedef $$CoachMessagesTableProcessedTableManager =
       $$CoachMessagesTableAnnotationComposer,
       $$CoachMessagesTableCreateCompanionBuilder,
       $$CoachMessagesTableUpdateCompanionBuilder,
-      (
-        CoachMessage,
-        BaseReferences<_$AppDatabase, $CoachMessagesTable, CoachMessage>,
-      ),
+      (CoachMessage, $$CoachMessagesTableReferences),
       CoachMessage,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool threadId})
     >;
 typedef $$CheckinsTableCreateCompanionBuilder =
     CheckinsCompanion Function({
@@ -11681,6 +12674,8 @@ class $AppDatabaseManager {
       $$FavouritesTableTableManager(_db, _db.favourites);
   $$CoachSettingsTableTableManager get coachSettings =>
       $$CoachSettingsTableTableManager(_db, _db.coachSettings);
+  $$CoachThreadsTableTableManager get coachThreads =>
+      $$CoachThreadsTableTableManager(_db, _db.coachThreads);
   $$CoachMessagesTableTableManager get coachMessages =>
       $$CoachMessagesTableTableManager(_db, _db.coachMessages);
   $$CheckinsTableTableManager get checkins =>

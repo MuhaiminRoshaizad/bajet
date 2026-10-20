@@ -214,10 +214,29 @@ class CoachSettings extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-/// The remembered chat with the coach, oldest first. It stays on the phone:
-/// a backup file never carries it (decision 024).
+/// One chat with the coach, as listed on the Coach tab: its name, whether it
+/// is pinned, and who coaches it in which voice. Like its messages it stays
+/// on the phone (decision 024).
+class CoachThreads extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Named after its first question unless the user renames it.
+  TextColumn get title => text()();
+  BoolColumn get pinned => boolean().withDefault(const Constant(false))();
+
+  /// The avatar and the personality this chat uses, by their keys.
+  TextColumn get face => text()();
+  TextColumn get personality => text()();
+
+  /// When it was started, in milliseconds since the epoch.
+  IntColumn get createdAt => integer()();
+}
+
+/// The remembered messages, oldest first, each in its chat. They stay on
+/// the phone: a backup file never carries them (decision 024).
 class CoachMessages extends Table {
   IntColumn get id => integer().autoIncrement()();
+  IntColumn get threadId => integer().references(CoachThreads, #id, onDelete: KeyAction.cascade)();
 
   /// When it was sent, in milliseconds since the epoch, for the day labels
   /// and for spotting a question sent twice in a row.
@@ -233,6 +252,9 @@ class CoachMessages extends Table {
 
   /// The reply's suggestion cards and what became of them, as JSON.
   TextColumn get cards => text().withDefault(const Constant(''))();
+
+  /// A line in the chat said by nobody, such as a change of personality.
+  BoolColumn get note => boolean().withDefault(const Constant(false))();
 }
 
 /// One finished Sunday check-in, one a day: finishing again the same day

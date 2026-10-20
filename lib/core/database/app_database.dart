@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 import '../../features/accounts/domain/account_models.dart' show firstAccountColor, firstAccountName;
+import '../../features/coach/domain/coach_thread.dart' show chatTitleFrom;
 import '../../features/plan/domain/plan_models.dart' show maxWindowDays;
 import 'tables.dart';
 
@@ -10,13 +11,13 @@ export 'tables.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites, CoachSettings, CoachMessages, Checkins],
+  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites, CoachSettings, CoachThreads, CoachMessages, Checkins],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -40,6 +41,7 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(coachMessages);
           }
           if (from < 9) await m.createTable(checkins);
+          if (from < 10) await _keepChatsApart(m);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -64,6 +66,30 @@ class AppDatabase extends _$AppDatabase {
     await m.alterTable(TableMigration(entries, newColumns: [entries.accountId], columnTransformer: {entries.accountId: const Constant(1)}));
     await m.alterTable(TableMigration(recurringItems, newColumns: [recurringItems.accountId], columnTransformer: {recurringItems.accountId: const Constant(1)}));
     await m.alterTable(TableMigration(appSettings, newColumns: [appSettings.totalCardColor, appSettings.totalCardFinish]));
+  }
+
+  /// Version 10 keeps each chat with the coach apart. The one chat so far
+  /// becomes the first, named after its first question and coached as the
+  /// settings said; nothing is made when there was nothing said.
+  Future<void> _keepChatsApart(Migrator m) async {
+    await m.createTable(coachThreads);
+    final first = await customSelect('SELECT body, sent_at FROM coach_messages ORDER BY id LIMIT 1').getSingleOrNull();
+    if (first != null) {
+      final question = await customSelect('SELECT body FROM coach_messages WHERE from_user = 1 ORDER BY id LIMIT 1').getSingleOrNull();
+      final settings = await customSelect('SELECT face, personality FROM coach_settings').getSingleOrNull();
+      await into(coachThreads).insert(CoachThreadsCompanion.insert(
+        id: const Value(1),
+        title: chatTitleFrom(question?.read<String>('body') ?? first.read<String>('body')),
+        face: settings?.read<String>('face') ?? 'bajety',
+        personality: settings?.read<String>('personality') ?? 'friendly',
+        createdAt: first.read<int>('sent_at'),
+      ));
+    }
+    await m.alterTable(TableMigration(
+      coachMessages,
+      newColumns: [coachMessages.threadId, coachMessages.note],
+      columnTransformer: {coachMessages.threadId: const Constant(1)},
+    ));
   }
 
   /// Version 7 drops the brushed metal finish: every card and the total card

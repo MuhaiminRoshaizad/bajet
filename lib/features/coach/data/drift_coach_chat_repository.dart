@@ -7,6 +7,7 @@ import '../domain/coach_client.dart';
 import '../domain/coach_memory.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
+import '../domain/coach_thread.dart';
 
 class DriftCoachChatRepository implements CoachChatRepository {
   DriftCoachChatRepository(this._db);
@@ -20,7 +21,7 @@ class DriftCoachChatRepository implements CoachChatRepository {
   }
 
   @override
-  Future<int> add(CoachMessage m) => _db.into(_db.coachMessages).insert(_row(m));
+  Future<int> add(CoachMessage m) async => _db.into(_db.coachMessages).insert(_row(await _chatFor(m), m));
 
   @override
   Future<void> saveCards(int id, CoachMessage m) =>
@@ -30,15 +31,35 @@ class DriftCoachChatRepository implements CoachChatRepository {
   Future<List<CoachMessage>> clear() => _db.transaction(() async {
         final all = await load();
         await _db.delete(_db.coachMessages).go();
+        await _db.delete(_db.coachThreads).go();
         return all;
       });
 
   @override
-  Future<void> restore(List<CoachMessage> messages) => _db.batch((b) => b.insertAll(_db.coachMessages, [
-        for (final m in messages) _row(m).copyWith(id: m.id == null ? const Value.absent() : Value(m.id!)),
-      ]));
+  Future<void> restore(List<CoachMessage> messages) async {
+    if (messages.isEmpty) return;
+    final chat = await _chatFor(messages.first);
+    await _db.batch((b) => b.insertAll(_db.coachMessages, [
+          for (final m in messages) _row(chat, m).copyWith(id: m.id == null ? const Value.absent() : Value(m.id!)),
+        ]));
+  }
 
-  db.CoachMessagesCompanion _row(CoachMessage m) => db.CoachMessagesCompanion.insert(
+  /// The one chat so far, started from [first] when there is none yet,
+  /// named after it and coached as the settings say.
+  Future<int> _chatFor(CoachMessage first) async {
+    final chat = await (_db.select(_db.coachThreads)..limit(1)).getSingleOrNull();
+    if (chat != null) return chat.id;
+    final settings = await _db.select(_db.coachSettings).getSingleOrNull();
+    return _db.into(_db.coachThreads).insert(db.CoachThreadsCompanion.insert(
+          title: chatTitleFrom(first.text),
+          face: settings?.face ?? CoachFace.bajety.name,
+          personality: settings?.personality ?? 'friendly',
+          createdAt: (first.sentAt ?? DateTime.now()).millisecondsSinceEpoch,
+        ));
+  }
+
+  db.CoachMessagesCompanion _row(int chat, CoachMessage m) => db.CoachMessagesCompanion.insert(
+        threadId: chat,
         sentAt: (m.sentAt ?? DateTime.now()).millisecondsSinceEpoch,
         fromUser: m.fromUser,
         body: m.text,
