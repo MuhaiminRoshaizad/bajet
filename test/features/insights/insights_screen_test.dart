@@ -25,7 +25,10 @@ void main() {
 
     await tester.tap(find.text('Log a spend'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(FilledButton, 'Type the amount'), findsOneWidget);
+    // Opened from inside the tab, the logger still sits over the floating
+    // bar, so the button at its foot can be reached.
+    expect(find.widgetWithText(FilledButton, 'Type the amount').hitTestable(), findsOneWidget);
+    expect(find.byKey(const ValueKey('add')).hitTestable(), findsNothing);
   });
 
   testWidgets('shows money in and out and where the flexible money went', (tester) async {

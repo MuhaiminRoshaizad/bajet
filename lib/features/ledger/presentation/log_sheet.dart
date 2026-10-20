@@ -44,6 +44,9 @@ class LogPrefill {
 /// on [messengerContext]'s scaffold, which outlives the sheet.
 Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing, LogPrefill? prefill}) => showModalBottomSheet<void>(
       context: messengerContext,
+      // Over the bottom bar wherever it is opened from; from inside a tab it
+      // would otherwise sit under the bar, its Log button beneath it.
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing, prefill: prefill),
