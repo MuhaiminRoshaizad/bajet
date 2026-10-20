@@ -37,9 +37,11 @@ own API key; without a key, nothing leaves the phone.
   or marking a bill paid, which happens only when you tap to confirm. Pick
   who coaches you, bajety the titanium orb or one of three finance people,
   and how they talk, from friendly to roasting; their face reacts as you
-  chat. The chat is remembered on the phone only, and messages that are not
-  about your money are turned away on the phone, costing nothing. The
-  week's summary can also be copied to paste anywhere.
+  chat, scroll and type. Chats are kept apart in a list you can search, pin,
+  rename and delete, each with its own coach and personality, and remembered
+  on the phone only. Messages that are not about your money are turned away
+  on the phone, costing nothing. The week's summary can also be copied to
+  paste anywhere.
 - **Settings** holds every amount and rule: allowance and buffer, goals, bills
   and income, one-off events, the weekly rhythm, favourites, backups, and a
   light or dark appearance that otherwise follows the phone.

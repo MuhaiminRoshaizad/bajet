@@ -397,6 +397,8 @@ read, the message goes on to the coach rather than being refused.
 
 ## 026: One remembered chat, kept on the phone
 
+*Replaced by 029: the chat became a list of chats.*
+
 **Decided:** the Coach tab is one ongoing chat rather than separate
 sessions. While Remember our chats is on, the default, it is kept in
 bajet's own database on the phone, never in a backup and never on a
@@ -443,3 +445,43 @@ screen there is nothing for them to land in.
 **Costs:** after time away the user starts again from Today rather than
 where they were, and a page open over a tab, such as a settings page, is
 closed.
+
+## 029: Chats with the coach, each keeping its own coach
+
+**Decided:** the Coach tab is a list of chats, as a messaging app keeps
+them, instead of the one ongoing chat of decision 026, which it replaces.
+Each chat has its own messages, name, pin, coach and personality; a new one
+starts with the defaults in Coach settings. A chat is named after its first
+question by the app. The coach is sent only the open chat's last 20
+messages, and searches the rest, this chat's older ones and every other
+chat's, on the phone when a question needs them. Everything else from 026
+holds: kept on the phone only, never in a backup, Forget everything clears
+it all, and with memory off the chats last until the app closes. The chat
+on the phone before this became the first chat.
+
+**Why:** one chat mixed every topic, so the coach was sent last week's
+laptop talk with this week's bill question, and there was no way to keep a
+plan apart, find it again or start fresh. Separate chats keep each one on
+its topic and send less per question, while the past-chats lookup keeps
+"what did you tell me on Saturday" working across them.
+
+**Costs:** a list to manage, and a new table (database version 10). The
+ten questions a day are shared by every chat, and so is the pushback
+against spam, so starting a new chat is no way round either. Naming a chat
+with the model would read better but would spend one of those questions.
+
+## 030: The bottom bar floats and never hides
+
+**Decided:** the bottom bar is a soft pill holding the four tabs, with the
+moulded + that logs beside it, floating over the page with nothing filling
+the space around them. Each tab's list scrolls on underneath and ends with
+room to clear it. The bar stays put while scrolling.
+
+**Why:** a solid strip cut the page off and read as a block laid over the
+soft surface. Floating, the bar belongs to the surface and the page shows
+all round it. Hiding it on scroll would put logging a swipe away, and
+logging has to stay one tap.
+
+**Costs:** every tab's list has to pad its own end (`underBar`) rather
+than sit in a bottom `SafeArea`, and any sheet a tab opens must go over the
+bar (`useRootNavigator`) or its last rows sit beneath it.
