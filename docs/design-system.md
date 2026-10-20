@@ -230,6 +230,14 @@ two, starts a new chat, which opens on its own page over the bottom bar
 and is dropped if it is left before anything is asked. Holding a chat, or
 the ⋮ inside it, pins, renames or deletes it; delete asks first and offers
 Undo. The list's own ⋮ copies the week's summary and opens Coach settings.
+Each chat keeps its own coach and personality. The top of a chat shows
+who is talking and how, the coach's name with the personality under it
+(`thinking…` while an answer comes), and tapping it, or Chat settings in
+its ⋮, opens the chat's settings: the four coaches in a row, the one in use
+pressed into the surface, and the six personalities. Changing the coach is
+said in the chat by the new coach's hello; changing the personality leaves
+a short note line, such as `bajety is now Strict`, which the model is never
+sent. Coach settings holds the coach and personality new chats start with.
 Sheets a tab opens go over the bottom bar (`useRootNavigator`), or their
 last rows would sit beneath it.
 

@@ -170,7 +170,7 @@ class _PersonalityPicker extends ConsumerWidget {
     final c = context.colors;
     final settings = ref.watch(coachSettingsProvider).value ?? const CoachSettings();
     return CardGroup(
-      label: 'Personality',
+      label: 'Personality for new chats',
       children: [
         RadioGroup<CoachPersonality>(
           groupValue: settings.personality,
@@ -259,7 +259,7 @@ class _YourCoach extends ConsumerWidget {
     final c = context.colors;
     final face = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).face;
     return CardGroup(
-      label: 'Your coach',
+      label: 'Coach for new chats',
       children: [
         ListTile(
           minTileHeight: 72,

@@ -9,10 +9,14 @@ import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/spring_menu.dart';
 import '../domain/coach_thread.dart';
 import 'coach_avatar.dart';
+import 'coach_chat_settings.dart';
 import 'coach_chats.dart';
 
 /// What can be done to a chat from the list or from inside it.
-enum ChatAction { pin, rename, delete }
+enum ChatAction { settings, pin, rename, delete }
+
+/// Inside a chat its menu leads with the chat's own coach and personality.
+const chatSettingsItem = SpringMenuItem(value: ChatAction.settings, icon: Icons.tune_rounded, label: 'Chat settings');
 
 /// The chat's own actions, as a [SpringMenuButton] lists them.
 List<SpringMenuItem<ChatAction>> chatMenuItems(CoachThread chat) => [
@@ -26,6 +30,8 @@ List<SpringMenuItem<ChatAction>> chatMenuItems(CoachThread chat) => [
 Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat, ChatAction action, {VoidCallback? onDeleted}) async {
   final chats = ref.read(coachChatsProvider.notifier);
   switch (action) {
+    case ChatAction.settings:
+      await showChatSettings(context, chat.id);
     case ChatAction.pin:
       await chats.pin(chat.id, !chat.pinned);
     case ChatAction.rename:

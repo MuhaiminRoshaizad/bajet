@@ -5,30 +5,24 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
-import 'coach_chats.dart';
-import 'coach_controller.dart';
 import 'coach_providers.dart';
 
-/// The sheet that switches the coach's face: from a chat, that chat's
-/// coach, keeping its messages; from Settings → Coach, the face new chats
-/// start with.
-Future<void> showCoachPicker(BuildContext context, {int? chat}) => showModalBottomSheet<void>(
+/// The sheet in Settings → Coach that picks the coach new chats start
+/// with. A chat changes its own in its chat settings.
+Future<void> showCoachPicker(BuildContext context) => showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      builder: (_) => _CoachPicker(chat: chat),
+      builder: (_) => const _CoachPicker(),
     );
 
 class _CoachPicker extends ConsumerWidget {
-  const _CoachPicker({this.chat});
-
-  final int? chat;
+  const _CoachPicker();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
-    final defaults = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).face;
-    final current = chat == null ? defaults : ref.watch(coachChatsProvider).byId(chat!)?.face ?? defaults;
+    final current = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).face;
     final idle = ref.watch(coachIdleMotionProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.xl),
@@ -36,9 +30,9 @@ class _CoachPicker extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Choose your coach', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+          Text('Coach for new chats', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: AppSpacing.xs),
-          Text('Same memory and figures, whoever you pick. How they talk is set under Personality.', style: TextStyle(color: c.muted)),
+          Text('Each new chat starts with this coach; a chat can change its own. How they talk is set under Personality.', style: TextStyle(color: c.muted)),
           const SizedBox(height: AppSpacing.l),
           GridView.count(
             crossAxisCount: 2,
@@ -85,15 +79,10 @@ class _CoachPicker extends ConsumerWidget {
     // gone, and Use it would quietly do nothing.
     final messenger = ScaffoldMessenger.of(context);
     final repo = ref.read(coachSettingsRepositoryProvider);
-    final chats = ref.read(coachChatsProvider.notifier);
-    final controller = chat == null ? null : ref.read(coachControllerProvider(chat!).notifier);
     final settings = ref.read(coachSettingsProvider).value ?? const CoachSettings();
-    final was = chat == null ? settings.face : ref.read(coachChatsProvider).byId(chat!)?.face ?? settings.face;
     Navigator.of(context).pop();
-    if (face == was) return;
-    // The face picked last is the one new chats start with too.
+    if (face == settings.face) return;
     await repo.saveSettings(settings.copyWith(face: face));
-    await controller?.switchFace(face);
     // bajety's joke is the knows-too-much voice, so it offers it once picked.
     if (face == CoachFace.bajety && settings.personality != CoachPersonality.seesEverything) {
       messenger
@@ -105,7 +94,6 @@ class _CoachPicker extends ConsumerWidget {
             onPressed: () async {
               final now = await repo.watchSettings().first;
               await repo.saveSettings(now.copyWith(personality: CoachPersonality.seesEverything));
-              if (chat != null) await chats.setCoach(chat!, personality: CoachPersonality.seesEverything);
             },
           ),
         ));

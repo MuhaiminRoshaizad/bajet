@@ -256,6 +256,15 @@ class CoachController extends Notifier<CoachChat> {
     ));
   }
 
+  /// Switches this chat's personality. A line in the chat says so, so a
+  /// change of tone has a reason anyone scrolling back can see.
+  Future<void> setPersonality(CoachPersonality personality) async {
+    if (personality == _personality) return;
+    await _chats.setCoach(chat, personality: personality);
+    if (state.messages.isEmpty) return;
+    await _add(CoachMessage.note('${_face.label} is now ${personality.label}', sentAt: _now));
+  }
+
   Future<void> decline(int message, int card) async {
     final c = state.messages[message].cards[card];
     if (c.state == CardState.waiting) await _setCard(message, card, c.copyWith(state: CardState.declined));

@@ -19,9 +19,9 @@ import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
 import 'coach_chat_actions.dart';
+import 'coach_chat_settings.dart';
 import 'coach_chats.dart';
 import 'coach_controller.dart';
-import 'coach_picker.dart';
 import 'coach_providers.dart';
 
 /// One chat with the coach, on a page of its own over the bottom bar: its
@@ -112,11 +112,11 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                       Expanded(
                         child: Semantics(
                           button: true,
-                          label: 'Your coach, ${settings.face.label}, ${settings.personality.label}. Switch coach',
+                          label: "This chat's coach, ${settings.face.label}, ${settings.personality.label}. Change",
                           excludeSemantics: true,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(AppRadii.control),
-                            onTap: () => showCoachPicker(context, chat: id),
+                            onTap: () => showChatSettings(context, id),
                             child: Row(
                               children: [
                                 CoachAvatar(face: settings.face, mood: mood, size: 40, idle: idle),
@@ -151,7 +151,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                       // Nothing to pin, rename or delete until something is said.
                       if (thread != null && thread.messages.isNotEmpty)
                         SpringMenuButton<ChatAction>(
-                          items: chatMenuItems(thread),
+                          items: [chatSettingsItem, ...chatMenuItems(thread)],
                           onSelected: (a) => runChatAction(context, ref, thread, a, onDeleted: () => Navigator.of(context).pop()),
                         ),
                     ],
@@ -201,16 +201,19 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                             ),
                           for (final (i, m) in chat.messages.indexed) ...[
                             if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
-                            SpringIn(
-                              key: ValueKey(('message', i)),
-                              animate: i >= settledCount,
-                              alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
-                              child: _Bubble(
-                                message: m,
-                                // A run of replies shows its face once, beside the last.
-                                face: m.fromUser || (i + 1 < chat.messages.length && !chat.messages[i + 1].fromUser) ? null : (m.face ?? settings.face),
+                            if (m.note)
+                              SpringIn(key: ValueKey(('message', i)), animate: i >= settledCount, alignment: Alignment.center, child: _Note(m.text))
+                            else
+                              SpringIn(
+                                key: ValueKey(('message', i)),
+                                animate: i >= settledCount,
+                                alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
+                                child: _Bubble(
+                                  message: m,
+                                  // A run of replies shows its face once, beside the last.
+                                  face: m.fromUser || (i + 1 < chat.messages.length && !chat.messages[i + 1].fromUser) ? null : (m.face ?? settings.face),
+                                ),
                               ),
-                            ),
                             for (final (j, card) in m.cards.indexed)
                               _ProposalCard(
                                 card: card,
@@ -248,6 +251,19 @@ String? _dayLabel(List<CoachMessage> messages, int i, DateTime today) {
   if (before != null && DateTime.utc(before.year, before.month, before.day) == day) return null;
   final gap = today.difference(day).inDays;
   return gap == 0 ? 'Today' : gap == 1 ? 'Yesterday' : '${Dates.weekday(day)} ${Dates.short(day)}';
+}
+
+/// A line in the chat said by nobody, such as a change of personality.
+class _Note extends StatelessWidget {
+  const _Note(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.m),
+        child: Center(child: Text(text, textAlign: TextAlign.center, style: TextStyle(color: context.colors.muted, fontSize: 12.5, fontWeight: FontWeight.w600))),
+      );
 }
 
 class _DayLabel extends StatelessWidget {
