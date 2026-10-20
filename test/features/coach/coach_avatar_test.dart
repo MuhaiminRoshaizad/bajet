@@ -1,5 +1,6 @@
 import 'package:bajet/core/theme/app_theme.dart';
 import 'package:bajet/features/coach/domain/coach_settings.dart';
+import 'package:bajet/features/coach/presentation/coach_attention.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -57,5 +58,52 @@ void main() {
     await tester.pump();
     expect((painter(tester).jelly as Animation<double>).isAnimating, isFalse);
     expect((painter(tester).morph as Animation<double>).value, 1);
+  });
+
+  testWidgets('it glances where its attention looks, and wobbles once when nudged', (tester) async {
+    final attention = CoachAttention();
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: Center(child: CoachAvatar(face: CoachFace.hafiz, size: 96, idle: false, attention: attention)),
+    ));
+    attention.lookAt(const Offset(0, 2));
+    await tester.pumpAndSettle();
+    expect((painter(tester).lookY as Animation<double>).value, closeTo(2, 0.01));
+
+    attention.wobble(0.4);
+    await tester.pump();
+    expect((painter(tester).jelly as Animation<double>).value, lessThan(0.7), reason: 'squashed by the nudge');
+    await tester.pumpAndSettle();
+    expect((painter(tester).jelly as Animation<double>).value, 1);
+  });
+
+  testWidgets('a flung list turns the faces its way, then they look ahead and wobble', (tester) async {
+    final attention = CoachAttention();
+    await tester.pumpWidget(MaterialApp(
+      home: ScrollAttention(
+        attention: attention,
+        child: ListView(children: [for (var i = 0; i < 60; i++) SizedBox(height: 80, child: Text('row $i'))]),
+      ),
+    ));
+    await tester.fling(find.byType(ListView), const Offset(0, -600), 3000);
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(attention.look.dy, greaterThan(0), reason: 'looking down the list as it moves down');
+    await tester.pumpAndSettle();
+    expect(attention.look, Offset.zero);
+    expect(attention.nudges, 1);
+  });
+
+  testWidgets('with animations off it never glances', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final attention = CoachAttention();
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.light(),
+      home: Center(child: CoachAvatar(face: CoachFace.mei, size: 96, idle: false, attention: attention)),
+    ));
+    attention.lookAt(const Offset(0, 2));
+    await tester.pumpAndSettle();
+    expect((painter(tester).lookY as Animation<double>).value, 0);
   });
 }

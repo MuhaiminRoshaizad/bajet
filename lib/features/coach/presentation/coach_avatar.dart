@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../domain/coach_settings.dart';
+import 'coach_attention.dart';
 
 /// Whether coaches breathe, blink and think in a loop. Tests turn it off,
 /// since a loop that never ends never lets a screen settle.
@@ -21,12 +22,16 @@ enum CoachMood { idle, thinking, happy, concerned, cheer, hello, stare }
 /// people. Every change of [mood] starts with a jelly wobble and morphs the
 /// face rather than snapping it; at rest it breathes and blinks, and it
 /// settles still after a minute with nothing happening. With [animate] off,
-/// as for the small faces beside old replies, it is a still picture.
+/// as for the small faces beside old replies, it is a still picture. Given an
+/// [attention], it also glances where that looks and wobbles when nudged.
 class CoachAvatar extends StatefulWidget {
-  const CoachAvatar({super.key, required this.face, this.mood = CoachMood.idle, this.size = 40, this.animate = true, this.idle = true, this.onTap});
+  const CoachAvatar({super.key, required this.face, this.mood = CoachMood.idle, this.size = 40, this.animate = true, this.idle = true, this.onTap, this.attention});
 
   final CoachFace face;
   final CoachMood mood;
+
+  /// What the user is doing that the coach notices, such as scrolling.
+  final CoachAttention? attention;
   final double size;
   final bool animate;
 
@@ -43,6 +48,10 @@ class CoachAvatar extends StatefulWidget {
 /// settles, like jelly.
 final _jellySpring = SpringDescription.withDampingRatio(mass: 1, stiffness: 220, ratio: 0.42);
 
+/// How the eyes follow [CoachAttention]: quick, with barely any overshoot,
+/// so they glance rather than wobble.
+final _glanceSpring = SpringDescription.withDampingRatio(mass: 1, stiffness: 140, ratio: 0.75);
+
 class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin {
   late final _morph = AnimationController(vsync: this, duration: const Duration(milliseconds: 420), value: 1);
   late final _jelly = AnimationController.unbounded(vsync: this, value: 1);
@@ -52,6 +61,11 @@ class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin
   late final _breathe = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
   late final _orbit = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
   late final _spark = AnimationController(vsync: this, duration: const Duration(milliseconds: 700), value: 1);
+
+  /// Where the eyes are turned by [CoachAvatar.attention], across and down.
+  late final _lookX = AnimationController.unbounded(vsync: this);
+  late final _lookY = AnimationController.unbounded(vsync: this);
+  var _nudges = 0;
 
   /// How long the surprised hello holds before the smile comes back.
   late final _hello = AnimationController(vsync: this, duration: const Duration(milliseconds: 520))
@@ -66,6 +80,29 @@ class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin
   bool get _moving => widget.animate && !(MediaQuery.maybeDisableAnimationsOf(context) ?? false);
 
   @override
+  void initState() {
+    super.initState();
+    _nudges = widget.attention?.nudges ?? 0;
+    widget.attention?.addListener(_attend);
+  }
+
+  /// Glances where the attention says and wobbles when it is nudged; a still
+  /// coach does neither.
+  void _attend() {
+    final attention = widget.attention;
+    if (attention == null || !_moving) return;
+    for (final (axis, to) in [(_lookX, attention.look.dx), (_lookY, attention.look.dy)]) {
+      if (axis.value != to) axis.animateWith(SpringSimulation(_glanceSpring, axis.value, to, axis.velocity));
+    }
+    if (attention.nudges != _nudges) {
+      _nudges = attention.nudges;
+      _jelly.value = 1 - attention.nudge;
+      _jelly.animateWith(SpringSimulation(_jellySpring, _jelly.value, 1, 0, snapToEnd: true));
+    }
+    _wake();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _wake();
@@ -74,6 +111,10 @@ class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin
   @override
   void didUpdateWidget(CoachAvatar old) {
     super.didUpdateWidget(old);
+    if (old.attention != widget.attention) {
+      old.attention?.removeListener(_attend);
+      widget.attention?.addListener(_attend);
+    }
     if (old.mood != widget.mood || old.face != widget.face) _react(widget.mood);
   }
 
@@ -141,7 +182,8 @@ class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin
   void dispose() {
     _blinkTimer?.cancel();
     _settleTimer?.cancel();
-    for (final c in [_morph, _jelly, _hop, _shake, _blink, _breathe, _orbit, _spark, _hello]) {
+    widget.attention?.removeListener(_attend);
+    for (final c in [_morph, _jelly, _hop, _shake, _blink, _breathe, _orbit, _spark, _hello, _lookX, _lookY]) {
       c.dispose();
     }
     super.dispose();
@@ -168,6 +210,8 @@ class _CoachAvatarState extends State<CoachAvatar> with TickerProviderStateMixin
           breathe: _breathe,
           orbit: _orbit,
           spark: _spark,
+          lookX: _lookX,
+          lookY: _lookY,
         ),
       ),
     );
@@ -232,6 +276,8 @@ class _Expression {
         CoachMood.stare => const _Expression(_flat, 0, Offset.zero, 0, 0),
       };
 
+  _Expression lookingBy(Offset by) => by == Offset.zero ? this : _Expression(mouth, brow, look + by, blush, tilt, thinking: thinking);
+
   static _Expression lerp(_Expression a, _Expression b, double t) => _Expression(
         _Mouth.lerp(a.mouth, b.mouth, t),
         lerpDouble(a.brow, b.brow, t)!,
@@ -286,7 +332,9 @@ class _AvatarPainter extends CustomPainter {
     required this.breathe,
     required this.orbit,
     required this.spark,
-  }) : super(repaint: Listenable.merge([morph, jelly, hop, shake, blink, breathe, orbit, spark]));
+    required this.lookX,
+    required this.lookY,
+  }) : super(repaint: Listenable.merge([morph, jelly, hop, shake, blink, breathe, orbit, spark, lookX, lookY]));
 
   final CoachFace face;
   final AppColors colors;
@@ -296,12 +344,15 @@ class _AvatarPainter extends CustomPainter {
   final bool dark;
   final _Expression from, to;
   final Animation<double> morph, jelly, hop, shake, blink, breathe, orbit, spark;
+
+  /// Where the attention has turned the eyes, on top of the mood's look.
+  final Animation<double> lookX, lookY;
   final double Function() hopHeight;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 100);
-    final e = _Expression.lerp(from, to, Curves.easeOutBack.transform(morph.value.clamp(0, 1)));
+    final e = _Expression.lerp(from, to, Curves.easeOutBack.transform(morph.value.clamp(0, 1))).lookingBy(Offset(lookX.value, lookY.value));
     final squash = 1 - jelly.value;
     final lift = math.sin(hop.value.clamp(0, 1) * math.pi) * hopHeight();
     final wobble = shake.isAnimating ? math.sin(shake.value * math.pi * 4) * 6 * (1 - shake.value) : 0.0;

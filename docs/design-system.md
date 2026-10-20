@@ -210,6 +210,14 @@ on, or `animate` off for the small faces beside old replies, it is a still
 picture. The people's skin, hair and clothes are artwork in fixed colours,
 like a card's face, on a background tint from the theme.
 
+A coach given a `CoachAttention` also notices the user. Its eyes glance
+where the attention looks, on a quick spring with barely any overshoot
+(stiffness 140, damping 0.75), on top of whatever the mood is doing, and a
+nudge squashes it into one jelly wobble. `ScrollAttention` feeds it from a
+scrolling list: the faces look the way the page moves, further the faster
+it goes up to `ScrollAttention.fast` (900 px/s), look ahead again when it
+stops, and wobble once after a fling. A still coach notices nothing.
+
 Every avatar keeps at least 3:1 against the page in both themes (WCAG 1.4.11,
 non-text contrast), since the tints and the orb's lit silver are within a
 shade of the page on their own. The orb is drawn one titanium step deeper on
