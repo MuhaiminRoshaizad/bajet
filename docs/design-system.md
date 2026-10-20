@@ -343,6 +343,10 @@ inline line of text where it is.
   filled one, not the warning colour, since leaving loses nothing. Back
   inside a screen or a sheet goes back as usual. Catching Back on Today
   gives up Android's back-to-home preview there.
+- A header's ⋮ (`SpringMenuButton`) holds what does not need a button of
+  its own on that screen. Its menu grows out of the button's corner on
+  `easeOutBack`, passing its size a little before it settles, and closes on
+  a tap outside; a choice that removes something is in the warning colour.
 - Tapping anywhere outside the field being typed in puts the keyboard
   away, on every screen and sheet (`DismissKeyboardOnTap`, set once on the
   app); a drag that starts outside it, such as a scroll, leaves it up.
