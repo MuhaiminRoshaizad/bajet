@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -6,13 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/widgets/rise_in.dart';
 import '../features/accounts/presentation/account_providers.dart';
-import '../features/accounts/presentation/account_stack.dart';
-import '../features/accounts/presentation/card_face.dart';
 import '../features/lock/presentation/lock_providers.dart';
 import '../features/opening/domain/opening_timeline.dart';
 import '../features/opening/presentation/opening_providers.dart';
+import '../features/opening/presentation/flying_card.dart';
 import '../features/opening/presentation/titanium_card.dart';
-import '../features/today/presentation/today_total_card.dart';
+import 'stack_landing.dart';
 
 /// Plays bajet's part of the opening over the app on a cold start
 /// (docs/design-system.md, Opening). On Android 12 and later, Android's
@@ -98,11 +96,7 @@ class _OpeningOverlayState extends ConsumerState<OpeningOverlay> with SingleTick
       if (mark != null && mark.hasSize) return LockTarget(mark.localToGlobal(mark.size.center(Offset.zero)));
       return const NoTarget();
     }
-    final stack = openingStackKey.currentContext?.findRenderObject() as RenderBox?;
-    final count = ref.read(accountsProvider).value?.length ?? 0;
-    if (stack == null || !stack.hasSize || count == 0) return const NoTarget();
-    final places = StackPlaces(stack.localToGlobal(Offset.zero) & stack.size, count);
-    return StackTarget(places.card(1), places.card(0), places.total);
+    return todayStackLanding(ref) ?? const NoTarget();
   }
 
   @override
@@ -142,11 +136,7 @@ class _Frame extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accounts = ref.watch(accountsProvider).value ?? const [];
-    Widget? real(int i) => switch (i) {
-          _ when plan.target is! StackTarget || accounts.isEmpty => null,
-          2 => const TodayTotalCard(),
-          _ => AccountCard(account: accounts[math.min(1 - i, accounts.length - 1)]),
-        };
+    final landing = plan.target is StackTarget && accounts.isNotEmpty;
     // Above the navigator there is no Material for text to take its style
     // from, so the overlay brings its own.
     return ExcludeSemantics(
@@ -154,32 +144,17 @@ class _Frame extends ConsumerWidget {
         type: MaterialType.transparency,
         child: Stack(clipBehavior: Clip.none, children: [
           Positioned.fill(child: ColoredBox(color: graphite.withValues(alpha: plan.backdropAt(ms)))),
-          for (var i = 0; i < 3; i++) _card(i, real(i)),
+          for (var i = 0; i < 3; i++)
+            FlyingCard(
+              pose: plan.card(i, ms),
+              base: base,
+              depth: i,
+              titanium: plan.titanium(i, ms),
+              face: landing ? stackFace(i, accounts) : null,
+              shown: plan.real(i, ms),
+            ),
           ..._word(),
         ]),
-      ),
-    );
-  }
-
-  Widget _card(int i, Widget? real) {
-    final pose = plan.card(i, ms);
-    final h = base / cardAspectRatio;
-    final titanium = plan.titanium(i, ms), shown = plan.real(i, ms);
-    return Positioned(
-      left: pose.centre.dx - base / 2,
-      top: pose.centre.dy - h / 2,
-      width: base,
-      height: h,
-      child: Opacity(
-        opacity: pose.opacity.clamp(0, 1),
-        child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.rotationZ(pose.turn * math.pi / 180)..scaleByDouble(pose.width / base, pose.width / base, 1, 1),
-          child: Stack(children: [
-            if (titanium > 0) Opacity(opacity: titanium.clamp(0, 1), child: TitaniumCard(depth: i, width: base)),
-            if (real != null && shown > 0) Opacity(opacity: shown.clamp(0, 1), child: real),
-          ]),
-        ),
       ),
     );
   }

@@ -155,6 +155,31 @@ class NoTarget extends OpeningTarget {
   const NoTarget();
 }
 
+/// A card's flight from [from] into [to], its place in Today's stack: up
+/// and over, growing on the way, landing with a little settle, and turning
+/// from titanium into its real face as it comes down. The opening's cards
+/// fly it from the fan, and the unlock's from the lock screen's.
+class StackFlight {
+  StackFlight(CardPose from, Rect to, double start)
+      : pose = Track(start, duration, [
+          Frame(0, from),
+          Frame(.5, CardPose(from.centre + (to.center - from.centre) * .5 + const Offset(0, -46 * OpeningPlan.zoom), (from.width + to.width) / 2 * 1.05, from.turn * .35)),
+          Frame(.84, CardPose(to.center + const Offset(0, 4), to.width * 1.012, 0)),
+          Frame(1, CardPose(to.center, to.width, 0)),
+        ], CardPose.lerp, curve: OpeningCurves.soft),
+        real = Track(start + 240, 260, const [Frame(0, 0), Frame(1, 1)], lerpNum, curve: OpeningCurves.easeOut),
+        titanium = Track(start + 300, 260, const [Frame(0, 1), Frame(1, 0)], lerpNum);
+
+  static const duration = 600.0;
+
+  final Track<CardPose> pose;
+  final Track<double> real;
+  final Track<double> titanium;
+}
+
+/// With no stack to land in, a card's titanium simply fades where it is.
+Track<double> fadeInPlace(double start) => Track(start, 300, const [Frame(0, 1), Frame(1, 0)], lerpNum, curve: OpeningCurves.easeIn);
+
 /// Every track of the opening for a screen of [size].
 class OpeningPlan {
   OpeningPlan(this.size, this.target) {
@@ -260,16 +285,10 @@ class OpeningPlan {
       final a = angles[i], from = _at(a), d = OpeningTimes.fly + (2 - i) * 50;
       switch (target) {
         case StackTarget():
-          final r = target[i], p = fanAt(a);
-          final m = (r.center - p) * .5 + const Offset(0, -46 * zoom);
-          cards[i].add(pose(d, 600, [
-            Frame(0, from),
-            Frame(.5, CardPose(p + m, cardWidth * ((1 + r.width / cardWidth) / 2 * 1.05), a * .35)),
-            Frame(.84, CardPose(r.center + const Offset(0, 4), r.width * 1.012, 0)),
-            Frame(1, CardPose(r.center, r.width, 0)),
-          ], curve: OpeningCurves.soft));
-          realFaces[i].add(number(d + 240, 260, const [Frame(0, 0), Frame(1, 1)], curve: OpeningCurves.easeOut));
-          titaniumFaces[i].add(number(d + 300, 260, const [Frame(0, 1), Frame(1, 0)]));
+          final flight = StackFlight(from, target[i], d);
+          cards[i].add(flight.pose);
+          realFaces[i].add(flight.real);
+          titaniumFaces[i].add(flight.titanium);
         case LockTarget(:final centre, :final scale):
           final p = fanAt(a), to = centre + (p - fanCentre) * scale - p;
           cards[i].add(pose(d, 560, [
@@ -279,7 +298,7 @@ class OpeningPlan {
             Frame(1, _at(a, to, scale)),
           ], curve: OpeningCurves.soft));
         case NoTarget():
-          titaniumFaces[i].add(number(d, 300, const [Frame(0, 1), Frame(1, 0)], curve: OpeningCurves.easeIn));
+          titaniumFaces[i].add(fadeInPlace(d));
       }
     }
   }
