@@ -1,4 +1,6 @@
+import 'package:bajet/core/widgets/soft.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
+import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:bajet/features/coach/presentation/coach_chat_screen.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
@@ -171,5 +173,15 @@ void main() {
     await ask(tester, 'One more?');
     expect(find.textContaining("That's today's 10 questions"), findsOneWidget);
     expect(world.coach.requests, isEmpty);
+  });
+
+  testWidgets("the coach's reply has a tail toward the coach and no face beside it", (tester) async {
+    await openCoach(tester);
+    await ask(tester, 'How did this week go?');
+    final reply = tester.widget<SoftCard>(find.ancestor(of: find.text('You are on track.'), matching: find.byType(SoftCard)).first);
+    expect(reply.borderRadius!.bottomLeft, const Radius.circular(6));
+    expect(reply.borderRadius!.bottomRight, const Radius.circular(20));
+    // Only the coach at the top of the chat has a face.
+    expect(find.descendant(of: chatPage, matching: find.byType(CoachAvatar)), findsOneWidget);
   });
 }

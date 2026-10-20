@@ -21,8 +21,8 @@ enum CoachMood { idle, thinking, happy, concerned, cheer, hello, stare }
 /// The coach, drawn in code: the titanium orb or one of three finance
 /// people. Every change of [mood] starts with a jelly wobble and morphs the
 /// face rather than snapping it; at rest it breathes and blinks, and it
-/// settles still after a minute with nothing happening. With [animate] off,
-/// as for the small faces beside old replies, it is a still picture. Given an
+/// settles still after a minute with nothing happening. With [animate] off
+/// it is a still picture. Given an
 /// [attention], it also glances where that looks and wobbles when nudged.
 class CoachAvatar extends StatefulWidget {
   const CoachAvatar({super.key, required this.face, this.mood = CoachMood.idle, this.size = 40, this.animate = true, this.idle = true, this.onTap, this.attention});

@@ -206,8 +206,7 @@ Happy and cheer hop, concerned shakes, cheer sparkles, thinking floats a
 thought bubble or circling sparks, and a tap says hello. At rest it breathes
 and blinks every three to five seconds, and stops after a minute with
 nothing happening. It sits in its own `RepaintBoundary`; with reduce motion
-on, or `animate` off for the small faces beside old replies, it is a still
-picture. The people's skin, hair and clothes are artwork in fixed colours,
+on, or `animate` off, it is a still picture. The people's skin, hair and clothes are artwork in fixed colours,
 like a card's face, on a background tint from the theme.
 
 A coach given a `CoachAttention` also notices the user. Its eyes glance
@@ -238,6 +237,10 @@ pressed into the surface, and the six personalities. Changing the coach is
 said in the chat by the new coach's hello; changing the personality leaves
 a short note line, such as `bajety is now Strict`, which the model is never
 sent. Coach settings holds the coach and personality new chats start with.
+Both sides of the chat have a tail at the bottom corner nearest the
+speaker, the user's on the right and the coach's on the left. A reply has
+no face beside it, since the coach is named at the top, so it takes the
+full width.
 Sheets a tab opens go over the bottom bar (`useRootNavigator`), or their
 last rows would sit beneath it.
 

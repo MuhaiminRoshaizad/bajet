@@ -208,11 +208,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                 key: ValueKey(('message', i)),
                                 animate: i >= settledCount,
                                 alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
-                                child: _Bubble(
-                                  message: m,
-                                  // A run of replies shows its face once, beside the last.
-                                  face: m.fromUser || (i + 1 < chat.messages.length && !chat.messages[i + 1].fromUser) ? null : (m.face ?? settings.face),
-                                ),
+                                child: _Bubble(message: m),
                               ),
                             for (final (j, card) in m.cards.indexed)
                               _ProposalCard(
@@ -278,64 +274,56 @@ class _DayLabel extends StatelessWidget {
       );
 }
 
+/// One message. Both sides have a tail at the bottom corner nearest the
+/// speaker; the coach is named at the top of the chat, so a reply needs no
+/// face beside it and takes the full width.
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, this.face});
+  const _Bubble({required this.message});
 
   final CoachMessage message;
 
-  /// The coach who gave a reply, shown beside it; null for none.
-  final CoachFace? face;
+  static const _round = Radius.circular(20);
+  static const _tail = Radius.circular(6);
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final mine = message.fromUser;
     final text = SelectableText(message.text, style: TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45));
+    const padding = EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m);
     final bubble = ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * (mine ? 0.82 : 0.72)),
-          child: Semantics(
-            label: mine ? 'You asked' : 'The coach said',
-            child: mine
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m),
-                    decoration: BoxDecoration(
-                      color: c.primary,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20),
-                        bottomLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(6),
-                      ),
-                    ),
+      constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
+      child: Semantics(
+        label: mine ? 'You asked' : 'The coach said',
+        child: mine
+            ? Container(
+                padding: padding,
+                decoration: BoxDecoration(
+                  color: c.primary,
+                  borderRadius: const BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _round, bottomRight: _tail),
+                ),
+                child: text,
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SoftCard(
+                    padding: padding,
+                    borderRadius: const BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _tail, bottomRight: _round),
                     child: text,
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SoftCard(padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m), radius: 20, child: text),
-                      if (message.looked.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.s, 0),
-                          child: Text('Looked at: ${message.looked.join(' · ')}', style: TextStyle(color: c.muted, fontSize: 12)),
-                        ),
-                    ],
                   ),
-          ),
-        );
+                  if (message.looked.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.s, 0),
+                      child: Text('Looked at: ${message.looked.join(' · ')}', style: TextStyle(color: c.muted, fontSize: 12)),
+                    ),
+                ],
+              ),
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.m),
-      child: mine
-          ? Align(alignment: Alignment.centerRight, child: bubble)
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // The space stays when the face is not shown, so a run of
-                // replies lines up.
-                SizedBox(width: 30, child: face == null ? null : CoachAvatar(face: face!, size: 30, animate: false)),
-                const SizedBox(width: AppSpacing.s),
-                Flexible(child: bubble),
-              ],
-            ),
+      child: Align(alignment: mine ? Alignment.centerRight : Alignment.centerLeft, child: bubble),
     );
   }
 }
@@ -385,12 +373,11 @@ class _ProposalCard extends StatelessWidget {
       ],
     );
     return Padding(
-      // Lined up with the reply bubbles, past the coach's face.
-      padding: const EdgeInsets.only(top: AppSpacing.s, left: 30 + AppSpacing.s),
+      padding: const EdgeInsets.only(top: AppSpacing.s),
       child: Align(
         alignment: Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.72),
+          constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
           child: AnimatedOpacity(
             opacity: settled ? 0.6 : 1,
             duration: AppMotion.fast,
@@ -449,7 +436,7 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
             // As the reply's own "Looked at:" line will say, label untouched.
             : 'Looking at: $reading…';
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.m, left: 30 + AppSpacing.s),
+      padding: const EdgeInsets.only(top: AppSpacing.m),
       child: Semantics(
         liveRegion: true,
         label: 'The coach is ${status[0].toLowerCase()}${status.substring(1)}',
@@ -458,7 +445,7 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
           children: [
             SoftCard(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m + 2),
-              radius: 20,
+              borderRadius: const BorderRadius.only(topLeft: _Bubble._round, topRight: _Bubble._round, bottomLeft: _Bubble._tail, bottomRight: _Bubble._round),
               child: AnimatedBuilder(
                 animation: _bob,
                 builder: (context, _) => Row(

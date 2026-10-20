@@ -93,11 +93,15 @@ class _MouldedButtonState extends State<MouldedButton> {
 /// soft edges. Content inside it carries its own contrast, so the edges are
 /// never the only thing that says what is there.
 class SoftCard extends StatelessWidget {
-  const SoftCard({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpacing.l + 2), this.radius = AppRadii.card});
+  const SoftCard({super.key, required this.child, this.padding = const EdgeInsets.all(AppSpacing.l + 2), this.radius = AppRadii.card, this.borderRadius});
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final double radius;
+
+  /// Corners that differ, such as a speech bubble's tail; [radius] rounds
+  /// them all alike otherwise.
+  final BorderRadius? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +110,7 @@ class SoftCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: c.background,
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: borderRadius ?? BorderRadius.circular(radius),
         boxShadow: softShadows(c, AppDepth.card),
       ),
       child: child,
