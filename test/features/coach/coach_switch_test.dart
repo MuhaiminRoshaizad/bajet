@@ -2,7 +2,7 @@ import 'package:bajet/features/coach/domain/coach_settings.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
 import 'package:bajet/features/coach/presentation/coach_chats.dart';
 import 'package:bajet/features/coach/presentation/coach_chat_screen.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -94,5 +94,19 @@ void main() {
     await ask(tester, 'Write me some more code');
     expect(header(tester).mood, CoachMood.stare);
     expect(find.textContaining('😉'), findsWidgets);
+  });
+
+  testWidgets('the coach looks down at the question box while it is typed in, then up once it is sent', (tester) async {
+    await openCoach(tester);
+    double lookY() => (tester.widget<CustomPaint>(find.descendant(of: find.byWidget(header(tester)), matching: find.byType(CustomPaint)).first).painter as dynamic).lookY.value as double;
+    await tester.showKeyboard(find.byKey(const ValueKey('coach-question')));
+    await tester.enterText(find.byKey(const ValueKey('coach-question')), 'How did');
+    await tester.pumpAndSettle();
+    expect(lookY(), closeTo(2.2, 0.01));
+
+    await tester.enterText(find.byKey(const ValueKey('coach-question')), 'How did this week go?');
+    await tester.tap(find.byTooltip('Send'));
+    await tester.pumpAndSettle();
+    expect(lookY(), closeTo(0, 0.01));
   });
 }

@@ -215,7 +215,10 @@ where the attention looks, on a quick spring with barely any overshoot
 nudge squashes it into one jelly wobble. `ScrollAttention` feeds it from a
 scrolling list: the faces look the way the page moves, further the faster
 it goes up to `ScrollAttention.fast` (900 px/s), look ahead again when it
-stops, and wobble once after a fling. A still coach notices nothing.
+stops, and wobble once after a fling. Inside a chat the coach at the top
+looks up as the user scrolls back through older messages, and down at the
+question box while they type, until the question is sent. A still coach
+notices nothing.
 
 ### Chats with the coach
 

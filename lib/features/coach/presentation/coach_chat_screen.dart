@@ -17,6 +17,7 @@ import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
+import 'coach_attention.dart';
 import 'coach_avatar.dart';
 import 'coach_chat_actions.dart';
 import 'coach_chat_settings.dart';
@@ -40,6 +41,11 @@ class CoachChatScreen extends ConsumerStatefulWidget {
 class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   final _question = TextEditingController();
   final _scroll = ScrollController();
+  final _typing = FocusNode();
+
+  /// What the coach at the top notices: the chat scrolling, and the user
+  /// typing, when it looks down at the question box.
+  final _attention = CoachAttention();
 
   /// Read on arrival, as the page cannot reach it once it is going.
   late final CoachChatsController _chats;
@@ -48,15 +54,22 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   void initState() {
     super.initState();
     _chats = ref.read(coachChatsProvider.notifier);
+    _question.addListener(_watchTyping);
+    _typing.addListener(_watchTyping);
   }
 
   @override
   void dispose() {
     _chats.discardIfEmpty(widget.chat);
     _question.dispose();
+    _typing.dispose();
+    _attention.dispose();
     _scroll.dispose();
     super.dispose();
   }
+
+  void _watchTyping() =>
+      _attention.lookAt(_typing.hasFocus && _question.text.isNotEmpty ? const Offset(-0.4, 2.2) : Offset.zero);
 
   Future<void> _send([String? text]) async {
     final question = text ?? _question.text;
@@ -119,7 +132,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                             onTap: () => showChatSettings(context, id),
                             child: Row(
                               children: [
-                                CoachAvatar(face: settings.face, mood: mood, size: 40, idle: idle),
+                                CoachAvatar(face: settings.face, mood: mood, size: 40, idle: idle, attention: _attention),
                                 const SizedBox(width: AppSpacing.s),
                                 Flexible(
                                   child: Column(
@@ -159,72 +172,77 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                 ),
               ),
               Expanded(
-                child: ListView(
-                        controller: _scroll,
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
-                        children: [
-                          if (chat.messages.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: AppSpacing.xxl),
-                              child: Column(
-                                children: [
-                                  CoachAvatar(face: settings.face, mood: mood, size: 112, idle: idle, onTap: () {}),
-                                  const SizedBox(height: AppSpacing.l),
-                                  Text("Hi, I'm ${settings.face.label}.", style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    settings.face == CoachFace.bajety
-                                        ? "What's a bajety, is that a new Verity? No lah. I look up your weeks, months, accounts and plan to "
-                                            'answer, and I always check with you before changing a thing.'
-                                        : 'I look up your weeks, months, accounts and plan to answer, and I always check with you before '
-                                            'changing a thing.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: c.muted, height: 1.4),
-                                  ),
-                                  const SizedBox(height: AppSpacing.s),
-                                  Text('Each question sends only what it looked up to Anthropic with your key.',
-                                      textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12.5)),
-                                ],
-                              ),
+                child: ScrollAttention(
+                  attention: _attention,
+                  reach: 2,
+                  child: ListView(
+                      controller: _scroll,
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
+                      children: [
+                        if (chat.messages.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.xxl),
+                            child: Column(
+                              children: [
+                                CoachAvatar(face: settings.face, mood: mood, size: 112, idle: idle, onTap: () {}),
+                                const SizedBox(height: AppSpacing.l),
+                                Text("Hi, I'm ${settings.face.label}.", style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+                                const SizedBox(height: AppSpacing.xs),
+                                Text(
+                                  settings.face == CoachFace.bajety
+                                      ? "What's a bajety, is that a new Verity? No lah. I look up your weeks, months, accounts and plan to "
+                                          'answer, and I always check with you before changing a thing.'
+                                      : 'I look up your weeks, months, accounts and plan to answer, and I always check with you before '
+                                          'changing a thing.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: c.muted, height: 1.4),
+                                ),
+                                const SizedBox(height: AppSpacing.s),
+                                Text('Each question sends only what it looked up to Anthropic with your key.',
+                                    textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12.5)),
+                              ],
                             ),
-                          if (chat.messages.isNotEmpty && remember)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.lock_outline_rounded, size: 14, color: c.muted),
-                                  const SizedBox(width: AppSpacing.xs),
-                                  Flexible(child: Text('Remembered on this phone only', textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12))),
-                                ],
-                              ),
+                          ),
+                        if (chat.messages.isNotEmpty && remember)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.lock_outline_rounded, size: 14, color: c.muted),
+                                const SizedBox(width: AppSpacing.xs),
+                                Flexible(child: Text('Remembered on this phone only', textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12))),
+                              ],
                             ),
-                          for (final (i, m) in chat.messages.indexed) ...[
-                            if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
-                            if (m.note)
-                              SpringIn(key: ValueKey(('message', i)), animate: i >= settledCount, alignment: Alignment.center, child: _Note(m.text))
-                            else
-                              SpringIn(
-                                key: ValueKey(('message', i)),
-                                animate: i >= settledCount,
-                                alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
-                                child: _Bubble(message: m),
-                              ),
-                            for (final (j, card) in m.cards.indexed)
-                              _ProposalCard(
-                                card: card,
-                                onConfirm: () => ref.read(coachControllerProvider(id).notifier).confirm(i, j),
-                                onDecline: () => ref.read(coachControllerProvider(id).notifier).decline(i, j),
-                                onUndo: () => ref.read(coachControllerProvider(id).notifier).undo(i, j),
-                              ),
-                          ],
-                          if (chat.sending) _Thinking(reading: chat.reading),
-                          if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider(id).notifier).retry() : null),
+                          ),
+                        for (final (i, m) in chat.messages.indexed) ...[
+                          if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
+                          if (m.note)
+                            SpringIn(key: ValueKey(('message', i)), animate: i >= settledCount, alignment: Alignment.center, child: _Note(m.text))
+                          else
+                            SpringIn(
+                              key: ValueKey(('message', i)),
+                              animate: i >= settledCount,
+                              alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
+                              child: _Bubble(message: m),
+                            ),
+                          for (final (j, card) in m.cards.indexed)
+                            _ProposalCard(
+                              card: card,
+                              onConfirm: () => ref.read(coachControllerProvider(id).notifier).confirm(i, j),
+                              onDecline: () => ref.read(coachControllerProvider(id).notifier).decline(i, j),
+                              onUndo: () => ref.read(coachControllerProvider(id).notifier).undo(i, j),
+                            ),
                         ],
-                      ),
+                        if (chat.sending) _Thinking(reading: chat.reading),
+                        if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider(id).notifier).retry() : null),
+                      ],
+                  ),
+                ),
               ),
               _Composer(
                 controller: _question,
+                focusNode: _typing,
                 enabled: !chat.sending && used < coachDailyLimit,
                 showSuggestions: chat.messages.isEmpty,
                 onSend: _send,
@@ -500,9 +518,10 @@ class _Problem extends StatelessWidget {
 
 /// Suggested questions and the question box, pinned under the conversation.
 class _Composer extends StatelessWidget {
-  const _Composer({required this.controller, required this.enabled, required this.showSuggestions, required this.onSend});
+  const _Composer({required this.controller, required this.focusNode, required this.enabled, required this.showSuggestions, required this.onSend});
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final bool enabled;
   final bool showSuggestions;
   final Future<void> Function([String? text]) onSend;
@@ -531,6 +550,7 @@ class _Composer extends StatelessWidget {
                 child: TextField(
                   key: const ValueKey('coach-question'),
                   controller: controller,
+                  focusNode: focusNode,
                   enabled: enabled,
                   minLines: 1,
                   maxLines: 4,
