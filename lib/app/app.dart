@@ -11,6 +11,7 @@ import '../features/opening/presentation/opening_providers.dart';
 import 'dismiss_keyboard.dart';
 import 'opening_overlay.dart';
 import 'router.dart';
+import 'stack_landing.dart';
 
 final _keyboard = DismissKeyboardOnTap();
 
@@ -34,7 +35,7 @@ class BajetApp extends ConsumerWidget {
       themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
       builder: (context, child) => Stack(children: [
-        LockGate(child: child!),
+        LockGate(landOnToday: () => landOnToday(ref), child: child!),
         if (ref.watch(openingProvider)) const Positioned.fill(child: OpeningOverlay()),
       ]),
       actions: {...WidgetsApp.defaultActions, ..._keyboard.actions},

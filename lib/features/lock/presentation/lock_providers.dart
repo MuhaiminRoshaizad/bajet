@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/dates/clock.dart';
 import '../../../core/platform/outside_app.dart';
+import '../../../core/widgets/rise_in.dart';
 import '../data/channel_recents_privacy.dart';
 import '../data/file_lock_settings_store.dart';
 import '../data/local_device_auth.dart';
@@ -70,7 +71,13 @@ class AppLockController extends Notifier<bool> {
     }
   }
 
-  void unlock() => state = false;
+  /// Lets the app through; the lock screen stays a moment longer to fly
+  /// its fan into Today.
+  void unlock() {
+    if (!state) return;
+    ref.read(unlockFlightProvider.notifier).start();
+    state = false;
+  }
 
   /// For a phone that no longer has anything to check: the lock turns off
   /// and the app opens, rather than locking the user out of their own data.
@@ -81,6 +88,28 @@ class AppLockController extends Notifier<bool> {
 }
 
 final appLockProvider = NotifierProvider<AppLockController, bool>(AppLockController.new);
+
+/// True while the lock screen leaves after an unlock, its fan flying into
+/// Today's stack. The screens underneath hold their entrance until the
+/// cards take off.
+class UnlockFlightController extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void start() {
+    ref.read(entranceHoldProvider.notifier).hold();
+    state = true;
+  }
+
+  /// At the end, or straight away on a tap or with animations off.
+  void land() {
+    if (!state) return;
+    state = false;
+    ref.read(entranceHoldProvider.notifier).release();
+  }
+}
+
+final unlockFlightProvider = NotifierProvider<UnlockFlightController, bool>(UnlockFlightController.new);
 
 /// Keeps the app switcher's picture of bajet in step with the lock. Watched
 /// for the app's lifetime.

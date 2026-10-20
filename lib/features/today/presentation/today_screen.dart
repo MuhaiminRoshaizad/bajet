@@ -18,6 +18,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
+import '../../lock/presentation/lock_providers.dart';
 import '../../opening/presentation/opening_providers.dart';
 import 'today_providers.dart';
 import 'today_total_card.dart';
@@ -114,9 +115,9 @@ class _AccountsStackState extends ConsumerState<_AccountsStack> {
   @override
   Widget build(BuildContext context) {
     final accounts = ref.watch(accountsProvider).value ?? const [];
-    // While Your accounts is over Today, or the opening plays, its cards
-    // are this stack's, in flight.
-    final lent = ref.watch(accountsOnTopProvider) || ref.watch(openingProvider);
+    // While Your accounts is over Today, or the opening or an unlock plays,
+    // its cards are this stack's, in flight.
+    final lent = ref.watch(accountsOnTopProvider) || ref.watch(openingProvider) || ref.watch(unlockFlightProvider);
     return Semantics(
       button: true,
       hint: 'See your accounts',

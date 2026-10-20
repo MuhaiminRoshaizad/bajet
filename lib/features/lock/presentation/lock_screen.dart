@@ -7,14 +7,19 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../opening/presentation/opening_providers.dart';
 import '../../opening/presentation/titanium_card.dart';
+import '../../opening/domain/opening_timeline.dart';
 import '../domain/app_lock.dart';
 import 'lock_providers.dart';
+import 'unlock_exit.dart';
 
-/// Covers the app while it is locked. Sits above the navigator, so the
-/// screens underneath keep their place and the lock needs no route.
+/// Covers the app while it is locked. Sits above the navigator, so the lock
+/// needs no route. Unlocking always opens on Today, where the lock's fan
+/// flies into the stack.
 class LockGate extends ConsumerWidget {
-  const LockGate({super.key, required this.child});
+  const LockGate({super.key, required this.landOnToday, required this.child});
 
+  /// Takes the app to Today and says where its stack is once laid out.
+  final Future<StackTarget?> Function() landOnToday;
   final Widget child;
 
   @override
@@ -25,7 +30,9 @@ class LockGate extends ConsumerWidget {
         // Hidden from TalkBack and frozen while covered, so nothing behind
         // the lock can be read out or keeps animating.
         ExcludeSemantics(excluding: locked, child: TickerMode(enabled: !locked, child: child)),
-        if (locked) const Positioned.fill(child: LockScreen()),
+        // Kept through the unlock while its fan flies off, as the same
+        // screen, so it does not ask again.
+        if (locked || ref.watch(unlockFlightProvider)) Positioned.fill(child: LockScreen(landOnToday: landOnToday)),
       ],
     );
   }
@@ -36,7 +43,9 @@ enum _Status { asking, cancelled, failed, lockedOut, unavailable }
 /// Asks for the fingerprint as soon as it shows, or once the opening has
 /// landed on it, and again on a tap.
 class LockScreen extends ConsumerStatefulWidget {
-  const LockScreen({super.key});
+  const LockScreen({super.key, required this.landOnToday});
+
+  final Future<StackTarget?> Function() landOnToday;
 
   @override
   ConsumerState<LockScreen> createState() => _LockScreenState();
@@ -92,9 +101,11 @@ class _LockScreenState extends ConsumerState<LockScreen> {
         ),
     };
     final warn = _status == _Status.failed || _status == _Status.lockedOut;
-    return Material(
-      color: c.background,
-      child: SafeArea(
+    return UnlockExit(
+      landOnToday: widget.landOnToday,
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl, vertical: AppSpacing.xxl),
@@ -103,12 +114,13 @@ class _LockScreenState extends ConsumerState<LockScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // The icon's fan; while the opening plays, its cards are
-                  // flying here.
-                  Opacity(opacity: ref.watch(openingProvider) ? 0 : 1, child: FanMark(key: openingLockMarkKey)),
+                  // The icon's fan; while the opening plays its cards are
+                  // flying here, and after an unlock they fly off it.
+                  Opacity(opacity: ref.watch(openingProvider) || ref.watch(unlockFlightProvider) ? 0 : 1, child: FanMark(key: openingLockMarkKey)),
                   const SizedBox(height: AppSpacing.l),
-                  // Held until the opening's cards have landed above it.
-                  RiseIn(children: [
+                  // Held until the opening's cards have landed above it; an
+                  // unlock holds only the screens underneath.
+                  RiseIn(held: ref.watch(openingProvider) && ref.watch(entranceHoldProvider), children: [
                     Text(title, textAlign: TextAlign.center, style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: AppSpacing.s),
                     Text(body, textAlign: TextAlign.center, style: TextStyle(color: warn ? c.bad : c.muted)),
@@ -149,6 +161,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

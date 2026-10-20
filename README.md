@@ -44,7 +44,8 @@ own API key; without a key, nothing leaves the phone.
   and income, one-off events, the weekly rhythm, favourites, backups, and a
   light or dark appearance that otherwise follows the phone.
 - **App lock**, if you turn it on, asks for your fingerprint or phone PIN
-  when bajet opens and after you have been away a while.
+  when bajet opens and after you have been away a while, then opens on
+  Today.
 
 ## Status
 

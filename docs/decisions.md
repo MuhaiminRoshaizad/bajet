@@ -429,3 +429,17 @@ to beat, and "since last check-in" figures need the last one kept.
 
 **Costs:** one small row a week, carried in backups. A target saved
 before the plan changed, such as a new bill, still stands for that week.
+
+## 028: Unlocking always opens on Today
+
+**Decided:** passing the app lock takes the app to Today, whichever screen
+was open when the lock came down, and the lock screen's fan flies into
+Today's stack as the opening's cards do.
+
+**Why:** the lock's fan and Today's stack are the same three cards, so
+landing them there makes unlocking read as opening the app. On any other
+screen there is nothing for them to land in.
+
+**Costs:** after time away the user starts again from Today rather than
+where they were, and a page open over a tab, such as a settings page, is
+closed.

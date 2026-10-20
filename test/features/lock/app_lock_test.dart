@@ -1,6 +1,10 @@
 import 'package:bajet/core/platform/outside_app.dart';
+import 'package:bajet/features/accounts/presentation/account_stack.dart';
+import 'package:bajet/features/coach/presentation/coach_screen.dart';
 import 'package:bajet/features/lock/data/file_lock_settings_store.dart';
 import 'package:bajet/features/lock/domain/app_lock.dart';
+import 'package:bajet/features/opening/presentation/flying_card.dart';
+import 'package:bajet/features/today/presentation/today_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -109,5 +113,47 @@ void main() {
     });
     expect(find.text('bajet is locked'), findsNothing);
     expect(world.deviceAuth.titles, hasLength(1));
+  });
+
+  double stackOpacity(WidgetTester tester) =>
+      tester.widget<Opacity>(find.ancestor(of: find.byType(AccountStack), matching: find.byType(Opacity)).first).opacity;
+
+  testWidgets("unlocking flies the lock screen's fan into Today's stack", (tester) async {
+    await pumpLocked(tester, outcomes: [AuthOutcome.cancelled, AuthOutcome.passed]);
+    await tester.tap(find.bySemanticsLabel('Unlock with fingerprint'));
+    for (var t = 0; t < 400; t += 50) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.byType(FlyingCard), findsNWidgets(3));
+    expect(tester.widgetList<FlyingCard>(find.byType(FlyingCard)).every((c) => c.face != null), isTrue, reason: 'they land as the real cards');
+    expect(stackOpacity(tester), 0, reason: "Today's own cards wait while the fan's fly");
+    await tester.pumpAndSettle();
+    expect(find.text('bajet is locked'), findsNothing);
+    expect(find.byType(FlyingCard), findsNothing);
+    expect(stackOpacity(tester), 1);
+  });
+
+  testWidgets('unlocking always opens on Today, wherever the lock came down', (tester) async {
+    final world = await pumpLocked(tester);
+    await tester.tap(find.byKey(const ValueKey('tab-Coach')));
+    await tester.pumpAndSettle();
+    expect(find.byType(CoachScreen), findsOneWidget);
+    await leave(tester);
+    world.clock = world.clock.add(const Duration(minutes: 2));
+    world.deviceAuth.outcomes = [AuthOutcome.passed];
+    await comeBack(tester);
+    expect(find.byType(CoachScreen), findsNothing);
+    expect(find.byType(TodayScreen), findsOneWidget);
+  });
+
+  testWidgets('with remove animations on, unlocking opens at once', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await pumpLocked(tester, outcomes: [AuthOutcome.cancelled, AuthOutcome.passed]);
+    await tester.tap(find.bySemanticsLabel('Unlock with fingerprint'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('bajet is locked'), findsNothing);
+    expect(find.byType(FlyingCard), findsNothing);
   });
 }

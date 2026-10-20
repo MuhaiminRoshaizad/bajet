@@ -25,6 +25,8 @@ class EntranceHold extends Notifier<bool> {
   @override
   bool build() => ref.watch(initialEntranceHoldProvider);
 
+  void hold() => state = true;
+
   void release() => state = false;
 }
 
@@ -34,10 +36,14 @@ final entranceHoldProvider = NotifierProvider<EntranceHold, bool>(EntranceHold.n
 /// the one above it. With the system's reduce-motion setting on, they appear
 /// in place.
 class RiseIn extends ConsumerWidget {
-  const RiseIn({super.key, required this.children, this.spacing = 0});
+  const RiseIn({super.key, required this.children, this.spacing = 0, this.held});
 
   final List<Widget> children;
   final double spacing;
+
+  /// Whether to wait, for a screen that waits on something other than the
+  /// app's [entranceHoldProvider].
+  final bool? held;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,7 +57,7 @@ class RiseIn extends ConsumerWidget {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: spaced);
     }
     // Laid out, so the opening can find where to land, but not yet seen.
-    if (ref.watch(entranceHoldProvider)) {
+    if (held ?? ref.watch(entranceHoldProvider)) {
       return Opacity(opacity: 0, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: spaced));
     }
     return Column(

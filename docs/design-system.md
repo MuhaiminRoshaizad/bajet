@@ -286,6 +286,14 @@ the deal itself after a plain graphite launch screen. A tap skips the
 hand-over, and with the system's remove animations setting on nothing
 moves.
 
+Unlocking plays the same flight the other way round (`UnlockPlan`,
+`features/lock/domain`). Once the fingerprint passes, the app goes to
+Today, the lock screen's words fade and sink, its fan's three cards arc
+into Today's stack front card first, turning into the real cards on the
+way down, and the lock's background lifts under them. It takes under 0.9
+seconds. With no accounts to stack, the fan fades where it is. A tap lands
+at once, and with remove animations on the lock simply goes.
+
 ## Empty screens
 
 A screen with nothing else to show (Insights for an empty period, History,
