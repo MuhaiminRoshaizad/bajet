@@ -12,6 +12,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
+import '../../../core/widgets/under_bar.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
@@ -74,8 +75,9 @@ class InsightsScreen extends ConsumerWidget {
       );
     }
     return SafeArea(
+      bottom: false,
       child: ListView(
-        padding: padding.copyWith(bottom: AppSpacing.xxl),
+        padding: padding.copyWith(bottom: underBar(context)),
         children: [
           ...header,
           if (i != null)

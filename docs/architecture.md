@@ -95,7 +95,9 @@ the first with an in-memory database and the second to pin the date.
 ## Navigation
 
 `go_router` with a `StatefulShellRoute`: four top-level destinations behind
-one bottom bar, each keeping its own stack and scroll position. Routes are
+one floating bottom bar, each keeping its own stack and scroll position. The
+shell's body runs under the bar (`extendBody`), so a tab's list pads its end
+with `underBar` rather than sitting in a bottom `SafeArea`. Routes are
 declared once in `lib/app/router.dart`; their paths live in
 `lib/core/navigation/routes.dart` so a feature can link to another without
 importing the router. History (`Routes.history`), the check-in (`Routes.checkin`)

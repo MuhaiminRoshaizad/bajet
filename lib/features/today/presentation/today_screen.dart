@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
+import '../../../core/widgets/under_bar.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_stack.dart';
 import '../../accounts/presentation/hold_swell.dart';
@@ -43,8 +44,9 @@ class TodayScreen extends ConsumerWidget {
     final categories = {for (final c in ref.watch(categoriesProvider).value ?? const []) c.key: c};
 
     return SafeArea(
+      bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.xxl),
+        padding: EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, underBar(context)),
         children: [
           _Header(today: today),
           const SizedBox(height: AppSpacing.m),

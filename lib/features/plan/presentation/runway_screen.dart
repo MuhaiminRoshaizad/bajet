@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
+import '../../../core/widgets/under_bar.dart';
 import '../domain/upcoming.dart';
 import 'plan_providers.dart';
 import 'runway_chart.dart';
@@ -44,8 +45,9 @@ class RunwayScreen extends ConsumerWidget {
     final outcome = projection?.goals.firstOrNull;
 
     return SafeArea(
+      bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.xxl),
+        padding: EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, underBar(context)),
         children: [
           SizedBox(
             height: 48,

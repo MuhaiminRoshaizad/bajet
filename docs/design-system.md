@@ -69,9 +69,9 @@ ways to do this:
 |--------------|----------------------------------|----------------------------------------|
 | `SoftCard`   | Raised `AppDepth.card` (6 px)    | Every card                             |
 | `SoftWell`   | Pressed in `AppDepth.well` (3 px) | Notices, readouts, tracks              |
-| `SoftButton` | Raised 3 px, sinks flat on press | Tiles, chips, the + button             |
+| `SoftButton` | Raised 3 px, sinks flat on press | Tiles, chips, quieter round buttons    |
 | `SoftMeter`  | A well with a coloured fill      | Progress toward a goal                 |
-| `MouldedButton` | A blue disc shaded by the same light | Filled round buttons             |
+| `MouldedButton` | A blue disc shaded by the same light | The + that logs                  |
 
 A raised surface casts a `highlight` shadow up and left and a `shade` shadow
 down and right, each offset by its depth and blurred to twice that. Flutter has
@@ -96,6 +96,18 @@ background colour cannot reach the 3:1 contrast WCAG 1.4.11 asks of a state:
 - A focused `SoftButton` gets a 3 px `primary` ring; text fields outline in
   `primary` on focus and in `bad` on error.
 - The main action of a screen stays a solid `primary` button.
+
+### The bottom bar
+
+The bar floats: a soft pill holding the four tabs and, beside it, the
+moulded + that logs. Nothing fills the space around them, so the page shows
+on every side and scrolls on underneath (`extendBody`). Each tab's list ends
+with `underBar` of room, so its last row scrolls clear of the bar. The open
+tab is pressed into the pill as a hollow that springs across to the next tab
+(`AppMotion.spring`), and the opened tab's icon gives one small bounce. The
+pill's own shadow (`floatingShadows`) keeps it apart from the cards passing
+beneath. On a tablet the bar keeps a phone's width. It never hides while
+scrolling, so logging stays one tap away.
 
 ## Account cards
 
@@ -326,7 +338,7 @@ inline line of text where it is.
 - Tapping anywhere outside the field being typed in puts the keyboard
   away, on every screen and sheet (`DismissKeyboardOnTap`, set once on the
   app); a drag that starts outside it, such as a scroll, leaves it up.
-- There is one way to log: the + in the centre of the bottom bar. The sheet
+- There is one way to log: the + beside the tabs in the bottom bar. The sheet
   reads top to bottom as amount, favourites, category, note and day, then a
   Log button that names what it will save. A new entry opens with the amount
   focused on the phone's number pad, filling from the right; the amount and

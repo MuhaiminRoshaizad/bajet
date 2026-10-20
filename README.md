@@ -11,7 +11,7 @@ own API key; without a key, nothing leaves the phone.
 
 ## What it does
 
-- **Log** spending or income from the + in the middle of the bottom bar, with a
+- **Log** spending or income from the + beside the tabs in the floating bottom bar, with a
   fill-from-right amount on the phone's number pad, favourites that fill the form in, an optional receipt
   photo or screenshot, and undo. Days you forgot can be logged up to a year back.
 - **Accounts** keep bank, cash and e-wallet money apart as cards you design,

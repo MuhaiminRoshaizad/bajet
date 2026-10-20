@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,8 +29,9 @@ const _tabs = [
   _Tab('Coach', Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded),
 ];
 
-/// The four top-level destinations behind one bottom bar, with the logger's
-/// button in the middle. Each branch keeps its own stack and scroll position.
+/// The four top-level destinations behind one floating bottom bar, with the
+/// logger's button beside it. Each branch keeps its own stack and scroll
+/// position.
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
@@ -67,7 +69,6 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     final navigationShell = widget.navigationShell;
-    final c = context.colors;
     return LeaveGuard(
       onToday: navigationShell.currentIndex == 0,
       goToday: () {
@@ -75,32 +76,56 @@ class _AppShellState extends ConsumerState<AppShell> {
         navigationShell.goBranch(0);
       },
       child: Scaffold(
+        // The page runs on under the bar, which floats over it; each tab's
+        // list ends with room to scroll its last row clear (underBar).
+        extendBody: true,
         body: navigationShell,
-        bottomNavigationBar: ColoredBox(
-          color: c.background,
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.xs),
-              child: Row(
-                children: [
-                  for (final (i, tab) in _tabs.indexed) ...[
-                    // The one way to log sits in the middle, under the thumb.
-                    if (i == 2) const _AddButton(),
-                    Expanded(
-                      child: _TabButton(
-                        key: ValueKey('tab-${tab.label}'),
-                        tab: tab,
-                        selected: navigationShell.currentIndex == i,
-                        onTap: () {
-                          ref.read(screenEntryProvider.notifier).arrive();
-                          navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
-                        },
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+        bottomNavigationBar: _FloatingBar(
+          index: navigationShell.currentIndex,
+          onTab: (i) {
+            ref.read(screenEntryProvider.notifier).arrive();
+            navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// The four tabs in a soft pill and, beside it, the one way to log: a
+/// moulded round button under the thumb. Nothing fills the space around
+/// them, so the page shows on every side.
+class _FloatingBar extends StatelessWidget {
+  const _FloatingBar({required this.index, required this.onTab});
+
+  final int index;
+  final ValueChanged<int> onTab;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.m, 0, AppSpacing.m, AppSpacing.s),
+        // Only as tall as the bar; a tablet keeps a phone-sized bar rather
+        // than one stretched across.
+        child: Align(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Row(
+              children: [
+                Expanded(child: _TabPill(index: index, onTab: onTab)),
+                const SizedBox(width: AppSpacing.m),
+                MouldedButton(
+                  key: const ValueKey('add'),
+                  size: _barHeight,
+                  semanticLabel: 'Log spending or income',
+                  onTap: () => showLogSheet(context),
+                  child: Icon(Icons.add_rounded, size: 30, color: c.onPrimary),
+                ),
+              ],
             ),
           ),
         ),
@@ -109,7 +134,76 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-class _TabButton extends StatelessWidget {
+const _barHeight = 64.0;
+
+/// The tabs, with the open one pressed into the pill. The hollow springs
+/// across to a newly opened tab, passing it by a little before it settles.
+class _TabPill extends StatefulWidget {
+  const _TabPill({required this.index, required this.onTab});
+
+  final int index;
+  final ValueChanged<int> onTab;
+
+  @override
+  State<_TabPill> createState() => _TabPillState();
+}
+
+class _TabPillState extends State<_TabPill> with SingleTickerProviderStateMixin {
+  /// Where the hollow is, in tabs from the left.
+  late final _at = AnimationController.unbounded(vsync: this, value: widget.index.toDouble());
+
+  @override
+  void didUpdateWidget(_TabPill old) {
+    super.didUpdateWidget(old);
+    if (old.index == widget.index) return;
+    final to = widget.index.toDouble();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _at.value = to;
+    } else {
+      _at.animateWith(SpringSimulation(AppMotion.spring, _at.value, to, _at.velocity, snapToEnd: true));
+    }
+  }
+
+  @override
+  void dispose() {
+    _at.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    const inset = 6.0;
+    return Container(
+      height: _barHeight,
+      padding: const EdgeInsets.symmetric(horizontal: inset),
+      decoration: BoxDecoration(color: c.background, borderRadius: BorderRadius.circular(AppRadii.pill), boxShadow: floatingShadows(c)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tab = constraints.maxWidth / _tabs.length;
+          return Stack(
+            children: [
+              AnimatedBuilder(
+                animation: _at,
+                builder: (context, child) => Positioned(left: _at.value * tab + 2, width: tab - 4, top: inset, bottom: inset, child: child!),
+                child: const SoftWell(key: ValueKey('tab-hollow'), radius: AppRadii.pill, padding: EdgeInsets.zero),
+              ),
+              Row(
+                children: [
+                  for (final (i, t) in _tabs.indexed)
+                    Expanded(child: _TabButton(key: ValueKey('tab-${t.label}'), tab: t, selected: widget.index == i, onTap: () => widget.onTab(i))),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// One tab: its icon gives a small bounce as the tab opens.
+class _TabButton extends StatefulWidget {
   const _TabButton({super.key, required this.tab, required this.selected, required this.onTap});
 
   final _Tab tab;
@@ -117,34 +211,50 @@ class _TabButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_TabButton> createState() => _TabButtonState();
+}
+
+class _TabButtonState extends State<_TabButton> with SingleTickerProviderStateMixin {
+  late final _bounce = AnimationController(vsync: this, duration: const Duration(milliseconds: 420), value: 1);
+  late final _scale = TweenSequence([
+    TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.28), weight: 1),
+    TweenSequenceItem(tween: Tween(begin: 1.28, end: 0.94), weight: 1),
+    TweenSequenceItem(tween: Tween(begin: 0.94, end: 1.0), weight: 1),
+  ]).animate(CurvedAnimation(parent: _bounce, curve: Curves.easeOut));
+
+  @override
+  void didUpdateWidget(_TabButton old) {
+    super.didUpdateWidget(old);
+    if (widget.selected && !old.selected && !MediaQuery.disableAnimationsOf(context)) _bounce.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _bounce.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final color = selected ? c.ink : c.muted;
+    final tab = widget.tab;
+    final selected = widget.selected;
+    final color = selected ? c.primary : c.muted;
     return Semantics(
       selected: selected,
       button: true,
       label: tab.label,
       excludeSemantics: true,
       child: InkResponse(
-        onTap: onTap,
-        radius: 36,
+        onTap: widget.onTap,
+        radius: 30,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 56),
+          constraints: const BoxConstraints(minHeight: 52),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedContainer(
-                duration: AppMotion.fast,
-                curve: AppMotion.ease,
-                width: 52,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: selected ? c.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                ),
-                child: Icon(selected ? tab.selectedIcon : tab.icon, size: 22, color: selected ? c.onPrimary : color),
-              ),
+              ScaleTransition(scale: _scale, child: Icon(selected ? tab.selectedIcon : tab.icon, size: 22, color: color)),
               const SizedBox(height: 2),
               // One line that shrinks to fit, so a large system font or a
               // narrow phone never pushes the label out of the bar.
@@ -153,32 +263,12 @@ class _TabButton extends StatelessWidget {
                 child: Text(
                   tab.label,
                   maxLines: 1,
-                  style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w700 : FontWeight.w500),
+                  style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w800 : FontWeight.w600),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _AddButton extends StatelessWidget {
-  const _AddButton();
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
-      child: SoftButton(
-        key: const ValueKey('add'),
-        semanticLabel: 'Log spending or income',
-        color: c.primary,
-        radius: AppRadii.card - 4,
-        onTap: () => showLogSheet(context),
-        child: SizedBox(width: 58, height: 58, child: Icon(Icons.add_rounded, size: 28, color: c.onPrimary)),
       ),
     );
   }

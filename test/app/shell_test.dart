@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:bajet/core/navigation/routes.dart';
+import 'package:bajet/features/today/presentation/today_screen.dart';
 import 'package:go_router/go_router.dart';
 
 import '../helpers/app_harness.dart';
@@ -39,5 +40,28 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget, reason: route);
     }
+  });
+
+  testWidgets('the hollow under the open tab springs across to the next one', (tester) async {
+    await pumpApp(tester);
+    final hollow = find.byKey(const ValueKey('tab-hollow'));
+    double gap(String tab) => (tester.getCenter(hollow).dx - tester.getCenter(find.byKey(ValueKey('tab-$tab'))).dx).abs();
+    expect(gap('Today'), lessThan(1));
+
+    await tester.tap(find.byKey(const ValueKey('tab-Insights')));
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(gap('Insights'), greaterThan(1), reason: 'still on its way');
+    await tester.pumpAndSettle();
+    expect(gap('Insights'), lessThan(1));
+  });
+
+  testWidgets("a tab's list runs under the floating bar and ends clear of it", (tester) async {
+    await pumpApp(tester);
+    final bar = tester.getRect(find.byKey(const ValueKey('add')));
+    final list = find.descendant(of: find.byType(TodayScreen), matching: find.byType(ListView));
+    expect(tester.getRect(list).bottom, greaterThan(bar.bottom), reason: 'the page shows under and around the bar');
+    final padding = tester.widget<ListView>(list).padding!.resolve(TextDirection.ltr);
+    expect(tester.getRect(list).bottom - padding.bottom, lessThan(bar.top), reason: 'the last row scrolls clear of it');
+    expect(padding.bottom, lessThan(bar.height * 2), reason: 'no more room than the bar needs');
   });
 }
