@@ -5,25 +5,30 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
+import 'coach_chats.dart';
 import 'coach_controller.dart';
 import 'coach_providers.dart';
 
-/// The sheet that switches the coach's face, from the Coach tab's header or
-/// from Settings → Coach. The chat and its memory stay as they are.
-Future<void> showCoachPicker(BuildContext context) => showModalBottomSheet<void>(
+/// The sheet that switches the coach's face: from a chat, that chat's
+/// coach, keeping its messages; from Settings → Coach, the face new chats
+/// start with.
+Future<void> showCoachPicker(BuildContext context, {int? chat}) => showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      builder: (_) => const _CoachPicker(),
+      builder: (_) => _CoachPicker(chat: chat),
     );
 
 class _CoachPicker extends ConsumerWidget {
-  const _CoachPicker();
+  const _CoachPicker({this.chat});
+
+  final int? chat;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
-    final current = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).face;
+    final defaults = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).face;
+    final current = chat == null ? defaults : ref.watch(coachChatsProvider).byId(chat!)?.face ?? defaults;
     final idle = ref.watch(coachIdleMotionProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.xl),
@@ -80,11 +85,15 @@ class _CoachPicker extends ConsumerWidget {
     // gone, and Use it would quietly do nothing.
     final messenger = ScaffoldMessenger.of(context);
     final repo = ref.read(coachSettingsRepositoryProvider);
-    final controller = ref.read(coachControllerProvider.notifier);
+    final chats = ref.read(coachChatsProvider.notifier);
+    final controller = chat == null ? null : ref.read(coachControllerProvider(chat!).notifier);
     final settings = ref.read(coachSettingsProvider).value ?? const CoachSettings();
+    final was = chat == null ? settings.face : ref.read(coachChatsProvider).byId(chat!)?.face ?? settings.face;
     Navigator.of(context).pop();
-    if (face == settings.face) return;
-    await controller.switchFace(face);
+    if (face == was) return;
+    // The face picked last is the one new chats start with too.
+    await repo.saveSettings(settings.copyWith(face: face));
+    await controller?.switchFace(face);
     // bajety's joke is the knows-too-much voice, so it offers it once picked.
     if (face == CoachFace.bajety && settings.personality != CoachPersonality.seesEverything) {
       messenger
@@ -96,6 +105,7 @@ class _CoachPicker extends ConsumerWidget {
             onPressed: () async {
               final now = await repo.watchSettings().first;
               await repo.saveSettings(now.copyWith(personality: CoachPersonality.seesEverything));
+              if (chat != null) await chats.setCoach(chat!, personality: CoachPersonality.seesEverything);
             },
           ),
         ));

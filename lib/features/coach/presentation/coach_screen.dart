@@ -20,13 +20,16 @@ import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
+import '../domain/coach_thread.dart';
 import 'coach_avatar.dart';
+import 'coach_chats.dart';
 import 'coach_controller.dart';
 import 'coach_picker.dart';
 import 'coach_providers.dart';
 
-/// Ask about your money. Answers come from Anthropic using the user's own
-/// key; the question box stays pinned to the bottom of the screen.
+/// Ask about your money, in the latest chat or, on the first question, a
+/// new one. Answers come from Anthropic using the user's own key; the
+/// question box stays pinned to the bottom of the screen.
 class CoachScreen extends ConsumerStatefulWidget {
   const CoachScreen({super.key});
 
@@ -38,8 +41,8 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   final _question = TextEditingController();
   final _scroll = ScrollController();
 
-  /// How many messages were already there when the tab opened.
-  late final _openedWith = ref.read(coachControllerProvider).messages.length;
+  /// The chat on screen; null until there is one.
+  int? _chat;
 
   @override
   void dispose() {
@@ -52,7 +55,10 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final question = text ?? _question.text;
     if (question.trim().isEmpty) return;
     _question.clear();
-    await ref.read(coachControllerProvider.notifier).ask(question);
+    final chat = _chat ?? await ref.read(coachChatsProvider.notifier).start();
+    if (!mounted) return;
+    setState(() => _chat = chat);
+    await ref.read(coachControllerProvider(chat).notifier).ask(question);
   }
 
   Future<void> _copySummary() async {
@@ -70,21 +76,26 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final hasKey = ref.watch(coachKeyProvider).value != null;
-    final chat = ref.watch(coachControllerProvider);
+    final chats = ref.watch(coachChatsProvider);
+    if (_chat == null || chats.byId(_chat!) == null) _chat = latestThread(chats.listed)?.id;
+    final id = _chat;
+    final chat = id == null ? const CoachChat() : ref.watch(coachControllerProvider(id));
     final today = ref.watch(todayProvider);
-    final settings = ref.watch(coachSettingsProvider).value ?? const CoachSettings();
-    final remember = settings.remember;
-    final mood = ref.watch(coachMoodProvider);
+    final defaults = ref.watch(coachSettingsProvider).value ?? const CoachSettings();
+    final remember = defaults.remember;
+    final thread = id == null ? null : chats.byId(id);
+    final settings = CoachSettings(face: thread?.face ?? defaults.face, personality: thread?.personality ?? defaults.personality);
+    final mood = id == null ? CoachMood.idle : ref.watch(coachMoodProvider(id));
     final idle = ref.watch(coachIdleMotionProvider);
     // What was on screen when it opened, or came back from memory, is already
     // in place; only what is said from here springs in.
-    final settledCount = math.max(_openedWith, ref.read(coachControllerProvider.notifier).settled);
+    final settledCount = id == null ? 0 : ref.read(coachControllerProvider(id).notifier).settled ?? 0;
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
     ref.watch(coachDataProvider);
     // Keep the newest message in view as the conversation grows.
-    ref.listen(coachControllerProvider, (_, _) {
+    ref.listen(coachChatsProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
       });
@@ -110,7 +121,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         excludeSemantics: true,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(AppRadii.control),
-                          onTap: () => showCoachPicker(context),
+                          onTap: () => showCoachPicker(context, chat: id),
                           child: Row(
                             children: [
                               CoachAvatar(face: settings.face, mood: mood, size: 40, idle: idle),
@@ -235,13 +246,13 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                         for (final (j, card) in m.cards.indexed)
                           _ProposalCard(
                             card: card,
-                            onConfirm: () => ref.read(coachControllerProvider.notifier).confirm(i, j),
-                            onDecline: () => ref.read(coachControllerProvider.notifier).decline(i, j),
-                            onUndo: () => ref.read(coachControllerProvider.notifier).undo(i, j),
+                            onConfirm: () => ref.read(coachControllerProvider(id!).notifier).confirm(i, j),
+                            onDecline: () => ref.read(coachControllerProvider(id!).notifier).decline(i, j),
+                            onUndo: () => ref.read(coachControllerProvider(id!).notifier).undo(i, j),
                           ),
                       ],
                       if (chat.sending) _Thinking(reading: chat.reading),
-                      if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider.notifier).retry() : null),
+                      if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider(id!).notifier).retry() : null),
                     ],
                   ),
           ),

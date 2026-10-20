@@ -1,5 +1,8 @@
 import 'package:bajet/features/coach/domain/coach_settings.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
+import 'package:bajet/features/coach/presentation/coach_chats.dart';
+import 'package:bajet/features/coach/presentation/coach_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_repositories.dart' show SaidMessages;
@@ -56,7 +59,8 @@ void main() {
     await ask(tester, 'Write me some code');
     expect(header(tester).mood, CoachMood.concerned);
 
-    await world.coachSettings.saveSettings(const CoachSettings(personality: CoachPersonality.seesEverything));
+    final app = ProviderScope.containerOf(tester.element(find.byType(CoachScreen)));
+    await app.read(coachChatsProvider.notifier).setCoach(app.read(coachChatsProvider).listed.single.id, personality: CoachPersonality.seesEverything);
     await tester.pumpAndSettle();
     await ask(tester, 'Write me some more code');
     expect(header(tester).mood, CoachMood.stare);

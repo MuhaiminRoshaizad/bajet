@@ -10,7 +10,7 @@ import '../domain/coach_client.dart';
 import '../domain/coach_memory.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
-import 'coach_controller.dart';
+import 'coach_chats.dart';
 import 'coach_picker.dart';
 import 'coach_providers.dart';
 
@@ -204,7 +204,7 @@ class _Memory extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final remember = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).remember;
-    final count = ref.watch(coachControllerProvider).messages.length;
+    final count = ref.watch(coachChatsProvider).said.length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -219,7 +219,7 @@ class _Memory extends ConsumerWidget {
                 style: TextStyle(color: c.muted, height: 1.4),
               ),
               value: remember,
-              onChanged: (on) => ref.read(coachControllerProvider.notifier).setRemember(on),
+              onChanged: (on) => ref.read(coachChatsProvider.notifier).setRemember(on),
             ),
           ],
         ),
@@ -242,11 +242,11 @@ class _Memory extends ConsumerWidget {
     );
     if (!sure || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    final controller = ref.read(coachControllerProvider.notifier);
+    final controller = ref.read(coachChatsProvider.notifier);
     final gone = await controller.forget();
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: const Text('Chat forgotten'), action: SnackBarAction(label: 'Undo', onPressed: () => controller.unforget(gone))));
+      ..showSnackBar(SnackBar(content: const Text('Chat forgotten'), action: SnackBarAction(label: 'Undo', onPressed: () => controller.restore(gone))));
   }
 }
 

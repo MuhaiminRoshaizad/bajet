@@ -15,18 +15,32 @@ import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
 import '../domain/coach_thread.dart';
 import 'coach_avatar.dart';
+import 'coach_chats.dart';
 import 'coach_providers.dart';
 
-/// What the coach's face is doing: thinking while it waits, then reacting
-/// to what happened.
+/// What the coach's face is doing in one chat: thinking while it waits,
+/// then reacting to what happened. Each chat keeps its own.
 class CoachMoodController extends Notifier<CoachMood> {
+  CoachMoodController(this.chat);
+
+  final int chat;
+
   @override
   CoachMood build() => CoachMood.idle;
 
   void set(CoachMood mood) => state = mood;
 }
 
-final coachMoodProvider = NotifierProvider<CoachMoodController, CoachMood>(CoachMoodController.new);
+final coachMoodProvider = NotifierProvider.family<CoachMoodController, CoachMood, int>(CoachMoodController.new);
+
+/// How the coach has been put upon across every chat, so starting a new
+/// chat is no way round it: messages turned away, and the pause after spam.
+class CoachPushback {
+  var declined = 0;
+  final spam = SpamPause();
+}
+
+final coachPushbackProvider = Provider<CoachPushback>((ref) => CoachPushback());
 
 class CoachChat {
   const CoachChat({this.messages = const [], this.sending = false, this.reading, this.error});
@@ -45,21 +59,27 @@ class CoachChat {
   bool get canRetry => error != null && messages.isNotEmpty && messages.last.fromUser;
 }
 
-/// The conversation on the Coach tab: the latest chat, remembered on the
-/// phone while the memory switch is on (decision 026), and gone when the
-/// app closes while it is off.
+/// One chat with the coach. Its messages come from [coachChatsProvider],
+/// which keeps them; this runs the asking and answering in it, in its own
+/// coach's face and voice.
 class CoachController extends Notifier<CoachChat> {
+  CoachController(this.chat);
+
+  final int chat;
+
+  var _sending = false;
+  String? _reading, _error;
+
   @override
   CoachChat build() {
-    _load();
-    return const CoachChat();
+    final messages = ref.watch(coachChatsProvider.select((c) => c.byId(chat)?.messages ?? const <CoachMessage>[]));
+    settled ??= messages.length;
+    return CoachChat(messages: messages, sending: _sending, reading: _reading, error: _error);
   }
 
-  /// Messages turned away today and repeats in a row, so the coach's
-  /// replies to them get firmer each time.
-  var _declined = 0, _repeats = 0;
+  /// Repeats in a row, so the coach's replies to them get firmer each time.
+  var _repeats = 0;
   DateTime? _lastAskedAt;
-  final _spam = SpamPause();
 
   /// Cards whose change is being made, so a second tap meanwhile does not
   /// make it twice.
@@ -67,45 +87,39 @@ class CoachController extends Notifier<CoachChat> {
 
   DateTime get _now => ref.read(clockProvider)();
 
-  /// The chat being talked in; null until something is said.
-  int? _threadId;
+  /// How many of the messages, from the top, were there when the chat was
+  /// first shown; the screen springs in only the rest.
+  int? settled;
 
-  /// Where the chats are kept: on the phone, or for this session only.
-  CoachChatRepository get _repo => _settings.remember ? ref.read(coachChatRepositoryProvider) : ref.read(sessionCoachChatRepositoryProvider);
+  CoachThread? get _thread => ref.read(coachChatsProvider).byId(chat);
+  CoachFace get _face => _thread?.face ?? CoachFace.bajety;
+  CoachPersonality get _personality => _thread?.personality ?? CoachPersonality.friendly;
+  CoachChatsController get _chats => ref.read(coachChatsProvider.notifier);
+  CoachPushback get _pushback => ref.read(coachPushbackProvider);
 
-  /// How many of the messages, from the top, came back from memory or Undo
-  /// rather than being said just now; the screen springs in only the rest.
-  int settled = 0;
-
-  CoachSettings get _settings => ref.read(coachSettingsProvider).value ?? const CoachSettings();
-  CoachPersonality get _personality => _settings.personality;
-
-  void _mood(CoachMood mood) => ref.read(coachMoodProvider.notifier).set(mood);
+  void _mood(CoachMood mood) => ref.read(coachMoodProvider(chat).notifier).set(mood);
 
   /// A message turned away or asked again: the knows-too-much voice stares,
   /// the others look concerned.
   CoachMood get _unimpressed => _personality == CoachPersonality.seesEverything ? CoachMood.stare : CoachMood.concerned;
 
-  Future<void> _load() async {
-    await ref.read(coachSettingsProvider.future);
-    final latest = latestThread(await _repo.load());
-    if (latest == null) return;
-    _threadId = latest.id;
-    final remembered = latest.messages;
-    // Anything said while loading stays after what was remembered.
-    settled = remembered.length;
-    state = CoachChat(messages: [...remembered, ...state.messages], sending: state.sending, reading: state.reading, error: state.error);
+  void _set({required bool sending, String? reading, String? error}) {
+    _sending = sending;
+    _reading = reading;
+    _error = error;
+    state = CoachChat(messages: state.messages, sending: sending, reading: reading, error: error);
   }
 
   Future<void> ask(String question) async {
     final text = question.trim();
-    if (text.isEmpty || state.sending) return;
+    if (text.isEmpty || _sending) return;
     // Busy from the first moment, so a second send while this one is still
     // being saved is not taken as another question.
-    state = CoachChat(messages: state.messages, sending: true);
+    _set(sending: true);
     final now = _now;
-    final answered = state.messages.length >= 2 && !state.messages.last.fromUser;
-    final previous = answered ? state.messages.lastWhere((m) => m.fromUser).text : null;
+    final messages = state.messages;
+    final answered = messages.length >= 2 && !messages.last.fromUser;
+    final previous = answered ? messages.lastWhere((m) => m.fromUser).text : null;
     final repeat = isRepeat(text, previous, now.difference(_lastAskedAt ?? now));
     _lastAskedAt = now;
     await _add(CoachMessage(fromUser: true, text: text, sentAt: now));
@@ -116,7 +130,7 @@ class CoachController extends Notifier<CoachChat> {
       return _reply(repeatLine(_personality, _repeats++));
     }
     _repeats = 0;
-    if (_spam.isOn(now)) {
+    if (_pushback.spam.isOn(now)) {
       _mood(_unimpressed);
       return _reply(pauseLine(_personality));
     }
@@ -125,7 +139,7 @@ class CoachController extends Notifier<CoachChat> {
 
   /// Sends the unanswered last question again.
   Future<void> retry() async {
-    if (state.canRetry && !state.sending) await _answer();
+    if (state.canRetry && !_sending) await _answer();
   }
 
   Future<void> _answer() async {
@@ -138,7 +152,7 @@ class CoachController extends Notifier<CoachChat> {
     if (await store.usedOn(today) >= coachDailyLimit) {
       return _fail("That's today's $coachDailyLimit questions. The coach is back tomorrow.");
     }
-    state = CoachChat(messages: state.messages, sending: true);
+    _set(sending: true);
     _mood(CoachMood.thinking);
     try {
       final client = ref.read(coachClientProvider);
@@ -146,14 +160,20 @@ class CoachController extends Notifier<CoachChat> {
       // Turned away on the phone, in the coach's own voice: the message never
       // reaches the coach and costs no question.
       if (kind == GateKind.offTopic || kind == GateKind.attack) {
-        _spam.turnedAway(_now);
+        _pushback.spam.turnedAway(_now);
         _mood(_unimpressed);
-        return _reply(declineLine(_personality, _declined++));
+        return _reply(declineLine(_personality, _pushback.declined++));
       }
-      _spam.heard();
+      _pushback.spam.heard();
       final said = spoken(state.messages);
       final conversation = forModel(said);
-      final older = said.sublist(0, said.length - conversation.length);
+      // What the coach can search: this chat's earlier messages and every
+      // other chat's.
+      final older = [
+        ...said.sublist(0, said.length - conversation.length),
+        for (final t in ref.read(coachChatsProvider).threads)
+          if (t.id != chat) ...spoken(t.messages),
+      ];
       final cards = <CoachCard>[];
       final answer = await coachAnswer(
         client: client,
@@ -172,7 +192,7 @@ class CoachController extends Notifier<CoachChat> {
             if (proposal != null) cards.add(CoachCard(proposal));
             result = r;
           }
-          if (!result.failed) state = CoachChat(messages: state.messages, sending: true, reading: result.label);
+          if (!result.failed) _set(sending: true, reading: result.label);
           return result;
         },
       );
@@ -180,10 +200,10 @@ class CoachController extends Notifier<CoachChat> {
       ref.invalidate(coachUsedTodayProvider);
       if (replyLooksWrong(answer.text)) {
         _mood(_unimpressed);
-        return _reply(declineLine(_personality, _declined++));
+        return _reply(declineLine(_personality, _pushback.declined++));
       }
       _mood(CoachMood.happy);
-      await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: _now, face: _settings.face));
+      await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: _now, face: _face));
     } on CoachException catch (e) {
       _fail(e.message);
     }
@@ -219,10 +239,11 @@ class CoachController extends Notifier<CoachChat> {
     await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
   }
 
-  /// Switches the coach's face. The chat stays; the new face says hello in
+  /// Switches this chat's coach. The chat stays; the new face says hello in
   /// it, so the switch is part of the record.
   Future<void> switchFace(CoachFace face) async {
-    await ref.read(coachSettingsRepositoryProvider).saveSettings(_settings.copyWith(face: face));
+    if (face == _face) return;
+    await _chats.setCoach(chat, face: face);
     if (state.messages.isEmpty) return;
     _mood(CoachMood.hello);
     await _add(CoachMessage(
@@ -255,71 +276,27 @@ class CoachController extends Notifier<CoachChat> {
     await _setCard(message, card, c.copyWith(state: CardState.undone));
   }
 
-  /// Empties the chat and what is remembered of it, and returns what went,
-  /// for Undo. The user's entries and figures are never touched.
-  Future<List<CoachThread>> forget() async {
-    final gone = await _repo.clear();
-    _threadId = null;
-    settled = 0;
-    state = const CoachChat();
-    return gone;
+  Future<void> _setCard(int message, int card, CoachCard updated) {
+    final m = state.messages[message];
+    return _chats.replace(chat, message, m.withCards([...m.cards]..[card] = updated));
   }
 
-  /// Puts back the chats [forget] took away.
-  Future<void> unforget(List<CoachThread> threads) async {
-    await _repo.restore(threads);
-    final latest = latestThread(threads);
-    if (latest == null) return;
-    _threadId = latest.id;
-    settled = latest.messages.length;
-    state = CoachChat(messages: latest.messages);
-  }
-
-  /// Turning memory off forgets what was kept, though the chats stay for
-  /// this session until the app closes. Turning it on keeps them from here.
-  Future<void> setRemember(bool remember) async {
-    final phone = ref.read(coachChatRepositoryProvider), session = ref.read(sessionCoachChatRepositoryProvider);
-    await ref.read(coachSettingsRepositoryProvider).saveSettings(_settings.copyWith(remember: remember));
-    if (remember) {
-      await phone.restore(await session.clear());
-    } else {
-      await session.restore(await phone.clear());
-    }
-  }
-
-  Future<void> _setCard(int message, int card, CoachCard updated) async {
-    final messages = [...state.messages];
-    final cards = [...messages[message].cards]..[card] = updated;
-    messages[message] = messages[message].withCards(cards);
-    state = CoachChat(messages: messages, sending: state.sending, error: state.error);
-    final id = messages[message].id;
-    if (id != null) await _repo.saveCards(id, messages[message]);
-  }
-
-  /// Adds [m] to the chat, starting one, named after [m], when there is none.
+  /// Adds [m] to this chat; a reply ends the wait for one, in the same
+  /// frame as it appears.
   Future<void> _add(CoachMessage m) async {
-    // A reply ends the wait for one.
-    state = CoachChat(messages: [...state.messages, m], sending: m.fromUser && state.sending);
-    _threadId ??= await _repo.createThread(CoachThread(
-      id: 0,
-      title: chatTitleFrom(m.text),
-      face: _settings.face,
-      personality: _personality,
-      createdAt: m.sentAt ?? _now,
-    ));
-    final id = await _repo.add(_threadId!, m);
-    final at = state.messages.lastIndexOf(m);
-    if (at < 0) return;
-    final messages = [...state.messages]..[at] = m.withId(id);
-    state = CoachChat(messages: messages, sending: state.sending, reading: state.reading, error: state.error);
+    if (!m.fromUser) {
+      _sending = false;
+      _reading = null;
+    }
+    await _chats.add(chat, m);
   }
 
-  Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: _now, face: _settings.face));
+  Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: _now, face: _face));
 
   void _fail(String message) {
     _mood(CoachMood.concerned);
-    state = CoachChat(messages: state.messages, error: message);
+    _set(sending: false, error: message);
   }
 }
 
-final coachControllerProvider = NotifierProvider<CoachController, CoachChat>(CoachController.new);
+final coachControllerProvider = NotifierProvider.family<CoachController, CoachChat, int>(CoachController.new);
