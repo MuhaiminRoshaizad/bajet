@@ -51,14 +51,17 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Add your key'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.byTooltip("Copy this week's summary"));
+    // From the header's menu, which sits over the empty screen's own button.
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text("Copy this week's summary").last);
     await tester.pumpAndSettle();
     expect(copied, contains('Flexible spending this week: RM12.00 of RM50.00'));
   });
 
-  testWidgets("the copy button sits at the header's edge, in line with Insights' share button", (tester) async {
+  testWidgets("the header's menu sits at its edge, in line with Insights' share button", (tester) async {
     await openCoach(tester, open: false);
-    final copy = tester.getTopRight(find.byTooltip("Copy this week's summary")).dx;
+    final copy = tester.getTopRight(find.byTooltip('More')).dx;
     await tester.tap(find.byKey(const ValueKey('tab-Insights')));
     await tester.pumpAndSettle();
     expect(copy, tester.getTopRight(find.byTooltip('Share a report')).dx);

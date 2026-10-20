@@ -42,6 +42,9 @@ class CoachThread {
 CoachThread? latestThread(List<CoachThread> threads) =>
     threads.isEmpty ? null : threads.reduce((a, b) => b.lastAt.isAfter(a.lastAt) ? b : a);
 
+/// The longest name the user can give a chat.
+const chatNameLength = 60;
+
 /// The longest name a chat gets from its first question; past it the
 /// question is cut at a word with an ellipsis.
 const chatTitleLength = 40;

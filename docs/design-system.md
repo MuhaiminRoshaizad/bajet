@@ -218,6 +218,21 @@ scrolling list: the faces look the way the page moves, further the faster
 it goes up to `ScrollAttention.fast` (900 px/s), look ahead again when it
 stops, and wobble once after a fling. A still coach notices nothing.
 
+### Chats with the coach
+
+The Coach tab is a list of chats, as a messaging app keeps them: pinned
+ones first, then the most recent, each with its coach's face, its name,
+when it was last used (`14:05`, `Yesterday`, `Sat`, `17/10`) and its last
+line. A chat that has something new said in it springs into its place at
+the top. Search finds chats by name or by anything said in them. A soft
+round button above the log button, centred on it and the lighter of the
+two, starts a new chat, which opens on its own page over the bottom bar
+and is dropped if it is left before anything is asked. Holding a chat, or
+the ⋮ inside it, pins, renames or deletes it; delete asks first and offers
+Undo. The list's own ⋮ copies the week's summary and opens Coach settings.
+Sheets a tab opens go over the bottom bar (`useRootNavigator`), or their
+last rows would sit beneath it.
+
 Every avatar keeps at least 3:1 against the page in both themes (WCAG 1.4.11,
 non-text contrast), since the tints and the orb's lit silver are within a
 shade of the page on their own. The orb is drawn one titanium step deeper on

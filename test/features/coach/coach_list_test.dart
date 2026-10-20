@@ -69,4 +69,91 @@ void main() {
     expect(newChat.dx, closeTo(log.center.dx, 1));
     expect(newChat.dy, lessThan(log.top));
   });
+
+  Future<void> seedTwo(FakeWorld w) async {
+    final day = DateTime(testToday.year, testToday.month, testToday.day, 9);
+    await w.coachChat.restore([
+      chatWith([said(true, 'Rent next month', day), said(false, 'You keep RM1,390.50.', day)], id: 1),
+      chatWith([said(true, 'Laptop by January?', day.subtract(const Duration(days: 1))), said(false, 'Yes, with a little room.', day.subtract(const Duration(days: 1)))], id: 2),
+    ]);
+  }
+
+  testWidgets('search finds chats by their name or anything said in them', (tester) async {
+    await openCoach(tester, open: false, seed: seedTwo);
+    await tester.enterText(find.byKey(const ValueKey('search-chats')), 'little room');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('chat-2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('chat-1')), findsNothing);
+
+    await tester.enterText(find.byKey(const ValueKey('search-chats')), 'crypto');
+    await tester.pumpAndSettle();
+    expect(find.text('No chats mention “crypto”.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Clear the search'));
+    await tester.pumpAndSettle();
+    expect(chatRows, findsNWidgets(2));
+  });
+
+  testWidgets('holding a chat pins it to the top, and renames it once it has a name', (tester) async {
+    final world = await openCoach(tester, open: false, seed: seedTwo);
+    await tester.longPress(find.byKey(const ValueKey('chat-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pin chat'));
+    await tester.pumpAndSettle();
+    expect((chatRows.evaluate().first.widget.key! as ValueKey<String>).value, 'chat-2');
+
+    await tester.longPress(find.byKey(const ValueKey('chat-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename chat'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Chat name'), '  ');
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Give the chat a name.'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Chat name'), 'Laptop plan');
+    await tester.pumpAndSettle();
+    expect(find.text('Give the chat a name.'), findsNothing, reason: 'clears as soon as it is fixed');
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Laptop plan'), findsOneWidget);
+    final kept = (await world.coachChat.load()).firstWhere((t) => t.id == 2);
+    expect((kept.title, kept.pinned), ('Laptop plan', true));
+  });
+
+  testWidgets('deleting a chat asks first, and Undo brings it back whole', (tester) async {
+    final world = await openCoach(tester, open: false, seed: seedTwo);
+    await tester.longPress(find.byKey(const ValueKey('chat-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete chat'));
+    await tester.pumpAndSettle();
+    expect(find.text('The coach forgets its 2 messages. Your entries, accounts and figures stay exactly as they are.'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('chat-1')), findsNothing);
+    expect((await world.coachChat.load()).map((t) => t.id), [2]);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('chat-1')), findsOneWidget);
+    expect((await world.coachChat.load()).firstWhere((t) => t.id == 1).messages, hasLength(2));
+  });
+
+  testWidgets("inside a chat its menu deletes it too, and goes back to the list", (tester) async {
+    await openCoach(tester, seed: seedTwo);
+    await tester.tap(find.descendant(of: chatPage, matching: find.byTooltip('More')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete chat'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(chatPage, findsNothing);
+    expect(chatRows, findsOneWidget);
+    expect(find.text('Chat deleted'), findsOneWidget);
+  });
+
+  testWidgets('a new chat shows no menu until something is asked in it', (tester) async {
+    await openCoach(tester);
+    expect(find.descendant(of: chatPage, matching: find.byTooltip('More')), findsNothing);
+    await ask(tester, 'How did this week go?');
+    expect(find.descendant(of: chatPage, matching: find.byTooltip('More')), findsOneWidget);
+  });
 }

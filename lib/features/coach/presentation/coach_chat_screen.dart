@@ -12,11 +12,13 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
+import '../../../core/widgets/spring_menu.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
+import 'coach_chat_actions.dart';
 import 'coach_chats.dart';
 import 'coach_controller.dart';
 import 'coach_picker.dart';
@@ -146,6 +148,12 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                           ),
                         ),
                       ),
+                      // Nothing to pin, rename or delete until something is said.
+                      if (thread != null && thread.messages.isNotEmpty)
+                        SpringMenuButton<ChatAction>(
+                          items: chatMenuItems(thread),
+                          onSelected: (a) => runChatAction(context, ref, thread, a, onDeleted: () => Navigator.of(context).pop()),
+                        ),
                     ],
                   ),
                 ),

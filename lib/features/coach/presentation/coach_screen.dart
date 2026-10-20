@@ -12,11 +12,13 @@ import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
+import '../../../core/widgets/spring_menu.dart';
 import '../../../core/widgets/under_bar.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_settings.dart';
 import '../domain/coach_thread.dart';
 import 'coach_attention.dart';
+import 'coach_chat_actions.dart';
 import 'coach_avatar.dart';
 import 'coach_chats.dart';
 import 'coach_providers.dart';
@@ -51,10 +53,29 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   /// with something new springs into its place.
   Map<int, DateTime>? _shown;
 
+  final _search = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _search.addListener(() => setState(() {}));
+  }
+
   @override
   void dispose() {
     _attention.dispose();
+    _search.dispose();
     super.dispose();
+  }
+
+  /// The chats whose name or messages hold every word searched for.
+  List<CoachThread> _found(List<CoachThread> listed) {
+    final words = _search.text.toLowerCase().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.isEmpty) return listed;
+    return [
+      for (final t in listed)
+        if (words.every((w) => t.title.toLowerCase().contains(w) || t.messages.any((m) => m.text.toLowerCase().contains(w)))) t,
+    ];
   }
 
   Future<void> _start() async {
@@ -79,6 +100,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     final hasKey = ref.watch(coachKeyProvider).value != null;
     final chats = ref.watch(coachChatsProvider);
     final listed = chats.listed;
+    final found = _found(listed);
     final today = ref.watch(todayProvider);
     final remember = (ref.watch(coachSettingsProvider).value ?? const CoachSettings()).remember;
     final idle = ref.watch(coachIdleMotionProvider);
@@ -122,11 +144,34 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                             ),
                           ),
                         ),
-                      IconButton(onPressed: _copySummary, icon: const Icon(Icons.copy_rounded), tooltip: "Copy this week's summary"),
+                      SpringMenuButton<_ListAction>(
+                        items: const [
+                          SpringMenuItem(value: _ListAction.copySummary, icon: Icons.copy_rounded, label: "Copy this week's summary"),
+                          SpringMenuItem(value: _ListAction.settings, icon: Icons.tune_rounded, label: 'Coach settings'),
+                        ],
+                        onSelected: (a) => switch (a) {
+                          _ListAction.copySummary => _copySummary(),
+                          _ListAction.settings => context.push(Routes.coachKey),
+                        },
+                      ),
                     ],
                   ),
                 ),
               ),
+              if (hasKey && listed.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
+                  child: TextField(
+                    key: const ValueKey('search-chats'),
+                    controller: _search,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'Search chats',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _search.text.isEmpty ? null : IconButton(onPressed: _search.clear, icon: const Icon(Icons.close_rounded), tooltip: 'Clear the search'),
+                    ),
+                  ),
+                ),
               Expanded(
                 child: !hasKey
                     ? SafeArea(
@@ -160,7 +205,12 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                                 child: ListView(
                                   padding: EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.s, AppSpacing.s, underBar(context) + _newChatSize + AppSpacing.m),
                                   children: [
-                                    for (final t in listed)
+                                    if (found.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.xxxl),
+                                        child: Text('No chats mention “${_search.text.trim()}”.', textAlign: TextAlign.center, style: TextStyle(color: c.muted)),
+                                      ),
+                                    for (final t in found)
                                       SpringIn(
                                         // A new key when something new is said, so it springs in again.
                                         key: ValueKey(('chat', t.id, t.lastAt)),
@@ -173,6 +223,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                                           idle: idle,
                                           attention: _attention,
                                           onTap: () => context.push(Routes.coachChat(t.id)),
+                                          onLongPress: () => showChatActions(context, ref, t),
                                         ),
                                       ),
                                     if (remember)
@@ -217,6 +268,8 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
   }
 }
 
+enum _ListAction { copySummary, settings }
+
 const _newChatSize = 52.0;
 
 /// The log button's size in the bottom bar, which the new chat button sits
@@ -226,13 +279,16 @@ const _logButtonSize = 64.0;
 /// One chat in the list: its coach, name, when it was last used and what
 /// was said last.
 class _ChatRow extends StatelessWidget {
-  const _ChatRow({super.key, required this.thread, required this.today, required this.idle, required this.attention, required this.onTap});
+  const _ChatRow({super.key, required this.thread, required this.today, required this.idle, required this.attention, required this.onTap, required this.onLongPress});
 
   final CoachThread thread;
   final DateTime today;
   final bool idle;
   final CoachAttention attention;
   final VoidCallback onTap;
+
+  /// Opens the chat's actions: pin, rename and delete.
+  final VoidCallback onLongPress;
 
   String get _preview {
     final last = thread.messages.last;
@@ -248,9 +304,11 @@ class _ChatRow extends StatelessWidget {
     return Semantics(
       button: true,
       label: '$title${thread.pinned ? ', pinned' : ''}, $when. $preview',
+      onLongPressHint: 'pin, rename or delete',
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(AppRadii.control),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.s + 2),
