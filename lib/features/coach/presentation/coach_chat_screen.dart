@@ -206,6 +206,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                       // Nothing to pin, rename or delete until something is said.
                       if (thread != null && thread.messages.isNotEmpty)
                         SpringMenuButton<ChatAction>(
+                          title: 'This chat',
                           items: [chatSettingsItem, ...chatMenuItems(thread)],
                           onSelected: (a) => runChatAction(context, ref, thread, a, onDeleted: () => Navigator.of(context).pop()),
                         ),

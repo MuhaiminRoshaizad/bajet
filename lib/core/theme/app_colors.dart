@@ -15,6 +15,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.background,
     required this.card,
     required this.well,
+    required this.raised,
     required this.highlight,
     required this.shade,
     required this.onBad,
@@ -42,6 +43,10 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// A sunken area pressed into the surface: inputs, tracks, notices.
   final Color well;
+
+  /// A surface lifted off the page, a step lighter, for something that
+  /// floats over it, such as a menu.
+  final Color raised;
 
   /// The lit edge and the shadowed edge of a raised or pressed surface.
   final Color highlight;
@@ -83,6 +88,7 @@ class AppColors extends ThemeExtension<AppColors> {
     background: Color(0xFFE3E9EF),
     card: Color(0xFFE3E9EF),
     well: Color(0xFFD7DFE7),
+    raised: Color(0xFFF0F4F7),
     highlight: Color(0xE6FFFFFF),
     shade: Color(0x99A3B1C0),
     onBad: Color(0xFFFFFFFF),
@@ -133,6 +139,7 @@ class AppColors extends ThemeExtension<AppColors> {
     background: Color(0xFF1D2329),
     card: Color(0xFF1D2329),
     well: Color(0xFF161B20),
+    raised: Color(0xFF262E36),
     // On a dark surface a white glow reads as fog, not light, so the lit
     // edge stays faint and the shadowed edge does most of the moulding.
     highlight: Color(0x0DFFFFFF),
