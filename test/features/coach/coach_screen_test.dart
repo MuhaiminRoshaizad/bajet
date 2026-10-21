@@ -184,4 +184,19 @@ void main() {
     // Only the coach at the top of the chat has a face.
     expect(find.descendant(of: chatPage, matching: find.byType(CoachAvatar)), findsOneWidget);
   });
+
+  testWidgets("the coach's formatting is drawn, never shown as asterisks", (tester) async {
+    final world = await openCoach(tester);
+    world.coach.reply = 'Here is your week:\n- **Balance:** RM1,488.00\n- **Spent:** RM12.00\n\nThat is *fine*.';
+    await ask(tester, 'How did this week go?');
+    final page = find.descendant(of: chatPage, matching: find.textContaining('**'));
+    expect(page, findsNothing);
+    expect(find.text('Balance: RM1,488.00'), findsOneWidget);
+    expect(find.text('•'), findsNWidgets(2));
+    final balance = tester.widget<Text>(find.text('Balance: RM1,488.00'));
+    final bold = (balance.textSpan! as TextSpan).children!.first as TextSpan;
+    expect((bold.text, bold.style?.fontWeight), ('Balance:', FontWeight.w800));
+    // The user's own message stays exactly as typed.
+    expect(find.text('How did this week go?'), findsOneWidget);
+  });
 }

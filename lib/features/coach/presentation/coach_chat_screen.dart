@@ -23,6 +23,7 @@ import 'coach_chat_actions.dart';
 import 'coach_chat_settings.dart';
 import 'coach_chats.dart';
 import 'coach_controller.dart';
+import 'coach_reply_text.dart';
 import 'coach_providers.dart';
 
 /// One chat with the coach, on a page of its own over the bottom bar: its
@@ -307,7 +308,9 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final mine = message.fromUser;
-    final text = SelectableText(message.text, style: TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45));
+    final style = TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45);
+    // The user's words as typed; the coach's as it means them read.
+    final text = mine ? SelectableText(message.text, style: style) : CoachReplyText(message.text, style: style);
     const padding = EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m);
     final bubble = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),

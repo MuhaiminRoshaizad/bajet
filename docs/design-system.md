@@ -244,6 +244,13 @@ Both sides of the chat have a tail at the bottom corner nearest the
 speaker, the user's on the right and the coach's on the left. A reply has
 no face beside it, since the coach is named at the top, so it takes the
 full width.
+The coach writes in Markdown, and a reply is drawn as it reads
+(`CoachReplyText`, from `parseReply`): bold and italic where it marked
+them, a heading as a bold line, and lists with real bullets or numbers
+hanging beside their wrapped lines. Links, code, quotes and rules keep
+their words and lose their marks. Only the look changes; the coach's
+instructions say nothing about formatting, so its voice is its own. The
+user's own messages are shown exactly as typed.
 Sheets a tab opens go over the bottom bar (`useRootNavigator`), or their
 last rows would sit beneath it.
 
