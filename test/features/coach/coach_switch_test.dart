@@ -109,4 +109,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(lookY(), closeTo(0, 0.01));
   });
+
+  testWidgets("the picked coach's well fills its slot, and the face springs up when picked", (tester) async {
+    await openCoach(tester);
+    await openChatSettings(tester);
+    final wells = find.byKey(const ValueKey('face-well'));
+    expect(wells, findsNWidgets(CoachFace.values.length));
+    AnimatedOpacity well(int i) => tester.widget<AnimatedOpacity>(wells.at(i));
+    expect([for (var i = 0; i < CoachFace.values.length; i++) well(i).opacity], [1, 0, 0, 0]);
+    // Each slot is a quarter of the row, and the well spans all of it.
+    final slots = tester.getSize(wells.first).width * CoachFace.values.length;
+    expect(slots, closeTo(tester.getSize(find.ancestor(of: wells.first, matching: find.byType(Row)).first).width, 1));
+
+    final sheet = find.byType(BottomSheet);
+    final mei = find.descendant(of: find.ancestor(of: find.descendant(of: sheet, matching: find.text('Mei')), matching: find.byType(Column)).first, matching: find.byType(CoachAvatar));
+    double width() => tester.getBottomRight(mei).dx - tester.getTopLeft(mei).dx;
+    final before = width();
+    await tester.tap(find.descendant(of: sheet, matching: find.text('Mei')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(width(), greaterThan(before), reason: 'the face grows rather than appearing at its picked size');
+    await tester.pumpAndSettle();
+    expect(well(3).opacity, 1);
+    expect(well(0).opacity, 0);
+  });
 }

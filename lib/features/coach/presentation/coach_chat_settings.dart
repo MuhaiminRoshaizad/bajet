@@ -96,7 +96,8 @@ class _ChatSettings extends ConsumerWidget {
   }
 }
 
-/// A coach to pick: pressed into the surface while it is this chat's.
+/// A coach to pick: pressed into the surface, and outlined, while it is
+/// this chat's. The face stays mounted across picks so its scale springs.
 class _FaceChoice extends StatelessWidget {
   const _FaceChoice({required this.face, required this.selected, required this.idle, required this.onTap});
 
@@ -131,9 +132,26 @@ class _FaceChoice extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        child: AnimatedSwitcher(
-          duration: AppMotion.fast,
-          child: selected ? SoftWell(key: const ValueKey('on'), radius: AppRadii.card, padding: EdgeInsets.zero, child: content) : KeyedSubtree(key: const ValueKey('off'), child: content),
+        child: Stack(
+          // Passing the Row's tight width through keeps the well the slot's
+          // width, not the face's.
+          fit: StackFit.passthrough,
+          children: [
+            Positioned.fill(
+              child: AnimatedOpacity(
+                key: const ValueKey('face-well'),
+                opacity: selected ? 1 : 0,
+                duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.fast,
+                // The outline, not the depth, carries the state, as on SoftButton.
+                child: DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadii.card), border: Border.all(color: c.primary, width: 2)),
+                  child: const SoftWell(radius: AppRadii.card, padding: EdgeInsets.zero),
+                ),
+              ),
+            ),
+            content,
+          ],
         ),
       ),
     );
