@@ -4459,6 +4459,24 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<ListingState?, String>
+  listingState = GeneratedColumn<String>(
+    'listing_state',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<ListingState?>($GoalsTable.$converterlistingStaten);
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, String>
+  listingCheckedOn = GeneratedColumn<String>(
+    'listing_checked_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<DateTime?>($GoalsTable.$converterlistingCheckedOnn);
+  @override
   late final GeneratedColumnWithTypeConverter<GoalStatus, String> status =
       GeneratedColumn<String>(
         'status',
@@ -4485,6 +4503,8 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     targetDate,
     priority,
     listingUrl,
+    listingState,
+    listingCheckedOn,
     status,
     achievedOn,
   ];
@@ -4566,6 +4586,18 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         DriftSqlType.string,
         data['${effectivePrefix}listing_url'],
       ),
+      listingState: $GoalsTable.$converterlistingStaten.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}listing_state'],
+        ),
+      ),
+      listingCheckedOn: $GoalsTable.$converterlistingCheckedOnn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}listing_checked_on'],
+        ),
+      ),
       status: $GoalsTable.$converterstatus.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -4588,6 +4620,18 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
 
   static TypeConverter<DateTime, String> $convertertargetDate =
       const DayConverter();
+  static JsonTypeConverter2<ListingState, String, String>
+  $converterlistingState = const EnumNameConverter<ListingState>(
+    ListingState.values,
+  );
+  static JsonTypeConverter2<ListingState?, String?, String?>
+  $converterlistingStaten = JsonTypeConverter2.asNullable(
+    $converterlistingState,
+  );
+  static TypeConverter<DateTime, String> $converterlistingCheckedOn =
+      const DayConverter();
+  static TypeConverter<DateTime?, String?> $converterlistingCheckedOnn =
+      NullAwareTypeConverter.wrap($converterlistingCheckedOn);
   static JsonTypeConverter2<GoalStatus, String, String> $converterstatus =
       const EnumNameConverter<GoalStatus>(GoalStatus.values);
   static TypeConverter<DateTime, String> $converterachievedOn =
@@ -4603,6 +4647,11 @@ class Goal extends DataClass implements Insertable<Goal> {
   final DateTime targetDate;
   final int priority;
   final String? listingUrl;
+
+  /// Whether the listing was still up when last looked at, and on which day;
+  /// both null until the user has looked.
+  final ListingState? listingState;
+  final DateTime? listingCheckedOn;
   final GoalStatus status;
   final DateTime? achievedOn;
   const Goal({
@@ -4612,6 +4661,8 @@ class Goal extends DataClass implements Insertable<Goal> {
     required this.targetDate,
     required this.priority,
     this.listingUrl,
+    this.listingState,
+    this.listingCheckedOn,
     required this.status,
     this.achievedOn,
   });
@@ -4629,6 +4680,16 @@ class Goal extends DataClass implements Insertable<Goal> {
     map['priority'] = Variable<int>(priority);
     if (!nullToAbsent || listingUrl != null) {
       map['listing_url'] = Variable<String>(listingUrl);
+    }
+    if (!nullToAbsent || listingState != null) {
+      map['listing_state'] = Variable<String>(
+        $GoalsTable.$converterlistingStaten.toSql(listingState),
+      );
+    }
+    if (!nullToAbsent || listingCheckedOn != null) {
+      map['listing_checked_on'] = Variable<String>(
+        $GoalsTable.$converterlistingCheckedOnn.toSql(listingCheckedOn),
+      );
     }
     {
       map['status'] = Variable<String>(
@@ -4653,6 +4714,12 @@ class Goal extends DataClass implements Insertable<Goal> {
       listingUrl: listingUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(listingUrl),
+      listingState: listingState == null && nullToAbsent
+          ? const Value.absent()
+          : Value(listingState),
+      listingCheckedOn: listingCheckedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(listingCheckedOn),
       status: Value(status),
       achievedOn: achievedOn == null && nullToAbsent
           ? const Value.absent()
@@ -4672,6 +4739,12 @@ class Goal extends DataClass implements Insertable<Goal> {
       targetDate: serializer.fromJson<DateTime>(json['targetDate']),
       priority: serializer.fromJson<int>(json['priority']),
       listingUrl: serializer.fromJson<String?>(json['listingUrl']),
+      listingState: $GoalsTable.$converterlistingStaten.fromJson(
+        serializer.fromJson<String?>(json['listingState']),
+      ),
+      listingCheckedOn: serializer.fromJson<DateTime?>(
+        json['listingCheckedOn'],
+      ),
       status: $GoalsTable.$converterstatus.fromJson(
         serializer.fromJson<String>(json['status']),
       ),
@@ -4688,6 +4761,10 @@ class Goal extends DataClass implements Insertable<Goal> {
       'targetDate': serializer.toJson<DateTime>(targetDate),
       'priority': serializer.toJson<int>(priority),
       'listingUrl': serializer.toJson<String?>(listingUrl),
+      'listingState': serializer.toJson<String?>(
+        $GoalsTable.$converterlistingStaten.toJson(listingState),
+      ),
+      'listingCheckedOn': serializer.toJson<DateTime?>(listingCheckedOn),
       'status': serializer.toJson<String>(
         $GoalsTable.$converterstatus.toJson(status),
       ),
@@ -4702,6 +4779,8 @@ class Goal extends DataClass implements Insertable<Goal> {
     DateTime? targetDate,
     int? priority,
     Value<String?> listingUrl = const Value.absent(),
+    Value<ListingState?> listingState = const Value.absent(),
+    Value<DateTime?> listingCheckedOn = const Value.absent(),
     GoalStatus? status,
     Value<DateTime?> achievedOn = const Value.absent(),
   }) => Goal(
@@ -4711,6 +4790,10 @@ class Goal extends DataClass implements Insertable<Goal> {
     targetDate: targetDate ?? this.targetDate,
     priority: priority ?? this.priority,
     listingUrl: listingUrl.present ? listingUrl.value : this.listingUrl,
+    listingState: listingState.present ? listingState.value : this.listingState,
+    listingCheckedOn: listingCheckedOn.present
+        ? listingCheckedOn.value
+        : this.listingCheckedOn,
     status: status ?? this.status,
     achievedOn: achievedOn.present ? achievedOn.value : this.achievedOn,
   );
@@ -4726,6 +4809,12 @@ class Goal extends DataClass implements Insertable<Goal> {
       listingUrl: data.listingUrl.present
           ? data.listingUrl.value
           : this.listingUrl,
+      listingState: data.listingState.present
+          ? data.listingState.value
+          : this.listingState,
+      listingCheckedOn: data.listingCheckedOn.present
+          ? data.listingCheckedOn.value
+          : this.listingCheckedOn,
       status: data.status.present ? data.status.value : this.status,
       achievedOn: data.achievedOn.present
           ? data.achievedOn.value
@@ -4742,6 +4831,8 @@ class Goal extends DataClass implements Insertable<Goal> {
           ..write('targetDate: $targetDate, ')
           ..write('priority: $priority, ')
           ..write('listingUrl: $listingUrl, ')
+          ..write('listingState: $listingState, ')
+          ..write('listingCheckedOn: $listingCheckedOn, ')
           ..write('status: $status, ')
           ..write('achievedOn: $achievedOn')
           ..write(')'))
@@ -4756,6 +4847,8 @@ class Goal extends DataClass implements Insertable<Goal> {
     targetDate,
     priority,
     listingUrl,
+    listingState,
+    listingCheckedOn,
     status,
     achievedOn,
   );
@@ -4769,6 +4862,8 @@ class Goal extends DataClass implements Insertable<Goal> {
           other.targetDate == this.targetDate &&
           other.priority == this.priority &&
           other.listingUrl == this.listingUrl &&
+          other.listingState == this.listingState &&
+          other.listingCheckedOn == this.listingCheckedOn &&
           other.status == this.status &&
           other.achievedOn == this.achievedOn);
 }
@@ -4780,6 +4875,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
   final Value<DateTime> targetDate;
   final Value<int> priority;
   final Value<String?> listingUrl;
+  final Value<ListingState?> listingState;
+  final Value<DateTime?> listingCheckedOn;
   final Value<GoalStatus> status;
   final Value<DateTime?> achievedOn;
   const GoalsCompanion({
@@ -4789,6 +4886,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.targetDate = const Value.absent(),
     this.priority = const Value.absent(),
     this.listingUrl = const Value.absent(),
+    this.listingState = const Value.absent(),
+    this.listingCheckedOn = const Value.absent(),
     this.status = const Value.absent(),
     this.achievedOn = const Value.absent(),
   });
@@ -4799,6 +4898,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     required DateTime targetDate,
     this.priority = const Value.absent(),
     this.listingUrl = const Value.absent(),
+    this.listingState = const Value.absent(),
+    this.listingCheckedOn = const Value.absent(),
     this.status = const Value.absent(),
     this.achievedOn = const Value.absent(),
   }) : name = Value(name),
@@ -4811,6 +4912,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Expression<String>? targetDate,
     Expression<int>? priority,
     Expression<String>? listingUrl,
+    Expression<String>? listingState,
+    Expression<String>? listingCheckedOn,
     Expression<String>? status,
     Expression<String>? achievedOn,
   }) {
@@ -4821,6 +4924,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
       if (targetDate != null) 'target_date': targetDate,
       if (priority != null) 'priority': priority,
       if (listingUrl != null) 'listing_url': listingUrl,
+      if (listingState != null) 'listing_state': listingState,
+      if (listingCheckedOn != null) 'listing_checked_on': listingCheckedOn,
       if (status != null) 'status': status,
       if (achievedOn != null) 'achieved_on': achievedOn,
     });
@@ -4833,6 +4938,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Value<DateTime>? targetDate,
     Value<int>? priority,
     Value<String?>? listingUrl,
+    Value<ListingState?>? listingState,
+    Value<DateTime?>? listingCheckedOn,
     Value<GoalStatus>? status,
     Value<DateTime?>? achievedOn,
   }) {
@@ -4843,6 +4950,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
       targetDate: targetDate ?? this.targetDate,
       priority: priority ?? this.priority,
       listingUrl: listingUrl ?? this.listingUrl,
+      listingState: listingState ?? this.listingState,
+      listingCheckedOn: listingCheckedOn ?? this.listingCheckedOn,
       status: status ?? this.status,
       achievedOn: achievedOn ?? this.achievedOn,
     );
@@ -4871,6 +4980,16 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     if (listingUrl.present) {
       map['listing_url'] = Variable<String>(listingUrl.value);
     }
+    if (listingState.present) {
+      map['listing_state'] = Variable<String>(
+        $GoalsTable.$converterlistingStaten.toSql(listingState.value),
+      );
+    }
+    if (listingCheckedOn.present) {
+      map['listing_checked_on'] = Variable<String>(
+        $GoalsTable.$converterlistingCheckedOnn.toSql(listingCheckedOn.value),
+      );
+    }
     if (status.present) {
       map['status'] = Variable<String>(
         $GoalsTable.$converterstatus.toSql(status.value),
@@ -4893,6 +5012,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
           ..write('targetDate: $targetDate, ')
           ..write('priority: $priority, ')
           ..write('listingUrl: $listingUrl, ')
+          ..write('listingState: $listingState, ')
+          ..write('listingCheckedOn: $listingCheckedOn, ')
           ..write('status: $status, ')
           ..write('achievedOn: $achievedOn')
           ..write(')'))
@@ -10987,6 +11108,8 @@ typedef $$GoalsTableCreateCompanionBuilder =
       required DateTime targetDate,
       Value<int> priority,
       Value<String?> listingUrl,
+      Value<ListingState?> listingState,
+      Value<DateTime?> listingCheckedOn,
       Value<GoalStatus> status,
       Value<DateTime?> achievedOn,
     });
@@ -10998,6 +11121,8 @@ typedef $$GoalsTableUpdateCompanionBuilder =
       Value<DateTime> targetDate,
       Value<int> priority,
       Value<String?> listingUrl,
+      Value<ListingState?> listingState,
+      Value<DateTime?> listingCheckedOn,
       Value<GoalStatus> status,
       Value<DateTime?> achievedOn,
     });
@@ -11039,6 +11164,18 @@ class $$GoalsTableFilterComposer extends Composer<_$AppDatabase, $GoalsTable> {
   ColumnFilters<String> get listingUrl => $composableBuilder(
     column: $table.listingUrl,
     builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ListingState?, ListingState, String>
+  get listingState => $composableBuilder(
+    column: $table.listingState,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, String>
+  get listingCheckedOn => $composableBuilder(
+    column: $table.listingCheckedOn,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
   ColumnWithTypeConverterFilters<GoalStatus, GoalStatus, String> get status =>
@@ -11093,6 +11230,16 @@ class $$GoalsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get listingState => $composableBuilder(
+    column: $table.listingState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get listingCheckedOn => $composableBuilder(
+    column: $table.listingCheckedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -11135,6 +11282,18 @@ class $$GoalsTableAnnotationComposer
     column: $table.listingUrl,
     builder: (column) => column,
   );
+
+  GeneratedColumnWithTypeConverter<ListingState?, String> get listingState =>
+      $composableBuilder(
+        column: $table.listingState,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<DateTime?, String> get listingCheckedOn =>
+      $composableBuilder(
+        column: $table.listingCheckedOn,
+        builder: (column) => column,
+      );
 
   GeneratedColumnWithTypeConverter<GoalStatus, String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -11180,6 +11339,8 @@ class $$GoalsTableTableManager
                 Value<DateTime> targetDate = const Value.absent(),
                 Value<int> priority = const Value.absent(),
                 Value<String?> listingUrl = const Value.absent(),
+                Value<ListingState?> listingState = const Value.absent(),
+                Value<DateTime?> listingCheckedOn = const Value.absent(),
                 Value<GoalStatus> status = const Value.absent(),
                 Value<DateTime?> achievedOn = const Value.absent(),
               }) => GoalsCompanion(
@@ -11189,6 +11350,8 @@ class $$GoalsTableTableManager
                 targetDate: targetDate,
                 priority: priority,
                 listingUrl: listingUrl,
+                listingState: listingState,
+                listingCheckedOn: listingCheckedOn,
                 status: status,
                 achievedOn: achievedOn,
               ),
@@ -11200,6 +11363,8 @@ class $$GoalsTableTableManager
                 required DateTime targetDate,
                 Value<int> priority = const Value.absent(),
                 Value<String?> listingUrl = const Value.absent(),
+                Value<ListingState?> listingState = const Value.absent(),
+                Value<DateTime?> listingCheckedOn = const Value.absent(),
                 Value<GoalStatus> status = const Value.absent(),
                 Value<DateTime?> achievedOn = const Value.absent(),
               }) => GoalsCompanion.insert(
@@ -11209,6 +11374,8 @@ class $$GoalsTableTableManager
                 targetDate: targetDate,
                 priority: priority,
                 listingUrl: listingUrl,
+                listingState: listingState,
+                listingCheckedOn: listingCheckedOn,
                 status: status,
                 achievedOn: achievedOn,
               ),

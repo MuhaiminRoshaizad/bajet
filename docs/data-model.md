@@ -170,7 +170,9 @@ year with nothing spent.
 | `price`       | int    | Greater than zero                               |
 | `target_date` | day    |                                                 |
 | `priority`    | int    | Lower is funded first                           |
-| `listing_url` | text?  |                                                 |
+| `listing_url` | text?  | The web link to the listing the user found      |
+| `listing_state` | enum? | `up` or `sold`, as last seen at the link; null until looked at |
+| `listing_checked_on` | day? | The day it was last looked at           |
 | `status`      | enum   | `active`, `paused`, `achieved`, `archived`      |
 | `achieved_on` | day?   |                                                 |
 
@@ -289,7 +291,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 11. Any change to a table bumps it and adds a step to
+`schemaVersion` is 12. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -306,3 +308,4 @@ data on the phone is left as it was.
 | 9       | `checkins`, new and empty, for the weekly check-in's targets |
 | 10      | `coach_threads`, the chats with the coach; `coach_messages.thread_id` and `note`, the one earlier chat becoming the first |
 | 11      | `app_settings.user_name`, empty; added before the older steps run, since versions 6 and 7 rebuild that table in its latest shape |
+| 12      | `goals.listing_state` and `listing_checked_on`, empty, for whether a goal's listing was still up when last looked at |

@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 11);
+    expect(db.schemaVersion, 12);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -248,5 +248,16 @@ void main() {
     addTearDown(old.close);
     final settings = await old.select(old.appSettings).getSingle();
     expect((settings.weeklyCap, settings.buffer, settings.userName), (40000, 50000, null));
+  });
+
+  test('a version 11 goal keeps its link and gains no listing check yet', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v11.sql').readAsStringSync());
+      raw.execute("INSERT INTO goals (name, price, target_date, listing_url) VALUES ('Laptop', 450000, '2026-12-01', 'https://example.com/item/1')");
+      raw.execute('PRAGMA user_version = 11');
+    }));
+    addTearDown(old.close);
+    final goal = await old.select(old.goals).getSingle();
+    expect((goal.listingUrl, goal.listingState, goal.listingCheckedOn), ('https://example.com/item/1', null, null));
   });
 }

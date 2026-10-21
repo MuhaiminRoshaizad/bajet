@@ -28,6 +28,9 @@ enum RhythmDayType { zero, spend, flex }
 
 enum GoalStatus { active, paused, achieved, archived }
 
+/// What the user last saw at a goal's listing link.
+enum ListingState { up, sold }
+
 enum AccountKind { cash, bank, ewallet }
 
 /// How a card is drawn. Leather and suede are the cash wallet's.
@@ -188,6 +191,11 @@ class Goals extends Table {
   TextColumn get targetDate => text().map(const DayConverter())();
   IntColumn get priority => integer().withDefault(const Constant(1))();
   TextColumn get listingUrl => text().nullable()();
+
+  /// Whether the listing was still up when last looked at, and on which day;
+  /// both null until the user has looked.
+  TextColumn get listingState => textEnum<ListingState>().nullable()();
+  TextColumn get listingCheckedOn => text().map(const DayConverter()).nullable()();
   TextColumn get status => textEnum<GoalStatus>().withDefault(const Constant('active'))();
   TextColumn get achievedOn => text().map(const DayConverter()).nullable()();
 }

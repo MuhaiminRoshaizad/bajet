@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -45,6 +45,10 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 9) await m.createTable(checkins);
           if (from < 10) await _keepChatsApart(m);
+          if (from < 12) {
+            await m.addColumn(goals, goals.listingState);
+            await m.addColumn(goals, goals.listingCheckedOn);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
