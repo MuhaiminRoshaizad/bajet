@@ -375,8 +375,10 @@ code change.
 mixed, off-topic or an attack. Off-topic messages and attacks are answered
 on the phone in the coach's own voice and never reach the coach; a message
 repeated within a minute is answered on the phone too. Whatever the coach
-replies is checked on the phone, and code or an essay is replaced by the
-same kind of refusal. A list of real attacks is kept as a test, run by hand
+replies is checked on the phone, and code is replaced by the same kind of
+refusal. An essay, a reply past 3,000 characters, is held back and said to
+be too long, not taken for an off-topic question (21/10/2026: the limit
+was 1,500 and refused, which caught long honest answers). A list of real attacks is kept as a test, run by hand
 with the user's key.
 
 **Why:** no instruction alone stops every attempt to talk a chatbot out of

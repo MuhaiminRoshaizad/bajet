@@ -154,6 +154,15 @@ void main() {
     expect(find.textContaining("that one's not my job"), findsOneWidget);
   });
 
+  testWidgets('a reply too long to show says so, and is not taken for an off-topic question', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.reply = 'Your week, day by day. ' * 140;
+    await ask(tester, 'Go through my whole week in detail');
+    expect(find.textContaining('Your week, day by day.'), findsNothing);
+    expect(find.textContaining('too long to show'), findsOneWidget);
+    expect(find.textContaining("that one's not my job"), findsNothing);
+  });
+
   testWidgets('a failed question says why and can be sent again', (tester) async {
     final world = await openCoach(tester);
     world.coach.failWith = CoachProblem.offline;
