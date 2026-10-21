@@ -15,6 +15,12 @@ void main() {
     expect(coach.requests, isEmpty);
   });
 
+  test('the gatekeeper is told a question about the chat or the coach is fine', () async {
+    final coach = FakeCoach();
+    await gate(coach, 'test-key', 'Wait where do u get the name hafiz from?');
+    expect(coach.gateRequests.single.system, contains('questions about this chat, something the coach said, or the coach itself'));
+  });
+
   test('a repeat is the same words within a minute, whatever the case or spacing', () {
     expect(isRepeat('How did  this week go?', 'how did this week go?', const Duration(seconds: 20)), isTrue);
     expect(isRepeat('How did this week go?', 'How did this week go?', const Duration(minutes: 2)), isFalse);
