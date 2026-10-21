@@ -1,5 +1,5 @@
 /// The version in pubspec.yaml, which Android shows as the app's version, for
 /// Settings to show without a plugin. test/app/app_version_test.dart fails if
 /// the two ever differ, so a release only has to bump both.
-const appVersion = '1.7.5';
-const appBuild = 13;
+const appVersion = '1.7.6';
+const appBuild = 14;
