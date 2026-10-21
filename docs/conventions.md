@@ -28,6 +28,10 @@ without a custom pattern.
 - Every name and note starts with a capital: `TextCapitalization.sentences`
   asks the keyboard for a shift, and `CapitaliseFirstFormatter` makes sure,
   since some keyboards ignore the hint.
+- No field opens the keyboard by itself: nothing sets `autofocus`, so the
+  keyboard comes up only when a field is tapped, and a sheet's choices can be
+  seen first.
+- `test/conventions_test.dart` checks this across `lib/`.
 
 ## Generated code
 

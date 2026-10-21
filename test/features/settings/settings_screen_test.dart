@@ -72,6 +72,7 @@ void main() {
 
     await tester.tap(find.text('Your name'));
     await tester.pumpAndSettle();
+    expect(tester.testTextInput.isVisible, isFalse, reason: 'the keyboard waits for a tap');
     await tester.enterText(find.byKey(const ValueKey('user-name')), 'Sara');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();

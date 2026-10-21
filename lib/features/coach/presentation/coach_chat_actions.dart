@@ -134,7 +134,6 @@ class _RenameSheetState extends State<_RenameSheet> {
               const SizedBox(height: AppSpacing.m),
               TextFormField(
                 controller: _name,
-                autofocus: true,
                 maxLength: chatNameLength,
                 textCapitalization: TextCapitalization.sentences,
                 inputFormatters: const [CapitaliseFirstFormatter()],

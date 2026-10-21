@@ -160,7 +160,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   Widget _welcomeStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // The keyboard waits for a tap, as the name is optional.
           UserNameField(controller: _name, onChanged: (_) => setState(() {}), onSubmitted: () => setState(() => _step = 1)),
           const SizedBox(height: AppSpacing.xxl),
           FilledButton(

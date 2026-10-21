@@ -10,10 +10,9 @@ import '../../coach/presentation/coach_providers.dart';
 /// Where the user types what the coach should call them, in setup and in
 /// Settings. A name is optional, so nothing typed is never an error.
 class UserNameField extends StatelessWidget {
-  const UserNameField({super.key, required this.controller, this.autofocus = false, this.onSubmitted, this.onChanged});
+  const UserNameField({super.key, required this.controller, this.onSubmitted, this.onChanged});
 
   final TextEditingController controller;
-  final bool autofocus;
   final VoidCallback? onSubmitted;
   final ValueChanged<String>? onChanged;
 
@@ -21,11 +20,10 @@ class UserNameField extends StatelessWidget {
   Widget build(BuildContext context) => TextField(
         key: const ValueKey('user-name'),
         controller: controller,
-        autofocus: autofocus,
+        autofillHints: const [AutofillHints.givenName],
         maxLength: userNameLength,
         textCapitalization: TextCapitalization.words,
         keyboardType: TextInputType.name,
-        autofillHints: const [AutofillHints.givenName],
         // A name has no line breaks; the first letter is capitalised for
         // keyboards that ignore textCapitalization.
         inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\n\r\t]')), const CapitaliseFirstFormatter()],
@@ -78,8 +76,7 @@ class _UserNameSheetState extends ConsumerState<_UserNameSheet> {
             const SizedBox(height: AppSpacing.xs),
             const Text('What the coach calls you. Leave it empty and it uses no name.'),
             const SizedBox(height: AppSpacing.l),
-            // Typing is all this sheet is for, so the keyboard comes with it.
-            UserNameField(controller: _name, autofocus: true, onSubmitted: _save),
+            UserNameField(controller: _name, onSubmitted: _save),
             const SizedBox(height: AppSpacing.l),
             FilledButton(
               onPressed: _save,
