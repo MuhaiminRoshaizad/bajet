@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
 import '../../helpers/fake_repositories.dart';
-import 'coach_screen_test.dart' show ask, chatPage, openCoach;
+import 'coach_screen_test.dart' show chatRows, ask, chatPage, openCoach;
 
 CoachMessage said(bool user, String text, DateTime at) => CoachMessage(fromUser: user, text: text, sentAt: at, face: user ? null : CoachFace.aina);
 
@@ -184,6 +184,23 @@ void main() {
     // Back down and up again: they spring in again.
     await tester.drag(find.byType(ListView).first, const Offset(0, -2000));
     await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(springing, findsWidgets);
+  });
+
+  testWidgets('a chat opened again, with nothing left to load, still springs its older messages in', (tester) async {
+    final yesterday = DateTime(testToday.year, testToday.month, testToday.day - 1, 20);
+    await openCoach(tester, seed: (w) {
+      w.coachChat.restore([chatWith([for (var i = 0; i < 22; i++) said(i.isEven, 'old $i', yesterday).withId(i + 1)])]);
+    });
+    // Back to the list and in again: everything is loaded, so nothing else
+    // redraws the chat after it opens.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(chatRows.first);
+    await tester.pumpAndSettle();
+    final springing = find.descendant(of: chatPage, matching: find.byWidgetPredicate((w) => w is Opacity && w.opacity < 1));
     await tester.drag(find.byType(ListView).first, const Offset(0, 500));
     await tester.pump(const Duration(milliseconds: 16));
     expect(springing, findsWidgets);

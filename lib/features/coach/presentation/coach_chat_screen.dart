@@ -63,7 +63,11 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   void initState() {
     super.initState();
     _chats = ref.read(coachChatsProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _shown = true);
+    // Redrawn once, so the rows built from here on, as they scroll into
+    // view, carry it; a flag alone would wait for the next redraw.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _shown = true);
+    });
     _question.addListener(_watchTyping);
     _typing.addListener(_watchTyping);
   }
