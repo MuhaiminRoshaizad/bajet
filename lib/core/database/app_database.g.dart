@@ -69,6 +69,17 @@ class $AppSettingsTable extends AppSettings
     requiredDuringInsert: false,
     defaultValue: const Constant('matte'),
   ).withConverter<CardFinish>($AppSettingsTable.$convertertotalCardFinish);
+  static const VerificationMeta _userNameMeta = const VerificationMeta(
+    'userName',
+  );
+  @override
+  late final GeneratedColumn<String> userName = GeneratedColumn<String>(
+    'user_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -77,6 +88,7 @@ class $AppSettingsTable extends AppSettings
     buffer,
     totalCardColor,
     totalCardFinish,
+    userName,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -118,6 +130,12 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
+    if (data.containsKey('user_name')) {
+      context.handle(
+        _userNameMeta,
+        userName.isAcceptableOrUnknown(data['user_name']!, _userNameMeta),
+      );
+    }
     return context;
   }
 
@@ -155,6 +173,10 @@ class $AppSettingsTable extends AppSettings
           data['${effectivePrefix}total_card_finish'],
         )!,
       ),
+      userName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_name'],
+      ),
     );
   }
 
@@ -182,6 +204,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   /// The total card's look; no colour means it follows the app's theme.
   final int? totalCardColor;
   final CardFinish totalCardFinish;
+
+  /// What the coach calls the user; none means it uses no name.
+  final String? userName;
   const AppSetting({
     required this.id,
     required this.openingDate,
@@ -189,6 +214,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.buffer,
     this.totalCardColor,
     required this.totalCardFinish,
+    this.userName,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -209,6 +235,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
         $AppSettingsTable.$convertertotalCardFinish.toSql(totalCardFinish),
       );
     }
+    if (!nullToAbsent || userName != null) {
+      map['user_name'] = Variable<String>(userName);
+    }
     return map;
   }
 
@@ -222,6 +251,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ? const Value.absent()
           : Value(totalCardColor),
       totalCardFinish: Value(totalCardFinish),
+      userName: userName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userName),
     );
   }
 
@@ -239,6 +271,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       totalCardFinish: $AppSettingsTable.$convertertotalCardFinish.fromJson(
         serializer.fromJson<String>(json['totalCardFinish']),
       ),
+      userName: serializer.fromJson<String?>(json['userName']),
     );
   }
   @override
@@ -253,6 +286,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'totalCardFinish': serializer.toJson<String>(
         $AppSettingsTable.$convertertotalCardFinish.toJson(totalCardFinish),
       ),
+      'userName': serializer.toJson<String?>(userName),
     };
   }
 
@@ -263,6 +297,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     int? buffer,
     Value<int?> totalCardColor = const Value.absent(),
     CardFinish? totalCardFinish,
+    Value<String?> userName = const Value.absent(),
   }) => AppSetting(
     id: id ?? this.id,
     openingDate: openingDate ?? this.openingDate,
@@ -272,6 +307,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
         ? totalCardColor.value
         : this.totalCardColor,
     totalCardFinish: totalCardFinish ?? this.totalCardFinish,
+    userName: userName.present ? userName.value : this.userName,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -287,6 +323,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       totalCardFinish: data.totalCardFinish.present
           ? data.totalCardFinish.value
           : this.totalCardFinish,
+      userName: data.userName.present ? data.userName.value : this.userName,
     );
   }
 
@@ -298,7 +335,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('weeklyCap: $weeklyCap, ')
           ..write('buffer: $buffer, ')
           ..write('totalCardColor: $totalCardColor, ')
-          ..write('totalCardFinish: $totalCardFinish')
+          ..write('totalCardFinish: $totalCardFinish, ')
+          ..write('userName: $userName')
           ..write(')'))
         .toString();
   }
@@ -311,6 +349,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     buffer,
     totalCardColor,
     totalCardFinish,
+    userName,
   );
   @override
   bool operator ==(Object other) =>
@@ -321,7 +360,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.weeklyCap == this.weeklyCap &&
           other.buffer == this.buffer &&
           other.totalCardColor == this.totalCardColor &&
-          other.totalCardFinish == this.totalCardFinish);
+          other.totalCardFinish == this.totalCardFinish &&
+          other.userName == this.userName);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -331,6 +371,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<int> buffer;
   final Value<int?> totalCardColor;
   final Value<CardFinish> totalCardFinish;
+  final Value<String?> userName;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.openingDate = const Value.absent(),
@@ -338,6 +379,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.buffer = const Value.absent(),
     this.totalCardColor = const Value.absent(),
     this.totalCardFinish = const Value.absent(),
+    this.userName = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -346,6 +388,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     required int buffer,
     this.totalCardColor = const Value.absent(),
     this.totalCardFinish = const Value.absent(),
+    this.userName = const Value.absent(),
   }) : openingDate = Value(openingDate),
        weeklyCap = Value(weeklyCap),
        buffer = Value(buffer);
@@ -356,6 +399,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<int>? buffer,
     Expression<int>? totalCardColor,
     Expression<String>? totalCardFinish,
+    Expression<String>? userName,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -364,6 +408,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (buffer != null) 'buffer': buffer,
       if (totalCardColor != null) 'total_card_color': totalCardColor,
       if (totalCardFinish != null) 'total_card_finish': totalCardFinish,
+      if (userName != null) 'user_name': userName,
     });
   }
 
@@ -374,6 +419,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<int>? buffer,
     Value<int?>? totalCardColor,
     Value<CardFinish>? totalCardFinish,
+    Value<String?>? userName,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -382,6 +428,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       buffer: buffer ?? this.buffer,
       totalCardColor: totalCardColor ?? this.totalCardColor,
       totalCardFinish: totalCardFinish ?? this.totalCardFinish,
+      userName: userName ?? this.userName,
     );
   }
 
@@ -412,6 +459,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
         ),
       );
     }
+    if (userName.present) {
+      map['user_name'] = Variable<String>(userName.value);
+    }
     return map;
   }
 
@@ -423,7 +473,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('weeklyCap: $weeklyCap, ')
           ..write('buffer: $buffer, ')
           ..write('totalCardColor: $totalCardColor, ')
-          ..write('totalCardFinish: $totalCardFinish')
+          ..write('totalCardFinish: $totalCardFinish, ')
+          ..write('userName: $userName')
           ..write(')'))
         .toString();
   }
@@ -7070,6 +7121,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       required int buffer,
       Value<int?> totalCardColor,
       Value<CardFinish> totalCardFinish,
+      Value<String?> userName,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -7079,6 +7131,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<int> buffer,
       Value<int?> totalCardColor,
       Value<CardFinish> totalCardFinish,
+      Value<String?> userName,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -7121,6 +7174,11 @@ class $$AppSettingsTableFilterComposer
     column: $table.totalCardFinish,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
+
+  ColumnFilters<String> get userName => $composableBuilder(
+    column: $table.userName,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$AppSettingsTableOrderingComposer
@@ -7161,6 +7219,11 @@ class $$AppSettingsTableOrderingComposer
     column: $table.totalCardFinish,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get userName => $composableBuilder(
+    column: $table.userName,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -7197,6 +7260,9 @@ class $$AppSettingsTableAnnotationComposer
         column: $table.totalCardFinish,
         builder: (column) => column,
       );
+
+  GeneratedColumn<String> get userName =>
+      $composableBuilder(column: $table.userName, builder: (column) => column);
 }
 
 class $$AppSettingsTableTableManager
@@ -7236,6 +7302,7 @@ class $$AppSettingsTableTableManager
                 Value<int> buffer = const Value.absent(),
                 Value<int?> totalCardColor = const Value.absent(),
                 Value<CardFinish> totalCardFinish = const Value.absent(),
+                Value<String?> userName = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 openingDate: openingDate,
@@ -7243,6 +7310,7 @@ class $$AppSettingsTableTableManager
                 buffer: buffer,
                 totalCardColor: totalCardColor,
                 totalCardFinish: totalCardFinish,
+                userName: userName,
               ),
           createCompanionCallback:
               ({
@@ -7252,6 +7320,7 @@ class $$AppSettingsTableTableManager
                 required int buffer,
                 Value<int?> totalCardColor = const Value.absent(),
                 Value<CardFinish> totalCardFinish = const Value.absent(),
+                Value<String?> userName = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 openingDate: openingDate,
@@ -7259,6 +7328,7 @@ class $$AppSettingsTableTableManager
                 buffer: buffer,
                 totalCardColor: totalCardColor,
                 totalCardFinish: totalCardFinish,
+                userName: userName,
               ),
           withReferenceMapper: (p0) => p0
               .map(

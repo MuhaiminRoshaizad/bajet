@@ -30,6 +30,7 @@ One row, created during first-run setup.
 | `buffer`            | int  | Minimum left after buying a goal          |
 | `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |
 | `total_card_finish` | enum | `matte` (default), `gloss`, `mirror`, `pearl`, `frosted` or `guilloche` |
+| `user_name`         | text? | What the coach calls the user; null means it uses no name |
 
 ### `accounts`
 A place money is kept. Its balance is `opening_balance` on the opening date,
@@ -287,7 +288,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 9. Any change to a table bumps it and adds a step to
+`schemaVersion` is 11. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -302,3 +303,5 @@ data on the phone is left as it was.
 | 7       | Brushed metal retired: `accounts.finish` and `app_settings.total_card_finish` turn `brushed` into `matte`, which becomes their default |
 | 8       | `coach_settings` and `coach_messages`, both new and empty, for the coach's look, personality and remembered chat |
 | 9       | `checkins`, new and empty, for the weekly check-in's targets |
+| 10      | `coach_threads`, the chats with the coach; `coach_messages.thread_id` and `note`, the one earlier chat becoming the first |
+| 11      | `app_settings.user_name`, empty; added before the older steps run, since versions 6 and 7 rebuild that table in its latest shape |

@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 10);
+    expect(db.schemaVersion, 11);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -237,5 +237,16 @@ void main() {
     addTearDown(old.close);
     expect(await old.select(old.coachThreads).get(), isEmpty);
     expect(await old.select(old.coachMessages).get(), isEmpty);
+  });
+
+  test('a version 10 database gains an empty name for the user and keeps its settings', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v10.sql').readAsStringSync());
+      raw.execute("INSERT INTO app_settings (id, opening_date, weekly_cap, buffer) VALUES (1, '2026-10-13', 40000, 50000)");
+      raw.execute('PRAGMA user_version = 10');
+    }));
+    addTearDown(old.close);
+    final settings = await old.select(old.appSettings).getSingle();
+    expect((settings.weeklyCap, settings.buffer, settings.userName), (40000, 50000, null));
   });
 }

@@ -47,6 +47,9 @@ class AppSettings extends Table {
   IntColumn get totalCardColor => integer().nullable()();
   TextColumn get totalCardFinish => textEnum<CardFinish>().withDefault(const Constant('matte'))();
 
+  /// What the coach calls the user; none means it uses no name.
+  TextColumn get userName => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

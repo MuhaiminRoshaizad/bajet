@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -27,6 +27,9 @@ class AppDatabase extends _$AppDatabase {
         },
         // One step per version, so any older database climbs to the latest.
         onUpgrade: (m, from, to) async {
+          // Version 11's name comes first: versions 6 and 7 rebuild the
+          // settings table in its latest shape, which already has it.
+          if (from < 11) await m.addColumn(appSettings, appSettings.userName);
           if (from < 2) await m.addColumn(entries, entries.receipt);
           if (from < 3) await m.addColumn(recurringItems, recurringItems.windowDays);
           if (from < 4) await m.addColumn(plannedEvents, plannedEvents.repeatsYearly);
