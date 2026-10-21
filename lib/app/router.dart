@@ -67,7 +67,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => AppShell(navigationShell: shell),
+        // In place at once from the loading or setup page: the opening or the
+        // lock covers that moment, and a slide frozen under the lock would
+        // leave Today a quarter off to the side when the unlock's cards
+        // measure where to land.
+        pageBuilder: (context, state, shell) => NoTransitionPage(key: state.pageKey, child: AppShell(navigationShell: shell)),
         branches: [
           StatefulShellBranch(routes: [
             GoRoute(

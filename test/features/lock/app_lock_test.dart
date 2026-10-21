@@ -145,6 +145,19 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets("on a cold start the fan lands where Today's stack ends up, not where it was sliding in", (tester) async {
+    await pumpLocked(tester, outcomes: [AuthOutcome.cancelled, AuthOutcome.passed]);
+    await tester.tap(find.bySemanticsLabel('Unlock with fingerprint'));
+    // Just before the cards hand over to the real stack.
+    for (var t = 0; t < 860; t += 20) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    final front = tester.getRect(find.byType(FlyingCard).last);
+    await tester.pumpAndSettle();
+    final stack = tester.getRect(find.byType(AccountStack));
+    expect(front.left, closeTo(stack.left, 2), reason: 'a card landing beside the stack would jump into place');
+  });
+
   testWidgets('unlocking always opens on Today, wherever the lock came down', (tester) async {
     final world = await pumpLocked(tester);
     await tester.tap(find.byKey(const ValueKey('tab-Coach')));
