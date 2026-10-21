@@ -76,35 +76,40 @@ class _UnlockExitState extends ConsumerState<UnlockExit> with SingleTickerProvid
     final accounts = ref.watch(accountsProvider).value ?? const [];
     // Laid out at Today's width, as the opening's cards are.
     final base = MediaQuery.sizeOf(context).width - 32;
-    return Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: plan == null ? null : (_) => _land(),
-      child: AnimatedBuilder(
-        animation: _clock,
-        builder: (context, child) {
-          final ms = _clock.value * UnlockTimes.end;
-          final out = plan?.words(ms) ?? 0;
-          // The words stay in the same place in the tree throughout, so the
-          // lock screen keeps its state as it leaves.
-          return Stack(children: [
-            Positioned.fill(child: ColoredBox(color: c.background.withValues(alpha: plan?.backdrop(ms) ?? 1))),
-            Positioned.fill(
-              child: Opacity(opacity: 1 - out, child: Transform.translate(offset: Offset(0, 12 * out), child: child)),
-            ),
-            if (plan != null)
-              for (var i = 0; i < 3; i++)
-                FlyingCard(
-                  pose: plan.card(i, ms),
-                  base: base,
-                  depth: i,
-                  titanium: plan.titanium(i, ms),
-                  face: plan.lands ? stackFace(i, accounts) : null,
-                  shown: plan.real(i, ms),
-                ),
-          ]);
-        },
-        // Unlocked, so its buttons no longer answer.
-        child: IgnorePointer(ignoring: plan != null, child: widget.child),
+    // Above the navigator there is no Material for text to take its style
+    // from, the lock's words and the flying cards' faces alike.
+    return Material(
+      type: MaterialType.transparency,
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: plan == null ? null : (_) => _land(),
+        child: AnimatedBuilder(
+          animation: _clock,
+          builder: (context, child) {
+            final ms = _clock.value * UnlockTimes.end;
+            final out = plan?.words(ms) ?? 0;
+            // The words stay in the same place in the tree throughout, so the
+            // lock screen keeps its state as it leaves.
+            return Stack(children: [
+              Positioned.fill(child: ColoredBox(color: c.background.withValues(alpha: plan?.backdrop(ms) ?? 1))),
+              Positioned.fill(
+                child: Opacity(opacity: 1 - out, child: Transform.translate(offset: Offset(0, 12 * out), child: child)),
+              ),
+              if (plan != null)
+                for (var i = 0; i < 3; i++)
+                  FlyingCard(
+                    pose: plan.card(i, ms),
+                    base: base,
+                    depth: i,
+                    titanium: plan.titanium(i, ms),
+                    face: plan.lands ? stackFace(i, accounts) : null,
+                    shown: plan.real(i, ms),
+                  ),
+            ]);
+          },
+          // Unlocked, so its buttons no longer answer.
+          child: IgnorePointer(ignoring: plan != null, child: widget.child),
+        ),
       ),
     );
   }

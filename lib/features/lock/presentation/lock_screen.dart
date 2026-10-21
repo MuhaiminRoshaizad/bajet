@@ -103,9 +103,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
     final warn = _status == _Status.failed || _status == _Status.lockedOut;
     return UnlockExit(
       landOnToday: widget.landOnToday,
-      child: Material(
-        type: MaterialType.transparency,
-        child: SafeArea(
+      child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxxl, vertical: AppSpacing.xxl),
@@ -161,7 +159,6 @@ class _LockScreenState extends ConsumerState<LockScreen> {
             ),
           ),
         ),
-      ),
       ),
     );
   }

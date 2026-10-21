@@ -133,6 +133,18 @@ void main() {
     expect(stackOpacity(tester), 1);
   });
 
+  testWidgets("the flying cards' faces are drawn in the app's text style", (tester) async {
+    await pumpLocked(tester, outcomes: [AuthOutcome.cancelled, AuthOutcome.passed]);
+    await tester.tap(find.bySemanticsLabel('Unlock with fingerprint'));
+    for (var t = 0; t < 600; t += 50) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    // Without a Material above them, text falls back to Flutter's unstyled
+    // look: yellow double underlines in a monospace face.
+    expect(find.ancestor(of: find.byType(FlyingCard).first, matching: find.byType(Material)), findsWidgets);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('unlocking always opens on Today, wherever the lock came down', (tester) async {
     final world = await pumpLocked(tester);
     await tester.tap(find.byKey(const ValueKey('tab-Coach')));
