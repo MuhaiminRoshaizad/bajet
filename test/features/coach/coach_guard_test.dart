@@ -22,13 +22,11 @@ void main() {
     expect(isRepeat('Hi', null, Duration.zero), isFalse);
   });
 
-  test('code or an essay never shows as a reply', () {
+  test('code never shows as a reply', () {
     expect(replyLooksWrong('Here you go:\n```python\nprint(1)\n```'), isTrue);
     expect(replyLooksWrong('def add(a, b):\n    return a + b\nprint(add(1, 2))\nimport math'), isTrue);
-    expect(replyTooLong('x' * (coachReplyLimit + 1)), isTrue);
-    // A long, honest answer is still an answer.
-    expect(replyLooksWrong('x' * 1600), isFalse);
-    expect(replyTooLong('x' * 1600), isFalse);
+    // A long, honest answer is still an answer, however long.
+    expect(replyLooksWrong('RM8.95 a day keeps the week on plan. ' * 200), isFalse);
     expect(replyLooksWrong('RM16.50 left this week; about RM8.25 a day. Keep Thursday light.'), isFalse);
   });
 

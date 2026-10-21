@@ -178,10 +178,9 @@ asks Haiku 5.5, with thinking off and a JSON schema, whether the message is
 `money`, `mixed`, `off_topic` or an `attack`; the last two are answered on
 the phone with the personality's `declineLine`, and never reach the coach
 or count against the day's questions. A reply that comes back as code
-(`replyLooksWrong`) is shown as a `declineLine` instead. One past
-`coachReplyLimit` (3,000 characters, about four times a detailed answer) is
-held back as too long to show, said as that rather than as an off-topic
-question. Both line sets get firmer the more often they are used. `test/eval/coach_eval_test.dart`
+(`replyLooksWrong`) is shown as a `declineLine` instead. A long reply is
+shown in full, however long; only the API's `maxTokens` bounds it. Both line
+sets get firmer the more often they are used. `test/eval/coach_eval_test.dart`
 sends real attacks to the real models; it runs only by hand with
 `--dart-define=COACH_EVAL_KEY=...`, so CI skips it.
 

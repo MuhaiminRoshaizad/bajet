@@ -197,8 +197,6 @@ class CoachController extends Notifier<CoachChat> {
         _mood(_unimpressed);
         return _reply(declineLine(_personality, _pushback.declined++));
       }
-      // Said as it is, not as the question being off topic.
-      if (replyTooLong(answer.text)) return _fail('That answer came out too long to show. Try asking about one thing at a time.');
       _mood(CoachMood.happy);
       await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: _now, face: _face));
     } on CoachException catch (e) {

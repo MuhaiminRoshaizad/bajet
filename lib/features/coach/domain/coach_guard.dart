@@ -62,13 +62,6 @@ Future<GateKind> gate(CoachClient client, String apiKey, String message) async {
 bool isRepeat(String message, String? previous, Duration since) =>
     previous != null && since < const Duration(minutes: 1) && _same(message) == _same(previous);
 
-/// The longest reply shown: about four times a detailed answer, so only an
-/// essay the coach was talked into passes it.
-const coachReplyLimit = 3000;
-
-/// A reply far past the length the coach is asked to keep to.
-bool replyTooLong(String reply) => reply.length > coachReplyLimit;
-
 String _same(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
 final _codeLine = RegExp(r'^\s*(def |class |import |from \S+ import|function |public |private |#include|for \(|while \(|const |let |var |print\(|console\.|return |if \(|\}|<\?php|SELECT |#!)');
