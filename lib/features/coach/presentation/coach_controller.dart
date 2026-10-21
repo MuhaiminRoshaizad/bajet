@@ -73,7 +73,6 @@ class CoachController extends Notifier<CoachChat> {
   @override
   CoachChat build() {
     final messages = ref.watch(coachChatsProvider.select((c) => c.byId(chat)?.messages ?? const <CoachMessage>[]));
-    settled ??= messages.length;
     return CoachChat(messages: messages, sending: _sending, reading: _reading, error: _error);
   }
 
@@ -86,10 +85,6 @@ class CoachController extends Notifier<CoachChat> {
   final _confirming = <(int, int)>{};
 
   DateTime get _now => ref.read(clockProvider)();
-
-  /// How many of the messages, from the top, were there when the chat was
-  /// first shown; the screen springs in only the rest.
-  int? settled;
 
   CoachThread? get _thread => ref.read(coachChatsProvider).byId(chat);
   CoachFace get _face => _thread?.face ?? CoachFace.bajety;

@@ -507,9 +507,11 @@ inline line of text where it is.
   answer, concerned (or staring, for Sees Everything) at a message turned
   away, cheering when a card is confirmed. The header also counts the
   questions left today.
-- A message said now springs in on `AppMotion.spring` from 24 pt below at
-  0.55 of its size, growing out of its own side, so older ones glide up as
-  the list scrolls; what came back from memory is simply there. While the
+- A message springs in on `AppMotion.spring` from 24 pt below at 0.55 of
+  its size, growing out of its own side, whenever it comes into view: when
+  it is said, and each time scrolling brings it back on screen. Messages
+  are built only as they come into view so the spring is seen. What is on
+  screen as the chat opens is simply there. While the
   coach works, three dots bob in a reply bubble with "Thinking…" beside
   them, then "Looking at: July 2026…" for each lookup, worded as the
   reply's "Looked at:" line. Reduce motion turns both into plain

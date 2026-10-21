@@ -165,4 +165,27 @@ void main() {
     expect(await world.coachChat.said(), isEmpty);
     expect(find.text('Remembered on this phone only'), findsNothing);
   });
+
+  testWidgets('older messages spring in as they scroll into view, every time', (tester) async {
+    final yesterday = DateTime(testToday.year, testToday.month, testToday.day - 1, 20);
+    await openCoach(tester, seed: (w) {
+      w.coachChat.restore([chatWith([for (var i = 0; i < 22; i++) said(i.isEven, 'old $i', yesterday).withId(i + 1)])]);
+    });
+    final springing = find.descendant(of: chatPage, matching: find.byWidgetPredicate((w) => w is Opacity && w.opacity < 1));
+    // What is on screen when the chat opens is simply there.
+    expect(springing, findsNothing);
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(springing, findsWidgets);
+    await tester.pumpAndSettle();
+    expect(springing, findsNothing);
+
+    // Back down and up again: they spring in again.
+    await tester.drag(find.byType(ListView).first, const Offset(0, -2000));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, 500));
+    await tester.pump(const Duration(milliseconds: 16));
+    expect(springing, findsWidgets);
+  });
 }

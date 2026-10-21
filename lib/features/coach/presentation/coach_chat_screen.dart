@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
@@ -51,10 +52,15 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   /// Read on arrival, as the page cannot reach it once it is going.
   late final CoachChatsController _chats;
 
+  /// Whether the chat has been on screen; until then its messages are simply
+  /// there, and after it each one springs in as it comes into view.
+  var _shown = false;
+
   @override
   void initState() {
     super.initState();
     _chats = ref.read(coachChatsProvider.notifier);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _shown = true);
     _question.addListener(_watchTyping);
     _typing.addListener(_watchTyping);
   }
@@ -91,9 +97,6 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     final settings = CoachSettings(face: thread?.face ?? defaults.face, personality: thread?.personality ?? defaults.personality);
     final mood = ref.watch(coachMoodProvider(id));
     final idle = ref.watch(coachIdleMotionProvider);
-    // What was on screen when it opened, or came back from memory, is already
-    // in place; only what is said from here springs in.
-    final settledCount = ref.read(coachControllerProvider(id).notifier).settled ?? 0;
     final used = ref.watch(coachUsedTodayProvider).value ?? 0;
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
@@ -183,6 +186,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                   child: ListView(
                       controller: _scroll,
                       reverse: fromBottom,
+                      // Messages are built only as they come into view, so
+                      // each springs in where it can be seen.
+                      scrollCacheExtent: const ScrollCacheExtent.pixels(0),
                       padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
                       children: _topDown(fromBottom, [
                         if (chat.messages.isEmpty)
@@ -224,11 +230,11 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                         for (final (i, m) in chat.messages.indexed) ...[
                           if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
                           if (m.note)
-                            SpringIn(key: ValueKey(('message', i)), animate: i >= settledCount, alignment: Alignment.center, child: _Note(m.text))
+                            SpringIn(key: ValueKey(('message', i)), animate: _shown, alignment: Alignment.center, child: _Note(m.text))
                           else
                             SpringIn(
                               key: ValueKey(('message', i)),
-                              animate: i >= settledCount,
+                              animate: _shown,
                               alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
                               child: _Bubble(message: m),
                             ),
