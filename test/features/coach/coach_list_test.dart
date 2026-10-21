@@ -1,5 +1,7 @@
+import 'package:bajet/core/theme/app_motion.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/coach/domain/coach_settings.dart';
+import 'package:bajet/features/coach/presentation/coach_attention.dart';
 import 'package:bajet/features/coach/presentation/coach_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -89,6 +91,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No chats mention “crypto”.'), findsOneWidget);
     await tester.tap(find.byTooltip('Clear the search'));
+    // The chats coming back rise in, each a stagger after the last: drawn
+    // first, then given the time to start and finish.
+    await tester.pump();
+    await tester.pump(AppMotion.enter + AppMotion.stagger * 4);
     await tester.pumpAndSettle();
     expect(chatRows, findsNWidgets(2));
   });
@@ -155,5 +161,31 @@ void main() {
     expect(find.descendant(of: chatPage, matching: find.byTooltip('More')), findsNothing);
     await ask(tester, 'How did this week go?');
     expect(find.descendant(of: chatPage, matching: find.byTooltip('More')), findsOneWidget);
+  });
+
+  testWidgets('opening the tab, the chats rise in as the other tabs do, and the faces still follow the scroll', (tester) async {
+    final day = DateTime(testToday.year, testToday.month, testToday.day, 9);
+    await pumpApp(tester, seed: (w) {
+      w.coachKeys.key = 'sk-ant-test-0123456789abcdefghij';
+      w.coachChat.restore([for (var n = 1; n <= 3; n++) chatWith([said(true, 'Question $n', day)], id: n)]);
+    });
+    await tester.tap(find.byKey(const ValueKey('tab-Coach')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+    final row = find.byKey(const ValueKey('chat-1'));
+    final rising = tester.getTopLeft(row).dy;
+    await tester.pumpAndSettle();
+    expect(rising, greaterThan(tester.getTopLeft(row).dy), reason: 'it came up from below');
+    expect(find.ancestor(of: row, matching: find.byType(ScrollAttention)), findsOneWidget);
+
+    // Away and back: it rises in again.
+    await tester.tap(find.byKey(const ValueKey('tab-Today')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tab-Coach')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
+    final again = tester.getTopLeft(row).dy;
+    await tester.pumpAndSettle();
+    expect(again, greaterThan(tester.getTopLeft(row).dy));
   });
 }

@@ -205,6 +205,9 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                                 child: ListView(
                                   padding: EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.s, AppSpacing.s, underBar(context) + _newChatSize + AppSpacing.m),
                                   children: [
+                                    // Rising in each time the tab opens, as the other tabs' cards do.
+                                    RiseIn(
+                                      children: [
                                     if (found.isEmpty)
                                       Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.xxxl),
@@ -238,6 +241,8 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                                           ],
                                         ),
                                       ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
