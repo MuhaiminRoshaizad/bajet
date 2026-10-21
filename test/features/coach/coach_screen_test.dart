@@ -1,3 +1,4 @@
+import 'package:bajet/core/theme/app_spacing.dart';
 import 'package:bajet/core/widgets/soft.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/coach/presentation/coach_avatar.dart';
@@ -212,5 +213,25 @@ void main() {
     expect((bold.text, bold.style?.fontWeight), ('Balance:', FontWeight.w800));
     // The user's own message stays exactly as typed.
     expect(find.text('How did this week go?'), findsOneWidget);
+  });
+
+  testWidgets('a reply taller than the chat opens at its first line; a short one lands at the bottom', (tester) async {
+    final world = await openCoach(tester);
+    final list = find.descendant(of: chatPage, matching: find.byType(Scrollable)).first;
+    ScrollPosition position() => tester.state<ScrollableState>(list).position;
+
+    world.coach.reply = [for (var n = 1; n <= 30; n++) 'Step $n of the plan.'].join('\n\n');
+    await ask(tester, 'Plan my next two weeks');
+    final first = find.text('Step 1 of the plan.');
+    expect(first.hitTestable(), findsOneWidget);
+    final bubble = find.ancestor(of: first, matching: find.byType(SoftCard)).first;
+    // Its top sits just under the header, so it is read down from the start.
+    expect(tester.getTopLeft(bubble).dy - tester.getTopLeft(list).dy, moreOrLessEquals(AppSpacing.m, epsilon: 1));
+    expect(position().pixels, greaterThan(0));
+
+    world.coach.reply = 'You are on track.';
+    await ask(tester, 'And this week?');
+    expect(position().pixels, 0);
+    expect(find.text('You are on track.').hitTestable(), findsOneWidget);
   });
 }

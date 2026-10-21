@@ -56,6 +56,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   /// there, and after it each one springs in as it comes into view.
   var _shown = false;
 
+  /// The messages on screen, by index, so a new reply can be measured.
+  final _rows = <int, BuildContext>{};
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +76,35 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     _attention.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// Brings the newest message into view. A reply taller than the chat stops
+  /// with its first line under the header, to be read down from there;
+  /// anything shorter lands at the bottom.
+  Future<void> _showNewest() async {
+    if (!mounted || !_scroll.hasClients) return;
+    final messages = ref.read(coachControllerProvider(widget.chat)).messages;
+    final reply = messages.isNotEmpty && !messages.last.fromUser;
+    final newest = messages.length - 1;
+    if (reply && _rows[newest] == null) {
+      // Scrolled too far up for it to be built yet: down first, then measure.
+      await _scroll.animateTo(0, duration: AppMotion.fast, curve: AppMotion.ease);
+      if (!mounted || !_scroll.hasClients) return;
+    }
+    final row = reply ? _rows[newest] : null;
+    final to = row != null && row.mounted ? _offsetToStartOf(row) : 0.0;
+    await _scroll.animateTo(to, duration: AppMotion.fast, curve: AppMotion.ease);
+  }
+
+  /// The scroll offset that puts [row]'s top just under the header, or 0
+  /// when all of it fits. The list is laid out from the bottom, so a larger
+  /// offset moves its rows down the screen by as much.
+  double _offsetToStartOf(BuildContext row) {
+    final box = row.findRenderObject()! as RenderBox;
+    final viewport = Scrollable.of(row).context.findRenderObject()! as RenderBox;
+    final topAtBottom = box.localToGlobal(Offset.zero).dy - _scroll.offset;
+    // The row's own top spacing keeps the bubble off the header.
+    return math.max(0, viewport.localToGlobal(Offset.zero).dy - topAtBottom);
   }
 
   void _watchTyping() =>
@@ -101,11 +133,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
     ref.watch(coachDataProvider);
-    // Back down to the newest message as the conversation grows.
-    ref.listen(coachChatsProvider, (_, _) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-      });
+    // To each new message as the conversation grows.
+    ref.listen(coachChatsProvider.select((c) => c.byId(id)?.messages.length ?? 0), (before, now) {
+      if (now > (before ?? 0)) WidgetsBinding.instance.addPostFrameCallback((_) => _showNewest());
     });
     // A chat opens at its newest message: the list is laid out from the
     // bottom, so it is there from the first frame, not scrolled to after.
@@ -229,15 +259,18 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                           ),
                         for (final (i, m) in chat.messages.indexed) ...[
                           if (_dayLabel(chat.messages, i, today) case final label?) _DayLabel(label),
-                          if (m.note)
-                            SpringIn(key: ValueKey(('message', i)), animate: _shown, alignment: Alignment.center, child: _Note(m.text))
-                          else
-                            SpringIn(
-                              key: ValueKey(('message', i)),
-                              animate: _shown,
-                              alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
-                              child: _Bubble(message: m),
-                            ),
+                          _Row(
+                            key: ValueKey(('message', i)),
+                            index: i,
+                            rows: _rows,
+                            child: m.note
+                                ? SpringIn(animate: _shown, alignment: Alignment.center, child: _Note(m.text))
+                                : SpringIn(
+                                    animate: _shown,
+                                    alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
+                                    child: _Bubble(message: m),
+                                  ),
+                          ),
                           for (final (j, card) in m.cards.indexed)
                             _ProposalCard(
                               card: card,
@@ -264,6 +297,33 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
         ),
       ),
     );
+  }
+}
+
+/// One message on screen, kept in [rows] under its [index] while it is
+/// built, so the chat can measure where it sits.
+class _Row extends StatefulWidget {
+  const _Row({super.key, required this.index, required this.rows, required this.child});
+
+  final int index;
+  final Map<int, BuildContext> rows;
+  final Widget child;
+
+  @override
+  State<_Row> createState() => _RowState();
+}
+
+class _RowState extends State<_Row> {
+  @override
+  void dispose() {
+    if (widget.rows[widget.index] == context) widget.rows.remove(widget.index);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    widget.rows[widget.index] = context;
+    return widget.child;
   }
 }
 

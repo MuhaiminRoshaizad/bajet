@@ -232,7 +232,9 @@ two, starts a new chat, which opens on its own page over the bottom bar
 and is dropped if it is left before anything is asked. A chat opens at its
 newest message, beside the question box, with older ones above; the list
 is laid out from the bottom, so it is there from the first frame rather
-than scrolled to. Holding a chat, or
+than scrolled to. Each new message is brought into view: a reply taller
+than the chat stops with its first line under the header, to be read
+down from there, and anything shorter lands at the bottom. Holding a chat, or
 the ⋮ inside it, pins, renames or deletes it; delete asks first and offers
 Undo. The list's own ⋮ copies the week's summary and opens Coach settings.
 Each chat keeps its own coach and personality. The top of a chat shows
