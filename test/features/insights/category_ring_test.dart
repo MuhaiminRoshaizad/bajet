@@ -26,6 +26,15 @@ void main() {
     expect(labelled('Bills RM120.00'), findsOneWidget);
   });
 
+  testWidgets('every amount and share ends on the right edge, however long the name', (tester) async {
+    await pumpRing(tester, [('food', 18640), ('bills', 12000), ('transport', 6400)]);
+    await tester.pumpAndSettle();
+    final edge = tester.getTopRight(find.byType(CategoryRing)).dx;
+    for (final share in ['50%', '32%', '17%']) {
+      expect(tester.getTopRight(find.text(share)).dx, moreOrLessEquals(edge, epsilon: 0.5), reason: share);
+    }
+  });
+
   testWidgets('past six categories the smallest share one slice', (tester) async {
     final keys = [for (final c in demoCategories.where((c) => c.key != untrackedCategoryKey).take(7)) c.key];
     await pumpRing(tester, [for (final (n, k) in keys.indexed) (k, 1000 - n * 100)]);

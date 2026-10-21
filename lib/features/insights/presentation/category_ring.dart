@@ -127,16 +127,23 @@ class _CategoryRingState extends State<CategoryRing> with SingleTickerProviderSt
                 children: [
                   Container(width: 12, height: 12, decoration: BoxDecoration(color: colour, borderRadius: BorderRadius.circular(4))),
                   const SizedBox(width: AppSpacing.m),
-                  Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
-                  if (fixed) ...[
-                    const SizedBox(width: AppSpacing.s),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s - 2),
-                      decoration: BoxDecoration(border: Border.all(color: c.line), borderRadius: BorderRadius.circular(AppRadii.pill)),
-                      child: Text('Fixed', style: TextStyle(color: c.muted, fontSize: 11, fontWeight: FontWeight.w700)),
+                  // The name takes all the room left, so every amount ends on
+                  // the card's right edge whatever the name's length.
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+                        if (fixed) ...[
+                          const SizedBox(width: AppSpacing.s),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s - 2),
+                            decoration: BoxDecoration(border: Border.all(color: c.line), borderRadius: BorderRadius.circular(AppRadii.pill)),
+                            child: Text('Fixed', style: TextStyle(color: c.muted, fontSize: 11, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
-                  const Spacer(),
+                  ),
                   Text(Money.format(amount), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
                   SizedBox(
                     width: 44,
