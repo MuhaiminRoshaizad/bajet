@@ -274,4 +274,26 @@ void main() {
     await DriftBackupRepository(target).restore(v8);
     expect((await target.select(target.appSettings).getSingle()).userName, isNull);
   });
+
+  test("a goal's listing and what it showed survive a round trip, and a format 9 backup restores with no check", () async {
+    await fill(source);
+    await source.update(source.goals).write(GoalsCompanion(
+      listingUrl: const Value('https://example.com/item/1'),
+      listingState: const Value(ListingState.sold),
+      listingCheckedOn: Value(d(2026, 10, 22)),
+    ));
+    final v10 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    await DriftBackupRepository(target).restore(v10);
+    final goal = await target.select(target.goals).getSingle();
+    expect((goal.listingUrl, goal.listingState, goal.listingCheckedOn), ('https://example.com/item/1', ListingState.sold, d(2026, 10, 22)));
+
+    final v9 = {
+      ...v10,
+      'format': 9,
+      'goals': [for (final g in v10['goals']! as List) {...(g as Map<String, Object?>)}..remove('listingState')..remove('listingCheckedOn')],
+    };
+    await DriftBackupRepository(target).restore(v9);
+    final older = await target.select(target.goals).getSingle();
+    expect((older.listingUrl, older.listingState, older.listingCheckedOn), ('https://example.com/item/1', null, null));
+  });
 }

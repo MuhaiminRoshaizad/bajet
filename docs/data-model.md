@@ -283,6 +283,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 7      | No `brushed` finish: older files' brushed cards and total card restore as `matte` |
 | 8      | `checkins`, the finished check-ins; older files restore with none |
 | 9      | Settings carry `userName`; older files restore with none |
+| 10     | Each goal carries `listingState` and `listingCheckedOn`; older files restore with neither |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that

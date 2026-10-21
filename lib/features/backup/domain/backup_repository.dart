@@ -10,8 +10,9 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// `accountId`; settings carry the total card's look instead of
 /// `openingBalance`, which becomes the first account's. 7: no `brushed`
 /// finish; cards that had it are `matte`. 8: `checkins`. 9: settings carry
-/// `userName`, what the coach calls the user.
-const backupFormatVersion = 9;
+/// `userName`, what the coach calls the user. 10: goals carry `listingState`
+/// and `listingCheckedOn`, what their listing showed when last looked at.
+const backupFormatVersion = 10;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -104,6 +105,11 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
     final settings = b['settings'] as Map<String, Object?>?;
     b = {...b, 'format': 9, 'settings': settings == null ? null : {...settings, 'userName': null}};
     format = 9;
+  }
+  if (format == 9) {
+    final goals = [for (final g in (b['goals'] as List?) ?? const []) {...(g as Map<String, Object?>), 'listingState': null, 'listingCheckedOn': null}];
+    b = {...b, 'format': 10, 'goals': goals};
+    format = 10;
   }
   return b;
 }
