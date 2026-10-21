@@ -98,12 +98,16 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     // Watched so the figures the coach is given stay loaded; the controller
     // only reads them, and an unwatched provider never loads its inputs.
     ref.watch(coachDataProvider);
-    // Keep the newest message in view as the conversation grows.
+    // Back down to the newest message as the conversation grows.
     ref.listen(coachChatsProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) _scroll.animateTo(_scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+        if (_scroll.hasClients) _scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
       });
     });
+    // A chat opens at its newest message: the list is laid out from the
+    // bottom, so it is there from the first frame, not scrolled to after.
+    // The greeting of an empty chat still sits at the top.
+    final fromBottom = chat.messages.isNotEmpty;
 
     return PopScope(
       // Gone from the list the moment it is left, not when the page is
@@ -178,8 +182,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                   reach: 2,
                   child: ListView(
                       controller: _scroll,
+                      reverse: fromBottom,
                       padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.l),
-                      children: [
+                      children: _topDown(fromBottom, [
                         if (chat.messages.isEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: AppSpacing.xxl),
@@ -237,7 +242,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                         ],
                         if (chat.sending) _Thinking(reading: chat.reading),
                         if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider(id).notifier).retry() : null),
-                      ],
+                      ]),
                   ),
                 ),
               ),
@@ -255,6 +260,10 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     );
   }
 }
+
+/// The chat's rows, oldest first, in the order the list lays them out: a
+/// list laid out from the bottom takes its newest row first.
+List<Widget> _topDown(bool fromBottom, List<Widget> rows) => fromBottom ? rows.reversed.toList() : rows;
 
 /// "Today", "Yesterday" or a day such as "Sat 17/10" above the first
 /// message of each day, or null when the day has not changed.

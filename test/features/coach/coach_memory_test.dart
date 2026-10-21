@@ -110,6 +110,8 @@ void main() {
       w.coachChat.restore([chatWith([for (var i = 0; i < 22; i++) said(i.isEven, 'old $i', yesterday).withId(i + 1)])]);
     });
     // The chat opens at its latest message; the top holds the day it began.
+    expect(find.text('old 21').hitTestable(), findsOneWidget);
+    expect(find.text('old 0'), findsNothing);
     await tester.fling(find.byType(ListView).first, const Offset(0, 4000), 4000);
     await tester.pumpAndSettle();
     expect(find.text('Yesterday'), findsOneWidget);

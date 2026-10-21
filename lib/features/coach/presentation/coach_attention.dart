@@ -63,7 +63,8 @@ class _ScrollAttentionState extends State<ScrollAttention> {
       _last = now;
       // A first update after a pause has no speed to speak of yet.
       if (ms <= 0 || ms > 100) return false;
-      final speed = n.scrollDelta! / ms * 1000;
+      // Read as it moves on screen, whichever end the list is laid out from.
+      final speed = n.scrollDelta! / ms * 1000 * (n.metrics.axisDirection == AxisDirection.up ? -1 : 1);
       if (speed.abs() > _peak) _peak = speed.abs();
       widget.attention.lookAt(Offset(0, (speed / ScrollAttention.fast).clamp(-1.0, 1.0) * widget.reach));
     } else if (n is ScrollEndNotification) {

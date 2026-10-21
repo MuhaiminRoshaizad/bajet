@@ -229,7 +229,10 @@ line. A chat that has something new said in it springs into its place at
 the top. Search finds chats by name or by anything said in them. A soft
 round button above the log button, centred on it and the lighter of the
 two, starts a new chat, which opens on its own page over the bottom bar
-and is dropped if it is left before anything is asked. Holding a chat, or
+and is dropped if it is left before anything is asked. A chat opens at its
+newest message, beside the question box, with older ones above; the list
+is laid out from the bottom, so it is there from the first frame rather
+than scrolled to. Holding a chat, or
 the ⋮ inside it, pins, renames or deletes it; delete asks first and offers
 Undo. The list's own ⋮ copies the week's summary and opens Coach settings.
 Each chat keeps its own coach and personality. The top of a chat shows
