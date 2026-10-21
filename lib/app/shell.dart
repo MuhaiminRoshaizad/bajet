@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -185,7 +187,10 @@ class _TabPillState extends State<_TabPill> with SingleTickerProviderStateMixin 
             children: [
               AnimatedBuilder(
                 animation: _at,
-                builder: (context, child) => Positioned(left: _at.value * tab + 2, width: tab - 4, top: inset, bottom: inset, child: child!),
+                builder: (context, child) {
+                  final (left, width) = _hollowSpan(_at.value, tab);
+                  return Positioned(left: left, width: width, top: inset, bottom: inset, child: child!);
+                },
                 child: const SoftWell(key: ValueKey('tab-hollow'), radius: AppRadii.pill, padding: EdgeInsets.zero),
               ),
               // The pill's full height, so each tab sits in the middle of the
@@ -204,6 +209,19 @@ class _TabPillState extends State<_TabPill> with SingleTickerProviderStateMixin 
       ),
     );
   }
+}
+
+/// Where the hollow starts and how wide it is, [at] tabs from the left. Past
+/// the first or last tab the spring's overshoot squashes it against the end
+/// of the pill, by up to a third of its width, rather than carrying it out
+/// of the pill to be cut off.
+(double, double) _hollowSpan(double at, double tab) {
+  final last = _tabs.length - 1.0;
+  final full = tab - 4;
+  final over = at < 0 ? -at : (at > last ? at - last : 0.0);
+  final width = full - math.min(over * tab, full / 3);
+  final left = at < 0 ? 2.0 : (at > last ? last * tab + 2 + full - width : at * tab + 2);
+  return (left, width);
 }
 
 /// One tab: its icon gives a small bounce as the tab opens.

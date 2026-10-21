@@ -61,6 +61,28 @@ void main() {
     expect(gap('Insights'), lessThan(1));
   });
 
+  testWidgets('springing to an end tab, the hollow squashes against the pill instead of leaving it', (tester) async {
+    await pumpApp(tester);
+    final hollow = find.byKey(const ValueKey('tab-hollow'));
+    final pill = tester.getRect(find.ancestor(of: hollow, matching: find.byType(Stack)).first);
+    final full = tester.getSize(hollow).width;
+
+    for (final (tab, end) in [('Coach', 'right'), ('Today', 'left')]) {
+      await tester.tap(find.byKey(ValueKey('tab-$tab')));
+      var narrowest = full;
+      for (var i = 0; i < 60; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        final r = tester.getRect(hollow);
+        expect(r.left, greaterThanOrEqualTo(pill.left), reason: '$tab, $end');
+        expect(r.right, lessThanOrEqualTo(pill.right), reason: '$tab, $end');
+        if (r.width < narrowest) narrowest = r.width;
+      }
+      expect(narrowest, lessThan(full - 1), reason: 'it squashed at the $end end');
+      await tester.pumpAndSettle();
+      expect(tester.getSize(hollow).width, moreOrLessEquals(full), reason: 'and sprang back');
+    }
+  });
+
   testWidgets("a tab's list runs under the floating bar and ends clear of it", (tester) async {
     await pumpApp(tester);
     final bar = tester.getRect(find.byKey(const ValueKey('add')));

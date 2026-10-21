@@ -104,7 +104,10 @@ moulded + that logs. Nothing fills the space around them, so the page shows
 on every side and scrolls on underneath (`extendBody`). Each tab's list ends
 with `underBar` of room, so its last row scrolls clear of the bar. The open
 tab is pressed into the pill as a hollow that springs across to the next tab
-(`AppMotion.spring`), and the opened tab's icon gives one small bounce. The
+(`AppMotion.spring`), and the opened tab's icon gives one small bounce.
+Springing to the first or last tab, its overshoot squashes it against the
+end of the pill, by up to a third of its width, instead of carrying it out
+of the pill. Each tab sits in the middle of its hollow. The
 pill's own shadow (`floatingShadows`) keeps it apart from the cards passing
 beneath. On a tablet the bar keeps a phone's width. It never hides while
 scrolling, so logging stays one tap away.
