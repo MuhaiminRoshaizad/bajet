@@ -11,6 +11,19 @@ Future<void> openAccounts(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+final providerSheet = find.byKey(const ValueKey('provider-search'));
+
+/// Opens the bank or e-wallet list from the field labelled [label], searches
+/// it for [query], then taps [row].
+Future<void> searchProvider(WidgetTester tester, String label, String query, String row) async {
+  await tester.tap(find.widgetWithText(TextField, label));
+  await tester.pumpAndSettle();
+  await tester.enterText(providerSheet, query);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(row));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets("the pencil on an account changes its card's colour, finish and nickname, not its balance", (tester) async {
     final world = await pumpApp(tester);
@@ -111,13 +124,10 @@ void main() {
     await tester.ensureVisible(find.text('Add account'));
     await tester.tap(find.text('Add account'));
     await tester.pumpAndSettle();
-    expect(find.text('Choose one, or type its name'), findsOneWidget);
+    expect(find.text('Choose one, or search for its name'), findsOneWidget);
     expect(world.accounts, hasLength(1));
 
-    await tester.enterText(find.widgetWithText(TextField, 'Which bank?'), 'isl');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Bank Islam'));
-    await tester.pumpAndSettle();
+    await searchProvider(tester, 'Which bank?', 'isl', 'Bank Islam');
     await tester.enterText(find.widgetWithText(TextFormField, 'How much is in it now'), '200000');
     await tester.ensureVisible(find.text('Add account'));
     await tester.tap(find.text('Add account'));
@@ -135,10 +145,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('E-wallet'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'Which e-wallet?'), 'Office card');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Not listed? Use “Office card”').last);
-    await tester.pumpAndSettle();
+    await searchProvider(tester, 'Which e-wallet?', 'Office card', 'Not listed? Use “Office card”');
     await tester.ensureVisible(find.text('Add account'));
     await tester.tap(find.text('Add account'));
     await tester.pumpAndSettle();
@@ -160,7 +167,7 @@ void main() {
     expect(bank.filled, isTrue);
   });
 
-  testWidgets('the bank list opens grouped, filters as it is typed, and a pick colours the card', (tester) async {
+  testWidgets('the bank list opens grouped with the keyboard down, filters as it is searched, and a pick colours the card', (tester) async {
     final world = await pumpApp(tester);
     await openAccounts(tester);
     await tester.ensureVisible(find.text('Add an account'));
@@ -173,8 +180,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('MOST USED'), findsOneWidget);
     expect(find.text('DIGITAL BANKS'), findsOneWidget);
+    expect(tester.testTextInput.isVisible, isFalse, reason: 'the list is there to scroll first');
+    // Further down the list, reached by scrolling rather than typing.
+    await tester.scrollUntilVisible(find.text('Agrobank'), 200, scrollable: find.descendant(of: find.byType(BottomSheet), matching: find.byType(Scrollable)).last);
+    expect(find.text('Agrobank'), findsOneWidget);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Which bank?'), 'cim');
+    await tester.enterText(providerSheet, 'cim');
     await tester.pumpAndSettle();
     expect(find.text('MOST USED'), findsNothing);
     await tester.tap(find.text('CIMB').last);
@@ -265,10 +276,7 @@ void main() {
     await tester.tap(find.byTooltip('Edit this card'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextField, 'Which bank?'), 'cim');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('CIMB'));
-    await tester.pumpAndSettle();
+    await searchProvider(tester, 'Which bank?', 'cim', 'CIMB');
     await tester.ensureVisible(find.text('Save card'));
     await tester.tap(find.text('Save card'));
     await tester.pumpAndSettle();

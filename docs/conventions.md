@@ -27,7 +27,7 @@ without a custom pattern.
 
 - Every name and note starts with a capital: `TextCapitalization.sentences`
   asks the keyboard for a shift, and `CapitaliseFirstFormatter` makes sure,
-  since some keyboards ignore the hint and a `DropdownMenu` cannot give it.
+  since some keyboards ignore the hint.
 
 ## Generated code
 

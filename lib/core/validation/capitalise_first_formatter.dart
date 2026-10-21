@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 /// Starts a name or note with a capital, `makan` reading `Makan`. Fields
 /// also ask the keyboard for sentence capitals, but that is only a hint: some
-/// keyboards ignore it, and a `DropdownMenu` cannot ask at all.
+/// keyboards ignore it.
 class CapitaliseFirstFormatter extends TextInputFormatter {
   const CapitaliseFirstFormatter();
 

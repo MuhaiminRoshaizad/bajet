@@ -269,7 +269,7 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                     kind: _kind!,
                     controller: _provider,
                     onChoose: _choose,
-                    errorText: _tried && _name.trim().isEmpty ? 'Choose one, or type its name' : null,
+                    errorText: _tried && _name.trim().isEmpty ? 'Choose one, or search for its name' : null,
                   ),
                 ],
                 if (kind != null) ...[

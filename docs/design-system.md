@@ -137,11 +137,12 @@ card. A card's look is changed from the pencil on its account view, the
 total card's by tapping it on Your accounts, and every card's from
 Settings → Accounts, which lists them with the total card first. Adding an account (Your accounts → Add an account) asks
 whether it is cash, a bank account or an e-wallet, then which bank or
-e-wallet, from a searchable dropdown (`ProviderPicker`) of Bank Negara
+e-wallet: tapping the field (`ProviderPicker`) opens a sheet of Bank Negara
 Malaysia's lists grouped as most used, digital and other banks
-(`known_providers.dart`), each with a dot in its starting colour. Typing
-filters it; a name not listed is used from its last row ("Not listed? Use
-…") or simply left typed. A well-known one starts on a swatch near its
+(`known_providers.dart`), each with a dot in its starting colour, to scroll
+and pick from with the keyboard down. A search box at its top filters it
+once tapped; a name not listed is used from its last row ("Not listed? Use
+…"). A well-known one starts on a swatch near its
 colour (`startingSwatch`). The sheet goes in the order it is filled in:
 provider, amount, nickname, then finish, colour and photo match, with its
 Add or Save button pinned below the scroll. "Match my card" (or "Match my
