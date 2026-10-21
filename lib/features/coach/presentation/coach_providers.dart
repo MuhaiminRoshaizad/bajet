@@ -28,6 +28,9 @@ final coachSettingsRepositoryProvider = Provider<CoachSettingsRepository>((ref) 
 /// The coach's look, personality and memory setting.
 final coachSettingsProvider = StreamProvider<CoachSettings>((ref) => ref.watch(coachSettingsRepositoryProvider).watchSettings());
 
+/// What the coach calls the user; null when no name is given.
+final userNameProvider = StreamProvider<String?>((ref) => ref.watch(coachSettingsRepositoryProvider).watchUserName());
+
 /// The saved key, or null when there is none.
 class CoachKeyController extends AsyncNotifier<String?> {
   @override

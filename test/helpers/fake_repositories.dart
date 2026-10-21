@@ -694,6 +694,16 @@ class FakeCoachSettings implements CoachSettingsRepository {
 
   @override
   Future<void> saveSettings(CoachSettings settings) async => _live.value = settings;
+
+  final _name = _Live<String?>(null);
+
+  String? get userName => _name.value;
+
+  @override
+  Stream<String?> watchUserName() => _name.stream;
+
+  @override
+  Future<void> saveUserName(String name) async => _name.value = name.trim().isEmpty ? null : name.trim();
 }
 
 /// Finished check-ins kept in memory, newest first.

@@ -38,6 +38,18 @@ void main() {
     expect((await repo.watchSettings().first).personality, CoachPersonality.friendly);
   });
 
+  test("the user's name is kept trimmed with the app's settings, and an empty one clears it", () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = DriftCoachSettingsRepository(db);
+    expect(await repo.watchUserName().first, isNull);
+    await db.into(db.appSettings).insert(AppSettingsCompanion.insert(openingDate: DateTime.utc(2026, 10, 13), weeklyCap: 5000, buffer: 0));
+    await repo.saveUserName('  Sara ');
+    expect(await repo.watchUserName().first, 'Sara');
+    await repo.saveUserName('');
+    expect(await repo.watchUserName().first, isNull);
+  });
+
   testWidgets('a personality picked in Settings is the voice of the next new chat', (tester) async {
     final world = await openCoach(tester, open: false);
     await tester.tap(find.byKey(const ValueKey('tab-Today')));

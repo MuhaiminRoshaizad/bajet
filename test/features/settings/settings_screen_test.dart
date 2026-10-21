@@ -64,4 +64,26 @@ void main() {
     expect(Theme.of(tester.element(find.text('Appearance'))).brightness, Brightness.dark);
     expect(find.text('Dark'), findsOneWidget);
   });
+
+  testWidgets('your name is set, changed and cleared from the top of Settings', (tester) async {
+    final world = await pumpApp(tester);
+    await openSettings(tester);
+    expect(find.text('Not set · the coach uses no name'), findsOneWidget);
+
+    await tester.tap(find.text('Your name'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('user-name')), 'Sara');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.userName, 'Sara');
+    expect(find.text('Sara'), findsOneWidget);
+
+    await tester.tap(find.text('Your name'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('user-name')), '   ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.userName, isNull);
+    expect(find.text('Not set · the coach uses no name'), findsOneWidget);
+  });
 }

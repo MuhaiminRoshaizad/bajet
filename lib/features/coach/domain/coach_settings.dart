@@ -81,8 +81,18 @@ class CoachSettings {
       CoachSettings(face: face ?? this.face, personality: personality ?? this.personality, remember: remember ?? this.remember);
 }
 
+/// The longest name the coach is given for the user.
+const userNameLength = 30;
+
 abstract interface class CoachSettingsRepository {
   /// The settings, or the defaults until they are first changed.
   Stream<CoachSettings> watchSettings();
   Future<void> saveSettings(CoachSettings settings);
+
+  /// What the coach calls the user, or null when they have given no name.
+  Stream<String?> watchUserName();
+
+  /// Saves [name] trimmed; an empty one clears it. Kept with the app's
+  /// settings, which setup creates, so it waits for setup to save them.
+  Future<void> saveUserName(String name);
 }

@@ -25,4 +25,13 @@ class DriftCoachSettingsRepository implements domain.CoachSettingsRepository {
   Future<void> saveSettings(domain.CoachSettings s) => _db.into(_db.coachSettings).insertOnConflictUpdate(
         CoachSettingsCompanion.insert(id: const Value(1), face: Value(s.face.name), personality: Value(s.personality.name), remember: Value(s.remember)),
       );
+
+  @override
+  Stream<String?> watchUserName() => _db.select(_db.appSettings).watchSingleOrNull().map((r) => r?.userName);
+
+  @override
+  Future<void> saveUserName(String name) {
+    final clean = name.trim();
+    return _db.update(_db.appSettings).write(AppSettingsCompanion(userName: Value(clean.isEmpty ? null : clean)));
+  }
 }

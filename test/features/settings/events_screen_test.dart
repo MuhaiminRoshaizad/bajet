@@ -9,6 +9,8 @@ DateTime d(int y, int m, int day) => DateTime.utc(y, m, day);
 Future<void> openEvents(WidgetTester tester) async {
   await tester.tap(find.byTooltip('Settings'));
   await tester.pumpAndSettle();
+  await tester.ensureVisible(find.text('Planned events'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Planned events'));
   await tester.pumpAndSettle();
 }

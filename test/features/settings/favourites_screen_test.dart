@@ -6,6 +6,8 @@ import '../../helpers/app_harness.dart';
 Future<void> openFavourites(WidgetTester tester) async {
   await tester.tap(find.byTooltip('Settings'));
   await tester.pumpAndSettle();
+  await tester.ensureVisible(find.text('Favourites'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Favourites'));
   await tester.pumpAndSettle();
 }

@@ -30,6 +30,14 @@ class _RestoreInto implements BackupRepository {
 
 Finder field(String label) => find.widgetWithText(TextFormField, label);
 
+/// A new install, past the welcome without a name.
+Future<FakeWorld> openSetup(WidgetTester tester) async {
+  final world = await pumpApp(tester, setUpDone: false);
+  await tester.tap(find.text('Skip for now'));
+  await tester.pumpAndSettle();
+  return world;
+}
+
 /// Adds cash holding [sen] on the first step.
 Future<void> addCash(WidgetTester tester, String sen) async {
   await tester.tap(find.text('Cash'));
@@ -58,14 +66,38 @@ Future<void> toWeekStep(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('a new install opens on setup, not Today', (tester) async {
+  testWidgets('a new install opens on a welcome that asks for a name, without the keyboard', (tester) async {
     await pumpApp(tester, setUpDone: false);
-    expect(find.text('Where do you keep your money?'), findsOneWidget);
+    expect(find.text('What should we call you?'), findsOneWidget);
+    expect(find.text('Welcome to bajet'), findsOneWidget);
     expect(find.byKey(const ValueKey('tab-Today')), findsNothing);
+    expect(tester.widget<TextField>(find.byKey(const ValueKey('user-name'))).autofocus, isFalse);
+    expect(find.widgetWithText(FilledButton, 'Skip for now'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const ValueKey('user-name')), 'Sara');
+    await tester.pump();
+    expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where do you keep your money?'), findsOneWidget);
+    expect(find.text('Step 1 of 3'), findsOneWidget);
   });
 
-  testWidgets('setup cannot go on until there is somewhere money is kept', (tester) async {
+  testWidgets('the name given at the welcome is saved, trimmed, when setup finishes', (tester) async {
     final world = await pumpApp(tester, setUpDone: false);
+    await tester.enterText(find.byKey(const ValueKey('user-name')), '  Sara ');
+    await tester.pump();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await fillMoneyStep(tester);
+    await tester.tap(find.text('Skip for now'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.userName, 'Sara');
+  });
+
+
+  testWidgets('setup cannot go on until there is somewhere money is kept', (tester) async {
+    final world = await openSetup(tester);
     expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Add an account to continue')).onPressed, isNull);
 
     await addCash(tester, '8450');
@@ -75,7 +107,7 @@ void main() {
   });
 
   testWidgets('required fields are flagged only when Continue is pressed', (tester) async {
-    await pumpApp(tester, setUpDone: false);
+    await openSetup(tester);
     await toWeekStep(tester);
     expect(find.text('Enter how much you allow each week'), findsNothing);
 
@@ -85,7 +117,7 @@ void main() {
   });
 
   testWidgets('an error clears as soon as the value becomes valid', (tester) async {
-    await pumpApp(tester, setUpDone: false);
+    await openSetup(tester);
     await toWeekStep(tester);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
@@ -97,7 +129,7 @@ void main() {
   });
 
   testWidgets('skipping the goal saves settings and lands on Today', (tester) async {
-    final world = await pumpApp(tester, setUpDone: false);
+    final world = await openSetup(tester);
     await fillMoneyStep(tester);
 
     expect(find.text('Your first goal'), findsOneWidget);
@@ -112,7 +144,7 @@ void main() {
   });
 
   testWidgets('the weekly allowance is spread over the rhythm, so days are not planned at RM0', (tester) async {
-    final world = await pumpApp(tester, setUpDone: false);
+    final world = await openSetup(tester);
     await fillMoneyStep(tester);
     await tester.tap(find.text('Skip for now'));
     await tester.pumpAndSettle();
@@ -123,7 +155,7 @@ void main() {
   });
 
   testWidgets('a half-filled goal cannot be skipped by accident', (tester) async {
-    await pumpApp(tester, setUpDone: false);
+    await openSetup(tester);
     await fillMoneyStep(tester);
 
     await tester.enterText(field('Goal'), 'Laptop');
@@ -137,7 +169,7 @@ void main() {
   });
 
   testWidgets('RM sits beside an amount, never in front of the hint', (tester) async {
-    await pumpApp(tester, setUpDone: false);
+    await openSetup(tester);
     await toWeekStep(tester);
     InputDecoration decoration() =>
         tester.widget<TextField>(find.descendant(of: field('Weekly allowance'), matching: find.byType(TextField))).decoration!;
@@ -149,7 +181,7 @@ void main() {
   });
 
   testWidgets('the buy day calendar opens with no day chosen for the user', (tester) async {
-    await pumpApp(tester, setUpDone: false);
+    await openSetup(tester);
     await fillMoneyStep(tester);
 
     await tester.tap(find.text('Pick a buy day'));

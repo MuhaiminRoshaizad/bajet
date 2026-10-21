@@ -77,7 +77,7 @@ A folder under `core/` appears only once two features need it.
 | `ledger` | Entries, categories and favourites, the log sheet, history, balance and flexible-spend maths |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
 | `today`  | The Today screen: balance, today's rule, bills due, the week dial, goal, recent entries |
-| `settings` | The Settings hub behind Today's gear: balance, accounts, allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites, and About bajet with the installed version |
+| `settings` | The Settings hub behind Today's gear: the user's name for the coach, balance, accounts, allowance and buffer, goals, bills and income, planned events, the weekly rhythm and favourites, and About bajet with the installed version |
 | `backup` | JSON export saved to a folder or through the share sheet, and restore from a picked file |
 | `checkin` | The Sunday check-in: compare each account with what it really holds (the bank app as a whole while there is one account), log any gap to that account (a starting adjustment at the first one), look back at the week, and finish it to save next week's target (decision 027) |
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV; the current week as the weekly check-in |
@@ -86,7 +86,7 @@ A folder under `core/` appears only once two features need it.
 | `coach`  | The Coach tab: a list of chats, each opening on its own page, with questions answered by Anthropic with the user's own key from Settings → Coach, up to 10 a day. The model reads the user's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
 | `opening` | The opening played on a cold start: its timeline as plain data, the titanium cards and the lock screen's fan, and the cards' flight into Today's stack that the unlock shares; the overlay that plays it lives in `app/` because it draws Today's and the lock screen's cards |
 | `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, its fan flying into Today's stack once it passes, and the user's lock choices |
-| `setup`  | First-run setup: where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
+| `setup`  | First-run setup: a welcome asking what the coach should call the user (optional), where money is kept (at least one account, with what it holds now), weekly allowance, buffer, optional first goal, or a backup restore instead |
 
 Shared providers live beside what they provide: `databaseProvider` and
 `todayProvider` in `core/database/database_provider.dart`. Tests override both,

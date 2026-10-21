@@ -9,16 +9,20 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
+import '../../../core/widgets/rise_in.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/card_designer.dart';
 import '../../backup/presentation/restore_flow.dart';
+import '../../coach/presentation/coach_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/presentation/plan_providers.dart';
+import '../../settings/presentation/user_name_sheet.dart';
 
-/// First run: where money is kept, with what each place holds now; the
-/// weekly allowance; then an optional first goal. Saving settings is what
-/// lets the router leave this screen.
+/// First run: a welcome that asks what to call the user; then where money
+/// is kept, with what each place holds now; the weekly allowance; then an
+/// optional first goal. Saving settings is what lets the router leave this
+/// screen.
 class SetupScreen extends ConsumerStatefulWidget {
   const SetupScreen({super.key});
 
@@ -33,6 +37,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _buffer = TextEditingController();
   final _goalName = TextEditingController();
   final _goalPrice = TextEditingController();
+  final _name = TextEditingController();
   DateTime? _goalDate;
   bool _goalDateMissing = false;
   int _step = 0;
@@ -40,14 +45,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   @override
   void dispose() {
-    for (final c in [_cap, _buffer, _goalName, _goalPrice]) {
+    for (final c in [_cap, _buffer, _goalName, _goalPrice, _name]) {
       c.dispose();
     }
     super.dispose();
   }
 
   void _next() {
-    if (_moneyForm.currentState!.validate()) setState(() => _step = 2);
+    if (_moneyForm.currentState!.validate()) setState(() => _step = 3);
   }
 
   bool get _goalStarted => _goalName.text.trim().isNotEmpty || _goalPrice.text.isNotEmpty || _goalDate != null;
@@ -60,6 +65,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     }
     setState(() => _saving = true);
     final repo = ref.read(planRepositoryProvider);
+    // Read now: once the settings are saved the router leaves this screen.
+    final names = ref.read(coachSettingsRepositoryProvider);
     if (withGoal) {
       await repo.addGoal(name: _goalName.text, price: RinggitCentsFormatter.parse(_goalPrice.text), targetDate: _goalDate!);
     }
@@ -76,6 +83,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       weeklyCap: cap,
       buffer: RinggitCentsFormatter.parse(_buffer.text),
     ));
+    // The name lives in the settings row just made.
+    await names.saveUserName(_name.text);
   }
 
   Future<void> _pickDate() async {
@@ -115,23 +124,31 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.xl),
               children: [
-                Text('Step ${_step + 1} of 3', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSpacing.s),
-                Text(
-                  switch (_step) { 0 => 'Where do you keep your money?', 1 => 'Your week', _ => 'Your first goal' },
-                  style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                // Each step rises in as it is reached.
+                RiseIn(
+                  key: ValueKey(_step),
+                  children: [
+                    // The welcome sits before the money steps, so it has no number.
+                    Text(_step == 0 ? 'Welcome to bajet' : 'Step $_step of 3', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: AppSpacing.s),
+                    Text(
+                      switch (_step) { 0 => 'What should we call you?', 1 => 'Where do you keep your money?', 2 => 'Your week', _ => 'Your first goal' },
+                      style: text.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: AppSpacing.s),
+                    Text(
+                      switch (_step) {
+                        0 => 'The coach uses it when it talks to you. You can skip this and add it later in Settings.',
+                        1 => "Add every place you hold money, with what's in it right now: your wallet, banks and e-wallets. You need at least one, and can add more later.",
+                        2 => 'What you allow yourself each week. You can change it later in Settings.',
+                        _ => 'Something you are saving for. bajet works out whether you will get there with money to spare. You can skip this.',
+                      },
+                      style: TextStyle(color: c.muted, height: 1.45),
+                    ),
+                    const SizedBox(height: AppSpacing.xxl),
+                    switch (_step) { 0 => _welcomeStep(), 1 => _accountsStep(), 2 => _moneyStep(), _ => _goalStep() },
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.s),
-                Text(
-                  switch (_step) {
-                    0 => "Add every place you hold money, with what's in it right now: your wallet, banks and e-wallets. You need at least one, and can add more later.",
-                    1 => 'What you allow yourself each week. You can change it later in Settings.',
-                    _ => 'Something you are saving for. bajet works out whether you will get there with money to spare. You can skip this.',
-                  },
-                  style: TextStyle(color: c.muted, height: 1.45),
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                switch (_step) { 0 => _accountsStep(), 1 => _moneyStep(), _ => _goalStep() },
               ],
             ),
           ),
@@ -139,6 +156,29 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       ),
     );
   }
+
+  Widget _welcomeStep() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // The keyboard waits for a tap, as the name is optional.
+          UserNameField(controller: _name, onChanged: (_) => setState(() {}), onSubmitted: () => setState(() => _step = 1)),
+          const SizedBox(height: AppSpacing.xxl),
+          FilledButton(
+            onPressed: () => setState(() => _step = 1),
+            style: _buttonStyle(),
+            child: Text(_name.text.trim().isEmpty ? 'Skip for now' : 'Continue'),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          // A restore saves settings too, which moves the router on to Today;
+          // it brings the name back, so it is offered before one is typed.
+          TextButton.icon(
+            onPressed: () => pickAndRestore(context, ref, replacing: false),
+            icon: const Icon(Icons.restore_rounded),
+            label: const Text('Restore from a backup file instead'),
+            style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+          ),
+        ],
+      );
 
   Widget _accountsStep() {
     final c = context.colors;
@@ -164,17 +204,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         AccountKindTiles(onPick: (kind) => showNewAccount(context, kind)),
         const SizedBox(height: AppSpacing.xxl),
         FilledButton(
-          onPressed: accounts.isEmpty ? null : () => setState(() => _step = 1),
+          onPressed: accounts.isEmpty ? null : () => setState(() => _step = 2),
           style: _buttonStyle(),
           child: Text(accounts.isEmpty ? 'Add an account to continue' : 'Continue'),
-        ),
-        const SizedBox(height: AppSpacing.s),
-        // A restore saves settings too, which moves the router on to Today.
-        TextButton.icon(
-          onPressed: () => pickAndRestore(context, ref, replacing: false),
-          icon: const Icon(Icons.restore_rounded),
-          label: const Text('Restore from a backup file instead'),
-          style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
         ),
       ],
     );

@@ -20,6 +20,7 @@ import '../../lock/presentation/app_lock_sheet.dart';
 import '../../lock/presentation/lock_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import 'balance_sheet.dart';
+import 'user_name_sheet.dart';
 
 /// Every amount and rule the app works from, so none of it is fixed in code.
 class SettingsScreen extends ConsumerWidget {
@@ -38,11 +39,25 @@ class SettingsScreen extends ConsumerWidget {
     final spendingDays = ref.watch(rulesProvider).value?.where((r) => r.type != DayType.zero).length;
     final goals = ref.watch(goalsProvider).value?.length ?? 0;
     final events = ref.watch(eventsProvider).value?.where((e) => !e.done).length ?? 0;
+    final name = ref.watch(userNameProvider).value;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.l),
         children: [
+          CardGroup(
+            label: 'You',
+            children: [
+              SettingsRow(
+                icon: Icons.person_outline_rounded,
+                tint: Tint.sky,
+                title: 'Your name',
+                value: name ?? 'Not set · the coach uses no name',
+                onTap: () => showUserNameSheet(context, name),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxl),
           CardGroup(
             label: 'Your plan',
             children: [
