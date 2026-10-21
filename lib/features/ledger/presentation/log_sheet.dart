@@ -254,7 +254,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
             ),
           ),
           // The amount stays in view above the choices, which scroll; the
-          // phone's number pad opens with the sheet.
+          // phone's number pad waits until the amount is tapped, so the
+          // favourites and categories can be seen first.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Column(
@@ -269,9 +270,6 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                   child: TextField(
                     key: const ValueKey('amount'),
                     controller: _amountText,
-                    // A new entry starts on the amount; an entry being
-                    // edited or filled in waits until the amount is tapped.
-                    autofocus: widget.editing == null && (widget.prefill?.amount ?? 0) == 0,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     textAlign: TextAlign.center,

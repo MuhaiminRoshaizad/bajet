@@ -404,9 +404,10 @@ inline line of text where it is.
   app); a drag that starts outside it, such as a scroll, leaves it up.
 - There is one way to log: the + beside the tabs in the bottom bar. The sheet
   reads top to bottom as amount, favourites, category, note and day, then a
-  Log button that names what it will save. A new entry opens with the amount
-  focused on the phone's number pad, filling from the right; the amount and
-  the Log button stay in view above it, and only favourites, categories,
+  Log button that names what it will save. A new entry opens with the number
+  pad down, so the favourites and categories show first; tapping the amount
+  brings it up, filling from the right, and the amount and the Log button
+  stay in view above it, and only favourites, categories,
   note and day scroll between them. Every money field uses the same number
   pad. Under the note, the day and the receipt sit as a matched pair of
   raised tiles (`DetailTile`); the receipt tile opens a sheet with Camera and

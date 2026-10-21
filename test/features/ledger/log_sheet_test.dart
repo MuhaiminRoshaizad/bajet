@@ -109,9 +109,12 @@ void main() {
     expect(find.text("RM2.00 over today's RM8.00 plan"), findsOneWidget);
   });
 
-  testWidgets('a new entry opens on the number pad, with Log above it', (tester) async {
+  testWidgets('a new entry opens with the number pad down until the amount is tapped, then Log sits above it', (tester) async {
     await pumpApp(tester);
     await openLogger(tester);
+    expect(tester.testTextInput.isVisible, isFalse, reason: 'the favourites and categories show first');
+    await tester.tap(amountField);
+    await tester.pump();
     expect(tester.widget<TextField>(amountField).keyboardType, TextInputType.number);
     expect(tester.testTextInput.isVisible, isTrue);
 
