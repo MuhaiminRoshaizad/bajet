@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bajet/core/widgets/soft.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,7 +56,13 @@ void main() {
     await tester.enterText(find.byType(TextField), 'How did this week go?');
     await tester.tap(find.byTooltip('Send'));
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.text('Thinking…'), findsOneWidget);
+    expect(find.text('Thinking'), findsOneWidget);
+    // Inside the bubble, ahead of the dots that stand in for its ellipsis.
+    final status = find.text('Thinking');
+    final bubble = find.ancestor(of: status, matching: find.byType(SoftCard));
+    expect(bubble, findsOneWidget);
+    final dot = find.descendant(of: bubble, matching: find.byWidgetPredicate((w) => w is Container && w.constraints?.maxWidth == 7)).first;
+    expect(tester.getTopRight(status).dx, lessThan(tester.getTopLeft(dot).dx));
     expect(find.text('thinking…'), findsOneWidget, reason: 'the header says so too');
 
     // The first turn asks for the month; the second waits.
@@ -70,7 +77,7 @@ void main() {
     second.complete();
     await tester.pumpAndSettle();
     expect(find.textContaining('Looking at: '), findsNothing);
-    expect(find.text('Thinking…'), findsNothing);
+    expect(find.text('Thinking'), findsNothing);
     expect(find.text('You are on track.'), findsOneWidget);
     expect(world.coach.requests, hasLength(2));
   });

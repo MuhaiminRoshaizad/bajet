@@ -340,20 +340,27 @@ class _Bubble extends StatelessWidget {
                 ),
                 child: text,
               )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SoftCard(
-                    padding: padding,
-                    borderRadius: const BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _tail, bottomRight: _round),
-                    child: text,
-                  ),
-                  if (message.looked.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.s, AppSpacing.xs, AppSpacing.s, 0),
-                      child: Text('Looked at: ${message.looked.join(' · ')}', style: TextStyle(color: c.muted, fontSize: 12)),
-                    ),
-                ],
+            : SoftCard(
+                padding: padding,
+                borderRadius: const BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _tail, bottomRight: _round),
+                child: message.looked.isEmpty
+                    ? text
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          text,
+                          // What the reply was drawn from belongs to it, so it
+                          // is the bubble's footer rather than a line between
+                          // messages.
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: AppSpacing.s),
+                            padding: const EdgeInsets.only(top: AppSpacing.s),
+                            decoration: BoxDecoration(border: Border(top: BorderSide(color: c.line, width: 0.5))),
+                            child: Text('Looked at: ${message.looked.join(' · ')}', style: TextStyle(color: c.muted, fontSize: 12)),
+                          ),
+                        ],
+                      ),
               ),
       ),
     );
@@ -465,12 +472,13 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
   Widget build(BuildContext context) {
     final c = context.colors;
     final reading = widget.reading;
+    // No "…": the dots after the words are its ellipsis.
     final status = reading == null
-        ? 'Thinking…'
+        ? 'Thinking'
         : reading.startsWith('A suggestion')
-            ? 'Writing up a suggestion…'
+            ? 'Writing up a suggestion'
             // As the reply's own "Looked at:" line will say, label untouched.
-            : 'Looking at: $reading…';
+            : 'Looking at: $reading';
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.m),
       child: Semantics(
@@ -479,10 +487,21 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
         excludeSemantics: true,
         child: Row(
           children: [
-            SoftCard(
+            Flexible(
+              child: SoftCard(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m + 2),
               borderRadius: const BorderRadius.only(topLeft: _Bubble._round, topRight: _Bubble._round, bottomLeft: _Bubble._tail, bottomRight: _Bubble._round),
-              child: AnimatedBuilder(
+              // The bubble springs to the width of each new status.
+              child: AnimatedSize(
+                duration: AppMotion.enter,
+                curve: Curves.easeOutBack,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(child: Text(status, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 13.5))),
+                    const SizedBox(width: AppSpacing.s),
+                    AnimatedBuilder(
                 animation: _bob,
                 builder: (context, _) => Row(
                   mainAxisSize: MainAxisSize.min,
@@ -499,9 +518,11 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
                   ],
                 ),
               ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(width: AppSpacing.s),
-            Flexible(child: Text(status, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 13))),
+            ),
           ],
         ),
       ),

@@ -81,6 +81,11 @@ void main() {
     expect(world.coach.lookedUp, contains('Balance: RM1,488.00'));
     expect(world.coach.lastSystem, isNot(contains('RM1,488.00')));
     expect(find.text('Looked at: This week'), findsOneWidget);
+    // It is the reply bubble's footer, in the same bubble as the reply.
+    expect(
+      find.ancestor(of: find.text('Looked at: This week'), matching: find.byType(SoftCard)).evaluate().single,
+      find.ancestor(of: find.text('You are on track.'), matching: find.byType(SoftCard)).evaluate().single,
+    );
     // The count is on the list, which catches up once it is back in view.
     await tester.pageBack();
     await tester.pumpAndSettle();
