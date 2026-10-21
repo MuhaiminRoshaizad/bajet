@@ -27,6 +27,7 @@ class DriftBackupRepository implements BackupRepository {
               'buffer': settings.buffer,
               'totalCardColor': settings.totalCardColor,
               'totalCardFinish': settings.totalCardFinish.name,
+              'userName': settings.userName,
             },
       'accounts': [
         for (final a in await _db.select(_db.accounts).get())
@@ -179,6 +180,7 @@ class DriftBackupRepository implements BackupRepository {
                 buffer: s['buffer']! as int,
                 totalCardColor: Value(s['totalCardColor'] as int?),
                 totalCardFinish: Value(CardFinish.values.byName(s['totalCardFinish']! as String)),
+                userName: Value(s['userName'] as String?),
               ));
         }
         await _db.batch((b) {

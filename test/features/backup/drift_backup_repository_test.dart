@@ -262,4 +262,16 @@ void main() {
     expect(await DriftCheckinRepository(target).watchCheckins().first, isEmpty);
     expect(await DriftLedgerRepository(target).watchBalance().first, 150000 - 50000 - 450);
   });
+
+  test("the user's name survives a round trip, and a format 8 backup restores with none", () async {
+    await fill(source);
+    await source.update(source.appSettings).write(const AppSettingsCompanion(userName: Value('Sara')));
+    final v9 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    await DriftBackupRepository(target).restore(v9);
+    expect((await target.select(target.appSettings).getSingle()).userName, 'Sara');
+
+    final v8 = {...v9, 'format': 8, 'settings': {...v9['settings']! as Map<String, Object?>}..remove('userName')};
+    await DriftBackupRepository(target).restore(v8);
+    expect((await target.select(target.appSettings).getSingle()).userName, isNull);
+  });
 }
