@@ -455,6 +455,14 @@ inline line of text where it is.
   at once would lose the gesture to the page's scrolling. Reorderable lists
   also expose move up and move down to TalkBack. Bought goals move to a Done
   list with their date and price.
+- A goal can keep a link to its listing, pasted on the goal form (only web
+  links are kept). In Settings → Goals it shows as a small preview set into
+  the goal (`ListingPreview`): a tile, the site's name ("Marketplace
+  listing" for a Facebook one), and a pill for what it showed when last
+  looked at (Not checked grey, Still up green, Sold red, each also in words)
+  beside the day. Tapping opens it in whichever app views it; back in bajet,
+  a short sheet asks whether it is still for sale. A sold listing offers
+  Add a new listing and Remove, with undo. Today stays as it is.
 - The Sunday check-in compares bajet's balance with the bank. Money missing
   from the bank is logged in one tap as Untracked, with undo; extra money in
   the bank opens the logger as income, filled in, so the user still picks

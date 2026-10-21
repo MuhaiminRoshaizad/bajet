@@ -98,6 +98,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final recents = FakeRecentsPrivacy();
   final splash = FakeSplash();
   final photos = FakePhotoColours();
+  final links = FakeLinks();
   var _nextId = 1;
 
   PlanSettings? get settings => _settings.value;
@@ -569,6 +570,18 @@ class FakeReceipts implements ReceiptStore {
 /// A camera that always sees the same thing: [next] is the photo it takes,
 /// by default a wine-red card on a light grey table, the table taking up
 /// most of the picture.
+/// Opens nothing: records each link handed to another app, and answers as
+/// [opens] says.
+class FakeLinks {
+  final opened = <Uri>[];
+  bool opens = true;
+
+  Future<bool> open(Uri url) async {
+    opened.add(url);
+    return opens;
+  }
+}
+
 class FakePhotoColours implements PhotoColours {
   PhotoSample? next = cardOnTable();
 

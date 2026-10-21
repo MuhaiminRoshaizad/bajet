@@ -487,3 +487,21 @@ logging has to stay one tap.
 **Costs:** every tab's list has to pad its own end (`underBar`) rather
 than sit in a bottom `SafeArea`, and any sheet a tab opens must go over the
 bar (`useRootNavigator`) or its last rows sit beneath it.
+
+## 031: A goal's listing is checked by the user, not by bajet
+
+**Decided:** a goal can keep a link to the listing the user found, and
+bajet hands it to whichever app views it (`url_launcher`, published by the
+Flutter team). Back in bajet, the user says whether it is still up or sold,
+and the goal keeps the answer with the day.
+
+**Why:** the point is to see at once whether the thing is still for sale.
+Marketplace shows a listing only to someone logged in, reading Facebook's
+pages from an app breaks its terms, and bajet has no internet access
+outside the coach. One tap to look, and one to say, gives the same answer
+without any of that.
+
+**Costs:** a new package, and a `<queries>` entry so Android 11 and later
+let bajet find an app for https links. The answer is only as fresh as the
+last look, so the preview shows the day beside it. The link stays on the
+phone and in backups, and the coach never sees it.

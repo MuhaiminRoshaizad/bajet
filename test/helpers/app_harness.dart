@@ -12,6 +12,7 @@ import 'package:bajet/features/lock/presentation/lock_providers.dart';
 import 'package:bajet/features/opening/presentation/opening_providers.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/presentation/plan_providers.dart';
+import 'package:bajet/features/settings/presentation/goal_listing.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -61,6 +62,7 @@ Future<FakeWorld> pumpApp(
       planRepositoryProvider.overrideWithValue(world),
       accountRepositoryProvider.overrideWithValue(world),
       photoColoursProvider.overrideWithValue(world.photos),
+      openLinkProvider.overrideWithValue(world.links.open),
       themeModeStoreProvider.overrideWithValue(world.themeModes),
       lockSettingsStoreProvider.overrideWithValue(world.lockSettings),
       initialLockSettingsProvider.overrideWithValue(world.lockSettings.saved),

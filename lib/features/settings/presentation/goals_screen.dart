@@ -13,13 +13,72 @@ import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
+import 'goal_listing.dart';
 
-/// What the user is saving for, funded in priority order.
-class GoalsScreen extends ConsumerWidget {
+/// What the user is saving for, funded in priority order. A goal with a
+/// listing link shows it as a preview; back from looking at it, the screen
+/// asks whether it is still for sale.
+class GoalsScreen extends ConsumerStatefulWidget {
   const GoalsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GoalsScreen> createState() => _GoalsScreenState();
+}
+
+class _GoalsScreenState extends ConsumerState<GoalsScreen> {
+  late final AppLifecycleListener _resumed;
+
+  @override
+  void initState() {
+    super.initState();
+    _resumed = AppLifecycleListener(onResume: _askPending);
+    // A question put off by the lock, which sends the user to Today.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _askPending());
+  }
+
+  @override
+  void dispose() {
+    _resumed.dispose();
+    super.dispose();
+  }
+
+  Future<void> _open(Goal goal) async {
+    if (await ref.read(openLinkProvider)(goal.listing!.url)) {
+      ref.read(pendingListingProvider.notifier).opened(goal.id);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nothing on this phone could open that link.')));
+    }
+  }
+
+  Future<void> _askPending() async {
+    final id = ref.read(pendingListingProvider);
+    if (id == null || !mounted) return;
+    ref.read(pendingListingProvider.notifier).answered();
+    final goal = (ref.read(goalsProvider).value ?? const <Goal>[]).where((g) => g.id == id).firstOrNull;
+    if (goal?.listing == null) return;
+    final check = await askListingCheck(context, goal!);
+    if (check == null) return;
+    final today = ref.read(todayProvider);
+    await ref.read(planRepositoryProvider).checkListing(goal.id, check, on: today);
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text('${check == ListingCheck.sold ? 'Marked sold' : 'Still up'} · ${Dates.full(today)}')));
+    }
+  }
+
+  Future<void> _removeListing(Goal goal) async {
+    final repo = ref.read(planRepositoryProvider);
+    await repo.updateGoal(goal.copyWith(listing: () => null));
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text("Removed ${goal.name}'s listing"), action: SnackBarAction(label: 'Undo', onPressed: () => repo.updateGoal(goal))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final c = context.colors;
     final goals = ref.watch(goalsProvider).value ?? const <Goal>[];
     final achieved = ref.watch(achievedGoalsProvider).value ?? const <Goal>[];
@@ -53,26 +112,41 @@ class GoalsScreen extends ConsumerWidget {
                         key: ValueKey('goal-${g.id}'),
                         index: i,
                         enabled: goals.length > 1,
-                        child: ListTile(
-                          minTileHeight: 64,
-                          onTap: () => _openForm(context, g),
-                          leading: CircleAvatar(backgroundColor: c.keepSurface, foregroundColor: c.keep, child: Text('${i + 1}')),
-                          title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: Text(
-                            '${Money.format(g.price)} by ${Dates.full(g.targetDate)}'
-                            '${outcomes[g.id] == null ? '' : outcomes[g.id]!.onTrack ? ' · on track' : ' · short'}',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TextButton(onPressed: () => _markBought(context, ref, g), child: const Text('Bought')),
-                              if (goals.length > 1)
-                                Padding(
-                                  padding: const EdgeInsets.all(AppSpacing.m),
-                                  child: Icon(Icons.drag_handle_rounded, color: c.muted),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ListTile(
+                              minTileHeight: 64,
+                              onTap: () => _openForm(context, g),
+                              leading: CircleAvatar(backgroundColor: c.keepSurface, foregroundColor: c.keep, child: Text('${i + 1}')),
+                              title: Text(g.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                              subtitle: Text(
+                                '${Money.format(g.price)} by ${Dates.full(g.targetDate)}'
+                                '${outcomes[g.id] == null ? '' : outcomes[g.id]!.onTrack ? ' · on track' : ' · short'}',
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextButton(onPressed: () => _markBought(context, g), child: const Text('Bought')),
+                                  if (goals.length > 1)
+                                    Padding(
+                                      padding: const EdgeInsets.all(AppSpacing.m),
+                                      child: Icon(Icons.drag_handle_rounded, color: c.muted),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (g.listing case final listing?)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.m),
+                                child: ListingPreview(
+                                  listing: listing,
+                                  onOpen: () => _open(g),
+                                  onReplace: () => _openForm(context, g),
+                                  onRemove: () => _removeListing(g),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                   ],
@@ -118,7 +192,7 @@ class GoalsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _markBought(BuildContext context, WidgetRef ref, Goal goal) async {
+  Future<void> _markBought(BuildContext context, Goal goal) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -176,6 +250,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.goal?.name);
   late final _price = TextEditingController(text: widget.goal == null ? '' : RinggitCentsFormatter.format(widget.goal!.price));
+  late final _link = TextEditingController(text: widget.goal?.listing?.url.toString());
   late DateTime? _date = widget.goal?.targetDate;
   bool _tried = false;
 
@@ -183,6 +258,7 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
   void dispose() {
     _name.dispose();
     _price.dispose();
+    _link.dispose();
     super.dispose();
   }
 
@@ -207,15 +283,18 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
     if (!ok || _date == null) return;
     final repo = ref.read(planRepositoryProvider);
     final price = RinggitCentsFormatter.parse(_price.text);
+    final url = parseListingUrl(_link.text);
     if (widget.goal case final goal?) {
-      await repo.updateGoal(goal.copyWith(name: _name.text, price: price, targetDate: _date));
+      // The same link keeps what it last showed; a new one starts unchecked.
+      final listing = url == null ? null : url == goal.listing?.url ? goal.listing : Listing(url);
+      await repo.updateGoal(goal.copyWith(name: _name.text, price: price, targetDate: _date, listing: () => listing));
       if (mounted) Navigator.of(context).pop();
       return;
     }
     final goals = ref.read(goalsProvider).value ?? const <Goal>[];
     // A new goal joins the end of the queue.
     final priority = goals.fold(0, (m, g) => g.priority > m ? g.priority : m) + 1;
-    await repo.addGoal(name: _name.text, price: price, targetDate: _date!, priority: priority);
+    await repo.addGoal(name: _name.text, price: price, targetDate: _date!, priority: priority, listingUrl: url);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -271,6 +350,8 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
                   padding: const EdgeInsets.only(top: AppSpacing.xs, left: AppSpacing.l),
                   child: Text('Pick the day you plan to buy it', style: TextStyle(color: c.bad, fontSize: 12)),
                 ),
+              const SizedBox(height: AppSpacing.l),
+              ListingLinkField(controller: _link),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save goal')),
               if (widget.goal case final goal?) ...[
