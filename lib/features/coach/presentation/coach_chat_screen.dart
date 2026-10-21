@@ -652,6 +652,7 @@ class _Composer extends StatelessWidget {
             children: [
               Expanded(
                 child: TextField(
+                  autofillHints: null,
                   key: const ValueKey('coach-question'),
                   controller: controller,
                   focusNode: focusNode,

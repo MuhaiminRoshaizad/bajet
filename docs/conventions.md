@@ -31,7 +31,10 @@ without a custom pattern.
 - No field opens the keyboard by itself: nothing sets `autofocus`, so the
   keyboard comes up only when a field is tapped, and a sheet's choices can be
   seen first.
-- `test/conventions_test.dart` checks this across `lib/`.
+- No field offers itself to the phone's autofill. A `TextField` takes part
+  unless `autofillHints` is null, so every one sets `autofillHints: null`;
+  a `TextFormField` already defaults to null.
+- `test/conventions_test.dart` checks both across `lib/`.
 
 ## Generated code
 

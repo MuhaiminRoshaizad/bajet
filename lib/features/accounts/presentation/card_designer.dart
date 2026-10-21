@@ -285,6 +285,7 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                 if (!_isTotal) ...[
                   const SizedBox(height: AppSpacing.m),
                   TextField(
+                    autofillHints: null,
                     controller: _nickname,
                     maxLength: 24,
                     textCapitalization: TextCapitalization.sentences,

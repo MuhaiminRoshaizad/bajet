@@ -162,6 +162,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
                   child: TextField(
+                    autofillHints: null,
                     key: const ValueKey('search-chats'),
                     controller: _search,
                     textInputAction: TextInputAction.search,

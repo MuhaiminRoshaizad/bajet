@@ -20,7 +20,7 @@ class UserNameField extends StatelessWidget {
   Widget build(BuildContext context) => TextField(
         key: const ValueKey('user-name'),
         controller: controller,
-        autofillHints: const [AutofillHints.givenName],
+        autofillHints: null,
         maxLength: userNameLength,
         textCapitalization: TextCapitalization.words,
         keyboardType: TextInputType.name,

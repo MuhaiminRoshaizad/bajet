@@ -268,6 +268,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                   radius: AppRadii.card,
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
                   child: TextField(
+                    autofillHints: null,
                     key: const ValueKey('amount'),
                     controller: _amountText,
                     keyboardType: TextInputType.number,
@@ -374,6 +375,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                   const SizedBox(height: AppSpacing.m),
                   // Full width, so the label is never cut short.
                   TextField(
+                    autofillHints: null,
                     controller: _note,
                     maxLength: 60,
                     textCapitalization: TextCapitalization.sentences,

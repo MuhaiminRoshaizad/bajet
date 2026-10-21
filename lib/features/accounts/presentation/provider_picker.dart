@@ -36,6 +36,7 @@ class ProviderPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextField(
+        autofillHints: null,
         controller: controller,
         readOnly: true,
         onTap: () => _open(context),
@@ -115,6 +116,7 @@ class _ProviderSheetState extends State<_ProviderSheet> {
               const SizedBox(height: AppSpacing.m),
               // The list is there to scroll first; this waits for a tap.
               TextField(
+                autofillHints: null,
                 key: const ValueKey('provider-search'),
                 controller: _query,
                 textCapitalization: TextCapitalization.words,
