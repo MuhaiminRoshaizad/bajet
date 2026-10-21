@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
@@ -95,7 +96,13 @@ class InsightsScreen extends ConsumerWidget {
                         children: [
                           const _Title('Where the money went'),
                           const SizedBox(height: AppSpacing.l),
-                          CategoryRing(byCategory: i.outByCategory, categories: categories),
+                          CategoryRing(
+                            byCategory: i.outByCategory,
+                            categories: categories,
+                            entries: i.outEntries,
+                            today: ref.watch(todayProvider),
+                            onOpenEntry: (e) => showLogSheet(context, editing: e),
+                          ),
                         ],
                       ),
                     ),

@@ -275,6 +275,14 @@ Insights shows where the money went as a ring (`CategoryRing`): every
 category of money out, fixed ones labelled Fixed, the total in the middle and
 a key with each one's amount and share. Slices take their colours by size, so
 neighbours never match; past six, the smallest share one "Everything else".
+Every amount and share ends on the card's right edge. Tapping a slice, or
+its row in the key, opens that category: the slice springs out and thickens
+(`AppMotion.spring`), the others fade back, the middle changes over without a
+bounce to the category, its total, share and number of entries, and its
+entries open under its row like a drawer, newest first, five then "Show
+all" (`CategoryEntries`, the same `EntryTile` as History, opening the same
+edit sheet). Tapping it again, or the ring's middle, closes it; one is open
+at a time, and a new period closes it.
 
 ### Account cards in motion
 
