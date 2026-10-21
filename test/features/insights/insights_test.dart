@@ -44,6 +44,15 @@ void main() {
     expect(i.outByCategory, [('bills', 50000), ('food', 3150), ('transport', 3000), (untrackedCategoryKey, 2000)]);
   });
 
+  test("a period keeps the entries behind each category's total, newest first", () {
+    final i = run(InsightsPeriod.month);
+    // Income and the day logged back before the opening are not among them.
+    expect([for (final e in i.outEntries) e.amount], [450, 2000, 700, 3000, 1200, 800, 50000]);
+    for (final (key, total) in i.outByCategory) {
+      expect(i.outEntries.where((e) => e.categoryKey == key).fold(0, (s, e) => s + e.amount), total, reason: key);
+    }
+  });
+
   test('habits count finished days and whole weeks only', () {
     final i = run(InsightsPeriod.month);
     expect((i.daysSoFar, i.zeroSpendDays, i.daysWithinPlan), (14, 10, 12));

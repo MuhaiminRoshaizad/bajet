@@ -37,6 +37,7 @@ class Insights {
     required this.untrackedOut,
     required this.flexibleByCategory,
     required this.outByCategory,
+    required this.outEntries,
     required this.lastDays,
     required this.zeroSpendDays,
     required this.daysWithinPlan,
@@ -65,6 +66,10 @@ class Insights {
   /// All money out per category key, fixed and untracked included, largest
   /// first.
   final List<(String, int)> outByCategory;
+
+  /// Every entry of money out behind [outByCategory], newest first, so a
+  /// category can show what it was spent on.
+  final List<Entry> outEntries;
 
   /// The fourteen days up to [to], oldest first, whatever the period. Days
   /// before the opening date carry no plan and no spending.
@@ -187,6 +192,8 @@ Insights insights({
     untrackedOut: sum(out.where((e) => e.categoryKey == untrackedCategoryKey)),
     flexibleByCategory: byCategory(flexible),
     outByCategory: byCategory(out),
+    // Newest day first; within a day, the one logged last.
+    outEntries: [...out]..sort((a, b) => b.day != a.day ? b.day.compareTo(a.day) : b.id.compareTo(a.id)),
     lastDays: [
       for (var i = 13; i >= 0; i--)
         () {
