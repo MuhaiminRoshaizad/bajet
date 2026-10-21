@@ -173,7 +173,7 @@ class CoachController extends Notifier<CoachChat> {
       final answer = await coachAnswer(
         client: client,
         apiKey: key,
-        system: coachSystemPrompt(today, _personality),
+        system: coachSystemPrompt(today, _personality, face: _face, userName: await ref.read(coachSettingsRepositoryProvider).watchUserName().first),
         conversation: conversation,
         tools: [...coachLookups, if (older.isNotEmpty) pastChatsLookup, ...proposalTools],
         lookup: (name, input) {

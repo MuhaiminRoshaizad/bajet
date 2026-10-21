@@ -166,11 +166,14 @@ Everything, Professional), stored with the chosen avatar and the memory
 switch in `coach_settings` through `CoachSettingsRepository`. Those are
 the defaults a new chat starts with; each chat then keeps its own coach and
 personality.
-`coachSystemPrompt(today, personality)` puts the same fixed rules first in
-every request (only bajet's money, refuse anything else in character, do
-the money half of a mixed request, no investment picks, whatever the user
-asks it to pretend) and only the last paragraph, the voice, changes
-(decision 024).
+`coachSystemPrompt(today, personality, face:, userName:)` puts the same
+fixed rules first in every request (only bajet's money, refuse anything
+else in character, do the money half of a mixed request, no investment
+picks, whatever the user asks it to pretend) and only the last paragraph,
+the voice, changes (decision 024). It opens with the chat's coach by name
+and the name the user gave in setup or Settings, or an instruction to use
+none, and says the coaches are never the user: with neither, a model once
+took a coach's hello in the chat for the user's name.
 
 Every message passes `coach_guard.dart` first. A message the same as the
 last one, sent again within a minute, is answered on the phone. `gate` then

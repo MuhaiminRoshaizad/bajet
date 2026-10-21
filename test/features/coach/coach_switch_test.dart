@@ -133,4 +133,18 @@ void main() {
     expect(well(3).opacity, 1);
     expect(well(0).opacity, 0);
   });
+
+  testWidgets("each question tells the coach the chat's coach and the user's name", (tester) async {
+    final world = await openCoach(tester, seed: (w) => w.coachSettings.saveUserName('Sara'));
+    await ask(tester, 'How did this week go?');
+    expect(world.coach.lastSystem, startsWith('You are bajety'));
+    expect(world.coach.lastSystem, contains('The user\'s name is "Sara".'));
+
+    await openChatSettings(tester);
+    await tester.tap(find.descendant(of: find.byType(BottomSheet), matching: find.text('Mei')));
+    await tester.pumpAndSettle();
+    await closeSheet(tester);
+    await ask(tester, 'And this month?');
+    expect(world.coach.lastSystem, startsWith('You are Mei'));
+  });
 }
