@@ -42,6 +42,12 @@ void main() {
     }
   });
 
+  testWidgets('each tab sits in the middle of the hollow', (tester) async {
+    await pumpApp(tester);
+    final hollow = tester.getCenter(find.byKey(const ValueKey('tab-hollow')));
+    expect(tester.getCenter(find.byKey(const ValueKey('tab-Today'))).dy, moreOrLessEquals(hollow.dy, epsilon: 0.5));
+  });
+
   testWidgets('the hollow under the open tab springs across to the next one', (tester) async {
     await pumpApp(tester);
     final hollow = find.byKey(const ValueKey('tab-hollow'));

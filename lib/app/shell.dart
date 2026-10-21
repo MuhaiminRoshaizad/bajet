@@ -188,11 +188,15 @@ class _TabPillState extends State<_TabPill> with SingleTickerProviderStateMixin 
                 builder: (context, child) => Positioned(left: _at.value * tab + 2, width: tab - 4, top: inset, bottom: inset, child: child!),
                 child: const SoftWell(key: ValueKey('tab-hollow'), radius: AppRadii.pill, padding: EdgeInsets.zero),
               ),
-              Row(
-                children: [
-                  for (final (i, t) in _tabs.indexed)
-                    Expanded(child: _TabButton(key: ValueKey('tab-${t.label}'), tab: t, selected: widget.index == i, onTap: () => widget.onTab(i))),
-                ],
+              // The pill's full height, so each tab sits in the middle of the
+              // hollow rather than at the top of the pill.
+              Positioned.fill(
+                child: Row(
+                  children: [
+                    for (final (i, t) in _tabs.indexed)
+                      Expanded(child: _TabButton(key: ValueKey('tab-${t.label}'), tab: t, selected: widget.index == i, onTap: () => widget.onTab(i))),
+                  ],
+                ),
               ),
             ],
           );
