@@ -4,6 +4,10 @@ library;
 
 import 'dart:math' as math;
 
+import 'listing.dart';
+
+export 'listing.dart';
+
 enum DayType { zero, spend, flex }
 
 /// One weekday of the spending rhythm. [weekday] follows [DateTime.weekday]:
@@ -174,6 +178,7 @@ class Goal {
     required this.targetDate,
     this.priority = 1,
     this.achievedOn,
+    this.listing,
   });
 
   final int id;
@@ -187,8 +192,18 @@ class Goal {
   /// The day it was marked bought; null while it is still being saved for.
   final DateTime? achievedOn;
 
-  Goal copyWith({String? name, int? price, DateTime? targetDate}) =>
-      Goal(id: id, name: name ?? this.name, price: price ?? this.price, targetDate: targetDate ?? this.targetDate, priority: priority, achievedOn: achievedOn);
+  /// Where the thing is for sale, when the user keeps a link to it.
+  final Listing? listing;
+
+  Goal copyWith({String? name, int? price, DateTime? targetDate, Listing? Function()? listing}) => Goal(
+        id: id,
+        name: name ?? this.name,
+        price: price ?? this.price,
+        targetDate: targetDate ?? this.targetDate,
+        priority: priority,
+        achievedOn: achievedOn,
+        listing: listing == null ? this.listing : listing(),
+      );
 }
 
 DateTime calendarDay(DateTime d) => DateTime.utc(d.year, d.month, d.day);

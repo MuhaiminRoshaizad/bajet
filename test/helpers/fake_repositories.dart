@@ -451,7 +451,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
     await add(EntryDraft(day: on, isIncome: false, amount: goal.price, categoryKey: goalCategoryKey, label: goal.name));
     _goals.value = [..._goals.value.where((g) => g.id != id)];
     _achieved.value = [
-      Goal(id: goal.id, name: goal.name, price: goal.price, targetDate: goal.targetDate, priority: goal.priority, achievedOn: on),
+      Goal(id: goal.id, name: goal.name, price: goal.price, targetDate: goal.targetDate, priority: goal.priority, achievedOn: on, listing: goal.listing),
       ..._achieved.value,
     ];
   }
@@ -497,7 +497,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
         for (final (i, id) in ids.indexed)
           () {
             final g = _goals.value.firstWhere((g) => g.id == id);
-            return Goal(id: g.id, name: g.name, price: g.price, targetDate: g.targetDate, priority: i + 1);
+            return Goal(id: g.id, name: g.name, price: g.price, targetDate: g.targetDate, priority: i + 1, listing: g.listing);
           }(),
       ];
 
@@ -505,11 +505,19 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   Stream<List<Goal>> watchActiveGoals() => _goals.stream.map((all) => [...all]..sort((a, b) => a.priority.compareTo(b.priority)));
 
   @override
-  Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1}) async {
+  Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1, Uri? listingUrl}) async {
     final id = _nextId++;
-    _goals.value = [..._goals.value, Goal(id: id, name: name.trim(), price: price, targetDate: targetDate, priority: priority)];
+    _goals.value = [
+      ..._goals.value,
+      Goal(id: id, name: name.trim(), price: price, targetDate: targetDate, priority: priority, listing: listingUrl == null ? null : Listing(listingUrl)),
+    ];
     return id;
   }
+
+  @override
+  Future<void> checkListing(int id, ListingCheck check, {required DateTime on}) async => _goals.value = [
+        for (final g in _goals.value) g.id == id ? g.copyWith(listing: () => Listing(g.listing!.url, check: check, checkedOn: on)) : g,
+      ];
 }
 
 class FakeFavourites implements FavouriteRepository {

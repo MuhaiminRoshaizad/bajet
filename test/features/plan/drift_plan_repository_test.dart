@@ -2,6 +2,7 @@ import 'package:bajet/core/database/app_database.dart';
 import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/data/drift_plan_repository.dart';
+import 'package:bajet/features/plan/domain/listing.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -182,5 +183,27 @@ void main() {
     await plan.updateRecurring(rent.copyWith(accountId: 1));
     expect((await plan.watchRecurring().first).single.accountId, 1);
     expect((await db.select(db.entries).getSingle()).accountId, cash);
+  });
+
+  test("a goal keeps its listing link and what it showed, through a check, an edit, a delete and its undo", () async {
+    final url = Uri.parse('https://www.facebook.com/marketplace/item/1/');
+    final id = await plan.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1), listingUrl: url);
+    expect((await plan.watchActiveGoals().first).single.listing, Listing(url));
+
+    await plan.checkListing(id, ListingCheck.sold, on: d(2026, 10, 22));
+    final checked = (await plan.watchActiveGoals().first).single;
+    expect(checked.listing, Listing(url, check: ListingCheck.sold, checkedOn: d(2026, 10, 22)));
+
+    final other = Uri.parse('https://shopee.com.my/item/2');
+    await plan.updateGoal(checked.copyWith(listing: () => Listing(other)));
+    final replaced = (await plan.watchActiveGoals().first).single;
+    expect(replaced.listing, Listing(other), reason: 'a new link starts unchecked');
+
+    await plan.deleteGoal(id);
+    await plan.restoreGoal(replaced);
+    expect((await plan.watchActiveGoals().first).single.listing, Listing(other));
+
+    await plan.updateGoal(replaced.copyWith(listing: () => null));
+    expect((await plan.watchActiveGoals().first).single.listing, isNull);
   });
 }

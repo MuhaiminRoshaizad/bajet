@@ -262,9 +262,20 @@ class DriftPlanRepository implements PlanRepository {
       ..where((g) => g.status.equalsValue(GoalStatus.active))
       ..orderBy([(g) => OrderingTerm(expression: g.priority), (g) => OrderingTerm(expression: g.targetDate)]);
     return q.watch().map((rows) => [
-          for (final r in rows) domain.Goal(id: r.id, name: r.name, price: r.price, targetDate: r.targetDate, priority: r.priority),
+          for (final r in rows) domain.Goal(id: r.id, name: r.name, price: r.price, targetDate: r.targetDate, priority: r.priority, listing: _listing(r)),
         ]);
   }
+
+  static domain.Listing? _listing(Goal r) => switch (r.listingUrl == null ? null : domain.parseListingUrl(r.listingUrl!)) {
+        null => null,
+        final url => domain.Listing(url, check: r.listingState == null ? null : domain.ListingCheck.values.byName(r.listingState!.name), checkedOn: r.listingCheckedOn),
+      };
+
+  static GoalsCompanion _listingColumns(domain.Listing? l) => GoalsCompanion(
+        listingUrl: Value(l?.url.toString()),
+        listingState: Value(l?.check == null ? null : ListingState.values.byName(l!.check!.name)),
+        listingCheckedOn: Value(l?.checkedOn),
+      );
 
   @override
   Stream<List<domain.Goal>> watchAchievedGoals() {
@@ -273,7 +284,7 @@ class DriftPlanRepository implements PlanRepository {
       ..orderBy([(g) => OrderingTerm(expression: g.achievedOn, mode: OrderingMode.desc)]);
     return q.watch().map((rows) => [
           for (final r in rows)
-            domain.Goal(id: r.id, name: r.name, price: r.price, targetDate: r.targetDate, priority: r.priority, achievedOn: r.achievedOn),
+            domain.Goal(id: r.id, name: r.name, price: r.price, targetDate: r.targetDate, priority: r.priority, achievedOn: r.achievedOn, listing: _listing(r)),
         ]);
   }
 
@@ -285,8 +296,9 @@ class DriftPlanRepository implements PlanRepository {
       });
 
   @override
-  Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1}) =>
-      _db.into(_db.goals).insert(GoalsCompanion.insert(name: name.trim(), price: price, targetDate: targetDate, priority: Value(priority)));
+  Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1, Uri? listingUrl}) => _db
+      .into(_db.goals)
+      .insert(GoalsCompanion.insert(name: name.trim(), price: price, targetDate: targetDate, priority: Value(priority), listingUrl: Value(listingUrl?.toString())));
 
   @override
   Future<void> markGoalBought(int id, {required DateTime on}) => _db.transaction(() async {
@@ -308,8 +320,12 @@ class DriftPlanRepository implements PlanRepository {
   @override
   Future<void> updateGoal(domain.Goal goal) async {
     await (_db.update(_db.goals)..where((g) => g.id.equals(goal.id)))
-        .write(GoalsCompanion(name: Value(goal.name.trim()), price: Value(goal.price), targetDate: Value(goal.targetDate)));
+        .write(_listingColumns(goal.listing).copyWith(name: Value(goal.name.trim()), price: Value(goal.price), targetDate: Value(goal.targetDate)));
   }
+
+  @override
+  Future<void> checkListing(int id, domain.ListingCheck check, {required DateTime on}) => (_db.update(_db.goals)..where((g) => g.id.equals(id)))
+      .write(GoalsCompanion(listingState: Value(ListingState.values.byName(check.name)), listingCheckedOn: Value(on)));
 
   @override
   Future<void> deleteGoal(int id) async {
@@ -318,6 +334,7 @@ class DriftPlanRepository implements PlanRepository {
 
   @override
   Future<void> restoreGoal(domain.Goal goal) async {
+    final listing = _listingColumns(goal.listing);
     await _db.into(_db.goals).insert(GoalsCompanion.insert(
           id: Value(goal.id),
           name: goal.name,
@@ -326,6 +343,9 @@ class DriftPlanRepository implements PlanRepository {
           priority: Value(goal.priority),
           status: Value(goal.achievedOn == null ? GoalStatus.active : GoalStatus.achieved),
           achievedOn: Value(goal.achievedOn),
+          listingUrl: listing.listingUrl,
+          listingState: listing.listingState,
+          listingCheckedOn: listing.listingCheckedOn,
         ));
   }
 }

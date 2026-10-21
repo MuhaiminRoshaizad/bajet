@@ -96,14 +96,18 @@ abstract interface class PlanRepository {
 
   /// Sets active goals' priorities to follow [ids], first is highest.
   Future<void> reorderGoals(List<int> ids);
-  Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1});
+  Future<int> addGoal({required String name, required int price, required DateTime targetDate, int priority = 1, Uri? listingUrl});
 
   /// Logs the purchase as an expense on [on] and marks the goal achieved, in
   /// one transaction, so it leaves the active goals.
   Future<void> markGoalBought(int id, {required DateTime on});
 
-  /// Changes a goal's name, price and buy day.
+  /// Changes a goal's name, price, buy day and listing, with what the
+  /// listing last showed.
   Future<void> updateGoal(Goal goal);
+
+  /// Records what the goal's listing showed when the user looked on [on].
+  Future<void> checkListing(int id, ListingCheck check, {required DateTime on});
 
   /// Removes a goal, active or bought. A bought goal's purchase stays in
   /// History as the entry it was logged as.
