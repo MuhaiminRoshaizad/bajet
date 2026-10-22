@@ -12,7 +12,8 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// finish; cards that had it are `matte`. 8: `checkins`. 9: settings carry
 /// `userName`, what the coach calls the user. 10: goals carry `listingState`
 /// and `listingCheckedOn`, what their listing showed when last looked at.
-const backupFormatVersion = 10;
+/// 11: categories and entries carry `spendKind`, `want` or `need`.
+const backupFormatVersion = 11;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -110,6 +111,18 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
     final goals = [for (final g in (b['goals'] as List?) ?? const []) {...(g as Map<String, Object?>), 'listingState': null, 'listingCheckedOn': null}];
     b = {...b, 'format': 10, 'goals': goals};
     format = 10;
+  }
+  if (format == 10) {
+    // As version 13 of the database: Family is a need, the rest wants, and
+    // each spend takes its category's kind.
+    String kindOf(Object? key) => key == 'family' ? 'need' : 'want';
+    final categories = [for (final c in (b['categories'] as List?) ?? const []) {...(c as Map<String, Object?>), 'spendKind': kindOf(c['key'])}];
+    final entries = [
+      for (final e in (b['entries'] as List?) ?? const [])
+        {...(e as Map<String, Object?>), 'spendKind': e['kind'] == 'expense' ? kindOf(e['categoryKey']) : 'want'},
+    ];
+    b = {...b, 'format': 11, 'categories': categories, 'entries': entries};
+    format = 11;
   }
   return b;
 }

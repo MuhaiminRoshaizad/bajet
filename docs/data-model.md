@@ -286,6 +286,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 8      | `checkins`, the finished check-ins; older files restore with none |
 | 9      | Settings carry `userName`; older files restore with none |
 | 10     | Each goal carries `listingState` and `listingCheckedOn`; older files restore with neither |
+| 11     | Categories and entries carry `spendKind`; in older files Family and its spends become `need`, everything else `want` |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that

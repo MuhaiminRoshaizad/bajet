@@ -296,4 +296,25 @@ void main() {
     final older = await target.select(target.goals).getSingle();
     expect((older.listingUrl, older.listingState, older.listingCheckedOn), ('https://example.com/item/1', null, null));
   });
+
+  test("each spend's kind survives a round trip, and a format 10 backup sorts Family's as needs", () async {
+    await fill(source);
+    await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 4500, categoryKey: 'family', spendKind: SpendKind.need));
+    await DriftLedgerRepository(source).add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1040, categoryKey: 'personal', spendKind: SpendKind.need));
+    final v11 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    await DriftBackupRepository(target).restore(v11);
+    Future<Map<String, SpendKind>> kinds() async => {for (final e in await target.select(target.entries).get()) e.label ?? e.categoryKey: e.spendKind};
+    expect(await kinds(), {'Rent': SpendKind.want, 'Coffee': SpendKind.want, 'family': SpendKind.need, 'personal': SpendKind.need});
+
+    final v10 = {
+      ...v11,
+      'format': 10,
+      'categories': [for (final c in v11['categories']! as List) {...(c as Map<String, Object?>)}..remove('spendKind')],
+      'entries': [for (final e in v11['entries']! as List) {...(e as Map<String, Object?>)}..remove('spendKind')],
+    };
+    await DriftBackupRepository(target).restore(v10);
+    expect(await kinds(), {'Rent': SpendKind.want, 'Coffee': SpendKind.want, 'family': SpendKind.need, 'personal': SpendKind.want});
+    final family = await (target.select(target.categories)..where((c) => c.key.equals('family'))).getSingle();
+    expect(family.spendKind, SpendKind.need);
+  });
 }

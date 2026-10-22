@@ -62,6 +62,7 @@ class DriftBackupRepository implements BackupRepository {
             'kind': c.kind.name,
             'tint': c.tint,
             'isFixed': c.isFixed,
+            'spendKind': c.spendKind.name,
             'monthlyBudget': c.monthlyBudget,
             'archived': c.archived,
             'sortOrder': c.sortOrder,
@@ -134,6 +135,7 @@ class DriftBackupRepository implements BackupRepository {
             'plannedEventId': e.plannedEventId,
             'plannedEventOn': e.plannedEventOn == null ? null : _day.toSql(e.plannedEventOn!),
             'accountId': e.accountId,
+            'spendKind': e.spendKind.name,
           },
       ],
       'checkins': [
@@ -219,6 +221,7 @@ class DriftBackupRepository implements BackupRepository {
                 kind: EntryKind.values.byName(c['kind']! as String),
                 tint: c['tint']! as String,
                 isFixed: Value(c['isFixed']! as bool),
+                spendKind: Value(SpendKind.values.byName(c['spendKind']! as String)),
                 monthlyBudget: Value(c['monthlyBudget'] as int?),
                 archived: Value(c['archived']! as bool),
                 sortOrder: Value(c['sortOrder']! as int),
@@ -303,6 +306,7 @@ class DriftBackupRepository implements BackupRepository {
                 plannedEventId: Value(e['plannedEventId'] as int?),
                 plannedEventOn: Value(e['plannedEventOn'] == null ? null : _day.fromSql(e['plannedEventOn']! as String)),
                 accountId: e['accountId']! as int,
+                spendKind: Value(SpendKind.values.byName(e['spendKind']! as String)),
               ),
           ]);
           b.insertAll(_db.checkins, [
