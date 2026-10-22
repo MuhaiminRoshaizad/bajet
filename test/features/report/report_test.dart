@@ -73,7 +73,7 @@ void main() {
       rules: rules,
     );
     final text = reportText(i: week, accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
-    expect(text, contains('Money out: RM8.00\n\nMoney out by kind:\n- Flexible: RM8.00\n'));
+    expect(text, contains('Money out: RM8.00\n\nMoney out by kind:\n- Wants: RM8.00\n'));
     for (final missing in ['Money in', 'Spent more than came in', 'Kept', 'Fixed', 'None']) {
       expect(text, isNot(contains(missing)), reason: missing);
     }
@@ -94,12 +94,28 @@ void main() {
   test('the CSV has one row per entry, oldest first, with its account, quoted where needed', () {
     final csv = reportCsv(entriesIn(month(), entries.reversed.toList()), categories, lines());
     expect(csv.split('\r\n'), [
-      'date,type,account,category,label,note,amount',
-      '2026-07-01,income,Main account,Salary,Salary,,3000.00',
-      '2026-07-02,expense,Wallet,Food,Lunch,"With team, then ""coffee""",8.00',
-      '2026-07-03,expense,Main account,Bills,Rent,,500.00',
+      'date,type,account,category,label,note,amount,kind',
+      '2026-07-01,income,Main account,Salary,Salary,,3000.00,',
+      '2026-07-02,expense,Wallet,Food,Lunch,"With team, then ""coffee""",8.00,want',
+      '2026-07-03,expense,Main account,Bills,Rent,,500.00,planned',
       '',
     ]);
+  });
+
+  test('a need is its own line in the text and marked need in the CSV', () {
+    final need = Entry(id: 4, day: d(7, 3), isIncome: false, amount: 4500, categoryKey: 'family', label: 'Groceries', accountId: 1, spendKind: SpendKind.need);
+    final i = insights(
+      period: InsightsPeriod.month,
+      today: d(7, 3),
+      openingDate: d(7, 1),
+      weeklyCap: 5000,
+      entries: [...entries, need],
+      categories: demoCategories,
+      rules: rules,
+    );
+    final text = reportText(i: i, accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
+    expect(text, contains('- Planned (bills, goals, events): RM500.00\n- Wants: RM8.00\n- Needs (bought anyway or asked for): RM45.00\n'));
+    expect(reportCsv([need], categories, lines()).split('\r\n')[1], endsWith(',45.00,need'));
   });
 
   test('the PDF builds with the bundled font, over several pages if needed', () async {

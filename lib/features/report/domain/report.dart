@@ -74,9 +74,8 @@ String reportText({
     if (i.moneyOut > 0) ...[
       '',
       'Money out by kind:',
-      if (i.fixedOut > 0) '- Fixed: ${Money.format(i.fixedOut)}',
-      if (i.flexibleOut > 0) '- Flexible: ${Money.format(i.flexibleOut)}',
-      if (i.untrackedOut > 0) '- Untracked: ${Money.format(i.untrackedOut)}',
+      for (final (part, name) in outPartNames)
+        if (i.outOf(part) > 0) '- $name: ${Money.format(i.outOf(part))}',
       '',
       'Money out by category:',
       for (final (key, amount) in i.outByCategory) '- ${categoryName(categories, key)}: ${Money.format(amount)}',
@@ -98,6 +97,14 @@ String reportText({
   return lines.join('\n');
 }
 
+/// Money out's parts as reports name them, in the order Insights shows.
+const outPartNames = [
+  (OutPart.planned, 'Planned (bills, goals, events)'),
+  (OutPart.wants, 'Wants'),
+  (OutPart.needs, 'Needs (bought anyway or asked for)'),
+  (OutPart.untracked, 'Untracked'),
+];
+
 /// A category's label, marked when it is fixed spending such as a bill.
 String categoryName(Map<String, Category> categories, String key) {
   final c = categories[key];
@@ -106,12 +113,16 @@ String categoryName(Map<String, Category> categories, String key) {
 
 /// Every entry in [entries] as CSV for a spreadsheet: one header row, ISO
 /// dates so spreadsheets sort them, and plain amounts with the direction in
-/// its own column. Fields are quoted per RFC 4180 where needed.
+/// its own column. A spend's kind comes last, so older sheets keep their
+/// columns: planned, want or need. Fields are quoted per RFC 4180 where
+/// needed.
 String reportCsv(List<Entry> entries, Map<String, Category> categories, List<AccountLine> accounts) {
   String field(String v) => RegExp(r'[",\r\n]').hasMatch(v) ? '"${v.replaceAll('"', '""')}"' : v;
   String day(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  final fixed = {for (final c in categories.values) if (c.isFixed) c.key};
+  String kind(Entry e) => e.isIncome ? '' : (e.isFlexible(fixed) ? e.spendKind.name : 'planned');
   final rows = [
-    'date,type,account,category,label,note,amount',
+    'date,type,account,category,label,note,amount,kind',
     for (final e in entries)
       [
         day(e.day),
@@ -121,6 +132,7 @@ String reportCsv(List<Entry> entries, Map<String, Category> categories, List<Acc
         field(e.label ?? ''),
         field(e.note ?? ''),
         (e.amount / 100).toStringAsFixed(2),
+        kind(e),
       ].join(','),
   ];
   // RFC 4180 separates records with CRLF.

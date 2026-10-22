@@ -505,11 +505,13 @@ inline line of text where it is.
   same ranges as Insights; opened from Insights it starts on the range shown.
   The Share button is pinned to the bottom so it stays in view however long
   the preview runs. Every format names each entry's account and lists money
-  out by every category, fixed ones marked; with two or more accounts, text
+  out by every category, fixed ones marked; text and PDF give money out by
+  kind (planned, wants, needs, untracked) and the CSV ends each spend's row
+  with its kind (`planned`, `want` or `need`); with two or more accounts, text
   and PDF also give each account's money in and out for the period and what
   it holds now (`byAccount`). Moves between the user's own accounts are
   neither in nor out. The balance shown is today's, whatever the period.
-  Lines with nothing to say, such as Fixed RM0.00, are left out, and a week
+  Lines with nothing to say, such as Planned RM0.00, are left out, and a week
   shows no Kept or "Spent more than came in", since a week rarely holds a
   payday.
 - The current week is reported as the weekly check-in (`weeklyCheckin`),

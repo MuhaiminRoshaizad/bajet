@@ -26,8 +26,8 @@ own API key; without a key, nothing leaves the phone.
   and needs, a ring of where the money went, the last fourteen days against
   the plan, and habits, for any week, any month or all time.
 - **Reports** share any of those periods as text, a PDF or a CSV file, broken
-  down by account and category, and PDFs, CSVs and backups save straight to
-  the phone.
+  down by account, category and kind, and PDFs, CSVs and backups save
+  straight to the phone.
 - **Sunday check-in** compares the balance with the bank, logs any gap, and saves next week's target; the week is shared as text, a PDF or an image card.
 - **Launcher shortcuts**: long-press the app icon to open the logger, empty
   or filled in from a favourite.
