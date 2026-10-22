@@ -9,14 +9,17 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/under_bar.dart';
 import '../../ledger/domain/ledger_models.dart';
+import '../../ledger/presentation/entry_drawer.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
+import '../../ledger/presentation/spend_kind_choice.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../settings/presentation/goal_listing.dart';
 import '../domain/insights.dart';
@@ -89,7 +92,7 @@ class InsightsScreen extends ConsumerWidget {
                 spacing: AppSpacing.l,
                 children: [
                   _Totals(i: i),
-                  SoftCard(child: _Split(i: i)),
+                  SoftCard(child: _Split(i: i, categories: categories, today: ref.watch(todayProvider))),
                   if (i.outByCategory.isNotEmpty)
                     SoftCard(
                       child: Column(
@@ -210,27 +213,41 @@ class _Tile extends StatelessWidget {
   }
 }
 
-/// Money out as one bar in three parts, each also named in words below.
-class _Split extends StatelessWidget {
-  const _Split({required this.i});
+/// Money out as one bar in parts, each also named in words below: planned,
+/// wants, needs and, when there is any, untracked. A part opens its entries
+/// under it, like the ring's slices.
+class _Split extends StatefulWidget {
+  const _Split({required this.i, required this.categories, required this.today});
 
   final Insights i;
+  final Map<String, Category> categories;
+  final DateTime today;
+
+  @override
+  State<_Split> createState() => _SplitState();
+}
+
+class _SplitState extends State<_Split> {
+  OutPart? _open;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final i = widget.i;
+    final still = MediaQuery.disableAnimationsOf(context);
     final parts = [
-      ('Fixed', 'bills, goals, events', i.fixedOut, c.tintInk(Tint.teal)),
-      ('Flexible', 'day to day', i.flexibleOut, c.tintInk(Tint.apricot)),
-      if (i.untrackedOut > 0) ('Untracked', 'not logged', i.untrackedOut, c.bad),
+      (OutPart.planned, 'Planned', 'bills, goals, events', c.tintInk(Tint.teal)),
+      (OutPart.wants, 'Wants', 'your choice', SpendKind.want.colour(c)),
+      (OutPart.needs, 'Needs', 'bought anyway or asked for', SpendKind.need.colour(c)),
+      if (i.untrackedOut > 0) (OutPart.untracked, 'Untracked', 'not logged', c.bad),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Title('Fixed and flexible', trailing: 'of ${Money.format(i.moneyOut)}'),
+        _Title('Spending by kind', trailing: 'of ${Money.format(i.moneyOut)}'),
         const SizedBox(height: AppSpacing.m),
         Semantics(
-          label: [for (final p in parts) '${p.$1} ${Money.format(p.$3)}'].join(', '),
+          label: [for (final p in parts) '${p.$2} ${Money.format(i.outOf(p.$1))}'].join(', '),
           excludeSemantics: true,
           child: SizedBox(
             height: 16,
@@ -240,10 +257,10 @@ class _Split extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final (n, p) in parts.where((p) => p.$3 > 0).indexed) ...[
+                  for (final (n, p) in parts.where((p) => i.outOf(p.$1) > 0).indexed) ...[
                     if (n > 0) const SizedBox(width: 2),
                     Expanded(
-                      flex: math.max(1, (p.$3 / math.max(1, i.moneyOut) * 1000).round()),
+                      flex: math.max(1, (i.outOf(p.$1) / math.max(1, i.moneyOut) * 1000).round()),
                       child: DecoratedBox(decoration: BoxDecoration(color: p.$4, borderRadius: BorderRadius.circular(AppRadii.pill))),
                     ),
                   ],
@@ -252,25 +269,59 @@ class _Split extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.m),
-        for (final p in parts)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-            child: Row(
-              children: [
-                Container(width: 10, height: 10, decoration: BoxDecoration(color: p.$4, shape: BoxShape.circle)),
-                const SizedBox(width: AppSpacing.s),
-                Expanded(child: Text('${p.$1} · ${p.$2}', style: const TextStyle(fontSize: 13))),
-                Text(Money.format(p.$3), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFeatures: [FontFeature.tabularFigures()])),
-              ],
+        const SizedBox(height: AppSpacing.s),
+        for (final (part, name, what, colour) in parts) ...[
+          Semantics(
+            button: i.outParts[part]!.isNotEmpty,
+            expanded: _open == part,
+            child: InkWell(
+              key: ValueKey('part-${part.name}'),
+              borderRadius: BorderRadius.circular(AppRadii.control),
+              onTap: i.outParts[part]!.isEmpty ? null : () => setState(() => _open = _open == part ? null : part),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 40),
+                child: Row(
+                  children: [
+                    Container(width: 10, height: 10, decoration: BoxDecoration(color: colour, shape: BoxShape.circle)),
+                    const SizedBox(width: AppSpacing.s),
+                    Expanded(child: Text('$name · $what', style: const TextStyle(fontSize: 13))),
+                    Text(Money.format(i.outOf(part)), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFeatures: [FontFeature.tabularFigures()])),
+                    AnimatedOpacity(
+                      opacity: i.outParts[part]!.isEmpty ? 0 : 1,
+                      duration: AppMotion.fast,
+                      child: AnimatedRotation(
+                        turns: _open == part ? 0.5 : 0,
+                        duration: still ? Duration.zero : AppMotion.enter,
+                        curve: Curves.easeOutBack,
+                        child: Icon(Icons.expand_more_rounded, size: 20, color: c.muted),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
+          AnimatedSize(
+            duration: still ? Duration.zero : AppMotion.enter,
+            curve: Curves.easeOutBack,
+            alignment: Alignment.topCenter,
+            child: _open == part
+                ? EntryDrawer(
+                    key: ValueKey(('part-entries', part)),
+                    entries: i.outParts[part]!,
+                    categories: widget.categories,
+                    today: widget.today,
+                    onOpen: (e) => showLogSheet(context, editing: e),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
       ],
     );
   }
 }
 
-/// Fourteen bars of flexible spending, each against its own day's plan:
+/// Fourteen bars of spending on wants, each against its own day's plan:
 /// rose when over, blue when within, a short mark where the plan sat.
 class _LastDays extends StatelessWidget {
   const _LastDays({required this.days});

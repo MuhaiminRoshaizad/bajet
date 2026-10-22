@@ -22,9 +22,9 @@ own API key; without a key, nothing leaves the phone.
 - **Runway** charts the projected balance up to a goal's buy day and says what
   will be left after buying it, against a buffer you choose. What-if sliders
   try a change to weekly spending or a new monthly cost without saving it.
-- **Insights** shows money in and out, fixed against flexible spending, a ring
-  of where the money went, the last fourteen days against the plan, and
-  habits, for any week, any month or all time.
+- **Insights** shows money in and out, spending split into planned, wants
+  and needs, a ring of where the money went, the last fourteen days against
+  the plan, and habits, for any week, any month or all time.
 - **Reports** share any of those periods as text, a PDF or a CSV file, broken
   down by account and category, and PDFs, CSVs and backups save straight to
   the phone.

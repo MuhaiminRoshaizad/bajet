@@ -31,6 +31,23 @@ void main() {
     expect(find.byKey(const ValueKey('add')).hitTestable(), findsNothing);
   });
 
+  testWidgets('spending splits by kind, and a part opens its entries', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 800, categoryKey: 'food', label: 'Lunch'));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 4500, categoryKey: 'family', label: 'Groceries', spendKind: SpendKind.need));
+    });
+    await openInsights(tester);
+    expect(find.text('Spending by kind'), findsOneWidget);
+    expect(find.text('Needs · bought anyway or asked for'), findsOneWidget);
+    expect(find.byKey(const ValueKey(('drawer-entry', 2))), findsNothing);
+    await tester.ensureVisible(find.byKey(const ValueKey('part-needs')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('part-needs')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey(('drawer-entry', 2))), findsOneWidget);
+    expect(find.byKey(const ValueKey(('drawer-entry', 1))), findsNothing, reason: 'the want stays under Wants');
+  });
+
   testWidgets('shows money in and out and where the flexible money went', (tester) async {
     await pumpApp(tester, seed: (w) {
       w.add(EntryDraft(day: testToday, isIncome: true, amount: 300000, categoryKey: 'salary'));

@@ -3,6 +3,11 @@ import '../../plan/domain/plan_models.dart';
 
 enum InsightsPeriod { week, month, all }
 
+/// The parts money out splits into: what the plan counted already (bills,
+/// goals, planned events), the day-to-day wants and needs, and money found
+/// missing at a check-in.
+enum OutPart { planned, wants, needs, untracked }
+
 /// A label the user logs often, and what it usually costs.
 class FrequentItem {
   const FrequentItem(this.label, this.count, this.average);
@@ -12,7 +17,7 @@ class FrequentItem {
   final int average;
 }
 
-/// One day's flexible spending against that day's plan.
+/// One day's spending on wants against that day's plan.
 class DayAgainstPlan {
   const DayAgainstPlan(this.date, this.spent, this.planned);
 
@@ -32,9 +37,7 @@ class Insights {
     required this.to,
     required this.moneyIn,
     required this.moneyOut,
-    required this.fixedOut,
-    required this.flexibleOut,
-    required this.untrackedOut,
+    required this.outParts,
     required this.flexibleByCategory,
     required this.outByCategory,
     required this.outEntries,
@@ -55,10 +58,17 @@ class Insights {
   final int moneyIn;
   final int moneyOut;
 
+  /// Every entry of money out in each part, newest first.
+  final Map<OutPart, List<Entry>> outParts;
+
+  int outOf(OutPart part) => (outParts[part] ?? const []).fold(0, (s, e) => s + e.amount);
+
   /// Fixed spending, goal purchases included, untracked money excluded.
-  final int fixedOut;
-  final int flexibleOut;
-  final int untrackedOut;
+  int get fixedOut => outOf(OutPart.planned);
+
+  /// Day-to-day spending, wants and needs together.
+  int get flexibleOut => outOf(OutPart.wants) + outOf(OutPart.needs);
+  int get untrackedOut => outOf(OutPart.untracked);
 
   /// Flexible spending per category key, largest first.
   final List<(String, int)> flexibleByCategory;
@@ -146,6 +156,7 @@ Insights insights({
   final inPeriod = entries.where((e) => inRange(e.day)).toList();
   final out = inPeriod.where((e) => !e.isIncome).toList();
   final flexible = out.where((e) => e.isFlexible(fixed)).toList();
+  final wants = flexible.where((e) => e.spendKind == SpendKind.want).toList();
 
   int sum(Iterable<Entry> es) => es.fold(0, (s, e) => s + e.amount);
 
@@ -180,20 +191,29 @@ Insights insights({
         (best, e) => best == null || e.value.length > best.value.length ? e : best,
       );
 
+  // Planned money: bills, goals, and anything spent on a planned event.
+  OutPart partOf(Entry e) => e.categoryKey == untrackedCategoryKey
+      ? OutPart.untracked
+      : !e.isFlexible(fixed)
+          ? OutPart.planned
+          : e.spendKind == SpendKind.want
+              ? OutPart.wants
+              : OutPart.needs;
+  // Newest day first; within a day, the one logged last.
+  final newestFirst = [...out]..sort((a, b) => b.day != a.day ? b.day.compareTo(a.day) : b.id.compareTo(a.id));
+
   return Insights(
     period: period,
     from: from,
     to: to,
     moneyIn: sum(inPeriod.where((e) => e.isIncome)),
     moneyOut: sum(out),
-    // Planned money: bills, goals, and anything spent on a planned event.
-    fixedOut: sum(out.where((e) => !e.isFlexible(fixed) && e.categoryKey != untrackedCategoryKey)),
-    flexibleOut: sum(flexible),
-    untrackedOut: sum(out.where((e) => e.categoryKey == untrackedCategoryKey)),
+    outParts: {
+      for (final part in OutPart.values) part: [for (final e in newestFirst) if (partOf(e) == part) e],
+    },
     flexibleByCategory: byCategory(flexible),
     outByCategory: byCategory(out),
-    // Newest day first; within a day, the one logged last.
-    outEntries: [...out]..sort((a, b) => b.day != a.day ? b.day.compareTo(a.day) : b.id.compareTo(a.id)),
+    outEntries: newestFirst,
     lastDays: [
       for (var i = 13; i >= 0; i--)
         () {
@@ -208,6 +228,6 @@ Insights insights({
     fullWeeks: fullWeeks,
     daysLogged: {for (final e in inPeriod) e.day}.length,
     frequent: top == null ? null : FrequentItem(top.key, top.value.length, (top.value.reduce((a, b) => a + b) / top.value.length).round()),
-    biggest: flexible.isEmpty ? null : flexible.reduce((a, b) => b.amount > a.amount ? b : a),
+    biggest: wants.isEmpty ? null : wants.reduce((a, b) => b.amount > a.amount ? b : a),
   );
 }

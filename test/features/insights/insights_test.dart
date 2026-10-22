@@ -127,6 +127,25 @@ void main() {
     expect(wantsSpent([gift], const {}, d(7, 15), d(7, 15)), 0);
   });
 
+  test('a need is day-to-day money out but no want: kept out of habits and the biggest extra', () {
+    final need = Entry(id: ++_id, day: d(7, 15), isIncome: false, amount: 4500, categoryKey: 'family', label: 'Groceries', spendKind: SpendKind.need);
+    final i = insights(
+      period: InsightsPeriod.month,
+      today: d(7, 15),
+      openingDate: d(7, 1),
+      weeklyCap: 5000,
+      entries: [...entries, need],
+      categories: demoCategories,
+      rules: rules,
+    );
+    final without = run(InsightsPeriod.month);
+    expect((i.outOf(OutPart.wants), i.outOf(OutPart.needs)), (6150, 4500));
+    expect(i.outParts[OutPart.needs], [need]);
+    expect(i.flexibleOut, without.flexibleOut + 4500);
+    expect(i.biggest, without.biggest);
+    expect((i.daysWithinPlan, i.zeroSpendDays), (without.daysWithinPlan, without.zeroSpendDays));
+  });
+
   test('a past week is whole: every day finished and the week counted', () {
     final i = insights(period: InsightsPeriod.week, offset: -1, today: d(7, 15), openingDate: d(7, 1), weeklyCap: 5000, entries: entries, categories: demoCategories, rules: rules);
     expect((i.from, i.to), (d(7, 6), d(7, 12)));
