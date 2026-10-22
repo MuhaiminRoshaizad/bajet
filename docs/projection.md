@@ -16,6 +16,7 @@ or database imports, so it is tested directly.
 | `goals`          | Active goals with price, target date and priority              |
 | `buffer`         | The minimum that must remain after buying                      |
 | `flexSpentToday` | Spending on wants already logged today                         |
+| `needsReserve`   | Set aside each month for needs, which the allowance leaves out |
 
 All amounts are integer sen. Days are UTC midnights, so stepping a day never
 crosses a daylight-saving change.
@@ -28,7 +29,9 @@ day a week ahead, so its target exists even when buy day falls sooner:
 
 1. Subtract that weekday's planned spend. On the first day, subtract only what
    is left of it after `flexSpentToday`, because logged spending is already in
-   `balance`.
+   `balance`. From the second day, also subtract that day's share of
+   `needsReserve`: the month's amount spread over its days, rounded so the
+   shares of a whole month add up to it exactly.
 2. Apply each active recurring item whose day of month matches, from its
    `nextDue` date onward. An item with a window (`windowDays`) counts on the
    window's last day if it is income and its first day if it is a bill, so
@@ -45,7 +48,7 @@ day a week ahead, so its target exists even when buy day falls sooner:
 
 A goal is **on track** when what is left after buying is at least the buffer.
 Each outcome also carries its `RunwaySums`: the balance today, the planned
-day-to-day spending, income, and bills and costs up to buy day, and goals
+day-to-day spending, needs set aside, income, and bills and costs up to buy day, and goals
 bought before it, which with the price add up exactly to what is left.
 
 ## What if

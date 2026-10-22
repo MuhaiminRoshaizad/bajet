@@ -27,15 +27,18 @@ class GoalOutcome {
 }
 
 /// The parts of a goal's outcome, all in sen and all positive: what is left
-/// after buying is [balanceNow] − [dailySpending] + [income] − [costs] −
-/// [earlierGoals] − the goal's price.
+/// after buying is [balanceNow] − [dailySpending] − [needs] + [income] −
+/// [costs] − [earlierGoals] − the goal's price.
 class RunwaySums {
-  const RunwaySums({this.balanceNow = 0, this.dailySpending = 0, this.income = 0, this.costs = 0, this.earlierGoals = 0});
+  const RunwaySums({this.balanceNow = 0, this.dailySpending = 0, this.needs = 0, this.income = 0, this.costs = 0, this.earlierGoals = 0});
 
   final int balanceNow;
 
   /// The weekly rhythm's planned spending, day by day.
   final int dailySpending;
+
+  /// The monthly amount for needs, set aside a share a day after today.
+  final int needs;
 
   /// Recurring and planned income that falls before or on buy day.
   final int income;
@@ -101,6 +104,7 @@ Projection project({
   required List<Goal> goals,
   required int buffer,
   int flexSpentToday = 0,
+  int needsReserve = 0,
   int horizonDaysWithoutGoal = 30,
   DateTime? through,
   WhatIf whatIf = WhatIf.none,
@@ -119,7 +123,7 @@ Projection project({
   final days = <ProjectedDay>[];
   final outcomes = <GoalOutcome>[];
   var running = balance;
-  var spent = 0, income = 0, costs = 0, bought = 0;
+  var spent = 0, needs = 0, income = 0, costs = 0, bought = 0;
   void move(int signed) {
     running += signed;
     if (signed > 0) {
@@ -146,6 +150,13 @@ Projection project({
     if (day == start) spend = (spend - flexSpentToday).clamp(0, spend);
     running -= spend;
     spent += spend;
+    // Needs come when they come, so the month's amount is spread over its
+    // days, from tomorrow: today's needs, if any, are logged already.
+    if (day != start && needsReserve > 0) {
+      final share = needsReserve * day.day ~/ _daysIn(day) - needsReserve * (day.day - 1) ~/ _daysIn(day);
+      running -= share;
+      needs += share;
+    }
 
     for (final item in recurring) {
       if (!item.active) continue;
@@ -165,7 +176,7 @@ Projection project({
     for (final g in sortedGoals) {
       if (calendarDay(g.targetDate) == day) {
         running -= g.price;
-        final sums = RunwaySums(balanceNow: balance, dailySpending: spent, income: income, costs: costs, earlierGoals: bought);
+        final sums = RunwaySums(balanceNow: balance, dailySpending: spent, needs: needs, income: income, costs: costs, earlierGoals: bought);
         outcomes.add(GoalOutcome(g, running, running >= buffer, sums: sums));
         bought += g.price;
       }
@@ -174,6 +185,8 @@ Projection project({
   }
   return Projection(days, outcomes);
 }
+
+int _daysIn(DateTime day) => DateTime.utc(day.year, day.month + 1, 0).day;
 
 /// How many months of a bill fell due before [start] and are still unpaid,
 /// since `nextDue` never moved past them. They are charged on [start]: the

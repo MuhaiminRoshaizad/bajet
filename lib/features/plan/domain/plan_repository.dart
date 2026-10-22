@@ -6,11 +6,16 @@ class PlanSettings {
     required this.openingDate,
     required this.weeklyCap,
     required this.buffer,
+    this.needsReserve = 0,
   });
 
   final DateTime openingDate;
   final int weeklyCap;
   final int buffer;
+
+  /// Set aside each month for needs, which the allowance leaves out; 0 plans
+  /// for none.
+  final int needsReserve;
 }
 
 abstract interface class PlanRepository {

@@ -1,3 +1,4 @@
+import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/presentation/runway_chart.dart';
 import 'package:bajet/features/plan/presentation/runway_sums.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
@@ -53,6 +54,22 @@ void main() {
     expect(inSums('−RM1,200.00'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Add monthly income'), 200);
     expect(find.textContaining('No income is planned before buy day'), findsOneWidget);
+  });
+
+  testWidgets('a monthly amount for needs is its own line, and only when set', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31));
+      w.saveSettings(PlanSettings(openingDate: testToday, weeklyCap: 5000, buffer: 50000, needsReserve: 3100));
+    });
+    await openRunway(tester);
+    // RM1.00 a day for 2 to 31 July.
+    expect(headline('RM970.00'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('How it adds up'), 200);
+    expect(find.text('Needs until buy day'), findsOneWidget);
+    expect(inSums('−RM30.00'), findsOneWidget);
+    await world.saveSettings(PlanSettings(openingDate: testToday, weeklyCap: 5000, buffer: 50000));
+    await tester.pumpAndSettle();
+    expect(find.text('Needs until buy day'), findsNothing);
   });
 
   testWidgets('planned income is counted and the warning goes', (tester) async {

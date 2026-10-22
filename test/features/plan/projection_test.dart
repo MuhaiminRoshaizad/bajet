@@ -80,6 +80,30 @@ void main() {
     expect(sums.balanceNow - sums.dailySpending + sums.income - sums.costs - goal.price, 590300);
   });
 
+  test('a monthly amount for needs is set aside a share a day from tomorrow, a whole month at a time', () {
+    Projection withNeeds(int reserve) => project(
+          balance: 100000,
+          today: d(2026, 10, 22),
+          rules: const [],
+          recurring: const [],
+          events: const [],
+          goals: [Goal(id: 1, name: 'Laptop', price: 10000, targetDate: d(2026, 11, 30))],
+          buffer: 0,
+          needsReserve: reserve,
+        );
+    // RM31.00 over October's 31 days is RM1.00 a day, for the 23rd to the
+    // 31st; then all of November's.
+    final p = withNeeds(3100);
+    expect(p.days.firstWhere((x) => x.date == d(2026, 10, 22)).balance, 100000);
+    expect(p.days.firstWhere((x) => x.date == d(2026, 10, 31)).balance, 100000 - 900);
+    expect(p.goals.single.sums.needs, 900 + 3100);
+    expect(p.goals.single.leftAfterBuying, 100000 - 4000 - 10000);
+    // Uneven shares still add up to the month exactly.
+    final odd = withNeeds(8000);
+    expect(odd.days.firstWhere((x) => x.date == d(2026, 10, 31)).balance - odd.days.firstWhere((x) => x.date == d(2026, 11, 30)).balanceBeforeGoals, 8000);
+    expect(withNeeds(0).goals.single.sums.needs, 0);
+  });
+
   test('pay that lands within a window counts on its last day, a bill on its first', () {
     // Salary between the 25th and 28th; rent between the 1st and the 6th.
     final varying = [

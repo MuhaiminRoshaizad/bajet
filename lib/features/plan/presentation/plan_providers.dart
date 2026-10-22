@@ -84,6 +84,7 @@ Projection? _project(Ref ref, {WhatIf whatIf = WhatIf.none, DateTime? through}) 
     goals: goals!,
     buffer: settings!.buffer,
     flexSpentToday: wantsSpent(entries!, fixed, today, today),
+    needsReserve: settings.needsReserve,
     through: through,
     whatIf: whatIf,
   );

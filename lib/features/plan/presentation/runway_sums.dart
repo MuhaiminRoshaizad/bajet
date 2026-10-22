@@ -28,6 +28,7 @@ class RunwaySumsCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s),
           _Line('Balance today', s.balanceNow, sign: ''),
           _Line('Day-to-day spending until buy day', s.dailySpending, sign: '−'),
+          if (s.needs > 0) _Line('Needs until buy day', s.needs, sign: '−'),
           _Line('Income until buy day', s.income, sign: '+'),
           _Line('Bills and planned costs', s.costs, sign: '−'),
           if (s.earlierGoals > 0) _Line('Goals bought before it', s.earlierGoals, sign: '−'),

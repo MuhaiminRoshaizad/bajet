@@ -13,14 +13,16 @@ class DriftPlanRepository implements PlanRepository {
 
   @override
   Stream<PlanSettings?> watchSettings() => _db.select(_db.appSettings).watchSingleOrNull().map(
-        (r) => r == null ? null : PlanSettings(openingDate: r.openingDate, weeklyCap: r.weeklyCap, buffer: r.buffer),
+        (r) => r == null ? null : PlanSettings(openingDate: r.openingDate, weeklyCap: r.weeklyCap, buffer: r.buffer, needsReserve: r.needsReserve),
       );
 
   /// Keeps the total card's look, which only the accounts change.
   @override
   Future<void> saveSettings(PlanSettings s) => _db.into(_db.appSettings).insert(
-        AppSettingsCompanion.insert(id: const Value(1), openingDate: s.openingDate, weeklyCap: s.weeklyCap, buffer: s.buffer),
-        onConflict: DoUpdate((_) => AppSettingsCompanion(openingDate: Value(s.openingDate), weeklyCap: Value(s.weeklyCap), buffer: Value(s.buffer))),
+        AppSettingsCompanion.insert(id: const Value(1), openingDate: s.openingDate, weeklyCap: s.weeklyCap, buffer: s.buffer, needsReserve: Value(s.needsReserve)),
+        onConflict: DoUpdate(
+          (_) => AppSettingsCompanion(openingDate: Value(s.openingDate), weeklyCap: Value(s.weeklyCap), buffer: Value(s.buffer), needsReserve: Value(s.needsReserve)),
+        ),
       );
 
   @override
