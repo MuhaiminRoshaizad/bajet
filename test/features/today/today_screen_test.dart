@@ -49,20 +49,27 @@ void main() {
     expect(find.text('Left after buying Laptop'), findsOneWidget);
   });
 
-  testWidgets('a due bill can be marked paid, which logs it, and Undo makes it due again', (tester) async {
+  testWidgets('Paid opens the log sheet with the bill picked, so the real amount is what is logged; Undo makes it due again', (tester) async {
     final world = await pumpApp(tester, seed: (w) {
       w.addRecurring(name: 'Internet', isIncome: false, amount: 12900, categoryKey: 'bills', nextDue: testToday);
     });
     expect(find.text('Internet'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Paid'));
-    await settleUnderBar(tester);
+    await tester.pumpAndSettle();
+    expect(world.entries, isEmpty, reason: 'nothing is logged until the sheet is saved');
+    expect(find.text('Log RM129.00'), findsOneWidget);
 
-    expect(world.entries.single.amount, 12900);
-    expect(world.recurring.single.nextDue, d(2026, 8, 1));
-    expect(find.widgetWithText(FilledButton, 'Paid'), findsNothing);
-    expect(find.text('Paid Internet RM129.00'), findsOneWidget);
-    await tester.tap(find.text('Undo'));
+    // This month's bill came to a little more.
+    await tester.enterText(find.byKey(const ValueKey('amount')), '13450');
+    await tester.pump();
+    await tester.tap(find.text('Log RM134.50'));
     await settleUnderBar(tester);
+    expect((world.entries.single.amount, world.recurring.single.nextDue), (13450, d(2026, 8, 1)));
+    expect(find.widgetWithText(FilledButton, 'Paid'), findsNothing);
+    expect(find.text('Paid Internet RM134.50'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
     expect(world.entries, isEmpty);
     expect(world.recurring.single.nextDue, testToday);
     expect(find.widgetWithText(FilledButton, 'Paid'), findsOneWidget);

@@ -419,13 +419,6 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
     return entry;
   }
 
-  @override
-  Future<void> unconfirmRecurring(int id, {required DateTime due, required int entryId}) async {
-    final item = _recurring.value.where((r) => r.id == id).firstOrNull;
-    if (item == null || item.nextDue != DateTime.utc(due.year, due.month + 1, due.day)) return;
-    await delete(entryId);
-    _recurring.value = [for (final r in _recurring.value) r.id == id ? r.copyWith(nextDue: due) : r];
-  }
 
   @override
   Stream<List<PlannedEvent>> watchEvents() => _events.stream.map((all) => [for (final e in all) _withSpent(e)]);

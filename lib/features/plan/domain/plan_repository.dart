@@ -56,10 +56,6 @@ abstract interface class PlanRepository {
   /// or paused, so a second tap or an old card never pays twice.
   Future<int?> confirmRecurring(int id, {required DateTime due, required DateTime paidOn});
 
-  /// Undoes [confirmRecurring]: deletes [entryId] and makes [due] the next
-  /// one again, in one transaction. Does nothing once the item has moved on
-  /// again, so an old Undo never takes back a later payment.
-  Future<void> unconfirmRecurring(int id, {required DateTime due, required int entryId});
 
   /// Every event, each with what has been spent against its next
   /// occurrence.

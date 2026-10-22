@@ -8,7 +8,6 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/under_bar.dart';
@@ -17,6 +16,7 @@ import '../../accounts/presentation/account_stack.dart';
 import '../../accounts/presentation/hold_swell.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -191,17 +191,12 @@ class _DueCard extends ConsumerWidget {
             ),
           ),
           FilledButton.tonal(
-            onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              final repo = ref.read(planRepositoryProvider);
-              final entry = await repo.confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider));
-              if (entry == null) return;
-              showBar(
-                messenger,
-                '${item.isIncome ? 'Received' : 'Paid'} ${item.name} ${Money.format(item.amount)}',
-                undo: () => repo.unconfirmRecurring(item.id, due: item.nextDue, entryId: entry),
-              );
-            },
+            // The log sheet, with this bill already picked, so the real
+            // amount and day are logged rather than the planned ones.
+            onPressed: () => showLogSheet(
+              context,
+              prefill: LogPrefill(isIncome: item.isIncome, amount: item.amount, categoryKey: item.categoryKey, label: item.name, accountId: item.accountId, billId: item.id),
+            ),
             style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
             child: Text(item.isIncome ? 'Received' : 'Paid'),
           ),

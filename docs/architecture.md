@@ -214,8 +214,10 @@ holds, a day no later than today and within the last year, an active bill)
 and either returns a `CoachProposal` or tells the model why not. A
 proposal becomes a `CoachCard` on the reply; `CoachController.confirm`
 writes it through the ledger, account or plan repository, and `undo`
-deletes the entry or transfer it made. A bill marked paid has no Undo, as
-with Today's Paid button.
+deletes the entry or transfer it made. A bill marked paid from a card
+logs its planned amount and has no Undo; Today's Paid and Received open
+the log sheet with the bill picked instead, so the real amount is logged
+(`EntryDraft.billId`).
 
 ## Platforms
 
