@@ -53,6 +53,7 @@ class Entry {
     this.receipt,
     this.event,
     this.accountId,
+    this.billId,
   });
 
   final int id;
@@ -71,6 +72,9 @@ class Entry {
 
   /// Where the money came from or went to; null means the first account.
   final int? accountId;
+
+  /// The bill or income this pays or receives for its month, if any.
+  final int? billId;
 
   int get signedAmount => isIncome ? amount : -amount;
 
@@ -92,6 +96,7 @@ class EntryDraft {
     this.receipt,
     this.event,
     this.accountId,
+    this.billId,
   });
 
   final DateTime day;
@@ -105,6 +110,10 @@ class EntryDraft {
 
   /// Null means the first account.
   final int? accountId;
+
+  /// The bill or income it pays or receives: logging it settles that one's
+  /// next month, as Paid does, at the amount actually logged.
+  final int? billId;
 }
 
 class Favourite {

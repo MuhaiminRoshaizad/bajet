@@ -145,10 +145,37 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
         receipt: d.receipt,
         event: d.event,
         accountId: d.accountId,
+        billId: d.billId,
       ),
     ];
+    _settle(d.billId, d.isIncome ? d.event : null, forward: true);
     _entriesChanged();
     return id;
+  }
+
+  /// As the drift repository: a bill moves a month, an income event closes
+  /// or moves a year, and back again when the entry goes.
+  void _settle(int? billId, EventLink? event, {required bool forward}) {
+    if (billId != null) {
+      _recurring.value = [
+        for (final r in _recurring.value) r.id == billId ? r.copyWith(nextDue: DateTime.utc(r.nextDue.year, r.nextDue.month + (forward ? 1 : -1), r.nextDue.day)) : r,
+      ];
+    }
+    if (event == null) return;
+    final next = DateTime.utc(event.on.year + 1, event.on.month, event.on.day);
+    _events.value = [
+      for (final e in _events.value)
+        if (e.id != event.eventId)
+          e
+        else if (forward && e.date == event.on)
+          e.repeatsYearly ? e.copyWith(date: next) : e.copyWith(done: true)
+        else if (!forward && e.repeatsYearly && e.date == next)
+          e.copyWith(date: event.on)
+        else if (!forward && !e.repeatsYearly)
+          e.copyWith(done: false)
+        else
+          e,
+    ];
   }
 
   @override
@@ -159,13 +186,19 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
 
   @override
   Future<void> delete(int id) async {
+    final gone = _entries.value.where((e) => e.id == id).firstOrNull;
     _entries.value = [..._entries.value.where((e) => e.id != id)];
+    if (gone != null) {
+      final latest = gone.billId != null && !_entries.value.any((e) => e.billId == gone.billId && e.id > id);
+      _settle(latest ? gone.billId : null, gone.isIncome ? gone.event : null, forward: false);
+    }
     _entriesChanged();
   }
 
   @override
   Future<void> restore(Entry e) async {
     _entries.value = [..._entries.value, e];
+    _settle(e.billId, e.isIncome ? e.event : null, forward: true);
     _entriesChanged();
   }
 

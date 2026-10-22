@@ -101,8 +101,8 @@ Every logged spend or income. The total balance is every account's
 | `label`             | text? | Short name, e.g. "Coffee", for item stats   |
 | `note`              | text? | Free text, never used in statistics         |
 | `receipt`           | text? | File name of an attached image, see below   |
-| `recurring_item_id` | int?  | Set when the entry confirms a recurring item|
-| `planned_event_id`  | int?  | Set when the entry was spent on a planned event |
+| `recurring_item_id` | int?  | The bill or income it pays or receives; logging it moves that item's `next_due` on a month, and deleting its latest payment moves it back |
+| `planned_event_id`  | int?  | The planned event it was spent on or received for; income for an event closes it (a yearly one moves on a year), and deleting the entry opens it again |
 | `planned_event_on`  | day?  | Which occurrence of that event it was for   |
 | `created_at`        | time  |                                             |
 

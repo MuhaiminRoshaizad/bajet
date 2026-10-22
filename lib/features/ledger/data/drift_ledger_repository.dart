@@ -53,20 +53,53 @@ class DriftLedgerRepository implements LedgerRepository {
   }
 
   @override
-  Future<int> add(domain.EntryDraft d) async => _db.into(_db.entries).insert(
-        EntriesCompanion.insert(
-          occurredOn: d.day,
-          kind: d.isIncome ? EntryKind.income : EntryKind.expense,
-          amount: d.amount,
-          categoryKey: d.categoryKey,
-          accountId: await _db.accountOrFirst(d.accountId),
-          label: Value(_blankToNull(d.label)),
-          note: Value(_blankToNull(d.note)),
-          receipt: Value(d.receipt),
-          plannedEventId: Value(d.event?.eventId),
-          plannedEventOn: Value(d.event?.on),
-        ),
-      );
+  Future<int> add(domain.EntryDraft d) => _db.transaction(() async {
+        final id = await _db.into(_db.entries).insert(
+              EntriesCompanion.insert(
+                occurredOn: d.day,
+                kind: d.isIncome ? EntryKind.income : EntryKind.expense,
+                amount: d.amount,
+                categoryKey: d.categoryKey,
+                accountId: await _db.accountOrFirst(d.accountId),
+                label: Value(_blankToNull(d.label)),
+                note: Value(_blankToNull(d.note)),
+                receipt: Value(d.receipt),
+                plannedEventId: Value(d.event?.eventId),
+                plannedEventOn: Value(d.event?.on),
+                recurringItemId: Value(d.billId),
+              ),
+            );
+        await _settle(billId: d.billId, event: d.isIncome ? d.event : null, forward: true);
+        return id;
+      });
+
+  /// What logging, or taking back, an entry for a bill or an income event
+  /// does to them. A bill or income moves on a month, or back one, as Paid
+  /// does. An income event is received once: it closes, or a yearly one
+  /// moves on a year, and opens again when the entry goes.
+  Future<void> _settle({required int? billId, required domain.EventLink? event, required bool forward}) async {
+    if (billId != null) {
+      final item = await (_db.select(_db.recurringItems)..where((r) => r.id.equals(billId))).getSingleOrNull();
+      if (item != null) {
+        final d = item.nextDue;
+        await (_db.update(_db.recurringItems)..where((r) => r.id.equals(billId)))
+            .write(RecurringItemsCompanion(nextDue: Value(DateTime.utc(d.year, d.month + (forward ? 1 : -1), d.day))));
+      }
+    }
+    if (event == null) return;
+    final row = await (_db.select(_db.plannedEvents)..where((e) => e.id.equals(event.eventId))).getSingleOrNull();
+    if (row == null) return;
+    final on = event.on;
+    final next = DateTime.utc(on.year + 1, on.month, on.day);
+    final write = _db.update(_db.plannedEvents)..where((e) => e.id.equals(event.eventId));
+    if (forward && row.dueOn == on) {
+      await write.write(row.repeatsYearly ? PlannedEventsCompanion(dueOn: Value(next)) : const PlannedEventsCompanion(done: Value(true)));
+    } else if (!forward && row.repeatsYearly && row.dueOn == next) {
+      await write.write(PlannedEventsCompanion(dueOn: Value(on)));
+    } else if (!forward && !row.repeatsYearly && row.done) {
+      await write.write(const PlannedEventsCompanion(done: Value(false)));
+    }
+  }
 
   @override
   Future<void> update(domain.Entry e) async {
@@ -86,25 +119,41 @@ class DriftLedgerRepository implements LedgerRepository {
     );
   }
 
+  /// Takes a bill's or an income event's payment back with the entry, but
+  /// a bill only for its latest payment, so deleting an old one never makes
+  /// a bill paid since fall due again.
   @override
-  Future<void> delete(int id) => (_db.delete(_db.entries)..where((t) => t.id.equals(id))).go();
+  Future<void> delete(int id) => _db.transaction(() async {
+        final row = await (_db.select(_db.entries)..where((t) => t.id.equals(id))).getSingleOrNull();
+        await (_db.delete(_db.entries)..where((t) => t.id.equals(id))).go();
+        if (row == null) return;
+        final bill = row.recurringItemId;
+        final latest = bill != null && (await (_db.select(_db.entries)..where((t) => t.recurringItemId.equals(bill) & t.id.isBiggerThanValue(id))).get()).isEmpty;
+        final event = row.plannedEventId == null || row.plannedEventOn == null ? null : domain.EventLink(row.plannedEventId!, row.plannedEventOn!);
+        await _settle(billId: latest ? bill : null, event: row.kind == EntryKind.income ? event : null, forward: false);
+      });
 
+  /// Puts back an entry [delete] took, and what it settled.
   @override
-  Future<void> restore(domain.Entry e) async => _db.into(_db.entries).insert(
-        EntriesCompanion.insert(
-          id: Value(e.id),
-          occurredOn: e.day,
-          kind: e.isIncome ? EntryKind.income : EntryKind.expense,
-          amount: e.amount,
-          categoryKey: e.categoryKey,
-          accountId: await _db.accountOrFirst(e.accountId),
-          label: Value(e.label),
-          note: Value(e.note),
-          receipt: Value(e.receipt),
-          plannedEventId: Value(e.event?.eventId),
-          plannedEventOn: Value(e.event?.on),
-        ),
-      );
+  Future<void> restore(domain.Entry e) => _db.transaction(() async {
+        await _db.into(_db.entries).insert(
+              EntriesCompanion.insert(
+                id: Value(e.id),
+                occurredOn: e.day,
+                kind: e.isIncome ? EntryKind.income : EntryKind.expense,
+                amount: e.amount,
+                categoryKey: e.categoryKey,
+                accountId: await _db.accountOrFirst(e.accountId),
+                label: Value(e.label),
+                note: Value(e.note),
+                receipt: Value(e.receipt),
+                plannedEventId: Value(e.event?.eventId),
+                plannedEventOn: Value(e.event?.on),
+                recurringItemId: Value(e.billId),
+              ),
+            );
+        await _settle(billId: e.billId, event: e.isIncome ? e.event : null, forward: true);
+      });
 
   domain.Entry _toDomain(Entry r) => domain.Entry(
         id: r.id,
@@ -117,6 +166,7 @@ class DriftLedgerRepository implements LedgerRepository {
         receipt: r.receipt,
         event: r.plannedEventId == null || r.plannedEventOn == null ? null : domain.EventLink(r.plannedEventId!, r.plannedEventOn!),
         accountId: r.accountId,
+        billId: r.recurringItemId,
       );
 }
 

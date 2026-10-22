@@ -1,6 +1,7 @@
 import 'package:bajet/core/database/app_database.dart';
 import 'package:bajet/features/ledger/data/drift_ledger_repository.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart' as domain;
+import 'package:bajet/features/plan/data/drift_plan_repository.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,5 +126,48 @@ void main() {
     await ledger.add(domain.EntryDraft(day: d(2026, 7, 2), isIncome: false, amount: 700, categoryKey: 'food', accountId: cash));
     final entries = await ledger.watchSince(d(2026, 7, 1)).first;
     expect({for (final e in entries) e.amount: e.accountId}, {450: 1, 700: cash});
+  });
+
+  test('an entry for a bill settles its month at the amount logged, and deleting the latest takes it back', () async {
+    final plan = DriftPlanRepository(db);
+    final gaji = await plan.addRecurring(name: 'Gaji', isIncome: true, amount: 238445, categoryKey: 'salary', nextDue: d(2026, 11, 1));
+    Future<DateTime> due() async => (await plan.watchRecurring().first).single.nextDue;
+
+    final november = await ledger.add(domain.EntryDraft(day: d(2026, 11, 3), isIncome: true, amount: 261230, categoryKey: 'salary', label: 'Gaji', billId: gaji));
+    expect(await due(), d(2026, 12, 1));
+    final logged = (await ledger.watchSince(d(2000, 1, 1)).first).single;
+    expect((logged.amount, logged.day, logged.billId), (261230, d(2026, 11, 3), gaji));
+
+    final december = await ledger.add(domain.EntryDraft(day: d(2026, 12, 1), isIncome: true, amount: 238445, categoryKey: 'salary', billId: gaji));
+    await ledger.delete(november);
+    expect(await due(), d(2027, 1, 1), reason: 'an older payment going leaves the later one standing');
+
+    final gone = (await ledger.watchSince(d(2000, 1, 1)).first).single;
+    await ledger.delete(december);
+    expect(await due(), d(2026, 12, 1));
+    await ledger.restore(gone);
+    expect(await due(), d(2027, 1, 1), reason: 'Undo settles it again');
+  });
+
+  test('an entry for an income event closes it at the real amount, and a yearly one moves on a year', () async {
+    final plan = DriftPlanRepository(db);
+    final kwsp = await plan.addEvent(name: 'KWSP cash out', isIncome: true, amount: 30000, categoryKey: 'kwsp', date: d(2026, 12, 15));
+    final bonus = await plan.addEvent(name: 'Bonus', isIncome: true, amount: 100000, categoryKey: 'salary', date: d(2026, 12, 20), repeatsYearly: true);
+    final got = await ledger.add(domain.EntryDraft(day: d(2026, 12, 15), isIncome: true, amount: 35000, categoryKey: 'kwsp', event: domain.EventLink(kwsp, d(2026, 12, 15))));
+    await ledger.add(domain.EntryDraft(day: d(2026, 12, 20), isIncome: true, amount: 90000, categoryKey: 'salary', event: domain.EventLink(bonus, d(2026, 12, 20))));
+    final events = {for (final e in await plan.watchEvents().first) e.name: e};
+    expect(events['KWSP cash out']!.done, isTrue);
+    expect((events['Bonus']!.done, events['Bonus']!.date), (false, d(2027, 12, 20)));
+
+    await ledger.delete(got);
+    expect((await plan.watchEvents().first).firstWhere((e) => e.id == kwsp).done, isFalse, reason: 'taking the money back opens it again');
+  });
+
+  test('spending for an expense event leaves the event open, as before', () async {
+    final plan = DriftPlanRepository(db);
+    final trip = await plan.addEvent(name: 'Trip', isIncome: false, amount: 50000, categoryKey: 'other', date: d(2026, 12, 1));
+    await ledger.add(domain.EntryDraft(day: d(2026, 12, 1), isIncome: false, amount: 20000, categoryKey: 'other', event: domain.EventLink(trip, d(2026, 12, 1))));
+    final e = (await plan.watchEvents().first).single;
+    expect((e.done, e.spent), (false, 20000));
   });
 }
