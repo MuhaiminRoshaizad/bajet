@@ -11,6 +11,7 @@ import '../../../core/theme/theme_mode.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
@@ -278,13 +279,13 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(planRepositoryProvider);
     final s = widget.settings;
-    await ref.read(planRepositoryProvider).saveSettings(PlanSettings(
-          openingDate: s.openingDate,
-          weeklyCap: RinggitCentsFormatter.parse(_cap.text),
-          buffer: RinggitCentsFormatter.parse(_buffer.text),
-        ));
+    final cap = RinggitCentsFormatter.parse(_cap.text);
+    await repo.saveSettings(PlanSettings(openingDate: s.openingDate, weeklyCap: cap, buffer: RinggitCentsFormatter.parse(_buffer.text)));
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, 'Allowance saved: ${Money.format(cap)} a week', undo: () => repo.saveSettings(s));
   }
 
   @override

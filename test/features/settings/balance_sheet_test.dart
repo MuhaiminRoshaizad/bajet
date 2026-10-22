@@ -38,6 +38,10 @@ void main() {
     expect(world.accounts.single.openingBalance, 160000);
     expect(world.entries, isEmpty);
     expect(find.text('RM1,600.00'), findsWidgets);
+    expect(find.text("Saved Main account's starting balance: RM1,600.00"), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.accounts.single.openingBalance, 150000);
   });
 
   testWidgets("with several accounts, the starting balance fixed is the chosen account's", (tester) async {

@@ -8,6 +8,7 @@ import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
@@ -51,10 +52,16 @@ class RhythmScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.m),
                   FilledButton.tonal(
                     onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
                       final repo = ref.read(planRepositoryProvider);
                       for (final r in spreadOverSpendingDays(rules, allowance)) {
                         await repo.saveRule(r);
                       }
+                      showBar(messenger, 'Spread ${Money.format(allowance)} over $spendingDays spending ${spendingDays == 1 ? 'day' : 'days'}', undo: () async {
+                        for (final r in rules) {
+                          await repo.saveRule(r);
+                        }
+                      });
                     },
                     style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                     child: Text('Spread ${Money.format(allowance)} over the $spendingDays spending ${spendingDays == 1 ? 'day' : 'days'}'),
@@ -160,12 +167,18 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
       plannedSpend: RinggitCentsFormatter.parse(_amount.text),
       isFastingDay: _fasting,
     );
+    final messenger = ScaffoldMessenger.of(context);
     final rules = ref.read(rulesProvider).value ?? [widget.rule];
     final repo = ref.read(planRepositoryProvider);
     for (final r in withRule(rules, changed)) {
       await repo.saveRule(r);
     }
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, 'Saved ${_weekdays[changed.weekday - 1]}: ${Money.format(changed.plannedSpend)}', undo: () async {
+      for (final r in rules) {
+        await repo.saveRule(r);
+      }
+    });
   }
 
   /// Where this day's old plan goes once it stops spending, or where its new

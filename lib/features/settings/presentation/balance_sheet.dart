@@ -8,6 +8,7 @@ import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../accounts/domain/account_models.dart';
 import '../../accounts/presentation/account_choice.dart';
@@ -58,8 +59,12 @@ class _BalanceSheetState extends ConsumerState<_BalanceSheet> {
   Future<void> _saveOpening() async {
     final account = _account;
     if (account == null || !_form.currentState!.validate()) return;
-    await ref.read(accountRepositoryProvider).setOpeningBalance(account.id, RinggitCentsFormatter.parse(_opening.text));
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(accountRepositoryProvider);
+    final opening = RinggitCentsFormatter.parse(_opening.text);
+    await repo.setOpeningBalance(account.id, opening);
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, "Saved ${account.called}'s starting balance: ${Money.format(opening)}", undo: () => repo.setOpeningBalance(account.id, account.openingBalance));
   }
 
   @override

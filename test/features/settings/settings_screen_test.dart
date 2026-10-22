@@ -31,6 +31,10 @@ void main() {
     expect((world.settings!.weeklyCap, world.settings!.buffer), (7500, 0));
     expect(world.settings!.openingDate, demoSettings.openingDate);
     expect(find.text('RM75 a week'), findsOneWidget, reason: 'no buffer, so no keep');
+    expect(find.text('Allowance saved: RM75.00 a week'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect((world.settings!.weeklyCap, world.settings!.buffer), (demoSettings.weeklyCap, demoSettings.buffer));
   });
 
   testWidgets('an empty allowance is refused', (tester) async {
@@ -78,6 +82,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.coachSettings.userName, 'Sara');
     expect(find.text('Sara'), findsOneWidget);
+    expect(find.text('Saved. The coach will call you Sara'), findsOneWidget);
 
     await tester.tap(find.text('Your name'));
     await tester.pumpAndSettle();
@@ -86,5 +91,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.coachSettings.userName, isNull);
     expect(find.text('Not set · the coach uses no name'), findsOneWidget);
+    expect(find.text('Name cleared. The coach uses no name.'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.userName, 'Sara');
   });
 }

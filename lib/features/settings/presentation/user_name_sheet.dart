@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../coach/domain/coach_settings.dart';
 import '../../coach/presentation/coach_providers.dart';
 
@@ -61,8 +62,12 @@ class _UserNameSheetState extends ConsumerState<_UserNameSheet> {
   }
 
   Future<void> _save() async {
-    await ref.read(coachSettingsRepositoryProvider).saveUserName(_name.text);
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(coachSettingsRepositoryProvider);
+    final name = _name.text.trim();
+    await repo.saveUserName(name);
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, name.isEmpty ? 'Name cleared. The coach uses no name.' : 'Saved. The coach will call you $name', undo: () => repo.saveUserName(widget.current ?? ''));
   }
 
   @override

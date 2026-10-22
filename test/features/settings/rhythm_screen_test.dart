@@ -54,6 +54,7 @@ void main() {
 
     expect(find.textContaining('Planned in total: RM12.00 a week.'), findsOneWidget);
     expect(find.text('Office day · Flexible'), findsOneWidget);
+    expect(find.text('Saved Monday: RM12.00'), findsOneWidget);
   });
 
   testWidgets('a no-spending day hands its plan to the other days, so the week keeps its total', (tester) async {
@@ -134,5 +135,9 @@ void main() {
 
     expect(await planned(world), spreadOverWeek(5000));
     expect(find.textContaining('weekly allowance is not planned'), findsNothing);
+    expect(find.text('Spread RM50.00 over 7 spending days'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('weekly allowance is not planned'), findsOneWidget);
   });
 }
