@@ -317,4 +317,16 @@ void main() {
     final family = await (target.select(target.categories)..where((c) => c.key.equals('family'))).getSingle();
     expect(family.spendKind, SpendKind.need);
   });
+
+  test('the monthly amount for needs survives a round trip, and a format 11 backup restores with none', () async {
+    await fill(source);
+    await source.update(source.appSettings).write(const AppSettingsCompanion(needsReserve: Value(8000)));
+    final v12 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    await DriftBackupRepository(target).restore(v12);
+    expect((await target.select(target.appSettings).getSingle()).needsReserve, 8000);
+
+    final v11 = {...v12, 'format': 11, 'settings': {...(v12['settings']! as Map<String, Object?>)}..remove('needsReserve')};
+    await DriftBackupRepository(target).restore(v11);
+    expect((await target.select(target.appSettings).getSingle()).needsReserve, 0);
+  });
 }

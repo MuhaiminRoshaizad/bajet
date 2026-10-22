@@ -13,7 +13,8 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// `userName`, what the coach calls the user. 10: goals carry `listingState`
 /// and `listingCheckedOn`, what their listing showed when last looked at.
 /// 11: categories and entries carry `spendKind`, `want` or `need`.
-const backupFormatVersion = 11;
+/// 12: settings carry `needsReserve`, set aside each month for needs.
+const backupFormatVersion = 12;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -123,6 +124,11 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
     ];
     b = {...b, 'format': 11, 'categories': categories, 'entries': entries};
     format = 11;
+  }
+  if (format == 11) {
+    final settings = b['settings'] as Map<String, Object?>?;
+    b = {...b, 'format': 12, 'settings': settings == null ? null : {...settings, 'needsReserve': 0}};
+    format = 12;
   }
   return b;
 }
