@@ -51,10 +51,15 @@ abstract interface class PlanRepository {
 
   /// Logs the occurrence due on [due] as a real entry dated [paidOn] and
   /// moves the item's next due date forward one month, in one transaction.
-  /// Returns false and does nothing when [due] is no longer the next one,
-  /// because it was already paid, or the item is gone or paused, so a second
-  /// tap or an old card never pays twice.
-  Future<bool> confirmRecurring(int id, {required DateTime due, required DateTime paidOn});
+  /// Returns the entry logged, or null and does nothing when [due] is no
+  /// longer the next one, because it was already paid, or the item is gone
+  /// or paused, so a second tap or an old card never pays twice.
+  Future<int?> confirmRecurring(int id, {required DateTime due, required DateTime paidOn});
+
+  /// Undoes [confirmRecurring]: deletes [entryId] and makes [due] the next
+  /// one again, in one transaction. Does nothing once the item has moved on
+  /// again, so an old Undo never takes back a later payment.
+  Future<void> unconfirmRecurring(int id, {required DateTime due, required int entryId});
 
   /// Every event, each with what has been spent against its next
   /// occurrence.

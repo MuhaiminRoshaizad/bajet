@@ -8,6 +8,7 @@ import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/under_bar.dart';
@@ -190,7 +191,17 @@ class _DueCard extends ConsumerWidget {
             ),
           ),
           FilledButton.tonal(
-            onPressed: () => ref.read(planRepositoryProvider).confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider)),
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              final repo = ref.read(planRepositoryProvider);
+              final entry = await repo.confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider));
+              if (entry == null) return;
+              showBar(
+                messenger,
+                '${item.isIncome ? 'Received' : 'Paid'} ${item.name} ${Money.format(item.amount)}',
+                undo: () => repo.unconfirmRecurring(item.id, due: item.nextDue, entryId: entry),
+              );
+            },
             style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
             child: Text(item.isIncome ? 'Received' : 'Paid'),
           ),

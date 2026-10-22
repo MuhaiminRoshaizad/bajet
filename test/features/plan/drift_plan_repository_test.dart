@@ -102,10 +102,25 @@ void main() {
     final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1));
     final first = plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
     final second = plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1));
-    expect(await [first, second].wait, [true, false]);
+    final paid = await [first, second].wait;
+    expect(paid[0], isNotNull);
+    expect(paid[1], isNull);
     expect(await db.select(db.entries).get(), hasLength(1));
     expect((await plan.watchRecurring().first).single.nextDue, d(2026, 8, 1));
-    expect(await plan.confirmRecurring(404, due: d(2026, 7, 1), paidOn: d(2026, 7, 1)), isFalse);
+    expect(await plan.confirmRecurring(404, due: d(2026, 7, 1), paidOn: d(2026, 7, 1)), isNull);
+  });
+
+  test('a payment undone takes its entry back and makes the bill due again, but never a later one', () async {
+    final id = await plan.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 1));
+    final july = (await plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1)))!;
+    await plan.unconfirmRecurring(id, due: d(2026, 7, 1), entryId: july);
+    expect(await db.select(db.entries).get(), isEmpty);
+    expect((await plan.watchRecurring().first).single.nextDue, d(2026, 7, 1));
+
+    final again = (await plan.confirmRecurring(id, due: d(2026, 7, 1), paidOn: d(2026, 7, 1)))!;
+    await plan.confirmRecurring(id, due: d(2026, 8, 1), paidOn: d(2026, 8, 1));
+    await plan.unconfirmRecurring(id, due: d(2026, 7, 1), entryId: again);
+    expect(await db.select(db.entries).get(), hasLength(2), reason: 'August was paid since, so July stays paid');
   });
 
   test('a second Done on a yearly event never skips a year', () async {

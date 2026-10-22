@@ -131,10 +131,10 @@ class DriftPlanRepository implements PlanRepository {
   }
 
   @override
-  Future<bool> confirmRecurring(int id, {required DateTime due, required DateTime paidOn}) => _db.transaction(() async {
+  Future<int?> confirmRecurring(int id, {required DateTime due, required DateTime paidOn}) => _db.transaction(() async {
         final item = await (_db.select(_db.recurringItems)..where((r) => r.id.equals(id))).getSingleOrNull();
-        if (item == null || !item.active || item.nextDue != due) return false;
-        await _db.into(_db.entries).insert(
+        if (item == null || !item.active || item.nextDue != due) return null;
+        final entry = await _db.into(_db.entries).insert(
               EntriesCompanion.insert(
                 occurredOn: paidOn,
                 kind: item.kind,
@@ -147,7 +147,15 @@ class DriftPlanRepository implements PlanRepository {
             );
         await (_db.update(_db.recurringItems)..where((r) => r.id.equals(id)))
             .write(RecurringItemsCompanion(nextDue: Value(DateTime.utc(due.year, due.month + 1, due.day))));
-        return true;
+        return entry;
+      });
+
+  @override
+  Future<void> unconfirmRecurring(int id, {required DateTime due, required int entryId}) => _db.transaction(() async {
+        final item = await (_db.select(_db.recurringItems)..where((r) => r.id.equals(id))).getSingleOrNull();
+        if (item == null || item.nextDue != DateTime.utc(due.year, due.month + 1, due.day)) return;
+        await (_db.delete(_db.entries)..where((e) => e.id.equals(entryId))).go();
+        await (_db.update(_db.recurringItems)..where((r) => r.id.equals(id))).write(RecurringItemsCompanion(nextDue: Value(due)));
       });
 
   @override

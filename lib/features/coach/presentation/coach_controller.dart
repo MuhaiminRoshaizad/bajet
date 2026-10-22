@@ -227,7 +227,7 @@ class CoachController extends Notifier<CoachChat> {
         // A card waits in the remembered chat for as long as the user likes;
         // a bill paid meanwhile from the Plan tab is not paid again.
         final paid = await ref.read(planRepositoryProvider).confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider));
-        if (!paid) return _setCard(message, card, c.copyWith(state: CardState.outdated));
+        if (paid == null) return _setCard(message, card, c.copyWith(state: CardState.outdated));
         undoId = null;
     }
     _mood(CoachMood.cheer);

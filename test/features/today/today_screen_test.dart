@@ -49,7 +49,7 @@ void main() {
     expect(find.text('Left after buying Laptop'), findsOneWidget);
   });
 
-  testWidgets('a due bill can be marked paid, which logs it', (tester) async {
+  testWidgets('a due bill can be marked paid, which logs it, and Undo makes it due again', (tester) async {
     final world = await pumpApp(tester, seed: (w) {
       w.addRecurring(name: 'Internet', isIncome: false, amount: 12900, categoryKey: 'bills', nextDue: testToday);
     });
@@ -60,6 +60,12 @@ void main() {
     expect(world.entries.single.amount, 12900);
     expect(world.recurring.single.nextDue, d(2026, 8, 1));
     expect(find.widgetWithText(FilledButton, 'Paid'), findsNothing);
+    expect(find.text('Paid Internet RM129.00'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.entries, isEmpty);
+    expect(world.recurring.single.nextDue, testToday);
+    expect(find.widgetWithText(FilledButton, 'Paid'), findsOneWidget);
   });
 
   testWidgets("today's rule appears under the balance", (tester) async {

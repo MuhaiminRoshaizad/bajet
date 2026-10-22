@@ -375,15 +375,23 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
       ];
 
   @override
-  Future<bool> confirmRecurring(int id, {required DateTime due, required DateTime paidOn}) async {
+  Future<int?> confirmRecurring(int id, {required DateTime due, required DateTime paidOn}) async {
     final item = _recurring.value.where((r) => r.id == id).firstOrNull;
-    if (item == null || !item.active || item.nextDue != due) return false;
-    await add(EntryDraft(day: paidOn, isIncome: item.isIncome, amount: item.amount, categoryKey: 'bills', label: item.name, accountId: item.accountId));
+    if (item == null || !item.active || item.nextDue != due) return null;
+    final entry = await add(EntryDraft(day: paidOn, isIncome: item.isIncome, amount: item.amount, categoryKey: 'bills', label: item.name, accountId: item.accountId));
     _recurring.value = [
       for (final r in _recurring.value)
         r.id == id ? r.copyWith(nextDue: DateTime.utc(due.year, due.month + 1, due.day)) : r,
     ];
-    return true;
+    return entry;
+  }
+
+  @override
+  Future<void> unconfirmRecurring(int id, {required DateTime due, required int entryId}) async {
+    final item = _recurring.value.where((r) => r.id == id).firstOrNull;
+    if (item == null || item.nextDue != DateTime.utc(due.year, due.month + 1, due.day)) return;
+    await delete(entryId);
+    _recurring.value = [for (final r in _recurring.value) r.id == id ? r.copyWith(nextDue: due) : r];
   }
 
   @override
