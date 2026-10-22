@@ -158,7 +158,7 @@ Insights insights({
   }
 
   final days = [for (var d = from; !d.isAfter(to); d = DateTime.utc(d.year, d.month, d.day + 1)) d];
-  int spentOn(DateTime d) => d.isBefore(first) ? 0 : flexibleSpent(entries, fixed, d, d);
+  int spentOn(DateTime d) => d.isBefore(first) ? 0 : wantsSpent(entries, fixed, d, d);
   // Today is still under way, so it counts toward no habit yet; a past
   // period is finished throughout.
   final finished = days.where((d) => d != now).toList();
@@ -168,7 +168,7 @@ Insights insights({
     final sunday = DateTime.utc(monday.year, monday.month, monday.day + 6);
     if (monday.isBefore(from) || sunday.isAfter(to) || !sunday.isBefore(now)) continue;
     fullWeeks++;
-    if (flexibleSpent(entries, fixed, monday, sunday) <= weeklyCap) weeksUnder++;
+    if (wantsSpent(entries, fixed, monday, sunday) <= weeklyCap) weeksUnder++;
   }
 
   final byLabel = <String, List<int>>{};

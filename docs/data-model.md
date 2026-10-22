@@ -26,7 +26,7 @@ One row, created during first-run setup.
 |-------------------|------|-------------------------------------------|
 | `id`                | int  | Always 1                                  |
 | `opening_date`      | day  | Balances ignore entries before this date; the week and Insights still count them (decision 020) |
-| `weekly_cap`        | int  | Flexible spending allowed per week        |
+| `weekly_cap`        | int  | Spending on wants allowed per week        |
 | `buffer`            | int  | Minimum left after buying a goal          |
 | `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |
 | `total_card_finish` | enum | `matte` (default), `gloss`, `mirror`, `pearl`, `frosted` or `guilloche` |
@@ -225,7 +225,7 @@ it. Each row keeps what the next week's report is judged against.
 | `matched`             | bool | Every account was compared with what it really holds and agreed |
 | `untracked`           | int  | Money logged as untracked at this check-in; default 0    |
 | `starting_adjustment` | int  | The gap found at the very first check-in, kept apart from untracked; default 0 |
-| `allowance_spent`     | int  | Flexible spending that week, Monday to the check-in      |
+| `allowance_spent`     | int  | Spending on wants that week, Monday to the check-in      |
 | `left_after_buying`   | int? | What the first goal leaves after buying; null without a goal |
 | `next_target`         | int  | The balance the plan expected seven days on              |
 

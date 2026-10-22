@@ -3,9 +3,11 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 import '../../features/accounts/domain/account_models.dart' show firstAccountColor, firstAccountName;
 import '../../features/coach/domain/coach_thread.dart' show chatTitleFrom;
+import '../../features/ledger/domain/ledger_models.dart' show SpendKind;
 import '../../features/plan/domain/plan_models.dart' show maxWindowDays;
 import 'tables.dart';
 
+export '../../features/ledger/domain/ledger_models.dart' show SpendKind;
 export 'tables.dart';
 
 part 'app_database.g.dart';

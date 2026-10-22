@@ -4,6 +4,7 @@
 
 import 'package:drift/drift.dart';
 
+import '../../features/ledger/domain/ledger_models.dart' show SpendKind;
 import '../../features/plan/domain/plan_models.dart' show maxWindowDays;
 
 /// Calendar days are stored as ISO `yyyy-mm-dd` text and read back as UTC
@@ -30,11 +31,6 @@ enum GoalStatus { active, paused, achieved, archived }
 
 /// What the user last saw at a goal's listing link.
 enum ListingState { up, sold }
-
-/// Day-to-day spending sorted by whose choice it was: a want the user
-/// chose, or a need that would be bought anyway or that family asked for.
-/// Only wants count toward the weekly allowance.
-enum SpendKind { want, need }
 
 enum AccountKind { cash, bank, ewallet }
 

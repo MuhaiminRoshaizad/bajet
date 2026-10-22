@@ -23,7 +23,7 @@ String weekSummary({
   final byKey = {for (final c in categories) c.key: c};
   final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
   final week = entries.where((e) => !e.day.isBefore(monday) && !e.day.isAfter(today)).toList();
-  final spent = flexibleSpent(week, fixed, monday, today);
+  final spent = wantsSpent(week, fixed, monday, today);
 
   final perCategory = <String, int>{};
   for (final e in week.where((e) => !e.isIncome)) {
@@ -35,7 +35,7 @@ String weekSummary({
   final overDays = <String>[];
   for (var d = monday; !d.isAfter(today); d = DateTime.utc(d.year, d.month, d.day + 1)) {
     final planned = rules.where((r) => r.weekday == d.weekday).firstOrNull?.plannedSpend ?? 0;
-    final daySpent = flexibleSpent(week, fixed, d, d);
+    final daySpent = wantsSpent(week, fixed, d, d);
     if (daySpent > planned) overDays.add('- ${Dates.weekday(d)} ${Dates.short(d)}: ${Money.format(daySpent)} against ${Money.format(planned)} planned');
   }
 

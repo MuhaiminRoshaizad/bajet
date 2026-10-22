@@ -53,6 +53,20 @@ void main() {
     expect(list.map((e) => e.amount), [300, 200]);
   });
 
+  test('a spend keeps its kind through add, update and restore, and Family starts as a need', () async {
+    final id = await ledger.add(domain.EntryDraft(day: d(2026, 7, 1), isIncome: false, amount: 1040, categoryKey: 'personal', spendKind: domain.SpendKind.need));
+    var e = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+    expect(e.spendKind, domain.SpendKind.need);
+    await ledger.update(domain.Entry(id: id, day: e.day, isIncome: false, amount: e.amount, categoryKey: e.categoryKey, accountId: e.accountId));
+    e = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+    expect(e.spendKind, domain.SpendKind.want);
+    await ledger.delete(id);
+    await ledger.restore(domain.Entry(id: id, day: e.day, isIncome: false, amount: e.amount, categoryKey: e.categoryKey, accountId: e.accountId, spendKind: domain.SpendKind.need));
+    expect((await ledger.watchSince(d(2026, 7, 1)).first).single.spendKind, domain.SpendKind.need);
+    final kinds = {for (final c in await ledger.watchCategories().first) c.key: c.spendKind};
+    expect((kinds['family'], kinds['food']), (domain.SpendKind.need, domain.SpendKind.want));
+  });
+
   test('blank labels and notes are stored as null', () async {
     await ledger.add(domain.EntryDraft(day: d(2026, 7, 1), isIncome: false, amount: 100, categoryKey: 'food', label: '  ', note: ''));
     final e = (await ledger.watchSince(d(2026, 7, 1)).first).single;
@@ -93,7 +107,7 @@ void main() {
     expect(await favourites.watchAll().first, isEmpty);
   });
 
-  test('flexibleSpent leaves out income, fixed categories, bills and other days', () {
+  test('wantsSpent leaves out income, fixed categories, bills and other days', () {
     final entries = [
       domain.Entry(id: 5, day: d(2026, 7, 8), isIncome: false, amount: 1500, categoryKey: 'pets', billId: 2),
       domain.Entry(id: 1, day: d(2026, 7, 6), isIncome: false, amount: 1000, categoryKey: 'food'),
@@ -101,7 +115,17 @@ void main() {
       domain.Entry(id: 3, day: d(2026, 7, 7), isIncome: true, amount: 9000, categoryKey: 'refund'),
       domain.Entry(id: 4, day: d(2026, 7, 13), isIncome: false, amount: 700, categoryKey: 'food'),
     ];
-    expect(domain.flexibleSpent(entries, {'bills'}, d(2026, 7, 6), d(2026, 7, 12)), 1000);
+    expect(domain.wantsSpent(entries, {'bills'}, d(2026, 7, 6), d(2026, 7, 12)), 1000);
+  });
+
+  test('a need counts in needsSpent and never in wantsSpent', () {
+    final entries = [
+      domain.Entry(id: 1, day: d(2026, 7, 6), isIncome: false, amount: 2270, categoryKey: 'food'),
+      domain.Entry(id: 2, day: d(2026, 7, 7), isIncome: false, amount: 4500, categoryKey: 'family', spendKind: domain.SpendKind.need),
+      domain.Entry(id: 3, day: d(2026, 7, 7), isIncome: false, amount: 5000, categoryKey: 'bills', spendKind: domain.SpendKind.need),
+    ];
+    expect(domain.wantsSpent(entries, {'bills'}, d(2026, 7, 6), d(2026, 7, 12)), 2270);
+    expect(domain.needsSpent(entries, {'bills'}, d(2026, 7, 6), d(2026, 7, 12)), 4500, reason: 'a fixed category stays planned');
   });
 
   test('weekStart is the Monday of the week', () {

@@ -36,7 +36,7 @@ final weekSpentProvider = Provider<int?>((ref) {
   final categories = ref.watch(categoriesProvider).value;
   if (entries == null || categories == null) return null;
   final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
-  return flexibleSpent(entries, fixed, weekStart(today), today);
+  return wantsSpent(entries, fixed, weekStart(today), today);
 });
 
 /// The live projection of the plan as saved, or null until setup is done and
@@ -83,7 +83,7 @@ Projection? _project(Ref ref, {WhatIf whatIf = WhatIf.none, DateTime? through}) 
     events: events!,
     goals: goals!,
     buffer: settings!.buffer,
-    flexSpentToday: flexibleSpent(entries!, fixed, today, today),
+    flexSpentToday: wantsSpent(entries!, fixed, today, today),
     through: through,
     whatIf: whatIf,
   );

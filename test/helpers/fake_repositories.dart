@@ -53,7 +53,7 @@ const demoCategories = [
   Category(key: 'food', label: 'Food', isIncome: false, tint: 'apricot', isFixed: false),
   Category(key: 'transport', label: 'Transport', isIncome: false, tint: 'sky', isFixed: false),
   Category(key: 'pets', label: 'Pets', isIncome: false, tint: 'sage', isFixed: false),
-  Category(key: 'family', label: 'Family', isIncome: false, tint: 'rose', isFixed: false),
+  Category(key: 'family', label: 'Family', isIncome: false, tint: 'rose', isFixed: false, spendKind: SpendKind.need),
   Category(key: 'gifts', label: 'Gifts', isIncome: false, tint: 'pink', isFixed: false),
   Category(key: 'bills', label: 'Bills', isIncome: false, tint: 'teal', isFixed: true),
   Category(key: 'personal', label: 'Personal', isIncome: false, tint: 'olive', isFixed: false),
@@ -146,6 +146,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
         event: d.event,
         accountId: d.accountId,
         billId: d.billId,
+        spendKind: d.spendKind,
       ),
     ];
     _settle(d.billId, d.isIncome ? d.event : null, forward: true);
@@ -306,7 +307,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
       _entries.value = [
         for (final e in _entries.value)
           mine(e.accountId)
-              ? Entry(id: e.id, day: e.day, isIncome: e.isIncome, amount: e.amount, categoryKey: e.categoryKey, label: e.label, note: e.note, receipt: e.receipt, event: e.event, accountId: moveTo)
+              ? Entry(id: e.id, day: e.day, isIncome: e.isIncome, amount: e.amount, categoryKey: e.categoryKey, label: e.label, note: e.note, receipt: e.receipt, event: e.event, accountId: moveTo, billId: e.billId, spendKind: e.spendKind)
               : e,
       ];
       _recurring.value = [for (final r in _recurring.value) mine(r.accountId) ? r.copyWith(accountId: moveTo) : r];

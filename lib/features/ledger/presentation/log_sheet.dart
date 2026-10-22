@@ -674,7 +674,7 @@ class _PlanHint extends ConsumerWidget {
     }
     final fixed = {for (final x in categories!.where((x) => x.isFixed)) x.key};
     final planned = rules.where((r) => r.weekday == day.weekday).firstOrNull?.plannedSpend ?? 0;
-    final room = (planned - flexibleSpent(entries, fixed, day, day)).clamp(0, planned);
+    final room = (planned - wantsSpent(entries, fixed, day, day)).clamp(0, planned);
     final over = amount - room;
     final whose = day == ref.read(todayProvider) ? "today's" : "that day's";
     final (bg, fg, text) = over > 0

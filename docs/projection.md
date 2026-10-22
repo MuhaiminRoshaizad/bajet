@@ -15,7 +15,7 @@ or database imports, so it is tested directly.
 | `events`         | One-off planned income or expenses                             |
 | `goals`          | Active goals with price, target date and priority              |
 | `buffer`         | The minimum that must remain after buying                      |
-| `flexSpentToday` | Flexible spending already logged today                         |
+| `flexSpentToday` | Spending on wants already logged today                         |
 
 All amounts are integer sen. Days are UTC midnights, so stepping a day never
 crosses a daylight-saving change.
@@ -74,8 +74,8 @@ a bill still owed. Confirming a payment moves `nextDue` forward a month. See [de
 
 `projectionProvider` in `features/plan/presentation/plan_providers.dart` feeds
 the engine from the database: the balance from the ledger, settings, rhythm,
-recurring items, events and active goals from the plan, and today's flexible
-spending from recent entries. It returns null until setup is complete and
+recurring items, events and active goals from the plan, and today's spending
+on wants from recent entries. It returns null until setup is complete and
 every stream has loaded, and recalculates whenever any of them changes.
 
 Confirming a recurring item (`PlanRepository.confirmRecurring`) logs a real

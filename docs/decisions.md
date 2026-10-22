@@ -505,3 +505,23 @@ without any of that.
 let bajet find an app for https links. The answer is only as fresh as the
 last look, so the preview shows the day beside it. The link stays on the
 phone and in backups, and the coach never sees it.
+
+## 032: Only wants count toward the allowance
+
+**Decided:** every day-to-day spend is a want or a need. A want is what
+the user chose; a need would have been bought anyway, or family asked for
+it. The weekly allowance, the day's plan, the check-in and the habits
+count wants only. Family starts as a need and every other category as a
+want, and the log sheet changes it for one spend. Bills, planned events
+and goals stay planned and have no kind.
+
+**Why:** a week with a must-buy or a family errand read as over the
+allowance when every choice the user made was within it, so the allowance
+stopped measuring the choices it is for. A separate kind for family was
+dropped: it behaves exactly like a need, and the Family category already
+shows how much family asked for.
+
+**Costs:** one more thing to get right on each log, kept small by the
+category's starting kind. Needs still leave the balance and show in
+Insights, but they no longer slow the week's dial, so Runway alone has to
+plan for them.

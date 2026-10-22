@@ -2,6 +2,11 @@
 /// Amounts are positive integer sen; [isIncome] carries the direction.
 library;
 
+/// Whose choice a day-to-day spend was: a want the user chose, or a need
+/// that would be bought anyway or that family asked for. Only wants count
+/// toward the weekly allowance.
+enum SpendKind { want, need }
+
 class Category {
   const Category({
     required this.key,
@@ -9,6 +14,7 @@ class Category {
     required this.isIncome,
     required this.tint,
     required this.isFixed,
+    this.spendKind = SpendKind.want,
   });
 
   final String key;
@@ -20,6 +26,9 @@ class Category {
 
   /// Fixed spending does not count toward the weekly cap.
   final bool isFixed;
+
+  /// The kind a spend here starts as, before the user changes it.
+  final SpendKind spendKind;
 
   /// Goal purchases and check-in gaps are logged by the app, never picked by
   /// hand.
@@ -54,6 +63,7 @@ class Entry {
     this.event,
     this.accountId,
     this.billId,
+    this.spendKind = SpendKind.want,
   });
 
   final int id;
@@ -76,12 +86,22 @@ class Entry {
   /// The bill or income this pays or receives for its month, if any.
   final int? billId;
 
+  /// Whose choice it was; only a spend's is read.
+  final SpendKind spendKind;
+
   int get signedAmount => isIncome ? amount : -amount;
 
-  /// Spending that comes out of the weekly allowance: not income, not a
+  /// Day-to-day spending the plan did not count already: not income, not a
   /// fixed category, and not paid toward a bill or spent on a planned
-  /// event, which the plan already counts whatever their category.
+  /// event, which the plan counts whatever their category.
   bool isFlexible(Set<String> fixedKeys) => !isIncome && !fixedKeys.contains(categoryKey) && billId == null && event == null;
+
+  /// Day-to-day spending that comes out of the weekly allowance.
+  bool isWant(Set<String> fixedKeys) => isFlexible(fixedKeys) && spendKind == SpendKind.want;
+
+  /// Day-to-day spending that was bought anyway or asked for, and so is
+  /// kept out of the allowance.
+  bool isNeed(Set<String> fixedKeys) => isFlexible(fixedKeys) && spendKind == SpendKind.need;
 }
 
 /// An entry not yet saved, as the logger builds it.
@@ -97,6 +117,7 @@ class EntryDraft {
     this.event,
     this.accountId,
     this.billId,
+    this.spendKind = SpendKind.want,
   });
 
   final DateTime day;
@@ -114,6 +135,7 @@ class EntryDraft {
   /// The bill or income it pays or receives: logging it settles that one's
   /// next month, as Paid does, at the amount actually logged.
   final int? billId;
+  final SpendKind spendKind;
 }
 
 class Favourite {
@@ -140,9 +162,16 @@ const foodCategoryKey = 'food';
 
 /// Spending that counts toward the weekly cap: expenses outside fixed
 /// categories, from [from] to [to] inclusive.
-int flexibleSpent(Iterable<Entry> entries, Set<String> fixedKeys, DateTime from, DateTime to) => entries
-    .where((e) => e.isFlexible(fixedKeys) && !e.day.isBefore(from) && !e.day.isAfter(to))
-    .fold(0, (sum, e) => sum + e.amount);
+/// What went on wants from [from] to [to], both included: the spending the
+/// weekly allowance measures.
+int wantsSpent(Iterable<Entry> entries, Set<String> fixedKeys, DateTime from, DateTime to) =>
+    _sum(entries.where((e) => e.isWant(fixedKeys) && !e.day.isBefore(from) && !e.day.isAfter(to)));
+
+/// What went on needs from [from] to [to], both included.
+int needsSpent(Iterable<Entry> entries, Set<String> fixedKeys, DateTime from, DateTime to) =>
+    _sum(entries.where((e) => e.isNeed(fixedKeys) && !e.day.isBefore(from) && !e.day.isAfter(to)));
+
+int _sum(Iterable<Entry> entries) => entries.fold(0, (sum, e) => sum + e.amount);
 
 /// Monday of the week containing [day].
 DateTime weekStart(DateTime day) => DateTime.utc(day.year, day.month, day.day - (day.weekday - 1));

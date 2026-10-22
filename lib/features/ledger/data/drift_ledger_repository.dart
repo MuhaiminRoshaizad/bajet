@@ -22,6 +22,7 @@ class DriftLedgerRepository implements LedgerRepository {
               isIncome: r.kind == EntryKind.income,
               tint: r.tint,
               isFixed: r.isFixed,
+              spendKind: r.spendKind,
             ),
         ]);
   }
@@ -67,6 +68,7 @@ class DriftLedgerRepository implements LedgerRepository {
                 plannedEventId: Value(d.event?.eventId),
                 plannedEventOn: Value(d.event?.on),
                 recurringItemId: Value(d.billId),
+                spendKind: Value(d.spendKind),
               ),
             );
         await _settle(billId: d.billId, event: d.isIncome ? d.event : null, forward: true);
@@ -115,6 +117,7 @@ class DriftLedgerRepository implements LedgerRepository {
         plannedEventId: Value(e.event?.eventId),
         plannedEventOn: Value(e.event?.on),
         accountId: Value(await _db.accountOrFirst(e.accountId)),
+        spendKind: Value(e.spendKind),
       ),
     );
   }
@@ -150,6 +153,7 @@ class DriftLedgerRepository implements LedgerRepository {
                 plannedEventId: Value(e.event?.eventId),
                 plannedEventOn: Value(e.event?.on),
                 recurringItemId: Value(e.billId),
+                spendKind: Value(e.spendKind),
               ),
             );
         await _settle(billId: e.billId, event: e.isIncome ? e.event : null, forward: true);
@@ -167,6 +171,7 @@ class DriftLedgerRepository implements LedgerRepository {
         event: r.plannedEventId == null || r.plannedEventOn == null ? null : domain.EventLink(r.plannedEventId!, r.plannedEventOn!),
         accountId: r.accountId,
         billId: r.recurringItemId,
+        spendKind: r.spendKind,
       );
 }
 

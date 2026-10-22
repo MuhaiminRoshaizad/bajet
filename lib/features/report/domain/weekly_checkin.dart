@@ -227,7 +227,7 @@ WeeklyCheckin weeklyCheckin({
                     ? CheckinDayState.ahead
                     : CheckinDayState.finished;
         final rule = rules.firstWhere((r) => r.weekday == d.weekday);
-        return CheckinDay(d, state == CheckinDayState.noData ? 0 : flexibleSpent(entries, fixed, d, d), rule, state);
+        return CheckinDay(d, state == CheckinDayState.noData ? 0 : wantsSpent(entries, fixed, d, d), rule, state);
       }(),
   ];
 

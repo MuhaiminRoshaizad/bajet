@@ -124,7 +124,7 @@ void main() {
     final without = run(InsightsPeriod.week);
     expect(i.flexibleOut, without.flexibleOut);
     expect(i.fixedOut, without.fixedOut + 4500);
-    expect(flexibleSpent([gift], const {}, d(7, 15), d(7, 15)), 0);
+    expect(wantsSpent([gift], const {}, d(7, 15), d(7, 15)), 0);
   });
 
   test('a past week is whole: every day finished and the week counted', () {
