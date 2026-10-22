@@ -158,6 +158,46 @@ void main() {
     expect(await world.coachChat.said(), hasLength(2));
   });
 
+  testWidgets('switching memory off asks first, and Undo keeps the chats after all', (tester) async {
+    final world = await openCoach(tester);
+    await ask(tester, 'How did this week go?');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('tab-Today')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Key saved'), 200);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -200));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Key saved'));
+    await tester.pumpAndSettle();
+    final page = find.descendant(of: find.byType(CoachKeyScreen), matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.text('Remember our chats'), 300, scrollable: page);
+    await tester.drag(page, const Offset(0, -200));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Remember our chats'));
+    await tester.pumpAndSettle();
+    expect(find.text('Stop remembering chats?'), findsOneWidget);
+    await tester.tap(find.text('Keep'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.value.remember, isTrue);
+    expect(await world.coachChat.said(), hasLength(2));
+
+    await tester.tap(find.text('Remember our chats'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Stop remembering'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.value.remember, isFalse);
+    expect(await world.coachChat.said(), isEmpty, reason: 'nothing kept on the phone');
+    expect(find.text('Chats forgotten when bajet closes'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.coachSettings.value.remember, isTrue);
+    expect(await world.coachChat.said(), hasLength(2));
+  });
+
   testWidgets('with memory off nothing is kept', (tester) async {
     final world = await openCoach(tester, seed: (w) => w.coachSettings.saveSettings(const CoachSettings(remember: false)));
     await ask(tester, 'How did this week go?');

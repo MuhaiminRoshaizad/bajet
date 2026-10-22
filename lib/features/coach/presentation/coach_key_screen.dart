@@ -221,7 +221,7 @@ class _Memory extends ConsumerWidget {
                 style: TextStyle(color: c.muted, height: 1.4),
               ),
               value: remember,
-              onChanged: (on) => ref.read(coachChatsProvider.notifier).setRemember(on),
+              onChanged: (on) => on ? ref.read(coachChatsProvider.notifier).setRemember(true) : _stopRemembering(context, ref, count),
             ),
           ],
         ),
@@ -233,6 +233,24 @@ class _Memory extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Turning memory off forgets what was kept once bajet closes, so with
+  /// anything kept it asks first; Undo keeps it after all.
+  Future<void> _stopRemembering(BuildContext context, WidgetRef ref, int count) async {
+    final controller = ref.read(coachChatsProvider.notifier);
+    if (count > 0) {
+      final sure = await confirmDelete(
+        context,
+        title: 'Stop remembering chats?',
+        message: 'The $count ${count == 1 ? 'message' : 'messages'} kept so far stay until bajet closes, then are forgotten. Your entries, accounts and figures stay exactly as they are.',
+        action: 'Stop remembering',
+      );
+      if (!sure || !context.mounted) return;
+    }
+    final messenger = ScaffoldMessenger.of(context);
+    await controller.setRemember(false);
+    showBar(messenger, count > 0 ? 'Chats forgotten when bajet closes' : 'Chats not remembered', undo: () => controller.setRemember(true));
   }
 
   Future<void> _forget(BuildContext context, WidgetRef ref, int count) async {
