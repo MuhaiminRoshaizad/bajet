@@ -283,7 +283,7 @@ its row in the key, opens that category: the slice springs out and thickens
 (`AppMotion.spring`), the others fade back, the middle changes over without a
 bounce to the category, its total, share and number of entries, and its
 entries open under its row like a drawer, newest first, five then "Show
-all" (`CategoryEntries`, the same `EntryTile` as History, opening the same
+all" (`EntryDrawer`, the same `EntryTile` as History, opening the same
 edit sheet). Tapping it again, or the ring's middle, closes it; one is open
 at a time, and a new period closes it.
 
