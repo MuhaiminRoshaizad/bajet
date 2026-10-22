@@ -18,6 +18,7 @@ import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
+import '../../settings/presentation/goal_listing.dart';
 import '../domain/insights.dart';
 import 'category_ring.dart';
 import 'insights_providers.dart';
@@ -412,6 +413,16 @@ class _GoalProgress extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s),
           Text('${Money.format(math.max(0, balance))} of ${Money.format(needed)} needed', style: TextStyle(color: c.keep)),
           if (buffer > 0) Text('The price plus ${Money.formatWhole(buffer)} to keep', style: TextStyle(color: c.muted, fontSize: 13)),
+          // Only shown and opened here; it is changed in Settings → Goals.
+          if (goal.listing case final listing?) ...[
+            const SizedBox(height: AppSpacing.m),
+            ListingPreview(
+              listing: listing,
+              onOpen: () => openListing(context, ref, goal),
+              onReplace: () => context.push(Routes.goals),
+              replaceLabel: 'Find another listing',
+            ),
+          ],
         ],
       ),
     );

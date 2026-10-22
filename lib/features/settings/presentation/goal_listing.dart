@@ -160,12 +160,17 @@ class _ListingLinkFieldState extends State<ListingLinkField> {
 /// whether it was still up when last looked at. Tapping opens it; once it
 /// has sold, it offers a new link or none.
 class ListingPreview extends StatelessWidget {
-  const ListingPreview({super.key, required this.listing, required this.onOpen, required this.onReplace, required this.onRemove});
+  const ListingPreview({super.key, required this.listing, required this.onOpen, required this.onReplace, this.onRemove, this.replaceLabel = 'Add a new listing'});
 
   final Listing listing;
   final VoidCallback onOpen;
+
+  /// Once sold: where a new link is found, named by [replaceLabel].
   final VoidCallback onReplace;
-  final VoidCallback onRemove;
+  final String replaceLabel;
+
+  /// Once sold: takes the link off. Left out where the link is only shown.
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -251,8 +256,8 @@ class ListingPreview extends StatelessWidget {
               // Wraps, so large text sizes put Remove on a line of its own.
               ? Wrap(
                   children: [
-                    TextButton(onPressed: onReplace, child: const Text('Add a new listing')),
-                    TextButton(onPressed: onRemove, style: TextButton.styleFrom(foregroundColor: c.muted), child: const Text('Remove')),
+                    TextButton(onPressed: onReplace, child: Text(replaceLabel)),
+                    if (onRemove != null) TextButton(onPressed: onRemove, style: TextButton.styleFrom(foregroundColor: c.muted), child: const Text('Remove')),
                   ],
                 )
               : const SizedBox(width: double.infinity),

@@ -1,3 +1,6 @@
+import 'package:bajet/core/widgets/done_bar.dart';
+import 'package:bajet/features/insights/presentation/insights_screen.dart';
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/lock/domain/app_lock.dart';
 import 'package:bajet/features/plan/domain/listing.dart';
 import 'package:flutter/material.dart';
@@ -183,5 +186,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('bajet is locked'), findsNothing);
     expect(find.text('Is the Laptop still for sale?'), findsOneWidget);
+  });
+
+  testWidgets("Insights' goal card shows the listing, opens it, and asks on the way back", (tester) async {
+    // Insights shows its cards once something is logged.
+    final world = await pumpApp(tester, seed: (w) => withListing(w).add(EntryDraft(day: testToday, isIncome: false, amount: 1200, categoryKey: 'food')));
+    await tester.tap(find.byKey(const ValueKey('tab-Insights')));
+    await tester.pumpAndSettle();
+    final preview = find.byKey(const ValueKey('listing-preview'));
+    await tester.scrollUntilVisible(preview, 300, scrollable: find.descendant(of: find.byType(InsightsScreen), matching: find.byType(Scrollable)).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Marketplace listing'), findsOneWidget);
+    expect(find.text('Remove'), findsNothing, reason: 'the link is changed in Settings → Goals');
+
+    await tester.tap(preview);
+    await tester.pumpAndSettle();
+    expect(world.links.opened, [marketplace]);
+    await leaveAndReturn(tester);
+    await tester.tap(find.text('Sold'));
+    await tester.pumpAndSettle();
+    expect(world.goals.single.listing?.check, ListingCheck.sold);
+
+    // The "Marked sold" bar leaves by itself, uncovering the card.
+    await tester.pump(barDuration);
+    await tester.pumpAndSettle();
+    await tester.drag(find.descendant(of: find.byType(InsightsScreen), matching: find.byType(Scrollable)).first, const Offset(0, -400));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Find another listing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Goals'), findsOneWidget);
   });
 }

@@ -461,8 +461,11 @@ inline line of text where it is.
   listing" for a Facebook one), and a pill for what it showed when last
   looked at (Not checked grey, Still up green, Sold red, each also in words)
   beside the day. Tapping opens it in whichever app views it; back in bajet,
-  a short sheet asks whether it is still for sale. A sold listing offers
-  Add a new listing and Remove, with undo. Today stays as it is.
+  wherever the user is (after the lock, if it came down), a short sheet asks
+  whether it is still for sale (`ListingCheckHost`). A sold listing offers
+  Add a new listing and Remove, with undo. Insights' goal card shows the
+  same preview under its figures, to open only; once sold it offers Find
+  another listing, which goes to Settings → Goals. Today stays as it is.
 - The Sunday check-in compares bajet's balance with the bank. Money missing
   from the bank is logged in one tap as Untracked, with undo; extra money in
   the bank opens the logger as income, filled in, so the user still picks
