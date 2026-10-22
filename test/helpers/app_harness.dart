@@ -1,6 +1,7 @@
 import 'package:bajet/app/app.dart';
 import 'package:bajet/core/database/database_provider.dart';
 import 'package:bajet/core/dates/clock.dart';
+import 'package:bajet/core/storage/device_flags.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/accounts/presentation/account_providers.dart';
 import 'package:bajet/features/checkin/presentation/checkin_providers.dart';
@@ -64,6 +65,7 @@ Future<FakeWorld> pumpApp(
       photoColoursProvider.overrideWithValue(world.photos),
       openLinkProvider.overrideWithValue(world.links.open),
       themeModeStoreProvider.overrideWithValue(world.themeModes),
+      deviceFlagsProvider.overrideWithValue(world.flags),
       lockSettingsStoreProvider.overrideWithValue(world.lockSettings),
       initialLockSettingsProvider.overrideWithValue(world.lockSettings.saved),
       deviceAuthProvider.overrideWithValue(world.deviceAuth),

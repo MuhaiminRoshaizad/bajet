@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 
+import 'package:bajet/core/storage/device_flags.dart';
 import 'package:bajet/core/theme/theme_mode.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/accounts/domain/account_repository.dart';
@@ -89,6 +90,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   final coachChat = MemoryCoachChatRepository();
   final checkins = FakeCheckins();
   final themeModes = FakeThemeModes();
+  final flags = FakeDeviceFlags();
   final lockSettings = FakeLockSettings();
 
   /// The wall clock the app reads; tests move it on to stand for time
@@ -774,6 +776,18 @@ class FakeCheckins implements CheckinRepository {
   @override
   Future<void> save(Checkin checkin) async =>
       _live.value = [...saved.where((c) => c.checkedOn != checkin.checkedOn), checkin]..sort((a, b) => b.checkedOn.compareTo(a.checkedOn));
+}
+
+/// Starts as a phone that has seen the wants and needs sheet, so the sheet
+/// covers Today only in the tests that clear it.
+class FakeDeviceFlags implements DeviceFlags {
+  final on = {DeviceFlag.kindsExplained};
+
+  @override
+  Future<bool> isSet(DeviceFlag flag) async => on.contains(flag);
+
+  @override
+  Future<void> set(DeviceFlag flag, bool value) async => value ? on.add(flag) : on.remove(flag);
 }
 
 class FakeThemeModes implements ThemeModeStore {

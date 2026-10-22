@@ -274,6 +274,10 @@ person's circle gets a ring in its own hue, the tint's ink mixed into its
 fill (80% on light, 60% on dark), about 3:1 and 5:1. Sparkles, thought
 puffs and the orbiting spark are white on dark and the muted ink on light.
 
+Under Spending by kind, Insights carries one short tip a week (`tipFor`),
+about wants, needs and the plan, from a list written into the app. "Hide
+tips" turns them off on this phone (`DeviceFlag.tipsHidden`), with Undo.
+
 Insights shows where the money went as a ring (`CategoryRing`): every
 category of money out, fixed ones labelled Fixed, the total in the middle and
 a key with each one's amount and share. Slices take their colours by size, so

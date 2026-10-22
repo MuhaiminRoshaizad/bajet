@@ -1,3 +1,4 @@
+import 'package:bajet/core/storage/device_flags.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,6 +30,23 @@ void main() {
     // bar, so the button at its foot can be reached.
     expect(find.widgetWithText(FilledButton, 'Type the amount').hitTestable(), findsOneWidget);
     expect(find.byKey(const ValueKey('add')).hitTestable(), findsNothing);
+  });
+
+  testWidgets("a tip shows until hidden, and Undo brings tips back", (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.add(EntryDraft(day: testToday, isIncome: false, amount: 800, categoryKey: 'food')));
+    await openInsights(tester);
+    expect(find.text('Good to know'), findsOneWidget);
+    // Midway up the screen, clear of the floating bar.
+    await Scrollable.ensureVisible(tester.element(find.text('Hide tips')), alignment: 0.5);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hide tips'));
+    await settleUnderBar(tester);
+    expect(find.text('Good to know'), findsNothing);
+    expect(world.flags.on, contains(DeviceFlag.tipsHidden));
+    expect(find.text('Tips hidden'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await settleUnderBar(tester);
+    expect(find.text('Good to know'), findsOneWidget);
   });
 
   testWidgets('spending splits by kind, and a part opens its entries', (tester) async {

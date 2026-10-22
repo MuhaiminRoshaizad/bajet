@@ -57,6 +57,7 @@ lib/
     navigation/         route paths, so features can link without the router
     platform/           screens bajet opens outside itself (camera, pickers, share sheet)
     sharing/            the share sheet and the "Save to" screen, for backups and reports, and drawing a widget off screen as a picture
+    storage/            yes-or-no device flags kept as files of the app's own, outside the database and backups
     theme/              colour, spacing, radii and motion tokens
     validation/         input formatters and validators
     widgets/            widgets shared by two or more features

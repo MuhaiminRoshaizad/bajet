@@ -8,9 +8,11 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
+import '../../../core/storage/device_flags.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
@@ -23,6 +25,7 @@ import '../../ledger/presentation/spend_kind_choice.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../settings/presentation/goal_listing.dart';
 import '../domain/insights.dart';
+import '../domain/tips.dart';
 import 'category_ring.dart';
 import 'insights_providers.dart';
 import 'period_picker.dart';
@@ -93,6 +96,7 @@ class InsightsScreen extends ConsumerWidget {
                 children: [
                   _Totals(i: i),
                   SoftCard(child: _Split(i: i, categories: categories, today: ref.watch(todayProvider))),
+                  if (ref.watch(deviceFlagProvider(DeviceFlag.tipsHidden)).value == false) const SoftCard(child: _Tip()),
                   if (i.outByCategory.isNotEmpty)
                     SoftCard(
                       child: Column(
@@ -209,6 +213,41 @@ class _Tile extends StatelessWidget {
           if (note != null) Text(note!, style: TextStyle(color: c.muted, fontSize: 12)),
         ],
       ),
+    );
+  }
+}
+
+/// This week's tip, until the user hides tips; Undo brings them back.
+class _Tip extends ConsumerWidget {
+  const _Tip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(children: [
+          Expanded(child: Text('Good to know', style: TextStyle(color: c.primary, fontWeight: FontWeight.w700, fontSize: 16))),
+          TextButton(
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              // The card is gone by the time Undo is tapped, so the change
+              // goes through the scope rather than this widget's ref.
+              final scope = ProviderScope.containerOf(context);
+              Future<void> show(bool on) async {
+                await scope.read(deviceFlagsProvider).set(DeviceFlag.tipsHidden, !on);
+                scope.invalidate(deviceFlagProvider(DeviceFlag.tipsHidden));
+              }
+
+              await show(false);
+              showBar(messenger, 'Tips hidden', undo: () => show(true));
+            },
+            child: const Text('Hide tips'),
+          ),
+        ]),
+        Text(tipFor(ref.watch(todayProvider)), style: const TextStyle(height: 1.45)),
+      ],
     );
   }
 }
