@@ -284,14 +284,21 @@ class _TabButtonState extends State<_TabButton> with SingleTickerProviderStateMi
             children: [
               ScaleTransition(scale: _scale, child: Icon(selected ? tab.selectedIcon : tab.icon, size: 22, color: color)),
               const SizedBox(height: 2),
-              // One line that shrinks to fit, so a large system font or a
-              // narrow phone never pushes the label out of the bar.
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  tab.label,
-                  maxLines: 1,
-                  style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w800 : FontWeight.w600),
+              // One line, grown with large text only so far, so the four
+              // labels stay one size; past that it shrinks to fit rather than
+              // leave the bar, with room either side so labels never touch.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                child: MediaQuery.withClampedTextScaling(
+                  maxScaleFactor: 1.2,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      tab.label,
+                      maxLines: 1,
+                      style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w800 : FontWeight.w600),
+                    ),
+                  ),
                 ),
               ),
             ],
