@@ -68,7 +68,10 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
         ],
       ),
     );
-    if (confirmed == true) await ref.read(coachKeyProvider.notifier).remove();
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    await ref.read(coachKeyProvider.notifier).remove();
+    showBar(messenger, 'Key removed. The coach is off until a key is added.');
   }
 
   @override

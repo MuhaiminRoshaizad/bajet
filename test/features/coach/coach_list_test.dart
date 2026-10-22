@@ -106,6 +106,7 @@ void main() {
     await tester.tap(find.text('Pin chat'));
     await tester.pumpAndSettle();
     expect((chatRows.evaluate().first.widget.key! as ValueKey<String>).value, 'chat-2');
+    expect(find.textContaining('Pinned "'), findsOneWidget);
 
     await tester.longPress(find.byKey(const ValueKey('chat-2')));
     await tester.pumpAndSettle();
@@ -123,6 +124,10 @@ void main() {
     expect(find.text('Laptop plan'), findsOneWidget);
     final kept = (await world.coachChat.load()).firstWhere((t) => t.id == 2);
     expect((kept.title, kept.pinned), ('Laptop plan', true));
+    expect(find.text('Renamed to "Laptop plan"'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect((await world.coachChat.load()).firstWhere((t) => t.id == 2).title, isNot('Laptop plan'));
   });
 
   testWidgets('deleting a chat asks first, and Undo brings it back whole', (tester) async {

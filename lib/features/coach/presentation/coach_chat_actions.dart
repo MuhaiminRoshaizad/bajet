@@ -30,11 +30,14 @@ List<SpringMenuItem<ChatAction>> chatMenuItems(CoachThread chat) => [
 /// [onDeleted] before the Undo shows, so a page about the chat can close.
 Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat, ChatAction action, {VoidCallback? onDeleted}) async {
   final chats = ref.read(coachChatsProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
+  final name = chat.title.isEmpty ? 'the chat' : '"${chat.title}"';
   switch (action) {
     case ChatAction.settings:
       await showChatSettings(context, chat.id);
     case ChatAction.pin:
       await chats.pin(chat.id, !chat.pinned);
+      showBar(messenger, '${chat.pinned ? 'Unpinned' : 'Pinned'} $name', undo: () => chats.pin(chat.id, chat.pinned));
     case ChatAction.rename:
       final title = await showModalBottomSheet<String>(
         context: context,
@@ -43,7 +46,9 @@ Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat
         useSafeArea: true,
         builder: (_) => _RenameSheet(title: chat.title),
       );
-      if (title != null) await chats.rename(chat.id, title);
+      if (title == null || title == chat.title) return;
+      await chats.rename(chat.id, title);
+      showBar(messenger, 'Renamed to "$title"', undo: () => chats.rename(chat.id, chat.title));
     case ChatAction.delete:
       final n = chat.messages.length;
       final sure = await confirmDelete(
@@ -52,7 +57,6 @@ Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat
         message: 'The coach forgets its $n ${n == 1 ? 'message' : 'messages'}. Your entries, accounts and figures stay exactly as they are.',
       );
       if (!sure || !context.mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
       final gone = await chats.delete(chat.id);
       onDeleted?.call();
       if (gone == null) return;

@@ -61,5 +61,6 @@ void main() {
     await tester.tap(find.text('Remove'));
     await tester.pumpAndSettle();
     expect(world.coachKeys.key, isNull);
+    expect(find.text('Key removed. The coach is off until a key is added.'), findsOneWidget);
   });
 }
