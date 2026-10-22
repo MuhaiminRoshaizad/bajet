@@ -17,8 +17,7 @@ import '../../plan/presentation/plan_providers.dart';
 import 'goal_listing.dart';
 
 /// What the user is saving for, funded in priority order. A goal with a
-/// listing link shows it as a preview; back from looking at it, the screen
-/// asks whether it is still for sale.
+/// listing link shows it as a preview that opens it.
 class GoalsScreen extends ConsumerStatefulWidget {
   const GoalsScreen({super.key});
 
@@ -27,45 +26,6 @@ class GoalsScreen extends ConsumerStatefulWidget {
 }
 
 class _GoalsScreenState extends ConsumerState<GoalsScreen> {
-  late final AppLifecycleListener _resumed;
-
-  @override
-  void initState() {
-    super.initState();
-    _resumed = AppLifecycleListener(onResume: _askPending);
-    // A question put off by the lock, which sends the user to Today.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _askPending());
-  }
-
-  @override
-  void dispose() {
-    _resumed.dispose();
-    super.dispose();
-  }
-
-  Future<void> _open(Goal goal) async {
-    if (await ref.read(openLinkProvider)(goal.listing!.url)) {
-      ref.read(pendingListingProvider.notifier).opened(goal.id);
-    } else if (mounted) {
-      showBar(ScaffoldMessenger.of(context), 'Nothing on this phone could open that link.');
-    }
-  }
-
-  Future<void> _askPending() async {
-    final id = ref.read(pendingListingProvider);
-    if (id == null || !mounted) return;
-    ref.read(pendingListingProvider.notifier).answered();
-    final goal = (ref.read(goalsProvider).value ?? const <Goal>[]).where((g) => g.id == id).firstOrNull;
-    if (goal?.listing == null) return;
-    final check = await askListingCheck(context, goal!);
-    if (check == null) return;
-    final today = ref.read(todayProvider);
-    await ref.read(planRepositoryProvider).checkListing(goal.id, check, on: today);
-    if (mounted) {
-      showBar(ScaffoldMessenger.of(context), '${check == ListingCheck.sold ? 'Marked sold' : 'Still up'} · ${Dates.full(today)}');
-    }
-  }
-
   Future<void> _removeListing(Goal goal) async {
     final repo = ref.read(planRepositoryProvider);
     await repo.updateGoal(goal.copyWith(listing: () => null));
@@ -138,7 +98,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                                 padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.m),
                                 child: ListingPreview(
                                   listing: listing,
-                                  onOpen: () => _open(g),
+                                  onOpen: () => openListing(context, ref, g),
                                   onReplace: () => _openForm(context, g),
                                   onRemove: () => _removeListing(g),
                                 ),

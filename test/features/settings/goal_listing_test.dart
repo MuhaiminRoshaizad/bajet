@@ -1,3 +1,4 @@
+import 'package:bajet/features/lock/domain/app_lock.dart';
 import 'package:bajet/features/plan/domain/listing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -129,16 +130,16 @@ void main() {
     expect(world.goals.single.listing?.check, ListingCheck.sold);
   });
 
-  testWidgets('a question put off by leaving Goals is asked when Goals is next open', (tester) async {
+  testWidgets('the question is asked wherever the user is once back in bajet', (tester) async {
     final world = await pumpApp(tester, seed: withListing);
     await openGoals(tester);
     await tester.tap(find.byKey(const ValueKey('listing-preview')));
     await tester.pumpAndSettle();
-    // As the lock does: the user ends up elsewhere before coming back.
     await tester.pageBack();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Goals'));
+    await tester.pageBack();
     await tester.pumpAndSettle();
+    await leaveAndReturn(tester);
     expect(find.text('Is the Laptop still for sale?'), findsOneWidget);
     await tester.tap(find.text('Still up'));
     await tester.pumpAndSettle();
@@ -154,5 +155,33 @@ void main() {
     expect(find.text('Nothing on this phone could open that link.'), findsOneWidget);
     await leaveAndReturn(tester);
     expect(find.text('Is the Laptop still for sale?'), findsNothing);
+  });
+
+  testWidgets('behind the lock, the question waits until the lock is passed', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      withListing(w);
+      w.lockSettings.saved = const LockSettings(enabled: true);
+      // Passed at launch, then cancelled once back, then passed.
+      w.deviceAuth.outcomes = [AuthOutcome.passed, AuthOutcome.cancelled, AuthOutcome.passed];
+    });
+    await openGoals(tester);
+    await tester.tap(find.byKey(const ValueKey('listing-preview')));
+    await tester.pumpAndSettle();
+    for (final state in [AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pump();
+    world.clock = world.clock.add(const Duration(minutes: 2));
+    for (final state in [AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('bajet is locked'), findsOneWidget);
+    expect(find.text('Is the Laptop still for sale?'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('Unlock with fingerprint'));
+    await tester.pumpAndSettle();
+    expect(find.text('bajet is locked'), findsNothing);
+    expect(find.text('Is the Laptop still for sale?'), findsOneWidget);
   });
 }

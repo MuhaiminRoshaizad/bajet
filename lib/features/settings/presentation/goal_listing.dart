@@ -3,11 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/database/database_provider.dart';
 import '../../../core/dates/dates.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
+import '../../lock/presentation/lock_providers.dart';
 import '../../plan/domain/plan_models.dart';
+import '../../plan/presentation/plan_providers.dart';
 
 /// Hands a link to whichever app views it, such as Facebook's for a
 /// Marketplace post; false when nothing could open it.
@@ -21,9 +25,8 @@ final openLinkProvider = Provider<OpenLink>((ref) => (url) async {
       }
     });
 
-/// The goal whose listing was opened and not yet answered for. It outlives
-/// the Goals screen, so a lock that sends the user to Today on the way
-/// back only puts the question off until Goals is next open.
+/// The goal whose listing was opened and not yet answered for, until the
+/// user is back and [ListingCheckHost] asks.
 class PendingListing extends Notifier<int?> {
   @override
   int? build() => null;
@@ -34,6 +37,71 @@ class PendingListing extends Notifier<int?> {
 }
 
 final pendingListingProvider = NotifierProvider<PendingListing, int?>(PendingListing.new);
+
+/// Opens [goal]'s listing in another app, and remembers to ask about it on
+/// the way back; says so when nothing could open it.
+Future<void> openListing(BuildContext context, WidgetRef ref, Goal goal) async {
+  final messenger = ScaffoldMessenger.of(context);
+  if (await ref.read(openLinkProvider)(goal.listing!.url)) {
+    ref.read(pendingListingProvider.notifier).opened(goal.id);
+  } else {
+    showBar(messenger, 'Nothing on this phone could open that link.');
+  }
+}
+
+/// Asks, wherever the user is once back in bajet, whether the listing they
+/// opened is still for sale. Behind the lock it waits until the lock is
+/// passed and the app has landed on Today, so the question is never under
+/// the lock nor closed with the pages the unlock closes.
+class ListingCheckHost extends ConsumerStatefulWidget {
+  const ListingCheckHost({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<ListingCheckHost> createState() => _ListingCheckHostState();
+}
+
+class _ListingCheckHostState extends ConsumerState<ListingCheckHost> {
+  late final AppLifecycleListener _resumed;
+
+  @override
+  void initState() {
+    super.initState();
+    // Just after the resume is handled, so a lock coming down on the way
+    // back is seen first.
+    _resumed = AppLifecycleListener(onResume: () => Future.microtask(_ask));
+    // Passing the lock takes the app to Today, closing pages; the question
+    // waits until that has landed.
+    ref.listenManual(unlockFlightProvider, (was, flying) {
+      if (was == true && !flying) Future.microtask(_ask);
+    });
+  }
+
+  @override
+  void dispose() {
+    _resumed.dispose();
+    super.dispose();
+  }
+
+  Future<void> _ask() async {
+    if (!mounted) return;
+    final id = ref.read(pendingListingProvider);
+    if (id == null || ref.read(appLockProvider) || ref.read(unlockFlightProvider)) return;
+    ref.read(pendingListingProvider.notifier).answered();
+    final goal = (ref.read(goalsProvider).value ?? const <Goal>[]).where((g) => g.id == id).firstOrNull;
+    if (goal?.listing == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final check = await askListingCheck(context, goal!);
+    if (check == null) return;
+    final today = ref.read(todayProvider);
+    await ref.read(planRepositoryProvider).checkListing(goal.id, check, on: today);
+    showBar(messenger, '${check == ListingCheck.sold ? 'Marked sold' : 'Still up'} · ${Dates.full(today)}');
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 /// The message for a listing link that is not a web address, or null.
 String? listingLinkError(String? text) =>
@@ -198,6 +266,8 @@ class ListingPreview extends StatelessWidget {
 /// Null when they would rather not say.
 Future<ListingCheck?> askListingCheck(BuildContext context, Goal goal) => showModalBottomSheet<ListingCheck>(
       context: context,
+      // Over whichever page is open, the bar included.
+      useRootNavigator: true,
       useSafeArea: true,
       builder: (context) {
         final c = context.colors;
