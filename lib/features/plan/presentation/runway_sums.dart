@@ -80,7 +80,8 @@ class _Line extends StatelessWidget {
         children: [
           Expanded(child: Text(label, style: TextStyle(color: bold ? context.colors.ink : context.colors.muted, fontWeight: weight))),
           const SizedBox(width: AppSpacing.m),
-          Text('$sign${Money.format(sen)}', style: TextStyle(fontWeight: weight, fontFeatures: const [FontFeature.tabularFigures()])),
+          // Nothing added or taken carries no sign: RM0.00, not −RM0.00.
+          Text('${sen == 0 ? '' : sign}${Money.format(sen)}', style: TextStyle(fontWeight: weight, fontFeatures: const [FontFeature.tabularFigures()])),
         ],
       ),
     );

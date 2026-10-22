@@ -52,6 +52,9 @@ void main() {
     expect(find.text('Balance today'), findsOneWidget);
     expect(find.text('Laptop price'), findsOneWidget);
     expect(inSums('−RM1,200.00'), findsOneWidget);
+    expect(inSums('RM0.00'), findsWidgets, reason: 'no income and no bills: no sign on nothing');
+    expect(inSums('+RM0.00'), findsNothing);
+    expect(inSums('−RM0.00'), findsNothing);
     await tester.scrollUntilVisible(find.text('Add monthly income'), 200);
     expect(find.textContaining('No income is planned before buy day'), findsOneWidget);
   });
