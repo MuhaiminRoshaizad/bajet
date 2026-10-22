@@ -59,6 +59,10 @@ void main() {
     expect(world.recurring.single.active, isFalse);
     expect(find.text('Paused'), findsOneWidget);
     expect(find.text('−RM0.00 a month'), findsOneWidget);
+    expect(find.text('Paused Gym'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.recurring.single.active, isTrue);
   });
 
   testWidgets('saving a new item asks for everything it needs', (tester) async {
@@ -123,6 +127,10 @@ void main() {
     await tester.pumpAndSettle();
     final salary = world.recurring.single;
     expect((salary.isIncome, salary.nextDue, salary.windowDays), (true, d(2026, 7, 25), 3));
+    expect(find.text('Added Salary'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.recurring, isEmpty);
   });
 
   testWidgets('tapping an item edits it, so a fixed payday can become a window', (tester) async {

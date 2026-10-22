@@ -54,7 +54,13 @@ class EventsScreen extends ConsumerWidget {
                       ].join(' · '),
                     ),
                     trailing: TextButton(
-                      onPressed: () => ref.read(planRepositoryProvider).setEventDone(e.id, date: e.date, done: true),
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        final repo = ref.read(planRepositoryProvider);
+                        await repo.setEventDone(e.id, date: e.date, done: true);
+                        // A yearly event moved on a year, so its old date is put back.
+                        showBar(messenger, 'Marked ${e.name} done', undo: () => e.repeatsYearly ? repo.updateEvent(e) : repo.setEventDone(e.id, date: e.date, done: false));
+                      },
                       child: const Text('Done'),
                     ),
                   ),
@@ -123,22 +129,27 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
     if (!ok || _category == null || _date == null) return;
+    final messenger = ScaffoldMessenger.of(context);
     final repo = ref.read(planRepositoryProvider);
+    final name = _name.text.trim();
     final amount = RinggitCentsFormatter.parse(_amount.text);
     if (widget.event case final event?) {
-      await repo.updateEvent(event.copyWith(name: _name.text, amount: amount, categoryKey: _category, date: _date, countInProjection: _counted, repeatsYearly: _yearly));
-    } else {
-      await repo.addEvent(
-        name: _name.text,
-        isIncome: _isIncome,
-        amount: amount,
-        categoryKey: _category!,
-        date: _date!,
-        countInProjection: _counted,
-        repeatsYearly: _yearly,
-      );
+      await repo.updateEvent(event.copyWith(name: name, amount: amount, categoryKey: _category, date: _date, countInProjection: _counted, repeatsYearly: _yearly));
+      if (mounted) Navigator.of(context).pop();
+      showBar(messenger, 'Saved $name', undo: () => repo.updateEvent(event));
+      return;
     }
+    final id = await repo.addEvent(
+      name: name,
+      isIncome: _isIncome,
+      amount: amount,
+      categoryKey: _category!,
+      date: _date!,
+      countInProjection: _counted,
+      repeatsYearly: _yearly,
+    );
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, 'Added $name', undo: () => repo.deleteEvent(id));
   }
 
   Future<void> _delete() async {

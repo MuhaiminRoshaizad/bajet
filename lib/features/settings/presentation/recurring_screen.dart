@@ -202,17 +202,25 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
     if (!ok || _category == null || _whenMissing) return;
+    final messenger = ScaffoldMessenger.of(context);
     final repo = ref.read(planRepositoryProvider);
+    final name = _name.text.trim();
     final amount = RinggitCentsFormatter.parse(_amount.text);
     final window = _varies ? _lastDay!.difference(_nextDue!).inDays : 0;
     final item = widget.item;
     if (item == null) {
-      await repo.addRecurring(name: _name.text, isIncome: _isIncome, amount: amount, categoryKey: _category!, nextDue: _nextDue!, windowDays: window, accountId: _accountId);
-    } else {
-      await repo.updateRecurring(item.copyWith(name: _name.text, amount: amount, categoryKey: _category, nextDue: _nextDue, windowDays: window, accountId: _accountId));
-      if (_active != item.active) await repo.setRecurringActive(item.id, active: _active);
+      final id = await repo.addRecurring(name: name, isIncome: _isIncome, amount: amount, categoryKey: _category!, nextDue: _nextDue!, windowDays: window, accountId: _accountId);
+      if (mounted) Navigator.of(context).pop();
+      showBar(messenger, 'Added $name', undo: () => repo.deleteRecurring(id));
+      return;
     }
+    await repo.updateRecurring(item.copyWith(name: name, amount: amount, categoryKey: _category, nextDue: _nextDue, windowDays: window, accountId: _accountId));
+    if (_active != item.active) await repo.setRecurringActive(item.id, active: _active);
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, _active == item.active ? 'Saved $name' : _active ? 'Counting $name again' : 'Paused $name', undo: () async {
+      await repo.updateRecurring(item);
+      if (_active != item.active) await repo.setRecurringActive(item.id, active: item.active);
+    });
   }
 
   Future<void> _delete() async {

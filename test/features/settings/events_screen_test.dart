@@ -35,6 +35,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.events.single.done, isTrue);
     expect(find.text('Car service'), findsNothing);
+    expect(find.text('Marked Car service done'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.events.single.done, isFalse);
+    expect(find.text('Car service'), findsOneWidget);
   });
 
   testWidgets('a new event needs every field', (tester) async {
@@ -63,6 +68,10 @@ void main() {
     await tester.pumpAndSettle();
     final e = world.events.single;
     expect((e.amount, e.categoryKey, e.date), (30000, 'transport', d(2026, 7, 20)));
+    expect(find.text('Saved Car service'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.events.single.amount, 25000);
   });
 
   testWidgets('deleting an event asks first and can be undone', (tester) async {
@@ -100,6 +109,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.events.single.date, d(2027, 10, 30));
     expect(find.text('−RM100.00 · 30/10/2027 · every year'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.events.single.date, d(2026, 10, 30), reason: 'Undo puts this year back');
   });
 
   testWidgets('an event shows how much of its budget is spent', (tester) async {
