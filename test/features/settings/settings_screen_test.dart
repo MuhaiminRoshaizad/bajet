@@ -21,19 +21,19 @@ void main() {
     final world = await pumpApp(tester);
     await openSettings(tester);
     await tester.tap(find.text('Allowance and buffer'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '7500');
     await tester.enterText(find.widgetWithText(TextFormField, 'Keep at least (optional)'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect((world.settings!.weeklyCap, world.settings!.buffer), (7500, 0));
     expect(world.settings!.openingDate, demoSettings.openingDate);
     expect(find.text('RM75 a week'), findsOneWidget, reason: 'no buffer, so no keep');
     expect(find.text('Allowance saved: RM75.00 a week'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect((world.settings!.weeklyCap, world.settings!.buffer), (demoSettings.weeklyCap, demoSettings.buffer));
   });
 
@@ -75,25 +75,25 @@ void main() {
     expect(find.text('Not set · the coach uses no name'), findsOneWidget);
 
     await tester.tap(find.text('Your name'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(tester.testTextInput.isVisible, isFalse, reason: 'the keyboard waits for a tap');
     await tester.enterText(find.byKey(const ValueKey('user-name')), 'Sara');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.coachSettings.userName, 'Sara');
     expect(find.text('Sara'), findsOneWidget);
     expect(find.text('Saved. The coach will call you Sara'), findsOneWidget);
 
     await tester.tap(find.text('Your name'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.enterText(find.byKey(const ValueKey('user-name')), '   ');
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.coachSettings.userName, isNull);
     expect(find.text('Not set · the coach uses no name'), findsOneWidget);
     expect(find.text('Name cleared. The coach uses no name.'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.coachSettings.userName, 'Sara');
   });
 }

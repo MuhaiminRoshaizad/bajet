@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/app_harness.dart' show settleUnderBar;
 import '../../helpers/recording_sharer.dart';
 
 class FakeFiles implements BackupFiles {
@@ -64,7 +65,7 @@ void main() {
   testWidgets('a backup can be saved straight to a folder, and says so', (tester) async {
     await pumpBackup(tester);
     await tester.tap(find.text('Save a backup file'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(sharer.savedName, 'bajet-backup-2026-07-01.json');
     expect(jsonDecode(sharer.savedText!), {'app': 'bajet', 'format': backupFormatVersion, 'entries': []});
     expect(find.text('Saved bajet-backup-2026-07-01.json'), findsOneWidget);
@@ -83,17 +84,17 @@ void main() {
     final (files, backups) = await pumpBackup(tester);
     files.toPick = jsonEncode({'app': 'bajet', 'format': 1, 'entries': [{}, {}]});
     await tester.tap(find.text('Restore from a backup file'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.textContaining('The backup holds 2 entries.'), findsOneWidget);
 
     await tester.tap(find.text('Keep what is here'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(backups.restored, isNull);
 
     await tester.tap(find.text('Restore from a backup file'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Replace'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(backups.restored, isNotNull);
     expect(find.text('Backup restored'), findsOneWidget);
   });
@@ -102,7 +103,7 @@ void main() {
     final (files, backups) = await pumpBackup(tester);
     files.toPick = 'not json at all';
     await tester.tap(find.text('Restore from a backup file'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('That file is not a bajet backup.'), findsOneWidget);
     expect(find.text('Replace everything on this phone?'), findsNothing);
     expect(backups.restored, isNull);

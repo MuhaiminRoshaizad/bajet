@@ -77,3 +77,13 @@ Future<FakeWorld> pumpApp(
   if (settle) await tester.pumpAndSettle();
   return world;
 }
+
+/// Lets sheets close and pages move, but stops short of a bar's own five
+/// seconds, which [WidgetTester.pumpAndSettle] would run out, so a test can
+/// read the bar.
+Future<void> settleUnderBar(WidgetTester tester) async {
+  // In short steps, so a bar shown partway through also has time to come up.
+  for (var i = 0; i < 12; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}

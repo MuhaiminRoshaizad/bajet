@@ -37,29 +37,29 @@ void main() {
   testWidgets('removing the key asks first', (tester) async {
     final world = await pumpApp(tester, seed: (w) => w.coachKeys.key = 'sk-ant-test-0123456789abcdefghij');
     await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.scrollUntilVisible(find.text('Key saved'), 200);
     await tester.drag(find.byType(ListView).last, const Offset(0, -200));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Key saved'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     // The key field has a Scrollable of its own, so name the list's.
     final list = find.descendant(of: find.byType(ListView).last, matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(find.text('Remove the key'), 200, scrollable: list);
     // Built is not on screen: bring it fully into view before tapping.
     await tester.ensureVisible(find.text('Remove the key'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Remove the key'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Keep it'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.coachKeys.key, isNotNull);
 
     await tester.tap(find.text('Remove the key'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Remove'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.coachKeys.key, isNull);
     expect(find.text('Key removed. The coach is off until a key is added.'), findsOneWidget);
   });

@@ -41,13 +41,13 @@ void main() {
     await openHistory(tester);
 
     await tester.tap(find.text('Coffee'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.widgetWithText(FilledButton, 'Save changes'), findsOneWidget);
 
     await tester.enterText(find.byKey(const ValueKey('amount')), '4500');
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Save changes'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect(world.entries.firstWhere((e) => e.label == 'Coffee').amount, 4500);
     expect(find.text('Saved changes'), findsOneWidget);
@@ -100,13 +100,13 @@ void main() {
     await openHistory(tester);
 
     await tester.drag(find.text('Coffee'), const Offset(-500, 0));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.entries, hasLength(1));
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.entries.map((e) => e.label), contains('Coffee'));
   });
 
@@ -134,17 +134,17 @@ void main() {
     await openHistory(tester);
     final before = world.entries.length;
     await tester.tap(find.text('Coffee'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Delete entry'));
     await tester.tap(find.text('Delete entry'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.entries.length, before - 1);
     expect(find.text('Save changes'), findsNothing);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.entries.length, before);
   });
 
@@ -170,15 +170,15 @@ void main() {
     await openHistory(tester);
 
     await tester.drag(find.text('Main account → Cash'), const Offset(-500, 0));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Delete this move?'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.transferCount, 0);
     expect(find.text('Main account → Cash'), findsNothing);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.transferCount, 1);
     expect(find.text('Main account → Cash'), findsOneWidget);
   });

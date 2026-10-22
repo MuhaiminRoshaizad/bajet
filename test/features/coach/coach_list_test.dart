@@ -102,48 +102,48 @@ void main() {
   testWidgets('holding a chat pins it to the top, and renames it once it has a name', (tester) async {
     final world = await openCoach(tester, open: false, seed: seedTwo);
     await tester.longPress(find.byKey(const ValueKey('chat-2')));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Pin chat'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect((chatRows.evaluate().first.widget.key! as ValueKey<String>).value, 'chat-2');
     expect(find.textContaining('Pinned "'), findsOneWidget);
 
     await tester.longPress(find.byKey(const ValueKey('chat-2')));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Rename chat'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'Chat name'), '  ');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Give the chat a name.'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextFormField, 'Chat name'), 'Laptop plan');
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Give the chat a name.'), findsNothing, reason: 'clears as soon as it is fixed');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Laptop plan'), findsOneWidget);
     final kept = (await world.coachChat.load()).firstWhere((t) => t.id == 2);
     expect((kept.title, kept.pinned), ('Laptop plan', true));
     expect(find.text('Renamed to "Laptop plan"'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect((await world.coachChat.load()).firstWhere((t) => t.id == 2).title, isNot('Laptop plan'));
   });
 
   testWidgets('deleting a chat asks first, and Undo brings it back whole', (tester) async {
     final world = await openCoach(tester, open: false, seed: seedTwo);
     await tester.longPress(find.byKey(const ValueKey('chat-1')));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Delete chat'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('The coach forgets its 2 messages. Your entries, accounts and figures stay exactly as they are.'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.byKey(const ValueKey('chat-1')), findsNothing);
     expect((await world.coachChat.load()).map((t) => t.id), [2]);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.byKey(const ValueKey('chat-1')), findsOneWidget);
     expect((await world.coachChat.load()).firstWhere((t) => t.id == 1).messages, hasLength(2));
   });
@@ -151,11 +151,11 @@ void main() {
   testWidgets("inside a chat its menu deletes it too, and goes back to the list", (tester) async {
     await openCoach(tester, seed: seedTwo);
     await tester.tap(find.descendant(of: chatPage, matching: find.byTooltip('More')));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Delete chat'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(chatPage, findsNothing);
     expect(chatRows, findsOneWidget);
     expect(find.text('Chat deleted'), findsOneWidget);

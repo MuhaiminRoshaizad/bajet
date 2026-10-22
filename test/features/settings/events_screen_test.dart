@@ -32,12 +32,12 @@ void main() {
     });
     await openEvents(tester);
     await tester.tap(find.text('Done'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events.single.done, isTrue);
     expect(find.text('Car service'), findsNothing);
     expect(find.text('Marked Car service done'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events.single.done, isFalse);
     expect(find.text('Car service'), findsOneWidget);
   });
@@ -59,18 +59,18 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 7, 20)));
     await openEvents(tester);
     await tester.tap(find.text('Car service'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Edit event'), findsOneWidget);
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '30000');
     await tester.ensureVisible(find.text('Save event'));
     await tester.tap(find.text('Save event'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     final e = world.events.single;
     expect((e.amount, e.categoryKey, e.date), (30000, 'transport', d(2026, 7, 20)));
     expect(find.text('Saved Car service'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events.single.amount, 25000);
   });
 
@@ -78,16 +78,16 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'Car service', isIncome: false, amount: 25000, categoryKey: 'transport', date: d(2026, 7, 20)));
     await openEvents(tester);
     await tester.tap(find.text('Car service'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Delete event'));
     await tester.tap(find.text('Delete event'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events, isEmpty);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events.single.name, 'Car service');
   });
 
@@ -95,22 +95,22 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: d(2026, 10, 30)));
     await openEvents(tester);
     await tester.tap(find.text('Birthday'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Every year'));
     await tester.tap(find.text('Every year'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.textContaining('Comes back on this date each year'), findsOneWidget);
     await tester.ensureVisible(find.text('Save event'));
     await tester.tap(find.text('Save event'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('−RM100.00 · 30/10/2026 · every year'), findsOneWidget);
 
     await tester.tap(find.text('Done'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events.single.date, d(2027, 10, 30));
     expect(find.text('−RM100.00 · 30/10/2027 · every year'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.events.single.date, d(2026, 10, 30), reason: 'Undo puts this year back');
   });
 

@@ -26,21 +26,21 @@ void main() {
   testWidgets('the starting balance can be fixed, moving every figure since', (tester) async {
     final world = await pumpApp(tester);
     await openBalance(tester);
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Fix the starting balance instead'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('1,500.00'), findsOneWidget);
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Balance on 01/07/2026'), '160000');
     await tester.tap(find.text('Save starting balance'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect(world.accounts.single.openingBalance, 160000);
     expect(world.entries, isEmpty);
     expect(find.text('RM1,600.00'), findsWidgets);
     expect(find.text("Saved Main account's starting balance: RM1,600.00"), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.accounts.single.openingBalance, 150000);
   });
 

@@ -42,9 +42,13 @@ without a custom pattern.
   of the page through `showBar` (`core/widgets/done_bar.dart`): past tense,
   naming the thing ("Saved MacBook", "Paid Rent RM900.00"), with Undo
   wherever the change can be put back.
-- A bar leaves by itself after five seconds or on a swipe down, and a newer
-  one replaces it at once. Flutter keeps a bar that has an action up until
-  it is tapped, so nothing calls `showSnackBar` directly.
+- A bar springs up, a thin line under it runs down over five seconds, then
+  it slides down and fades; a swipe down sends it at once, and a newer one
+  replaces it at once. The bar times and moves itself, so nothing calls
+  `showSnackBar` directly. With TalkBack on, a bar with a choice waits to be
+  dismissed, as Flutter's own do.
+- In widget tests, `pumpAndSettle` runs a bar's five seconds out; read a
+  bar after `settleUnderBar` (`test/helpers/app_harness.dart`) instead.
 - A sheet takes the page's `ScaffoldMessenger` before it closes, so the bar
   shows on the page rather than on the closing sheet.
 - No bar where the change is already in front of the user: dragging to

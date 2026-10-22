@@ -48,20 +48,20 @@ void main() {
     await openRecurring(tester);
     expect(find.byType(Switch), findsNothing);
     await tester.tap(find.text('Gym'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Counted each month'));
     await tester.tap(find.text('Counted each month'));
     await tester.pump();
     await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect(world.recurring.single.active, isFalse);
     expect(find.text('Paused'), findsOneWidget);
     expect(find.text('−RM0.00 a month'), findsOneWidget);
     expect(find.text('Paused Gym'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.recurring.single.active, isTrue);
   });
 
@@ -97,39 +97,39 @@ void main() {
     // The range picker's own header sets both dates in one row; the test
     // font draws every glyph as a full square, so give it a wider screen.
     tester.view.physicalSize = const Size(1440, 2340);
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await openRecurring(tester);
     await tester.tap(find.text('Add a bill or income'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Income').last);
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Salary');
     await tester.enterText(find.widgetWithText(TextFormField, 'Amount each month'), '300000');
     await tester.tap(find.widgetWithText(ChoiceChip, 'Salary'));
     await tester.pump();
     await tester.ensureVisible(find.text('The day changes each month'));
     await tester.tap(find.text('The day changes each month'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.textContaining('Runway counts it on the latest'), findsOneWidget);
 
     await tester.tap(find.text('Pick the earliest and latest day'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('25').first);
     await tester.pump();
     await tester.tap(find.text('28').first);
     await tester.pump();
     await tester.tap(find.text('Done'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Next between 25/07 to 28/07/2026'), findsOneWidget);
 
     await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     final salary = world.recurring.single;
     expect((salary.isIncome, salary.nextDue, salary.windowDays), (true, d(2026, 7, 25), 3));
     expect(find.text('Added Salary'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.recurring, isEmpty);
   });
 
@@ -167,17 +167,17 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Gym', isIncome: false, amount: 9000, categoryKey: 'bills', nextDue: d(2026, 8, 3)));
     await openRecurring(tester);
     await tester.tap(find.text('Gym'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Delete bill'));
     await tester.tap(find.text('Delete bill'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Delete Gym?'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.recurring, isEmpty);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.recurring.single.name, 'Gym');
   });
 

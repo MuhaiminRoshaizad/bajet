@@ -47,7 +47,7 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Transport'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Log RM12.50'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect(world.entries.single.amount, 1250);
     expect(world.entries.single.categoryKey, 'transport');
@@ -55,7 +55,7 @@ void main() {
     expect(find.text('Logged Transport RM12.50'), findsOneWidget);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.entries, isEmpty);
   });
 

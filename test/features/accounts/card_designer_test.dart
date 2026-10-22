@@ -86,30 +86,30 @@ void main() {
     final world = await pumpApp(tester);
     Future<void> openTotal() async {
       await tester.tap(find.text('Total card'));
-      await tester.pumpAndSettle();
+      await settleUnderBar(tester);
     }
 
     await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Accounts'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await openTotal();
     await tester.ensureVisible(find.bySemanticsLabel('Champagne'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.bySemanticsLabel('Champagne'));
     await tester.ensureVisible(find.text('Save total card'));
     await tester.tap(find.text('Save total card'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.totalLook, const TotalCardLook(color: 0xFFCDB88A));
     expect(find.text('Saved the total card'), findsOneWidget);
 
     await openTotal();
     await tester.ensureVisible(find.bySemanticsLabel('Match the app'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.bySemanticsLabel('Match the app'));
     await tester.ensureVisible(find.text('Save total card'));
     await tester.tap(find.text('Save total card'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.totalLook, const TotalCardLook());
   });
 
@@ -118,13 +118,13 @@ void main() {
     await openAccounts(tester);
     await tester.ensureVisible(find.text('Add an account'));
     await tester.tap(find.text('Add an account'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Bank account'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     await tester.ensureVisible(find.text('Add account'));
     await tester.tap(find.text('Add account'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Choose one, or search for its name'), findsOneWidget);
     expect(world.accounts, hasLength(1));
 
@@ -132,14 +132,14 @@ void main() {
     await tester.enterText(find.widgetWithText(TextFormField, 'How much is in it now'), '200000');
     await tester.ensureVisible(find.text('Add account'));
     await tester.tap(find.text('Add account'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     final added = world.accounts.last;
     expect((added.kind, added.name, added.balance, added.look.color, added.look.ink), (AccountKind.bank, 'Bank Islam', 200000, 0xFF151515, 0xFFE6C674));
     expect(find.text('Added Bank Islam'), findsWidgets);
     // Each page under the bar draws it; the top one is the one seen.
     await tester.tap(find.text('Undo').hitTestable().last);
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.accounts, hasLength(1));
   });
 
@@ -278,19 +278,19 @@ void main() {
     final world = await pumpApp(tester);
     await openAccounts(tester);
     await tester.tap(find.text('Main account').hitTestable().first);
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.byTooltip('Edit this card'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     await searchProvider(tester, 'Which bank?', 'cim', 'CIMB');
     await tester.ensureVisible(find.text('Save card'));
     await tester.tap(find.text('Save card'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     final main = world.accounts.single;
     expect((main.name, main.look.color, main.balance), ('CIMB', 0xFF4A5866, 150000));
     expect(find.text("Saved CIMB's card"), findsWidgets);
     await tester.tap(find.text('Undo').hitTestable().last);
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.accounts.single.name, 'Main account');
   });
 }

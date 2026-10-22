@@ -113,10 +113,10 @@ void main() {
     final world = await pumpApp(tester);
     await openCheckin(tester);
     await tester.enterText(bankField(), '148000');
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Log RM20.00 as untracked'));
     await tester.tap(find.text('Log RM20.00 as untracked'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Logged RM20.00 as a starting adjustment'), findsOneWidget);
     expect(world.entries.single.label, 'Starting adjustment');
 

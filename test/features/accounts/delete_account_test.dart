@@ -43,20 +43,20 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addAccount(_cash));
     await openAccountSettings(tester);
     await tester.tap(find.text('Cash'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Delete account'));
     await tester.tap(find.text('Delete account'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Nothing has been logged to it. Your total drops by RM84.50.'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect([for (final a in world.accounts) a.name], ['Main account']);
     expect(find.text('Cash'), findsNothing);
     expect(find.text('Deleted Cash'), findsOneWidget);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect([for (final a in world.accounts) a.name], ['Main account', 'Cash']);
   });
 
@@ -65,12 +65,12 @@ void main() {
     final total = world.accounts.fold<int>(0, (sum, a) => sum + a.balance);
     await _editCash(tester);
     await tester.tap(find.text('Delete account'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('1 entry uses it.'), findsOneWidget);
     expect(find.text('RM72.50 goes with them. Your total stays the same.'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.byType(AccountViewScreen), findsNothing);
     expect(world.accounts.single.balance, total);
     expect(world.entries.single.accountId, world.accounts.single.id);

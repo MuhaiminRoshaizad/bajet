@@ -19,7 +19,7 @@ Future<void> openDay(WidgetTester tester, String day) async {
 
 Future<void> save(WidgetTester tester) async {
   await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-  await tester.pumpAndSettle();
+  await settleUnderBar(tester);
 }
 
 /// RM50 a week spread evenly, as setup leaves it.
@@ -131,13 +131,13 @@ void main() {
 
     expect(find.text('RM50.00 of your RM50.00 weekly allowance is not planned on any day.'), findsOneWidget);
     await tester.tap(find.text('Spread RM50.00 over the 7 spending days'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect(await planned(world), spreadOverWeek(5000));
     expect(find.textContaining('weekly allowance is not planned'), findsNothing);
     expect(find.text('Spread RM50.00 over 7 spending days'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.textContaining('weekly allowance is not planned'), findsOneWidget);
   });
 }

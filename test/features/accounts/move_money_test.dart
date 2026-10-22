@@ -21,18 +21,18 @@ void main() {
     final world = await pumpApp(tester, seed: addCash);
     await openMove(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'Amount'), '5000');
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.textContaining('→ RM1,450.00', findRichText: true), findsOneWidget); // Main account after
     expect(find.textContaining('→ RM134.50', findRichText: true), findsOneWidget); // Cash after
 
     await tester.tap(find.text('Move RM50.00'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect({for (final a in world.accounts) a.name: a.balance}, {'Main account': 145000, 'Cash': 13450});
     expect(world.entries, isEmpty);
     expect(find.text('Moved RM50.00 from Main account to Cash').hitTestable(), findsOneWidget);
 
     await tester.tap(find.text('Undo').hitTestable());
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.transferCount, 0);
   });
 

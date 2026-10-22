@@ -76,7 +76,7 @@ void main() {
     final world = await pumpLocked(tester, outcomes: [AuthOutcome.unavailable]);
     expect(find.text('App lock is off'), findsOneWidget);
     await tester.tap(find.text('Open bajet'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('App lock is off'), findsNothing);
     expect(world.lockSettings.saved.enabled, isFalse);
     expect(find.text('App lock is off. Turn it on again in Settings once the phone has a screen lock.'), findsWidgets);

@@ -120,19 +120,19 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
     await openGoals(tester);
     await tester.tap(find.text('Laptop'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Edit goal'), findsOneWidget);
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Goal'), 'New laptop');
     await tester.enterText(find.widgetWithText(TextFormField, 'Price'), '480000');
     await tester.tap(find.text('Save goal'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     final goal = world.goals.single;
     expect((goal.name, goal.price, goal.targetDate), ('New laptop', 480000, d(2026, 7, 31)));
     expect(find.text('Saved New laptop'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect((world.goals.single.name, world.goals.single.price), ('Laptop', 50000));
   });
 
@@ -140,21 +140,21 @@ void main() {
     final world = await pumpApp(tester);
     await openGoals(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Add a goal'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'Goal'), 'Laptop');
     await tester.enterText(find.widgetWithText(TextFormField, 'Price'), '450000');
     await tester.tap(find.text('Pick a buy day'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('28'));
     await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Save goal'));
     await tester.tap(find.text('Save goal'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals.single.name, 'Laptop');
     expect(find.text('Added Laptop'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals, isEmpty);
   });
 
@@ -162,24 +162,24 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
     await openGoals(tester);
     await tester.tap(find.text('Laptop'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Delete goal'));
     await tester.tap(find.text('Delete goal'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Delete Laptop?'), findsOneWidget);
     await tester.tap(find.text('Keep'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals, hasLength(1));
 
     await tester.tap(find.text('Delete goal'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals, isEmpty);
     expect(find.text('Edit goal'), findsNothing);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals.single.name, 'Laptop');
   });
 

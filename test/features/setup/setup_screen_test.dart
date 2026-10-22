@@ -204,11 +204,11 @@ void main() {
       ],
     );
     await tester.tap(find.text('Restore from a backup file instead'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Restore this backup?'), findsOneWidget);
 
     await tester.tap(find.text('Restore'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.settings, isNotNull);
     expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget);
     expect(find.text('Backup restored'), findsOneWidget);

@@ -55,14 +55,14 @@ void main() {
     });
     expect(find.text('Internet'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Paid'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     expect(world.entries.single.amount, 12900);
     expect(world.recurring.single.nextDue, d(2026, 8, 1));
     expect(find.widgetWithText(FilledButton, 'Paid'), findsNothing);
     expect(find.text('Paid Internet RM129.00'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.entries, isEmpty);
     expect(world.recurring.single.nextDue, testToday);
     expect(find.widgetWithText(FilledButton, 'Paid'), findsOneWidget);

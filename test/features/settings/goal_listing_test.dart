@@ -50,16 +50,16 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1)));
     await openGoals(tester);
     await tester.tap(find.text('Laptop'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(tester.testTextInput.isVisible, isFalse);
 
     copy(tester, '  ${marketplace.toString()} ');
     await tester.ensureVisible(find.text('Paste'));
     await tester.tap(find.text('Paste'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.ensureVisible(find.text('Save goal'));
     await tester.tap(find.text('Save goal'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals.single.listing, Listing(marketplace));
     expect(find.text('Marketplace listing'), findsOneWidget);
     expect(find.text('Not checked'), findsOneWidget);
@@ -122,14 +122,14 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('listing-preview')));
     await leaveAndReturn(tester);
     await tester.tap(find.text('Sold'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     await tester.tap(find.text('Remove'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals.single.listing, isNull);
     expect(find.text('Marketplace listing'), findsNothing);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.goals.single.listing?.check, ListingCheck.sold);
   });
 
@@ -154,7 +154,7 @@ void main() {
     world.links.opens = false;
     await openGoals(tester);
     await tester.tap(find.byKey(const ValueKey('listing-preview')));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Nothing on this phone could open that link.'), findsOneWidget);
     await leaveAndReturn(tester);
     expect(find.text('Is the Laptop still for sale?'), findsNothing);

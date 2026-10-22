@@ -17,20 +17,20 @@ void main() {
     final world = await pumpApp(tester);
     await openFavourites(tester);
     await tester.tap(find.text('Add a favourite'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Coffee');
     await tester.enterText(find.widgetWithText(TextFormField, 'Usual amount'), '450');
     await tester.tap(find.widgetWithText(ChoiceChip, 'Food'));
     await tester.tap(find.text('Save favourite'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
 
     final f = world.favourites.all.single;
     expect((f.label, f.amount, f.categoryKey), ('Coffee', 450, 'food'));
     expect(find.text('Coffee'), findsOneWidget);
     expect(find.text('Added Coffee'), findsOneWidget);
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.favourites.all, isEmpty);
   });
 
@@ -51,17 +51,17 @@ void main() {
     final world = await pumpApp(tester, seed: (w) => w.favourites.add(label: 'Coffee', categoryKey: 'food', amount: 450));
     await openFavourites(tester);
     await tester.tap(find.text('Coffee'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Remove favourite'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(find.text('Remove Coffee?'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.favourites.all, isEmpty);
 
     await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(world.favourites.all.single.label, 'Coffee');
   });
 

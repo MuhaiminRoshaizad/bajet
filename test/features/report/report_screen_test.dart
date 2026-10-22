@@ -102,9 +102,9 @@ void main() {
     expect(find.text('Save'), findsNothing);
 
     await tester.tap(find.text('CSV'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect(sharer.savedName, 'bajet-report-2026-07-01-to-2026-07-01.csv');
     expect(sharer.savedText, contains('2026-07-01,expense,Main account,Food,Lunch,,8.00'));
     expect(find.text('Saved bajet-report-2026-07-01-to-2026-07-01.csv'), findsOneWidget);

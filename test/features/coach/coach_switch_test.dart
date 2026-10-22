@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/app_harness.dart' show settleUnderBar;
 import '../../helpers/fake_repositories.dart' show SaidMessages;
 import 'coach_screen_test.dart' show ask, chatPage, openCoach;
 
@@ -17,7 +18,7 @@ Future<void> openChatSettings(WidgetTester tester) async {
 /// Closes the chat settings, as Back does.
 Future<void> closeSheet(WidgetTester tester) async {
   Navigator.of(tester.element(find.text("This chat's coach"))).pop();
-  await tester.pumpAndSettle();
+  await settleUnderBar(tester);
 }
 
 /// The face at the top of the chat on screen.
@@ -58,11 +59,11 @@ void main() {
     await ask(tester, 'How did this week go?');
     await openChatSettings(tester);
     await tester.tap(find.text('bajety'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     await closeSheet(tester);
     expect(find.text('bajety pairs well with Sees Everything 😉'), findsOneWidget);
     await tester.tap(find.text('Use it'));
-    await tester.pumpAndSettle();
+    await settleUnderBar(tester);
     expect((await world.coachChat.load()).single.personality, CoachPersonality.seesEverything);
     expect(find.text('Sees Everything'), findsOneWidget);
   });
