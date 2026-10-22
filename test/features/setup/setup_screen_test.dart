@@ -53,7 +53,7 @@ Future<void> fillMoneyStep(WidgetTester tester) async {
   await addCash(tester, '250000');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
-  await tester.enterText(field('Weekly allowance'), '5000');
+  await tester.enterText(field('Weekly allowance, for your wants'), '5000');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 }
@@ -122,7 +122,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(field('Weekly allowance'), '5000');
+    await tester.enterText(field('Weekly allowance, for your wants'), '5000');
     await tester.pumpAndSettle();
     expect(find.text('Enter how much you allow each week'), findsNothing);
     expect(find.text('50.00'), findsOneWidget);
@@ -138,9 +138,23 @@ void main() {
 
     expect(find.byKey(const ValueKey('tab-Today')), findsOneWidget);
     final s = world.settings!;
-    expect((s.weeklyCap, s.buffer, s.openingDate), (5000, 0, testToday));
+    expect((s.weeklyCap, s.buffer, s.needsReserve, s.openingDate), (5000, 0, 0, testToday));
     expect(world.accounts.single.balance, 250000);
     expect(world.goals, isEmpty);
+  });
+
+  testWidgets('a monthly amount for needs given at setup is saved, and none is 0', (tester) async {
+    final world = await openSetup(tester);
+    await toWeekStep(tester);
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.enterText(field('Weekly allowance, for your wants'), '5000');
+    await tester.enterText(field('Needs, a month (optional)'), '8000');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Skip for now'));
+    await tester.pumpAndSettle();
+    expect(world.settings!.needsReserve, 8000);
   });
 
   testWidgets('the weekly allowance is spread over the rhythm, so days are not planned at RM0', (tester) async {
@@ -172,10 +186,10 @@ void main() {
     await openSetup(tester);
     await toWeekStep(tester);
     InputDecoration decoration() =>
-        tester.widget<TextField>(find.descendant(of: field('Weekly allowance'), matching: find.byType(TextField))).decoration!;
+        tester.widget<TextField>(find.descendant(of: field('Weekly allowance, for your wants'), matching: find.byType(TextField))).decoration!;
     expect((decoration().prefixText, decoration().hintText), (null, 'e.g. 50.00'));
 
-    await tester.enterText(field('Weekly allowance'), '5000');
+    await tester.enterText(field('Weekly allowance, for your wants'), '5000');
     await tester.pump();
     expect(decoration().prefixText, 'RM');
   });

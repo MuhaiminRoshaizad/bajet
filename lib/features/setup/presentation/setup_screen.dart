@@ -34,6 +34,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _moneyForm = GlobalKey<FormState>();
   final _goalForm = GlobalKey<FormState>();
   final _cap = TextEditingController();
+  final _needs = TextEditingController();
   final _buffer = TextEditingController();
   final _goalName = TextEditingController();
   final _goalPrice = TextEditingController();
@@ -45,7 +46,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   @override
   void dispose() {
-    for (final c in [_cap, _buffer, _goalName, _goalPrice, _name]) {
+    for (final c in [_cap, _needs, _buffer, _goalName, _goalPrice, _name]) {
       c.dispose();
     }
     super.dispose();
@@ -82,6 +83,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       openingDate: ref.read(todayProvider),
       weeklyCap: cap,
       buffer: RinggitCentsFormatter.parse(_buffer.text),
+      needsReserve: RinggitCentsFormatter.parse(_needs.text),
     ));
     // The name lives in the settings row just made.
     await names.saveUserName(_name.text);
@@ -217,6 +219,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AllowanceField(controller: _cap),
+            const SizedBox(height: AppSpacing.l),
+            NeedsReserveField(controller: _needs),
             const SizedBox(height: AppSpacing.l),
             BufferField(controller: _buffer),
             const SizedBox(height: AppSpacing.xxl),

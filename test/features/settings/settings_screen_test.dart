@@ -1,3 +1,4 @@
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,7 +24,7 @@ void main() {
     await tester.tap(find.text('Allowance and buffer'));
     await settleUnderBar(tester);
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '7500');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your wants'), '7500');
     await tester.enterText(find.widgetWithText(TextFormField, 'Keep at least (optional)'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await settleUnderBar(tester);
@@ -37,13 +38,42 @@ void main() {
     expect((world.settings!.weeklyCap, world.settings!.buffer), (demoSettings.weeklyCap, demoSettings.buffer));
   });
 
+  testWidgets('the monthly amount for needs saves, survives another change, and can come from the last four weeks', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      // RM28.00 of needs in four weeks is about RM30 a month.
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 2800, categoryKey: 'family', spendKind: SpendKind.need));
+    });
+    await openSettings(tester);
+    await tester.tap(find.text('Allowance and buffer'));
+    await settleUnderBar(tester);
+    final needs = find.widgetWithText(TextFormField, 'Needs, a month (optional)');
+    expect(find.text('Use RM30.00, from your last 4 weeks'), findsOneWidget);
+    await tester.tap(find.text('Use RM30.00, from your last 4 weeks'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.descendant(of: needs, matching: find.byType(TextField))).controller!.text, '30.00');
+    expect(find.text('Use RM30.00, from your last 4 weeks'), findsNothing);
+    await tester.enterText(needs, '8000');
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await settleUnderBar(tester);
+    expect(world.settings!.needsReserve, 8000);
+    expect(find.text('Allowance saved: RM50.00 a week, RM80.00 a month for needs'), findsOneWidget);
+
+    await tester.tap(find.text('Allowance and buffer'));
+    await settleUnderBar(tester);
+    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your wants'), '4000');
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await settleUnderBar(tester);
+    expect((world.settings!.weeklyCap, world.settings!.needsReserve), (4000, 8000));
+  });
+
   testWidgets('an empty allowance is refused', (tester) async {
     final world = await pumpApp(tester);
     await openSettings(tester);
     await tester.tap(find.text('Allowance and buffer'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance'), '');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your wants'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
 

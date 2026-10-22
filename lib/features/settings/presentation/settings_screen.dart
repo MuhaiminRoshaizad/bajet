@@ -5,13 +5,16 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_version.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
+import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_mode.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/done_bar.dart';
 import '../../accounts/presentation/account_providers.dart';
+import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
@@ -268,11 +271,13 @@ class _AllowanceSheet extends ConsumerStatefulWidget {
 class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
   final _form = GlobalKey<FormState>();
   late final _cap = TextEditingController(text: RinggitCentsFormatter.format(widget.settings.weeklyCap));
+  late final _needs = TextEditingController(text: widget.settings.needsReserve == 0 ? '' : RinggitCentsFormatter.format(widget.settings.needsReserve));
   late final _buffer = TextEditingController(text: widget.settings.buffer == 0 ? '' : RinggitCentsFormatter.format(widget.settings.buffer));
 
   @override
   void dispose() {
     _cap.dispose();
+    _needs.dispose();
     _buffer.dispose();
     super.dispose();
   }
@@ -283,9 +288,11 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
     final repo = ref.read(planRepositoryProvider);
     final s = widget.settings;
     final cap = RinggitCentsFormatter.parse(_cap.text);
-    await repo.saveSettings(PlanSettings(openingDate: s.openingDate, weeklyCap: cap, buffer: RinggitCentsFormatter.parse(_buffer.text)));
+    final needs = RinggitCentsFormatter.parse(_needs.text);
+    await repo.saveSettings(PlanSettings(openingDate: s.openingDate, weeklyCap: cap, buffer: RinggitCentsFormatter.parse(_buffer.text), needsReserve: needs));
     if (mounted) Navigator.of(context).pop();
-    showBar(messenger, 'Allowance saved: ${Money.format(cap)} a week', undo: () => repo.saveSettings(s));
+    final forNeeds = needs == 0 ? '' : ', ${Money.format(needs)} a month for needs';
+    showBar(messenger, 'Allowance saved: ${Money.format(cap)} a week$forNeeds', undo: () => repo.saveSettings(s));
   }
 
   @override
@@ -301,6 +308,9 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
               const SizedBox(height: AppSpacing.l),
               AllowanceField(controller: _cap),
               const SizedBox(height: AppSpacing.l),
+              NeedsReserveField(controller: _needs),
+              _NeedsSuggestion(onUse: (sen) => setState(() => _needs.text = RinggitCentsFormatter.format(sen)), current: RinggitCentsFormatter.parse(_needs.text)),
+              const SizedBox(height: AppSpacing.l),
               BufferField(controller: _buffer),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(
@@ -312,4 +322,36 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
           ),
         ),
       );
+}
+
+/// What the last four weeks' needs come to a month, offered with one tap
+/// under the field and never filled in by itself. Shown only when there
+/// were needs and the field holds something else.
+class _NeedsSuggestion extends ConsumerWidget {
+  const _NeedsSuggestion({required this.onUse, required this.current});
+
+  final ValueChanged<int> onUse;
+  final int current;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(todayProvider);
+    final entries = ref.watch(recentEntriesProvider).value ?? const <Entry>[];
+    final fixed = {for (final c in ref.watch(categoriesProvider).value ?? const <Category>[]) if (c.isFixed) c.key};
+    final fourWeeks = needsSpent(entries, fixed, DateTime.utc(today.year, today.month, today.day - 27), today);
+    // Four weeks scaled to an average month, rounded to the ringgit.
+    final month = (fourWeeks * 365 / 12 / 28 / 100).round() * 100;
+    final shown = month > 0 && month != current;
+    return AnimatedSize(
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.enter,
+      curve: Curves.easeOutBack,
+      alignment: Alignment.topLeft,
+      child: shown
+          ? Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(onPressed: () => onUse(month), child: Text('Use ${Money.format(month)}, from your last 4 weeks')),
+            )
+          : const SizedBox(width: double.infinity),
+    );
+  }
 }

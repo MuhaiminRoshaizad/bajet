@@ -11,10 +11,25 @@ class AllowanceField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MoneyField(
         controller: controller,
-        label: 'Weekly allowance',
+        label: 'Weekly allowance, for your wants',
         hint: 'e.g. 50.00',
-        helper: 'What you let yourself spend Monday to Sunday on food, transport and extras. Bills and other fixed costs do not count.',
+        helper: 'What you let yourself spend Monday to Sunday on your wants: food, transport and extras. Needs and bills do not count.',
         validator: (sen) => sen > 0 ? null : 'Enter how much you allow each week',
+      );
+}
+
+/// What to set aside each month for needs, so Runway plans for them.
+class NeedsReserveField extends StatelessWidget {
+  const NeedsReserveField({super.key, required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) => MoneyField(
+        controller: controller,
+        label: 'Needs, a month (optional)',
+        hint: 'e.g. 80.00',
+        helper: 'Set aside for things bought anyway or asked for by family. Runway takes it off each month. Leave empty for none.',
       );
 }
 
