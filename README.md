@@ -51,7 +51,7 @@ own API key; without a key, nothing leaves the phone.
 
 ## Status
 
-Version 1.12 is in daily use on Android, with a demo mode for screenshots and
+Version 1.13 is in daily use on Android, with a demo mode for screenshots and
 CI on every push; see
 [release phases](docs/architecture.md#release-phases).
 
