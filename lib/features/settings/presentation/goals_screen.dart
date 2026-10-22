@@ -276,21 +276,26 @@ class _GoalFormState extends ConsumerState<_GoalForm> {
     final ok = _form.currentState!.validate();
     setState(() => _tried = true);
     if (!ok || _date == null) return;
+    final messenger = ScaffoldMessenger.of(context);
     final repo = ref.read(planRepositoryProvider);
+    final name = _name.text.trim();
     final price = RinggitCentsFormatter.parse(_price.text);
     final url = parseListingUrl(_link.text);
     if (widget.goal case final goal?) {
       // The same link keeps what it last showed; a new one starts unchecked.
       final listing = url == null ? null : url == goal.listing?.url ? goal.listing : Listing(url);
-      await repo.updateGoal(goal.copyWith(name: _name.text, price: price, targetDate: _date, listing: () => listing));
+      await repo.updateGoal(goal.copyWith(name: name, price: price, targetDate: _date, listing: () => listing));
       if (mounted) Navigator.of(context).pop();
+      final linked = listing != null && listing != goal.listing ? ', with its listing' : listing == null && goal.listing != null ? ', without a listing' : '';
+      showBar(messenger, 'Saved $name$linked', undo: () => repo.updateGoal(goal));
       return;
     }
     final goals = ref.read(goalsProvider).value ?? const <Goal>[];
     // A new goal joins the end of the queue.
     final priority = goals.fold(0, (m, g) => g.priority > m ? g.priority : m) + 1;
-    await repo.addGoal(name: _name.text, price: price, targetDate: _date!, priority: priority, listingUrl: url);
+    final id = await repo.addGoal(name: name, price: price, targetDate: _date!, priority: priority, listingUrl: url);
     if (mounted) Navigator.of(context).pop();
+    showBar(messenger, 'Added $name${url == null ? '' : ', with its listing'}', undo: () => repo.deleteGoal(id));
   }
 
   @override

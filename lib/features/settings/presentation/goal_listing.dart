@@ -41,30 +41,49 @@ String? listingLinkError(String? text) =>
 
 /// The optional link on the goal form. Paste fills it from the clipboard,
 /// as Facebook's Share → Copy link leaves it, so no long address is typed.
-class ListingLinkField extends StatelessWidget {
+class ListingLinkField extends StatefulWidget {
   const ListingLinkField({super.key, required this.controller});
 
   final TextEditingController controller;
 
-  Future<void> _paste(BuildContext context) async {
+  @override
+  State<ListingLinkField> createState() => _ListingLinkFieldState();
+}
+
+class _ListingLinkFieldState extends State<ListingLinkField> {
+  final _field = GlobalKey<FormFieldState<String>>();
+
+  /// Paste was tapped with nothing on the clipboard.
+  bool _nothingCopied = false;
+
+  Future<void> _paste() async {
     final copied = (await Clipboard.getData(Clipboard.kTextPlain))?.text?.trim();
-    if (copied != null && copied.isNotEmpty) controller.text = copied;
-    if (context.mounted) Form.maybeOf(context)?.validate();
+    if (!mounted) return;
+    setState(() => _nothingCopied = copied == null || copied.isEmpty);
+    if (_nothingCopied) return;
+    widget.controller.text = copied!;
+    // Only this field is checked, so the rest of the form is not flagged
+    // before Save.
+    _field.currentState?.didChange(copied);
+    _field.currentState?.validate();
   }
 
   @override
   Widget build(BuildContext context) => TextFormField(
-        key: const ValueKey('listing-link'),
-        controller: controller,
+        key: _field,
+        controller: widget.controller,
         keyboardType: TextInputType.url,
         textInputAction: TextInputAction.done,
         autovalidateMode: AutovalidateMode.onUserInteractionIfError,
         validator: listingLinkError,
+        onChanged: (_) {
+          if (_nothingCopied) setState(() => _nothingCopied = false);
+        },
         decoration: InputDecoration(
           labelText: 'Listing link (optional)',
           hintText: "Paste the listing's link",
-          helperText: 'Kept on this phone and in backups. The coach never sees it.',
-          suffixIcon: Builder(builder: (context) => TextButton(onPressed: () => _paste(context), child: const Text('Paste'))),
+          helperText: _nothingCopied ? "Nothing is copied yet. Copy the listing's link first." : 'Kept on this phone and in backups. The coach never sees it.',
+          suffixIcon: TextButton(key: const ValueKey('listing-paste'), onPressed: _paste, child: const Text('Paste')),
         ),
       );
 }

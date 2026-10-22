@@ -59,6 +59,21 @@ void main() {
     expect(world.goals.single.listing, Listing(marketplace));
     expect(find.text('Marketplace listing'), findsOneWidget);
     expect(find.text('Not checked'), findsOneWidget);
+    expect(find.text('Saved Laptop, with its listing'), findsOneWidget);
+  });
+
+  testWidgets('Paste with nothing copied says so under the field, and flags nothing else', (tester) async {
+    await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 450000, targetDate: d(2026, 12, 1)));
+    await openGoals(tester);
+    await tester.tap(find.text('Laptop'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Goal'), '');
+    copy(tester, '');
+    await tester.ensureVisible(find.text('Paste'));
+    await tester.tap(find.text('Paste'));
+    await tester.pumpAndSettle();
+    expect(find.text("Nothing is copied yet. Copy the listing's link first."), findsOneWidget);
+    expect(find.text('Give the goal a name'), findsNothing, reason: 'Paste checks only its own field');
   });
 
   testWidgets('text that is not a web link is refused with a reason, and nothing is saved', (tester) async {

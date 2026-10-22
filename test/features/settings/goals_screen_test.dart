@@ -130,6 +130,32 @@ void main() {
 
     final goal = world.goals.single;
     expect((goal.name, goal.price, goal.targetDate), ('New laptop', 480000, d(2026, 7, 31)));
+    expect(find.text('Saved New laptop'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect((world.goals.single.name, world.goals.single.price), ('Laptop', 50000));
+  });
+
+  testWidgets('a goal added says so, and Undo takes it away again', (tester) async {
+    final world = await pumpApp(tester);
+    await openGoals(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'Add a goal'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Goal'), 'Laptop');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Price'), '450000');
+    await tester.tap(find.text('Pick a buy day'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('28'));
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save goal'));
+    await tester.tap(find.text('Save goal'));
+    await tester.pumpAndSettle();
+    expect(world.goals.single.name, 'Laptop');
+    expect(find.text('Added Laptop'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.goals, isEmpty);
   });
 
   testWidgets('deleting a goal asks first and can be undone', (tester) async {
