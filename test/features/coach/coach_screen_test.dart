@@ -59,7 +59,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text("Copy this week's summary").last);
     await tester.pumpAndSettle();
-    expect(copied, contains('Flexible spending this week: RM12.00 of RM50.00'));
+    expect(copied, contains('Spending on wants this week: RM12.00 of RM50.00'));
   });
 
   testWidgets("the header's menu sits at its edge, in line with Insights' share button", (tester) async {

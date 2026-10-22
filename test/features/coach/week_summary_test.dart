@@ -31,7 +31,17 @@ void main() {
     final s = summary(entries: [Entry(id: 1, day: d(2026, 6, 29), isIncome: false, amount: 1200, categoryKey: 'food')]);
     expect(s, contains('week of 29/06/2026 to 05/07/2026'));
     expect(s, contains('Balance: RM1,500.00'));
-    expect(s, contains('Flexible spending this week: RM12.00 of RM50.00 (RM38.00 left)'));
+    expect(s, contains('Spending on wants this week: RM12.00 of RM50.00 (RM38.00 left)'));
+  });
+
+  test("a need stays out of the allowance's figure and is named apart", () {
+    final s = summary(entries: [
+      Entry(id: 1, day: d(2026, 6, 29), isIncome: false, amount: 1200, categoryKey: 'food'),
+      Entry(id: 2, day: d(2026, 6, 30), isIncome: false, amount: 4500, categoryKey: 'food', spendKind: SpendKind.need),
+    ]);
+    expect(s, contains('Spending on wants this week: RM12.00 of RM50.00 (RM38.00 left)'));
+    expect(s, contains('Needs this week, kept out of the allowance: RM45.00'));
+    expect(summary(), isNot(contains('Needs this week')));
   });
 
   test('lists categories by size and marks fixed ones', () {

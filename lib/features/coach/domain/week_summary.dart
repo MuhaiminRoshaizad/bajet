@@ -24,6 +24,7 @@ String weekSummary({
   final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
   final week = entries.where((e) => !e.day.isBefore(monday) && !e.day.isAfter(today)).toList();
   final spent = wantsSpent(week, fixed, monday, today);
+  final needs = needsSpent(week, fixed, monday, today);
 
   final perCategory = <String, int>{};
   for (final e in week.where((e) => !e.isIncome)) {
@@ -43,8 +44,9 @@ String weekSummary({
     'bajet summary, week of ${Dates.full(monday)} to ${Dates.full(sunday)}',
     '',
     'Balance: ${Money.format(balance)}',
-    'Flexible spending this week: ${Money.format(spent)} of ${Money.format(weeklyCap)} '
+    'Spending on wants this week: ${Money.format(spent)} of ${Money.format(weeklyCap)} '
         '(${spent <= weeklyCap ? '${Money.format(weeklyCap - spent)} left' : '${Money.format(spent - weeklyCap)} over'})',
+    if (needs > 0) 'Needs this week, kept out of the allowance: ${Money.format(needs)}',
     '',
     'By category:',
     if (categoryLines.isEmpty) '- Nothing spent yet' else ...categoryLines,

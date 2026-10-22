@@ -67,14 +67,14 @@ const _noInput = {'type': 'object', 'properties': <String, Object?>{}};
 const coachLookups = [
   CoachLookup(
     'bajet_overview',
-    "The user's money right now: balance, this week's flexible spending against the weekly allowance, spending by category this "
+    "The user's money right now: balance, this week's spending on wants against the weekly allowance and its needs apart, spending by category this "
         'week, days over plan, the first goal and how Runway expects it to go, and the next few bills or income. Use it first for any '
         'question about how things stand today or this week. It takes no input.',
     _noInput,
   ),
   CoachLookup(
     'bajet_period',
-    'The figures for one week, one month or everything logged: money in, money out, fixed against flexible, every category, each '
+    'The figures for one week, one month or everything logged: money in, money out split into planned, wants and needs, every category, each '
         "account's money in and out, and habits. Use it for questions about a past or current week or month, or about all time. "
         'offset counts back from the current one: 0 is this week or month, -1 the one before, and so on.',
     {
@@ -190,6 +190,7 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
   final kind = _text(input['kind']) ?? 'both';
   final accountName = {for (final a in d.accounts) a.id: a.called};
   final firstAccount = d.accounts.isEmpty ? null : d.accounts.first.id;
+  final fixed = {for (final c in categories.values) if (c.isFixed) c.key};
   final picked = [
     for (final e in d.entries)
       if (!e.day.isBefore(from) && !e.day.isAfter(to))
@@ -206,7 +207,7 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
     for (final e in picked.take(cap))
       '- ${Dates.full(e.day)} · ${categories[e.categoryKey]?.label ?? e.categoryKey}'
           '${e.label == null ? '' : ' · ${e.label}'} · ${accountName[e.accountId ?? firstAccount] ?? 'no account'} · '
-          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}${e.note == null ? '' : ' · note: ${e.note}'}',
+          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}${e.isNeed(fixed) ? ' · need' : ''}${e.note == null ? '' : ' · note: ${e.note}'}',
     if (picked.length > cap) '(${picked.length - cap} more not listed; ask for a shorter span.)',
   ];
   final filter = [if (wantCategory != null && wantCategory.isNotEmpty) input['category'], if (wantAccount != null && wantAccount.isNotEmpty) input['account']];
@@ -217,7 +218,8 @@ String _plan(CoachData d, Map<String, Category> categories) {
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   final goals = d.projection?.goals ?? const <GoalOutcome>[];
   return [
-    'Weekly allowance for flexible spending: ${Money.format(d.settings.weeklyCap)}',
+    'Weekly allowance for wants: ${Money.format(d.settings.weeklyCap)}',
+    'Set aside each month for needs: ${d.settings.needsReserve == 0 ? 'nothing' : Money.format(d.settings.needsReserve)}',
     'Buffer to keep at all times: ${Money.format(d.settings.buffer)}',
     '',
     'Planned spend by weekday:',

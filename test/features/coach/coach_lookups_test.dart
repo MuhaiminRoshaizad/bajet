@@ -85,7 +85,7 @@ void main() {
 
   test('the plan names the allowance, the buffer and every weekday', () {
     final r = runLookup('bajet_plan', const {}, data);
-    expect(r.text, contains('Weekly allowance for flexible spending: RM40.00'));
+    expect(r.text, contains('Weekly allowance for wants: RM40.00'));
     expect(r.text, contains('- Friday (Day): no spending'));
   });
 }
