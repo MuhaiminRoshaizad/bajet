@@ -31,6 +31,11 @@ enum GoalStatus { active, paused, achieved, archived }
 /// What the user last saw at a goal's listing link.
 enum ListingState { up, sold }
 
+/// Day-to-day spending sorted by whose choice it was: a want the user
+/// chose, or a need that would be bought anyway or that family asked for.
+/// Only wants count toward the weekly allowance.
+enum SpendKind { want, need }
+
 enum AccountKind { cash, bank, ewallet }
 
 /// How a card is drawn. Leather and suede are the cash wallet's.
@@ -99,6 +104,9 @@ class Categories extends Table {
 
   /// Fixed spending, such as bills, is excluded from the weekly cap.
   BoolColumn get isFixed => boolean().withDefault(const Constant(false))();
+
+  /// The kind a spend in this category starts as, before the user changes it.
+  TextColumn get spendKind => textEnum<SpendKind>().withDefault(const Constant('want'))();
   IntColumn get monthlyBudget => integer().nullable()();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
@@ -123,6 +131,9 @@ class Entries extends Table {
 
   /// File name of an attached receipt image in the app's receipts folder.
   TextColumn get receipt => text().nullable()();
+
+  /// Why a spend happened; income keeps the default and nothing reads it.
+  TextColumn get spendKind => textEnum<SpendKind>().withDefault(const Constant('want'))();
 
   /// Set when the entry confirms a recurring item.
   IntColumn get recurringItemId => integer().nullable().references(RecurringItems, #id)();

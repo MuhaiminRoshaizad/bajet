@@ -82,6 +82,7 @@ there offers an undo that writes it again.
 | `kind`           | enum   | `income` or `expense`                           |
 | `tint`           | text   | A `Tint` name from the design system            |
 | `is_fixed`       | bool   | Fixed spending is excluded from the weekly cap  |
+| `spend_kind`     | enum   | `want` or `need`: the kind a spend here starts as; default `want` |
 | `monthly_budget` | int?   | Optional                                        |
 | `archived`       | bool   | Hidden from pickers, kept for history           |
 | `sort_order`     | int    | Display order                                   |
@@ -101,6 +102,7 @@ Every logged spend or income. The total balance is every account's
 | `label`             | text? | Short name, e.g. "Coffee", for item stats   |
 | `note`              | text? | Free text, never used in statistics         |
 | `receipt`           | text? | File name of an attached image, see below   |
+| `spend_kind`        | enum  | `want` or `need`; only wants count toward the weekly cap. Income keeps the default |
 | `recurring_item_id` | int?  | The bill or income it pays or receives; logging it moves that item's `next_due` on a month, and deleting its latest payment moves it back |
 | `planned_event_id`  | int?  | The planned event it was spent on or received for; income for an event closes it (a yearly one moves on a year), and deleting the entry opens it again |
 | `planned_event_on`  | day?  | Which occurrence of that event it was for   |
@@ -292,7 +294,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 12. Any change to a table bumps it and adds a step to
+`schemaVersion` is 13. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -310,3 +312,4 @@ data on the phone is left as it was.
 | 10      | `coach_threads`, the chats with the coach; `coach_messages.thread_id` and `note`, the one earlier chat becoming the first |
 | 11      | `app_settings.user_name`, empty; added before the older steps run, since versions 6 and 7 rebuild that table in its latest shape |
 | 12      | `goals.listing_state` and `listing_checked_on`, empty, for whether a goal's listing was still up when last looked at |
+| 13      | `categories.spend_kind` and `entries.spend_kind`: Family becomes `need`, every other category `want`, and each spend so far takes its category's kind. The entries column is added before the older steps run, since version 6 rebuilds that table |

@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 12);
+    expect(db.schemaVersion, 13);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -259,5 +259,20 @@ void main() {
     addTearDown(old.close);
     final goal = await old.select(old.goals).getSingle();
     expect((goal.listingUrl, goal.listingState, goal.listingCheckedOn), ('https://example.com/item/1', null, null));
+  });
+
+  test('a version 12 family spend becomes a need, and every other spend a want', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v12.sql').readAsStringSync());
+      raw.execute("INSERT INTO accounts (id, kind, name, color) VALUES (1, 'bank', 'Bank', 0)");
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('family', 'Family', 'expense', 'rose'), ('food', 'Food', 'expense', 'apricot'), ('salary', 'Salary', 'income', 'sage')");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key, account_id) VALUES ('2026-10-21', 'expense', 4500, 'family', 1), ('2026-10-21', 'expense', 550, 'food', 1), ('2026-10-01', 'income', 100000, 'salary', 1)");
+      raw.execute('PRAGMA user_version = 12');
+    }));
+    addTearDown(old.close);
+    final kinds = {for (final c in await old.select(old.categories).get()) c.key: c.spendKind};
+    expect((kinds['family'], kinds['food']), (SpendKind.need, SpendKind.want));
+    final entries = await (old.select(old.entries)..orderBy([(e) => OrderingTerm(expression: e.id)])).get();
+    expect(entries.map((e) => e.spendKind), [SpendKind.need, SpendKind.want, SpendKind.want]);
   });
 }

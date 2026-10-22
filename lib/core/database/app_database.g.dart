@@ -1564,6 +1564,16 @@ class $CategoriesTable extends Categories
     ),
     defaultValue: const Constant(false),
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<SpendKind, String> spendKind =
+      GeneratedColumn<String>(
+        'spend_kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('want'),
+      ).withConverter<SpendKind>($CategoriesTable.$converterspendKind);
   static const VerificationMeta _monthlyBudgetMeta = const VerificationMeta(
     'monthlyBudget',
   );
@@ -1609,6 +1619,7 @@ class $CategoriesTable extends Categories
     kind,
     tint,
     isFixed,
+    spendKind,
     monthlyBudget,
     archived,
     sortOrder,
@@ -1707,6 +1718,12 @@ class $CategoriesTable extends Categories
         DriftSqlType.bool,
         data['${effectivePrefix}is_fixed'],
       )!,
+      spendKind: $CategoriesTable.$converterspendKind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}spend_kind'],
+        )!,
+      ),
       monthlyBudget: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}monthly_budget'],
@@ -1729,6 +1746,8 @@ class $CategoriesTable extends Categories
 
   static JsonTypeConverter2<EntryKind, String, String> $converterkind =
       const EnumNameConverter<EntryKind>(EntryKind.values);
+  static JsonTypeConverter2<SpendKind, String, String> $converterspendKind =
+      const EnumNameConverter<SpendKind>(SpendKind.values);
 }
 
 class Category extends DataClass implements Insertable<Category> {
@@ -1739,6 +1758,9 @@ class Category extends DataClass implements Insertable<Category> {
 
   /// Fixed spending, such as bills, is excluded from the weekly cap.
   final bool isFixed;
+
+  /// The kind a spend in this category starts as, before the user changes it.
+  final SpendKind spendKind;
   final int? monthlyBudget;
   final bool archived;
   final int sortOrder;
@@ -1748,6 +1770,7 @@ class Category extends DataClass implements Insertable<Category> {
     required this.kind,
     required this.tint,
     required this.isFixed,
+    required this.spendKind,
     this.monthlyBudget,
     required this.archived,
     required this.sortOrder,
@@ -1764,6 +1787,11 @@ class Category extends DataClass implements Insertable<Category> {
     }
     map['tint'] = Variable<String>(tint);
     map['is_fixed'] = Variable<bool>(isFixed);
+    {
+      map['spend_kind'] = Variable<String>(
+        $CategoriesTable.$converterspendKind.toSql(spendKind),
+      );
+    }
     if (!nullToAbsent || monthlyBudget != null) {
       map['monthly_budget'] = Variable<int>(monthlyBudget);
     }
@@ -1779,6 +1807,7 @@ class Category extends DataClass implements Insertable<Category> {
       kind: Value(kind),
       tint: Value(tint),
       isFixed: Value(isFixed),
+      spendKind: Value(spendKind),
       monthlyBudget: monthlyBudget == null && nullToAbsent
           ? const Value.absent()
           : Value(monthlyBudget),
@@ -1800,6 +1829,9 @@ class Category extends DataClass implements Insertable<Category> {
       ),
       tint: serializer.fromJson<String>(json['tint']),
       isFixed: serializer.fromJson<bool>(json['isFixed']),
+      spendKind: $CategoriesTable.$converterspendKind.fromJson(
+        serializer.fromJson<String>(json['spendKind']),
+      ),
       monthlyBudget: serializer.fromJson<int?>(json['monthlyBudget']),
       archived: serializer.fromJson<bool>(json['archived']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
@@ -1816,6 +1848,9 @@ class Category extends DataClass implements Insertable<Category> {
       ),
       'tint': serializer.toJson<String>(tint),
       'isFixed': serializer.toJson<bool>(isFixed),
+      'spendKind': serializer.toJson<String>(
+        $CategoriesTable.$converterspendKind.toJson(spendKind),
+      ),
       'monthlyBudget': serializer.toJson<int?>(monthlyBudget),
       'archived': serializer.toJson<bool>(archived),
       'sortOrder': serializer.toJson<int>(sortOrder),
@@ -1828,6 +1863,7 @@ class Category extends DataClass implements Insertable<Category> {
     EntryKind? kind,
     String? tint,
     bool? isFixed,
+    SpendKind? spendKind,
     Value<int?> monthlyBudget = const Value.absent(),
     bool? archived,
     int? sortOrder,
@@ -1837,6 +1873,7 @@ class Category extends DataClass implements Insertable<Category> {
     kind: kind ?? this.kind,
     tint: tint ?? this.tint,
     isFixed: isFixed ?? this.isFixed,
+    spendKind: spendKind ?? this.spendKind,
     monthlyBudget: monthlyBudget.present
         ? monthlyBudget.value
         : this.monthlyBudget,
@@ -1850,6 +1887,7 @@ class Category extends DataClass implements Insertable<Category> {
       kind: data.kind.present ? data.kind.value : this.kind,
       tint: data.tint.present ? data.tint.value : this.tint,
       isFixed: data.isFixed.present ? data.isFixed.value : this.isFixed,
+      spendKind: data.spendKind.present ? data.spendKind.value : this.spendKind,
       monthlyBudget: data.monthlyBudget.present
           ? data.monthlyBudget.value
           : this.monthlyBudget,
@@ -1866,6 +1904,7 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('kind: $kind, ')
           ..write('tint: $tint, ')
           ..write('isFixed: $isFixed, ')
+          ..write('spendKind: $spendKind, ')
           ..write('monthlyBudget: $monthlyBudget, ')
           ..write('archived: $archived, ')
           ..write('sortOrder: $sortOrder')
@@ -1880,6 +1919,7 @@ class Category extends DataClass implements Insertable<Category> {
     kind,
     tint,
     isFixed,
+    spendKind,
     monthlyBudget,
     archived,
     sortOrder,
@@ -1893,6 +1933,7 @@ class Category extends DataClass implements Insertable<Category> {
           other.kind == this.kind &&
           other.tint == this.tint &&
           other.isFixed == this.isFixed &&
+          other.spendKind == this.spendKind &&
           other.monthlyBudget == this.monthlyBudget &&
           other.archived == this.archived &&
           other.sortOrder == this.sortOrder);
@@ -1904,6 +1945,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<EntryKind> kind;
   final Value<String> tint;
   final Value<bool> isFixed;
+  final Value<SpendKind> spendKind;
   final Value<int?> monthlyBudget;
   final Value<bool> archived;
   final Value<int> sortOrder;
@@ -1914,6 +1956,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     this.kind = const Value.absent(),
     this.tint = const Value.absent(),
     this.isFixed = const Value.absent(),
+    this.spendKind = const Value.absent(),
     this.monthlyBudget = const Value.absent(),
     this.archived = const Value.absent(),
     this.sortOrder = const Value.absent(),
@@ -1925,6 +1968,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     required EntryKind kind,
     required String tint,
     this.isFixed = const Value.absent(),
+    this.spendKind = const Value.absent(),
     this.monthlyBudget = const Value.absent(),
     this.archived = const Value.absent(),
     this.sortOrder = const Value.absent(),
@@ -1939,6 +1983,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<String>? kind,
     Expression<String>? tint,
     Expression<bool>? isFixed,
+    Expression<String>? spendKind,
     Expression<int>? monthlyBudget,
     Expression<bool>? archived,
     Expression<int>? sortOrder,
@@ -1950,6 +1995,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (kind != null) 'kind': kind,
       if (tint != null) 'tint': tint,
       if (isFixed != null) 'is_fixed': isFixed,
+      if (spendKind != null) 'spend_kind': spendKind,
       if (monthlyBudget != null) 'monthly_budget': monthlyBudget,
       if (archived != null) 'archived': archived,
       if (sortOrder != null) 'sort_order': sortOrder,
@@ -1963,6 +2009,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Value<EntryKind>? kind,
     Value<String>? tint,
     Value<bool>? isFixed,
+    Value<SpendKind>? spendKind,
     Value<int?>? monthlyBudget,
     Value<bool>? archived,
     Value<int>? sortOrder,
@@ -1974,6 +2021,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       kind: kind ?? this.kind,
       tint: tint ?? this.tint,
       isFixed: isFixed ?? this.isFixed,
+      spendKind: spendKind ?? this.spendKind,
       monthlyBudget: monthlyBudget ?? this.monthlyBudget,
       archived: archived ?? this.archived,
       sortOrder: sortOrder ?? this.sortOrder,
@@ -2001,6 +2049,11 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (isFixed.present) {
       map['is_fixed'] = Variable<bool>(isFixed.value);
     }
+    if (spendKind.present) {
+      map['spend_kind'] = Variable<String>(
+        $CategoriesTable.$converterspendKind.toSql(spendKind.value),
+      );
+    }
     if (monthlyBudget.present) {
       map['monthly_budget'] = Variable<int>(monthlyBudget.value);
     }
@@ -2024,6 +2077,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('kind: $kind, ')
           ..write('tint: $tint, ')
           ..write('isFixed: $isFixed, ')
+          ..write('spendKind: $spendKind, ')
           ..write('monthlyBudget: $monthlyBudget, ')
           ..write('archived: $archived, ')
           ..write('sortOrder: $sortOrder, ')
@@ -3332,6 +3386,16 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  @override
+  late final GeneratedColumnWithTypeConverter<SpendKind, String> spendKind =
+      GeneratedColumn<String>(
+        'spend_kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('want'),
+      ).withConverter<SpendKind>($EntriesTable.$converterspendKind);
   static const VerificationMeta _recurringItemIdMeta = const VerificationMeta(
     'recurringItemId',
   );
@@ -3392,6 +3456,7 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     label,
     note,
     receipt,
+    spendKind,
     recurringItemId,
     plannedEventId,
     plannedEventOn,
@@ -3530,6 +3595,12 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
         DriftSqlType.string,
         data['${effectivePrefix}receipt'],
       ),
+      spendKind: $EntriesTable.$converterspendKind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}spend_kind'],
+        )!,
+      ),
       recurringItemId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}recurring_item_id'],
@@ -3560,6 +3631,8 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
       const DayConverter();
   static JsonTypeConverter2<EntryKind, String, String> $converterkind =
       const EnumNameConverter<EntryKind>(EntryKind.values);
+  static JsonTypeConverter2<SpendKind, String, String> $converterspendKind =
+      const EnumNameConverter<SpendKind>(SpendKind.values);
   static TypeConverter<DateTime, String> $converterplannedEventOn =
       const DayConverter();
   static TypeConverter<DateTime?, String?> $converterplannedEventOnn =
@@ -3583,6 +3656,9 @@ class Entry extends DataClass implements Insertable<Entry> {
   /// File name of an attached receipt image in the app's receipts folder.
   final String? receipt;
 
+  /// Why a spend happened; income keeps the default and nothing reads it.
+  final SpendKind spendKind;
+
   /// Set when the entry confirms a recurring item.
   final int? recurringItemId;
 
@@ -3602,6 +3678,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     this.label,
     this.note,
     this.receipt,
+    required this.spendKind,
     this.recurringItemId,
     this.plannedEventId,
     this.plannedEventOn,
@@ -3630,6 +3707,11 @@ class Entry extends DataClass implements Insertable<Entry> {
     }
     if (!nullToAbsent || receipt != null) {
       map['receipt'] = Variable<String>(receipt);
+    }
+    {
+      map['spend_kind'] = Variable<String>(
+        $EntriesTable.$converterspendKind.toSql(spendKind),
+      );
     }
     if (!nullToAbsent || recurringItemId != null) {
       map['recurring_item_id'] = Variable<int>(recurringItemId);
@@ -3661,6 +3743,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       receipt: receipt == null && nullToAbsent
           ? const Value.absent()
           : Value(receipt),
+      spendKind: Value(spendKind),
       recurringItemId: recurringItemId == null && nullToAbsent
           ? const Value.absent()
           : Value(recurringItemId),
@@ -3691,6 +3774,9 @@ class Entry extends DataClass implements Insertable<Entry> {
       label: serializer.fromJson<String?>(json['label']),
       note: serializer.fromJson<String?>(json['note']),
       receipt: serializer.fromJson<String?>(json['receipt']),
+      spendKind: $EntriesTable.$converterspendKind.fromJson(
+        serializer.fromJson<String>(json['spendKind']),
+      ),
       recurringItemId: serializer.fromJson<int?>(json['recurringItemId']),
       plannedEventId: serializer.fromJson<int?>(json['plannedEventId']),
       plannedEventOn: serializer.fromJson<DateTime?>(json['plannedEventOn']),
@@ -3712,6 +3798,9 @@ class Entry extends DataClass implements Insertable<Entry> {
       'label': serializer.toJson<String?>(label),
       'note': serializer.toJson<String?>(note),
       'receipt': serializer.toJson<String?>(receipt),
+      'spendKind': serializer.toJson<String>(
+        $EntriesTable.$converterspendKind.toJson(spendKind),
+      ),
       'recurringItemId': serializer.toJson<int?>(recurringItemId),
       'plannedEventId': serializer.toJson<int?>(plannedEventId),
       'plannedEventOn': serializer.toJson<DateTime?>(plannedEventOn),
@@ -3729,6 +3818,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     Value<String?> label = const Value.absent(),
     Value<String?> note = const Value.absent(),
     Value<String?> receipt = const Value.absent(),
+    SpendKind? spendKind,
     Value<int?> recurringItemId = const Value.absent(),
     Value<int?> plannedEventId = const Value.absent(),
     Value<DateTime?> plannedEventOn = const Value.absent(),
@@ -3743,6 +3833,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     label: label.present ? label.value : this.label,
     note: note.present ? note.value : this.note,
     receipt: receipt.present ? receipt.value : this.receipt,
+    spendKind: spendKind ?? this.spendKind,
     recurringItemId: recurringItemId.present
         ? recurringItemId.value
         : this.recurringItemId,
@@ -3769,6 +3860,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       label: data.label.present ? data.label.value : this.label,
       note: data.note.present ? data.note.value : this.note,
       receipt: data.receipt.present ? data.receipt.value : this.receipt,
+      spendKind: data.spendKind.present ? data.spendKind.value : this.spendKind,
       recurringItemId: data.recurringItemId.present
           ? data.recurringItemId.value
           : this.recurringItemId,
@@ -3794,6 +3886,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           ..write('label: $label, ')
           ..write('note: $note, ')
           ..write('receipt: $receipt, ')
+          ..write('spendKind: $spendKind, ')
           ..write('recurringItemId: $recurringItemId, ')
           ..write('plannedEventId: $plannedEventId, ')
           ..write('plannedEventOn: $plannedEventOn, ')
@@ -3813,6 +3906,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     label,
     note,
     receipt,
+    spendKind,
     recurringItemId,
     plannedEventId,
     plannedEventOn,
@@ -3831,6 +3925,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           other.label == this.label &&
           other.note == this.note &&
           other.receipt == this.receipt &&
+          other.spendKind == this.spendKind &&
           other.recurringItemId == this.recurringItemId &&
           other.plannedEventId == this.plannedEventId &&
           other.plannedEventOn == this.plannedEventOn &&
@@ -3847,6 +3942,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
   final Value<String?> label;
   final Value<String?> note;
   final Value<String?> receipt;
+  final Value<SpendKind> spendKind;
   final Value<int?> recurringItemId;
   final Value<int?> plannedEventId;
   final Value<DateTime?> plannedEventOn;
@@ -3861,6 +3957,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     this.label = const Value.absent(),
     this.note = const Value.absent(),
     this.receipt = const Value.absent(),
+    this.spendKind = const Value.absent(),
     this.recurringItemId = const Value.absent(),
     this.plannedEventId = const Value.absent(),
     this.plannedEventOn = const Value.absent(),
@@ -3876,6 +3973,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     this.label = const Value.absent(),
     this.note = const Value.absent(),
     this.receipt = const Value.absent(),
+    this.spendKind = const Value.absent(),
     this.recurringItemId = const Value.absent(),
     this.plannedEventId = const Value.absent(),
     this.plannedEventOn = const Value.absent(),
@@ -3895,6 +3993,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Expression<String>? label,
     Expression<String>? note,
     Expression<String>? receipt,
+    Expression<String>? spendKind,
     Expression<int>? recurringItemId,
     Expression<int>? plannedEventId,
     Expression<String>? plannedEventOn,
@@ -3910,6 +4009,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       if (label != null) 'label': label,
       if (note != null) 'note': note,
       if (receipt != null) 'receipt': receipt,
+      if (spendKind != null) 'spend_kind': spendKind,
       if (recurringItemId != null) 'recurring_item_id': recurringItemId,
       if (plannedEventId != null) 'planned_event_id': plannedEventId,
       if (plannedEventOn != null) 'planned_event_on': plannedEventOn,
@@ -3927,6 +4027,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Value<String?>? label,
     Value<String?>? note,
     Value<String?>? receipt,
+    Value<SpendKind>? spendKind,
     Value<int?>? recurringItemId,
     Value<int?>? plannedEventId,
     Value<DateTime?>? plannedEventOn,
@@ -3942,6 +4043,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       label: label ?? this.label,
       note: note ?? this.note,
       receipt: receipt ?? this.receipt,
+      spendKind: spendKind ?? this.spendKind,
       recurringItemId: recurringItemId ?? this.recurringItemId,
       plannedEventId: plannedEventId ?? this.plannedEventId,
       plannedEventOn: plannedEventOn ?? this.plannedEventOn,
@@ -3983,6 +4085,11 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     if (receipt.present) {
       map['receipt'] = Variable<String>(receipt.value);
     }
+    if (spendKind.present) {
+      map['spend_kind'] = Variable<String>(
+        $EntriesTable.$converterspendKind.toSql(spendKind.value),
+      );
+    }
     if (recurringItemId.present) {
       map['recurring_item_id'] = Variable<int>(recurringItemId.value);
     }
@@ -4012,6 +4119,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
           ..write('label: $label, ')
           ..write('note: $note, ')
           ..write('receipt: $receipt, ')
+          ..write('spendKind: $spendKind, ')
           ..write('recurringItemId: $recurringItemId, ')
           ..write('plannedEventId: $plannedEventId, ')
           ..write('plannedEventOn: $plannedEventOn, ')
@@ -8403,6 +8511,7 @@ typedef $$CategoriesTableCreateCompanionBuilder =
       required EntryKind kind,
       required String tint,
       Value<bool> isFixed,
+      Value<SpendKind> spendKind,
       Value<int?> monthlyBudget,
       Value<bool> archived,
       Value<int> sortOrder,
@@ -8415,6 +8524,7 @@ typedef $$CategoriesTableUpdateCompanionBuilder =
       Value<EntryKind> kind,
       Value<String> tint,
       Value<bool> isFixed,
+      Value<SpendKind> spendKind,
       Value<int?> monthlyBudget,
       Value<bool> archived,
       Value<int> sortOrder,
@@ -8533,6 +8643,12 @@ class $$CategoriesTableFilterComposer
     column: $table.isFixed,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<SpendKind, SpendKind, String> get spendKind =>
+      $composableBuilder(
+        column: $table.spendKind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnFilters<int> get monthlyBudget => $composableBuilder(
     column: $table.monthlyBudget,
@@ -8684,6 +8800,11 @@ class $$CategoriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get spendKind => $composableBuilder(
+    column: $table.spendKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get monthlyBudget => $composableBuilder(
     column: $table.monthlyBudget,
     builder: (column) => ColumnOrderings(column),
@@ -8723,6 +8844,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<bool> get isFixed =>
       $composableBuilder(column: $table.isFixed, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SpendKind, String> get spendKind =>
+      $composableBuilder(column: $table.spendKind, builder: (column) => column);
 
   GeneratedColumn<int> get monthlyBudget => $composableBuilder(
     column: $table.monthlyBudget,
@@ -8874,6 +8998,7 @@ class $$CategoriesTableTableManager
                 Value<EntryKind> kind = const Value.absent(),
                 Value<String> tint = const Value.absent(),
                 Value<bool> isFixed = const Value.absent(),
+                Value<SpendKind> spendKind = const Value.absent(),
                 Value<int?> monthlyBudget = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
@@ -8884,6 +9009,7 @@ class $$CategoriesTableTableManager
                 kind: kind,
                 tint: tint,
                 isFixed: isFixed,
+                spendKind: spendKind,
                 monthlyBudget: monthlyBudget,
                 archived: archived,
                 sortOrder: sortOrder,
@@ -8896,6 +9022,7 @@ class $$CategoriesTableTableManager
                 required EntryKind kind,
                 required String tint,
                 Value<bool> isFixed = const Value.absent(),
+                Value<SpendKind> spendKind = const Value.absent(),
                 Value<int?> monthlyBudget = const Value.absent(),
                 Value<bool> archived = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
@@ -8906,6 +9033,7 @@ class $$CategoriesTableTableManager
                 kind: kind,
                 tint: tint,
                 isFixed: isFixed,
+                spendKind: spendKind,
                 monthlyBudget: monthlyBudget,
                 archived: archived,
                 sortOrder: sortOrder,
@@ -10155,6 +10283,7 @@ typedef $$EntriesTableCreateCompanionBuilder =
       Value<String?> label,
       Value<String?> note,
       Value<String?> receipt,
+      Value<SpendKind> spendKind,
       Value<int?> recurringItemId,
       Value<int?> plannedEventId,
       Value<DateTime?> plannedEventOn,
@@ -10171,6 +10300,7 @@ typedef $$EntriesTableUpdateCompanionBuilder =
       Value<String?> label,
       Value<String?> note,
       Value<String?> receipt,
+      Value<SpendKind> spendKind,
       Value<int?> recurringItemId,
       Value<int?> plannedEventId,
       Value<DateTime?> plannedEventOn,
@@ -10297,6 +10427,12 @@ class $$EntriesTableFilterComposer
     column: $table.receipt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<SpendKind, SpendKind, String> get spendKind =>
+      $composableBuilder(
+        column: $table.spendKind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   ColumnWithTypeConverterFilters<DateTime?, DateTime, String>
   get plannedEventOn => $composableBuilder(
@@ -10446,6 +10582,11 @@ class $$EntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get spendKind => $composableBuilder(
+    column: $table.spendKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get plannedEventOn => $composableBuilder(
     column: $table.plannedEventOn,
     builder: (column) => ColumnOrderings(column),
@@ -10581,6 +10722,9 @@ class $$EntriesTableAnnotationComposer
 
   GeneratedColumn<String> get receipt =>
       $composableBuilder(column: $table.receipt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<SpendKind, String> get spendKind =>
+      $composableBuilder(column: $table.spendKind, builder: (column) => column);
 
   GeneratedColumnWithTypeConverter<DateTime?, String> get plannedEventOn =>
       $composableBuilder(
@@ -10726,6 +10870,7 @@ class $$EntriesTableTableManager
                 Value<String?> label = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<String?> receipt = const Value.absent(),
+                Value<SpendKind> spendKind = const Value.absent(),
                 Value<int?> recurringItemId = const Value.absent(),
                 Value<int?> plannedEventId = const Value.absent(),
                 Value<DateTime?> plannedEventOn = const Value.absent(),
@@ -10740,6 +10885,7 @@ class $$EntriesTableTableManager
                 label: label,
                 note: note,
                 receipt: receipt,
+                spendKind: spendKind,
                 recurringItemId: recurringItemId,
                 plannedEventId: plannedEventId,
                 plannedEventOn: plannedEventOn,
@@ -10756,6 +10902,7 @@ class $$EntriesTableTableManager
                 Value<String?> label = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<String?> receipt = const Value.absent(),
+                Value<SpendKind> spendKind = const Value.absent(),
                 Value<int?> recurringItemId = const Value.absent(),
                 Value<int?> plannedEventId = const Value.absent(),
                 Value<DateTime?> plannedEventOn = const Value.absent(),
@@ -10770,6 +10917,7 @@ class $$EntriesTableTableManager
                 label: label,
                 note: note,
                 receipt: receipt,
+                spendKind: spendKind,
                 recurringItemId: recurringItemId,
                 plannedEventId: plannedEventId,
                 plannedEventOn: plannedEventOn,

@@ -17,7 +17,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -27,9 +27,11 @@ class AppDatabase extends _$AppDatabase {
         },
         // One step per version, so any older database climbs to the latest.
         onUpgrade: (m, from, to) async {
-          // Version 11's name comes first: versions 6 and 7 rebuild the
-          // settings table in its latest shape, which already has it.
+          // Versions 11 and 13 add their columns first: versions 6 and 7
+          // rebuild the settings and entries tables in their latest shape,
+          // which already has them.
           if (from < 11) await m.addColumn(appSettings, appSettings.userName);
+          if (from < 13) await m.addColumn(entries, entries.spendKind);
           if (from < 2) await m.addColumn(entries, entries.receipt);
           if (from < 3) await m.addColumn(recurringItems, recurringItems.windowDays);
           if (from < 4) await m.addColumn(plannedEvents, plannedEvents.repeatsYearly);
@@ -49,6 +51,7 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(goals, goals.listingState);
             await m.addColumn(goals, goals.listingCheckedOn);
           }
+          if (from < 13) await _sortSpending(m);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -73,6 +76,15 @@ class AppDatabase extends _$AppDatabase {
     await m.alterTable(TableMigration(entries, newColumns: [entries.accountId], columnTransformer: {entries.accountId: const Constant(1)}));
     await m.alterTable(TableMigration(recurringItems, newColumns: [recurringItems.accountId], columnTransformer: {recurringItems.accountId: const Constant(1)}));
     await m.alterTable(TableMigration(appSettings, newColumns: [appSettings.totalCardColor, appSettings.totalCardFinish]));
+  }
+
+  /// Version 13 sorts spending into wants and needs. Family starts as a
+  /// need and every other category as a want, and each spend so far takes
+  /// its category's kind.
+  Future<void> _sortSpending(Migrator m) async {
+    await m.addColumn(categories, categories.spendKind);
+    await customStatement("UPDATE categories SET spend_kind = 'need' WHERE key = 'family'");
+    await customStatement("UPDATE entries SET spend_kind = (SELECT spend_kind FROM categories WHERE categories.key = entries.category_key) WHERE kind = 'expense'");
   }
 
   /// Version 10 keeps each chat with the coach apart. The one chat so far
@@ -129,7 +141,7 @@ class AppDatabase extends _$AppDatabase {
         for (final (i, c) in _defaultCategories.indexed.where((e) => _builtIn.contains(e.$2.$1))) {
           b.insert(
             categories,
-            CategoriesCompanion.insert(key: c.$1, label: c.$2, kind: c.$3, tint: c.$4, isFixed: Value(c.$5), sortOrder: Value(i)),
+            CategoriesCompanion.insert(key: c.$1, label: c.$2, kind: c.$3, tint: c.$4, isFixed: Value(c.$5), spendKind: Value(c.$6), sortOrder: Value(i)),
             mode: InsertMode.insertOrIgnore,
           );
         }
@@ -148,6 +160,7 @@ class AppDatabase extends _$AppDatabase {
             kind: c.$3,
             tint: c.$4,
             isFixed: Value(c.$5),
+            spendKind: Value(c.$6),
             sortOrder: Value(i),
           ),
       ]);
@@ -166,18 +179,18 @@ class AppDatabase extends _$AppDatabase {
 const _builtIn = {'goal', 'untracked'};
 
 const _defaultCategories = [
-  ('food', 'Food', EntryKind.expense, 'apricot', false),
-  ('transport', 'Transport', EntryKind.expense, 'sky', false),
-  ('pets', 'Pets', EntryKind.expense, 'sage', false),
-  ('family', 'Family', EntryKind.expense, 'rose', false),
-  ('gifts', 'Gifts', EntryKind.expense, 'pink', false),
-  ('bills', 'Bills', EntryKind.expense, 'teal', true),
-  ('personal', 'Personal', EntryKind.expense, 'olive', false),
-  ('other', 'Other', EntryKind.expense, 'neutral', false),
-  ('goal', 'Goals', EntryKind.expense, 'apricot', true),
-  ('untracked', 'Untracked', EntryKind.expense, 'neutral', true),
-  ('salary', 'Salary', EntryKind.income, 'sage', true),
-  ('kwsp', 'KWSP', EntryKind.income, 'teal', true),
-  ('refund', 'Refund', EntryKind.income, 'sky', false),
-  ('other_income', 'Other', EntryKind.income, 'neutral', false),
+  ('food', 'Food', EntryKind.expense, 'apricot', false, SpendKind.want),
+  ('transport', 'Transport', EntryKind.expense, 'sky', false, SpendKind.want),
+  ('pets', 'Pets', EntryKind.expense, 'sage', false, SpendKind.want),
+  ('family', 'Family', EntryKind.expense, 'rose', false, SpendKind.need),
+  ('gifts', 'Gifts', EntryKind.expense, 'pink', false, SpendKind.want),
+  ('bills', 'Bills', EntryKind.expense, 'teal', true, SpendKind.want),
+  ('personal', 'Personal', EntryKind.expense, 'olive', false, SpendKind.want),
+  ('other', 'Other', EntryKind.expense, 'neutral', false, SpendKind.want),
+  ('goal', 'Goals', EntryKind.expense, 'apricot', true, SpendKind.want),
+  ('untracked', 'Untracked', EntryKind.expense, 'neutral', true, SpendKind.want),
+  ('salary', 'Salary', EntryKind.income, 'sage', true, SpendKind.want),
+  ('kwsp', 'KWSP', EntryKind.income, 'teal', true, SpendKind.want),
+  ('refund', 'Refund', EntryKind.income, 'sky', false, SpendKind.want),
+  ('other_income', 'Other', EntryKind.income, 'neutral', false, SpendKind.want),
 ];
