@@ -15,6 +15,7 @@ import '../../backup/presentation/restore_flow.dart';
 import '../../coach/presentation/coach_providers.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
+import '../../plan/presentation/allowance_fields.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../settings/presentation/user_name_sheet.dart';
 
@@ -215,21 +216,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            MoneyField(
-              controller: _cap,
-              label: 'Weekly allowance',
-              hint: 'e.g. 50.00',
-              helper: 'What you let yourself spend Monday to Sunday on food, transport and extras. Bills and other fixed costs do not count.',
-              validator: (sen) => sen > 0 ? null : 'Enter how much you allow each week',
-            ),
+            AllowanceField(controller: _cap),
             const SizedBox(height: AppSpacing.l),
-            MoneyField(
-              controller: _buffer,
-              label: 'Keep at least (optional)',
-              hint: 'e.g. 1,000.00',
-              helper: 'The least you want left in your account after buying a goal. A goal is on track only if this much remains. Leave empty for none.',
-              textInputAction: TextInputAction.done,
-            ),
+            BufferField(controller: _buffer),
             const SizedBox(height: AppSpacing.xxl),
             FilledButton(
               onPressed: _next,

@@ -9,7 +9,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_mode.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
-import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/done_bar.dart';
 import '../../accounts/presentation/account_providers.dart';
@@ -19,6 +18,7 @@ import '../../plan/domain/plan_repository.dart';
 import '../../coach/presentation/coach_providers.dart';
 import '../../lock/presentation/app_lock_sheet.dart';
 import '../../lock/presentation/lock_providers.dart';
+import '../../plan/presentation/allowance_fields.dart';
 import '../../plan/presentation/plan_providers.dart';
 import 'balance_sheet.dart';
 import 'user_name_sheet.dart';
@@ -299,21 +299,9 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
             children: [
               Text('Allowance and buffer', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: AppSpacing.l),
-              MoneyField(
-                controller: _cap,
-                label: 'Weekly allowance',
-                hint: 'e.g. 50.00',
-                helper: 'What you let yourself spend Monday to Sunday on food, transport and extras. Bills and other fixed costs do not count.',
-                validator: (sen) => sen > 0 ? null : 'Enter how much you allow each week',
-              ),
+              AllowanceField(controller: _cap),
               const SizedBox(height: AppSpacing.l),
-              MoneyField(
-                controller: _buffer,
-                label: 'Keep at least (optional)',
-                hint: 'e.g. 1,000.00',
-                helper: 'The least you want left in your account after buying a goal. A goal is on track only if this much remains. Leave empty for none.',
-                textInputAction: TextInputAction.done,
-              ),
+              BufferField(controller: _buffer),
               const SizedBox(height: AppSpacing.xl),
               FilledButton(
                 onPressed: _save,
