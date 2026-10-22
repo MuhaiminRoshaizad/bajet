@@ -10,7 +10,6 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
 import '../../../core/widgets/spring_menu.dart';
@@ -660,8 +659,6 @@ class _Composer extends StatelessWidget {
                   minLines: 1,
                   maxLines: 4,
                   maxLength: 500,
-                  textCapitalization: TextCapitalization.sentences,
-                  inputFormatters: const [CapitaliseFirstFormatter()],
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => onSend(),
                   decoration: const InputDecoration(hintText: 'Ask the coach…', counterText: ''),

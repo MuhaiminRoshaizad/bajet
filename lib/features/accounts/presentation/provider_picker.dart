@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/validation/capitalise_first_formatter.dart';
 import '../domain/account_models.dart';
 import '../domain/known_providers.dart';
 import 'card_palette.dart';
@@ -119,8 +118,6 @@ class _ProviderSheetState extends State<_ProviderSheet> {
                 autofillHints: null,
                 key: const ValueKey('provider-search'),
                 controller: _query,
-                textCapitalization: TextCapitalization.words,
-                inputFormatters: const [CapitaliseFirstFormatter()],
                 textInputAction: TextInputAction.search,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(

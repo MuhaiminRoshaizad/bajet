@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/done_bar.dart';
@@ -298,8 +297,6 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
                     autofillHints: null,
                     controller: _nickname,
                     maxLength: 24,
-                    textCapitalization: TextCapitalization.sentences,
-                    inputFormatters: const [CapitaliseFirstFormatter()],
                     textInputAction: TextInputAction.done,
                     onChanged: (_) => setState(() {}),
                     decoration: const InputDecoration(labelText: 'Nickname (optional)', hintText: 'e.g. Savings', counterText: ''),

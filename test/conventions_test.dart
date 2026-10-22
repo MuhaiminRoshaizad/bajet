@@ -14,6 +14,10 @@ void main() {
     expect([for (final (path, text) in sources()) if (text.contains('autofocus: true')) path], isEmpty);
   });
 
+  test('no field forces capitals on what is typed', () {
+    expect([for (final (path, text) in sources()) if (text.contains('textCapitalization:')) path], isEmpty);
+  });
+
   test("every TextField stays out of the phone's autofill", () {
     final missing = [
       for (final (path, text) in sources())

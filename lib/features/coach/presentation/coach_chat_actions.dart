@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
 import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/spring_menu.dart';
@@ -138,8 +137,6 @@ class _RenameSheetState extends State<_RenameSheet> {
               TextFormField(
                 controller: _name,
                 maxLength: chatNameLength,
-                textCapitalization: TextCapitalization.sentences,
-                inputFormatters: const [CapitaliseFirstFormatter()],
                 textInputAction: TextInputAction.done,
                 // Checked on Save, then again with each key once it has said
                 // something, so the message clears as soon as it is fixed.

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/done_bar.dart';
 import '../../coach/domain/coach_settings.dart';
 import '../../coach/presentation/coach_providers.dart';
@@ -23,11 +22,9 @@ class UserNameField extends StatelessWidget {
         controller: controller,
         autofillHints: null,
         maxLength: userNameLength,
-        textCapitalization: TextCapitalization.words,
         keyboardType: TextInputType.name,
-        // A name has no line breaks; the first letter is capitalised for
-        // keyboards that ignore textCapitalization.
-        inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\n\r\t]')), const CapitaliseFirstFormatter()],
+        // A name has no line breaks.
+        inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[\n\r\t]'))],
         textInputAction: TextInputAction.done,
         onChanged: onChanged,
         onSubmitted: (_) => onSubmitted?.call(),

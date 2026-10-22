@@ -25,16 +25,16 @@ without a custom pattern.
 
 ## Text fields
 
-- Every name and note starts with a capital: `TextCapitalization.sentences`
-  asks the keyboard for a shift, and `CapitaliseFirstFormatter` makes sure,
-  since some keyboards ignore the hint.
+- Text is kept as typed: no field asks the keyboard for capitals
+  (`textCapitalization`) or changes what was typed to add one. The user
+  turned this off on 22/10/2026.
 - No field opens the keyboard by itself: nothing sets `autofocus`, so the
   keyboard comes up only when a field is tapped, and a sheet's choices can be
   seen first.
 - No field offers itself to the phone's autofill. A `TextField` takes part
   unless `autofillHints` is null, so every one sets `autofillHints: null`;
   a `TextFormField` already defaults to null.
-- `test/conventions_test.dart` checks both across `lib/`.
+- `test/conventions_test.dart` checks all three across `lib/`.
 
 ## Feedback after an action
 

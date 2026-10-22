@@ -59,7 +59,7 @@ void main() {
     expect(world.entries, isEmpty);
   });
 
-  testWidgets('a note starts with a capital, whatever the keyboard does', (tester) async {
+  testWidgets('a note is kept as typed, with no capital forced on it', (tester) async {
     final world = await pumpApp(tester);
     await openLogger(tester);
     await typeKeys(tester, '800');
@@ -68,7 +68,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Log RM8.00'));
     await tester.pumpAndSettle();
-    expect(world.entries.single.note, 'Makan');
+    expect(world.entries.single.note, 'makan');
   });
 
   testWidgets('a favourite fills the logger but saves nothing on its own', (tester) async {
