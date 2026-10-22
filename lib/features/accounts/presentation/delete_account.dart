@@ -4,6 +4,7 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../domain/account_models.dart';
 import '../domain/account_repository.dart';
 import 'account_choice.dart';
@@ -41,12 +42,11 @@ Future<DeleteChoice?> askDeleteAccount(BuildContext context, AccountRepository r
 Future<void> deleteAccount(ScaffoldMessengerState messenger, AccountRepository repo, Account account, DeleteChoice choice, List<Account> all) async {
   final removal = await repo.deleteAccount(account.id, moveTo: choice.moveTo);
   final to = all.where((a) => a.id == choice.moveTo).firstOrNull;
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(to == null ? 'Deleted ${_called(account)}' : 'Deleted ${_called(account)}. Its history moved to ${_called(to)}.'),
-      action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreAccount(removal)),
-    ));
+  showBar(
+    messenger,
+    to == null ? 'Deleted ${_called(account)}' : 'Deleted ${_called(account)}. Its history moved to ${_called(to)}.',
+    undo: () => repo.restoreAccount(removal),
+  );
 }
 
 String _count(int n, String one, String many) => '$n ${n == 1 ? one : many}';

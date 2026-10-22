@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
 import 'coach_providers.dart';
@@ -85,18 +86,17 @@ class _CoachPicker extends ConsumerWidget {
     await repo.saveSettings(settings.copyWith(face: face));
     // bajety's joke is the knows-too-much voice, so it offers it once picked.
     if (face == CoachFace.bajety && settings.personality != CoachPersonality.seesEverything) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: const Text('bajety pairs well with Sees Everything 😉'),
-          action: SnackBarAction(
-            label: 'Use it',
-            onPressed: () async {
-              final now = await repo.watchSettings().first;
-              await repo.saveSettings(now.copyWith(personality: CoachPersonality.seesEverything));
-            },
-          ),
-        ));
+      showBar(
+        messenger,
+        'bajety pairs well with Sees Everything 😉',
+        action: (
+          'Use it',
+          () async {
+            final now = await repo.watchSettings().first;
+            await repo.saveSettings(now.copyWith(personality: CoachPersonality.seesEverything));
+          },
+        ),
+      );
     }
   }
 }

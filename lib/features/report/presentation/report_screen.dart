@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/card_group.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
 import '../../coach/domain/coach_settings.dart';
@@ -139,13 +140,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         final (bytes, name, type) = await _file(i, entries, categories);
         try {
           if (!await ref.read(fileSharerProvider).saveFile(bytes, name, type)) return;
-          messenger
-            ..clearSnackBars()
-            ..showSnackBar(SnackBar(content: Text('Saved $name')));
+          showBar(messenger, 'Saved $name');
         } on PlatformException {
-          messenger
-            ..clearSnackBars()
-            ..showSnackBar(const SnackBar(content: Text('Could not save the file. Share it instead.')));
+          showBar(messenger, 'Could not save the file. Share it instead.');
         }
       });
 
@@ -256,9 +253,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         : () async {
                             await Clipboard.setData(ClipboardData(text: text));
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context)
-                                ..clearSnackBars()
-                                ..showSnackBar(const SnackBar(content: Text('Report copied')));
+                              showBar(ScaffoldMessenger.of(context), 'Report copied');
                             }
                           },
                     icon: const Icon(Icons.copy_rounded),

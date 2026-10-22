@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/soft.dart';
 import '../../accounts/domain/account_models.dart';
@@ -67,12 +68,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
       accountId: accountId,
     ));
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text('Logged ${Money.format(amount)} as ${first ? 'a starting adjustment' : 'untracked'}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => repo.delete(id)),
-      ));
+    showBar(ScaffoldMessenger.of(context), 'Logged ${Money.format(amount)} as ${first ? 'a starting adjustment' : 'untracked'}', undo: () => repo.delete(id));
   }
 
   /// Saves the check-in, so next week is judged against the balance the plan
@@ -91,9 +87,7 @@ class _CheckinScreenState extends ConsumerState<CheckinScreen> {
     );
     await ref.read(checkinRepositoryProvider).save(checkin);
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text('Check-in saved. Next target ${Money.format(checkin.nextTarget)} by ${Dates.dayShort(checkin.targetOn)}')));
+    showBar(ScaffoldMessenger.of(context), 'Check-in saved. Next target ${Money.format(checkin.nextTarget)} by ${Dates.dayShort(checkin.targetOn)}');
   }
 
   @override

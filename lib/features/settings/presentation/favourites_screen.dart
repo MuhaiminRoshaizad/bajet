@@ -9,6 +9,7 @@ import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
@@ -112,12 +113,7 @@ class _FavouriteFormState extends ConsumerState<_FavouriteForm> {
     await repo.delete(f.id);
     if (!mounted) return;
     Navigator.of(context).pop();
-    widget.messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text('Removed ${f.label}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => repo.add(label: f.label, categoryKey: f.categoryKey, amount: f.amount)),
-      ));
+    showBar(widget.messenger, 'Removed ${f.label}', undo: () => repo.add(label: f.label, categoryKey: f.categoryKey, amount: f.amount));
   }
 
   @override

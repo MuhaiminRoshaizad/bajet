@@ -7,6 +7,7 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../accounts/domain/account_models.dart';
 import '../../accounts/presentation/account_providers.dart';
@@ -162,26 +163,17 @@ class _HistoryList extends ConsumerWidget {
     final repo = ref.read(ledgerRepositoryProvider);
     final messenger = ScaffoldMessenger.of(context);
     await repo.delete(entry.id);
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text('Deleted ${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => repo.restore(entry)),
-      ));
+    showBar(messenger, 'Deleted ${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey}', undo: () => repo.restore(entry));
   }
 
   Future<void> _deleteTransfer(BuildContext context, WidgetRef ref, Transfer t) async {
     final repo = ref.read(accountRepositoryProvider);
     final messenger = ScaffoldMessenger.of(context);
     await repo.deleteTransfer(t.id);
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text('Deleted the move of ${Money.format(t.amount)}'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () => repo.transfer(fromId: t.fromId, toId: t.toId, amount: t.amount, day: t.day, note: t.note),
-        ),
-      ));
+    showBar(
+      messenger,
+      'Deleted the move of ${Money.format(t.amount)}',
+      undo: () => repo.transfer(fromId: t.fromId, toId: t.toId, amount: t.amount, day: t.day, note: t.note),
+    );
   }
 }

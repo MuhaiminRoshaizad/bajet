@@ -6,6 +6,7 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/money_field.dart';
 import '../domain/account_models.dart';
 import 'account_choice.dart';
@@ -58,12 +59,7 @@ class _MoveMoneyState extends ConsumerState<_MoveMoney> {
     final id = await repo.transfer(fromId: _from, toId: to, amount: amount, day: ref.read(todayProvider));
     String name(int id) => accounts.firstWhere((a) => a.id == id).name;
     if (mounted) Navigator.of(context).pop();
-    widget.messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text('Moved ${Money.format(amount)} from ${name(_from)} to ${name(to)}'),
-        action: SnackBarAction(label: 'Undo', onPressed: () => repo.deleteTransfer(id)),
-      ));
+    showBar(widget.messenger, 'Moved ${Money.format(amount)} from ${name(_from)} to ${name(to)}', undo: () => repo.deleteTransfer(id));
   }
 
   @override

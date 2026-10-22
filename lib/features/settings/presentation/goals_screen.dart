@@ -11,6 +11,7 @@ import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 import 'goal_listing.dart';
@@ -46,7 +47,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     if (await ref.read(openLinkProvider)(goal.listing!.url)) {
       ref.read(pendingListingProvider.notifier).opened(goal.id);
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nothing on this phone could open that link.')));
+      showBar(ScaffoldMessenger.of(context), 'Nothing on this phone could open that link.');
     }
   }
 
@@ -61,9 +62,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     final today = ref.read(todayProvider);
     await ref.read(planRepositoryProvider).checkListing(goal.id, check, on: today);
     if (mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text('${check == ListingCheck.sold ? 'Marked sold' : 'Still up'} · ${Dates.full(today)}')));
+      showBar(ScaffoldMessenger.of(context), '${check == ListingCheck.sold ? 'Marked sold' : 'Still up'} · ${Dates.full(today)}');
     }
   }
 
@@ -71,9 +70,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     final repo = ref.read(planRepositoryProvider);
     await repo.updateGoal(goal.copyWith(listing: () => null));
     if (mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text("Removed ${goal.name}'s listing"), action: SnackBarAction(label: 'Undo', onPressed: () => repo.updateGoal(goal))));
+      showBar(ScaffoldMessenger.of(context), "Removed ${goal.name}'s listing", undo: () => repo.updateGoal(goal));
     }
   }
 
@@ -207,7 +204,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     if (confirmed != true) return;
     await ref.read(planRepositoryProvider).markGoalBought(goal.id, on: ref.read(todayProvider));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${goal.name} bought. Well saved.')));
+      showBar(ScaffoldMessenger.of(context), '${goal.name} bought. Well saved.');
     }
   }
 }
@@ -230,9 +227,7 @@ Future<bool> _deleteGoal(BuildContext context, WidgetRef ref, Goal goal) async {
   if (!confirmed) return false;
   final repo = ref.read(planRepositoryProvider);
   await repo.deleteGoal(goal.id);
-  messenger
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text('${bought ? 'Removed' : 'Deleted'} ${goal.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreGoal(goal))));
+  showBar(messenger, '${bought ? 'Removed' : 'Deleted'} ${goal.name}', undo: () => repo.restoreGoal(goal));
   return true;
 }
 

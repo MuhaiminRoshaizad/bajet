@@ -8,6 +8,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
@@ -88,9 +89,7 @@ class _CoachScreenState extends ConsumerState<CoachScreen> {
     if (summary == null) return;
     await Clipboard.setData(ClipboardData(text: summary));
     if (mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(const SnackBar(content: Text('Summary copied')));
+      showBar(ScaffoldMessenger.of(context), 'Summary copied');
     }
   }
 

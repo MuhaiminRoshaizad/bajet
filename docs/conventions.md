@@ -36,6 +36,20 @@ without a custom pattern.
   a `TextFormField` already defaults to null.
 - `test/conventions_test.dart` checks both across `lib/`.
 
+## Feedback after an action
+
+- Every action that saves, changes or deletes something says so at the foot
+  of the page through `showBar` (`core/widgets/done_bar.dart`): past tense,
+  naming the thing ("Saved MacBook", "Paid Rent RM900.00"), with Undo
+  wherever the change can be put back.
+- A bar leaves by itself after five seconds or on a swipe down, and a newer
+  one replaces it at once. Flutter keeps a bar that has an action up until
+  it is tapped, so nothing calls `showSnackBar` directly.
+- A sheet takes the page's `ScaffoldMessenger` before it closes, so the bar
+  shows on the page rather than on the closing sheet.
+- No bar where the change is already in front of the user: dragging to
+  reorder, picking the theme.
+
 ## Generated code
 
 drift output (`*.g.dart`) is committed, and regenerated with

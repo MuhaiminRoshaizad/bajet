@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../data/drift_backup_repository.dart';
 import '../domain/backup_repository.dart';
 import 'backup_files.dart';
@@ -16,9 +17,7 @@ final backupRepositoryProvider = Provider<BackupRepository>((ref) => DriftBackup
 /// [replacing] is false on a fresh install, where there is nothing to lose.
 Future<void> pickAndRestore(BuildContext context, WidgetRef ref, {required bool replacing}) async {
   final messenger = ScaffoldMessenger.of(context);
-  void say(String message) => messenger
-    ..clearSnackBars()
-    ..showSnackBar(SnackBar(content: Text(message)));
+  void say(String message) => showBar(messenger, message);
 
   final text = await ref.read(backupFilesProvider).pick();
   if (text == null || !context.mounted) return;

@@ -21,4 +21,8 @@ void main() {
     ];
     expect(missing, isEmpty);
   });
+
+  test('every bar goes through showBar, so none stays up for good', () {
+    expect([for (final (path, text) in sources()) if (text.contains('showSnackBar(') && !path.replaceAll(r'\', '/').endsWith('core/widgets/done_bar.dart')) path], isEmpty);
+  });
 }

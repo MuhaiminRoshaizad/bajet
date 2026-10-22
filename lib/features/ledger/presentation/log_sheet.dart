@@ -16,6 +16,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../../plan/domain/plan_models.dart' show calendarDay;
 import '../../plan/presentation/plan_providers.dart';
@@ -177,9 +178,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     unawaited(HapticFeedback.lightImpact());
     if (!mounted) return;
     Navigator.of(context).pop();
-    widget.messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message), action: SnackBarAction(label: 'Undo', onPressed: undo)));
+    showBar(widget.messenger, message, undo: undo);
   }
 
   /// Removes the entry being edited, after asking, with Undo on the page.
@@ -197,9 +196,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     await repo.delete(entry.id);
     if (!mounted) return;
     Navigator.of(context).pop();
-    widget.messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text('Deleted $name'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restore(entry))));
+    showBar(widget.messenger, 'Deleted $name', undo: () => repo.restore(entry));
   }
 
   void _manageFavourites() {

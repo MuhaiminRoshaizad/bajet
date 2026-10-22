@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_memory.dart';
@@ -47,9 +48,7 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
     _key.clear();
     if (!mounted) return;
     FocusScope.of(context).unfocus();
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(const SnackBar(content: Text('Key saved')));
+    showBar(ScaffoldMessenger.of(context), 'Key saved');
   }
 
   Future<void> _remove() async {
@@ -244,9 +243,7 @@ class _Memory extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     final controller = ref.read(coachChatsProvider.notifier);
     final gone = await controller.forget();
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: const Text('Chat forgotten'), action: SnackBarAction(label: 'Undo', onPressed: () => controller.restore(gone))));
+    showBar(messenger, 'Chat forgotten', undo: () => controller.restore(gone));
   }
 }
 

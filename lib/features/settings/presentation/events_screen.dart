@@ -11,6 +11,7 @@ import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../ledger/presentation/category_visuals.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/domain/plan_models.dart';
@@ -148,9 +149,7 @@ class _EventFormState extends ConsumerState<_EventForm> {
     final repo = ref.read(planRepositoryProvider);
     final removal = await repo.deleteEvent(event.id);
     navigator.pop();
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text('Deleted ${event.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreEvent(removal))));
+    showBar(messenger, 'Deleted ${event.name}', undo: () => repo.restoreEvent(removal));
   }
 
   @override

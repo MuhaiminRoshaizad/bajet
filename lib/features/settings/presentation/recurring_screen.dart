@@ -13,6 +13,7 @@ import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../../core/widgets/card_group.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/category_visuals.dart';
@@ -227,9 +228,7 @@ class _RecurringFormState extends ConsumerState<_RecurringForm> {
     final repo = ref.read(planRepositoryProvider);
     final removal = await repo.deleteRecurring(item.id);
     navigator.pop();
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text('Deleted ${item.name}'), action: SnackBarAction(label: 'Undo', onPressed: () => repo.restoreRecurring(removal))));
+    showBar(messenger, 'Deleted ${item.name}', undo: () => repo.restoreRecurring(removal));
   }
 
   @override

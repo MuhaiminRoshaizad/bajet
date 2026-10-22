@@ -8,6 +8,7 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/sharing/file_sharer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import 'restore_flow.dart';
 
@@ -41,9 +42,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       if (!await sharer.saveFile(bytes, name, 'application/json')) return;
-      messenger.showSnackBar(SnackBar(content: Text('Saved $name')));
+      showBar(messenger, 'Saved $name');
     } on PlatformException {
-      messenger.showSnackBar(const SnackBar(content: Text('Could not save the file. Share it instead.')));
+      showBar(messenger, 'Could not save the file. Share it instead.');
     }
   }
 

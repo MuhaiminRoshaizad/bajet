@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/spring_menu.dart';
 import '../domain/coach_thread.dart';
 import 'coach_avatar.dart';
@@ -55,9 +56,7 @@ Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat
       final gone = await chats.delete(chat.id);
       onDeleted?.call();
       if (gone == null) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: const Text('Chat deleted'), action: SnackBarAction(label: 'Undo', onPressed: () => chats.restore([gone]))));
+      showBar(messenger, 'Chat deleted', undo: () => chats.restore([gone]));
   }
 }
 
