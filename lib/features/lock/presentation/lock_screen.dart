@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../opening/presentation/opening_providers.dart';
 import '../../opening/presentation/titanium_card.dart';
@@ -124,7 +125,17 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                     Text(body, textAlign: TextAlign.center, style: TextStyle(color: warn ? c.bad : c.muted)),
                     const SizedBox(height: AppSpacing.xxxl),
                     if (_status == _Status.unavailable)
-                      Center(child: FilledButton(onPressed: () => ref.read(appLockProvider.notifier).turnOffAndOpen(), child: const Text('Open bajet')))
+                      Center(
+                        child: FilledButton(
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            await ref.read(appLockProvider.notifier).turnOffAndOpen();
+                            // Said again once open, so the lock is not off unnoticed.
+                            showBar(messenger, 'App lock is off. Turn it on again in Settings once the phone has a screen lock.');
+                          },
+                          child: const Text('Open bajet'),
+                        ),
+                      )
                     else ...[
                       if (_status != _Status.lockedOut)
                         Center(

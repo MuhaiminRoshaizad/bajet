@@ -79,6 +79,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('App lock is off'), findsNothing);
     expect(world.lockSettings.saved.enabled, isFalse);
+    expect(find.text('App lock is off. Turn it on again in Settings once the phone has a screen lock.'), findsWidgets);
   });
 
   testWidgets('coming back within the grace stays open; longer away locks again', (tester) async {
