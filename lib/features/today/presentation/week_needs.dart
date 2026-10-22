@@ -57,7 +57,7 @@ class _WeekNeedsState extends State<WeekNeeds> {
                     child: Icon(Icons.expand_more_rounded, size: 18, color: c.muted),
                   ),
                 ]),
-                Text('Also this week, not counted in your ${Money.formatWhole(widget.cap)}', style: TextStyle(color: c.muted, fontSize: 12)),
+                Text('Also this week, not counted in your ${Money.formatWhole(widget.cap)}', textAlign: TextAlign.center, style: TextStyle(color: c.muted, fontSize: 12)),
               ]),
             ),
           ),
