@@ -7,6 +7,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/rise_in.dart';
 import '../../../core/widgets/soft.dart';
@@ -14,6 +15,7 @@ import '../../../core/widgets/under_bar.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_stack.dart';
 import '../../accounts/presentation/hold_swell.dart';
+import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/entry_tile.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
@@ -25,6 +27,7 @@ import '../../opening/presentation/opening_providers.dart';
 import 'today_providers.dart';
 import 'today_total_card.dart';
 import 'week_dial.dart';
+import 'week_needs.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({super.key});
@@ -38,11 +41,12 @@ class TodayScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider).value;
     final days = ref.watch(weekDaysProvider);
     final weekSpent = ref.watch(weekSpentProvider);
+    final needs = ref.watch(weekNeedsProvider) ?? const <Entry>[];
     final projection = ref.watch(projectionProvider);
     final goals = ref.watch(goalsProvider).value;
     final due = ref.watch(dueRecurringProvider);
     final entries = ref.watch(recentEntriesProvider).value;
-    final categories = {for (final c in ref.watch(categoriesProvider).value ?? const []) c.key: c};
+    final categories = {for (final c in ref.watch(categoriesProvider).value ?? const <Category>[]) c.key: c};
 
     return SafeArea(
       bottom: false,
@@ -58,7 +62,19 @@ class TodayScreen extends ConsumerWidget {
               if (today.weekday == DateTime.sunday) const _CheckinCard(),
               for (final item in due) _DueCard(item: item),
               if (days != null && weekSpent != null && settings != null)
-                SoftCard(child: WeekDial(days: days, spent: weekSpent, cap: settings.weeklyCap)),
+                SoftCard(
+                  child: Column(children: [
+                    WeekDial(days: days, spent: weekSpent, cap: settings.weeklyCap),
+                    AnimatedSize(
+                      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.enter,
+                      curve: Curves.easeOutBack,
+                      alignment: Alignment.topCenter,
+                      child: needs.isEmpty
+                          ? const SizedBox(width: double.infinity)
+                          : WeekNeeds(needs: needs, cap: settings.weeklyCap, categories: categories, today: today),
+                    ),
+                  ]),
+                ),
               _GoalCard(outcome: projection?.goals.firstOrNull, hasGoal: goals?.isNotEmpty ?? false, today: today, balance: balance.value),
               _Recent(
                 children: [

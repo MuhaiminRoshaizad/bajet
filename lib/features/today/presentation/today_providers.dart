@@ -7,7 +7,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import 'week_dial.dart';
 
-/// Monday to Sunday of the current week, each with its flexible spend and
+/// Monday to Sunday of the current week, each with what went on wants and
 /// what the rhythm planned. Null while inputs load.
 final weekDaysProvider = Provider<List<WeekDay>?>((ref) {
   final today = ref.watch(todayProvider);
@@ -27,4 +27,16 @@ final weekDaysProvider = Provider<List<WeekDay>?>((ref) {
         return WeekDay(date: day, label: Dates.weekday(day), spent: spent, planned: planned);
       }(),
   ];
+});
+
+/// This week's needs so far, newest first: the spending the dial leaves
+/// out. Null while inputs load.
+final weekNeedsProvider = Provider<List<Entry>?>((ref) {
+  final today = ref.watch(todayProvider);
+  final entries = ref.watch(recentEntriesProvider).value;
+  final categories = ref.watch(categoriesProvider).value;
+  if (entries == null || categories == null) return null;
+  final fixed = {for (final c in categories.where((c) => c.isFixed)) c.key};
+  final monday = weekStart(today);
+  return entries.where((e) => e.isNeed(fixed) && !e.day.isBefore(monday) && !e.day.isAfter(today)).toList();
 });

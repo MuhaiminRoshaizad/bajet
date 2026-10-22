@@ -34,6 +34,25 @@ void main() {
     expect(find.text('Spent RM15.00 of RM50'), findsOneWidget);
   });
 
+  testWidgets("the week's needs show under the dial, and a tap lists them", (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, categoryKey: 'food'));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 4500, categoryKey: 'family', label: 'Groceries', spendKind: SpendKind.need));
+      w.add(EntryDraft(day: d(2026, 6, 28), isIncome: false, amount: 900, categoryKey: 'family', spendKind: SpendKind.need));
+    });
+    expect(find.text('RM45.00'), findsOneWidget, reason: "last week's need is not this week's");
+    expect(find.text('Also this week, not counted in your RM50'), findsOneWidget);
+    expect(find.byKey(const ValueKey(('drawer-entry', 2))), findsNothing);
+    await tester.tap(find.text('Also this week, not counted in your RM50'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey(('drawer-entry', 2))), findsOneWidget);
+  });
+
+  testWidgets('a week with no needs shows no needs line', (tester) async {
+    await pumpApp(tester, seed: (w) => w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, categoryKey: 'food')));
+    expect(find.textContaining('not counted in your'), findsNothing);
+  });
+
   testWidgets('a goal shows days left, what is left after buying and its status', (tester) async {
     await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31)));
     expect(find.text('Laptop · buy day'), findsOneWidget);

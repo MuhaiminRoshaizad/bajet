@@ -297,7 +297,7 @@ rejected: nobody remembers last week's bank balance.
 ## 021: The week as a dial
 
 **Decided:** Today and the check-in show the week as a raised dial
-(`WeekDial`). Its arc fills with the week's flexible spending against the
+(`WeekDial`). Its arc fills with the week's spending on wants against the
 allowance, each spending day owns a stretch as long as its plan, a marker
 shows what the plan allows by tonight, and the centre says what is left.
 Under it, one line divides what is left by the spending days still to come.

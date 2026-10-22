@@ -196,7 +196,9 @@ by about a tenth first, like a needle with some weight: Insights' category
 ring swells a touch past its size as it sweeps in, and the week dial on Today
 springs past a newly logged amount, glows over the stretch just added for
 500 ms, and dips to 0.97 as if pressed before springing back. Its arc and
-figures fade to rose over `fast` once the week is ahead of its plan. Figures written in words
+figures fade to rose over `fast` once the week is ahead of its plan. Under
+it, a week with needs shows them (`WeekNeeds`): one line, "not counted in
+your" allowance, that opens the needs under it like the ring's slices do. Figures written in words
 never overshoot, since a number that reads wrong for a moment is a wrong
 number.
 
