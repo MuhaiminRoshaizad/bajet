@@ -420,8 +420,8 @@ backup starts the conversation fresh, since the backup does not carry it.
 ## 027: Each check-in sets the next week's target
 
 **Decided:** finishing the Sunday check-in saves it: the balance, whether
-every account matched, the money found untracked, the week's flexible
-spending, what the goal leaves after buying, and the balance the plan
+every account matched, the money found untracked, the week's spending
+on wants (decision 032), what the goal leaves after buying, and the balance the plan
 expects a week on. Next week's check-in is judged against that saved
 target, and the goal is judged apart from it. A gap found at the very
 first check-in is a starting adjustment, from an opening balance slightly
