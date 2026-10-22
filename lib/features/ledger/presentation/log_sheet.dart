@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -416,7 +417,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     padding: const EdgeInsets.all(AppSpacing.xs),
                     mainAxisSpacing: AppSpacing.m,
                     crossAxisSpacing: AppSpacing.m,
-                    childAspectRatio: 1.1,
+                    // Taller as the label's text grows, read at its own size
+                    // since large text is not scaled as much, so a small phone
+                    // with large text still fits the name under the icon.
+                    childAspectRatio: 1.1 / math.max(1.0, MediaQuery.textScalerOf(context).scale(12) / 12),
                     children: [
                       for (final cat in categories)
                         _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
