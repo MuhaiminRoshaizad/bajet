@@ -12,6 +12,7 @@ import '../core/widgets/rise_in.dart';
 import '../core/widgets/soft.dart';
 import '../features/launch/domain/launch_link.dart';
 import '../features/launch/presentation/launch_providers.dart';
+import '../features/ledger/presentation/kinds_explainer.dart';
 import '../features/ledger/presentation/ledger_providers.dart';
 import '../features/ledger/presentation/log_sheet.dart';
 import '../features/settings/presentation/goal_listing.dart';
@@ -79,17 +80,19 @@ class _AppShellState extends ConsumerState<AppShell> {
         navigationShell.goBranch(0);
       },
       child: ListingCheckHost(
-        child: Scaffold(
-          // The page runs on under the bar, which floats over it; each tab's
-          // list ends with room to scroll its last row clear (underBar).
-          extendBody: true,
-          body: navigationShell,
-          bottomNavigationBar: _FloatingBar(
-            index: navigationShell.currentIndex,
-            onTab: (i) {
-              ref.read(screenEntryProvider.notifier).arrive();
-              navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
-            },
+        child: KindsExplainerHost(
+          child: Scaffold(
+            // The page runs on under the bar, which floats over it; each tab's
+            // list ends with room to scroll its last row clear (underBar).
+            extendBody: true,
+            body: navigationShell,
+            bottomNavigationBar: _FloatingBar(
+              index: navigationShell.currentIndex,
+              onTab: (i) {
+                ref.read(screenEntryProvider.notifier).arrive();
+                navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
+              },
+            ),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
+import 'kinds_explainer.dart';
 
 /// How a kind of spend reads wherever it is shown.
 extension SpendKindLook on SpendKind {
@@ -39,8 +40,10 @@ class SpendKindChoice extends ConsumerWidget {
       SpendKind.need => 'A need: bought anyway or asked for, so it stays out of $allowance.',
     };
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('What kind?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.muted)),
-      const SizedBox(height: AppSpacing.s),
+      Row(children: [
+        Expanded(child: Text('What kind?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.muted))),
+        TextButton(onPressed: () => showKindsExplainer(context), child: const Text("What's this?")),
+      ]),
       Wrap(spacing: AppSpacing.s, runSpacing: AppSpacing.s, children: [
         for (final k in SpendKind.values)
           ChoiceChip(

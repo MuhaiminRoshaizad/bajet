@@ -428,7 +428,10 @@ inline line of text where it is.
   a category is picked, with a line saying whether the spend counts toward
   the allowance. It slides away for income, a fixed category, a bill or a
   planned event, which are planned already, and a need's bar says "as a
-  need" (decision 032).
+  need" (decision 032). "What's this?" opens the explainer, a sheet with the
+  two kinds, the one question for unclear cases and a quick check on an
+  everyday example; it also opens by itself once on each phone, past the
+  lock (`KindsExplainerHost`, `DeviceFlag.kindsExplained`).
 - Between Category and Paid from, a row of tiles built like Favourites
   (`_DueChoice`) offers what the entry can be *for*: on Spend, the bills due
   and the planned expense events within two weeks of the entry's day; on
