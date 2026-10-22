@@ -9,7 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../ledger/domain/ledger_models.dart';
-import 'category_entries.dart';
+import '../../ledger/presentation/entry_drawer.dart';
 
 /// Slices take these in order of size, so neighbours never share a colour
 /// the way two categories with the same tint would.
@@ -293,7 +293,7 @@ class _CategoryRingState extends State<CategoryRing> with TickerProviderStateMix
             curve: Curves.easeOutBack,
             alignment: Alignment.topCenter,
             child: open == i
-                ? CategoryEntries(
+                ? EntryDrawer(
                     key: ValueKey(('ring-entries', i)),
                     entries: entriesOf(keys),
                     categories: widget.categories,
