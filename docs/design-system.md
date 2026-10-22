@@ -417,10 +417,17 @@ inline line of text where it is.
   in the calendar, any day of the past year up to today. A day before the
   opening date shows a line under the tiles saying it counts in that week
   and Insights but not in the balance (decision 020).
-- When a planned expense event falls within two weeks of the entry's day, a
-  spend can be marked *For* it. The pill then shows what is left of that
-  event's budget instead of the day's plan, and the spend stays out of the
-  weekly allowance.
+- Between Category and Paid from, a row of tiles built like Favourites
+  (`_DueChoice`) offers what the entry can be *for*: on Spend, the bills due
+  and the planned expense events within two weeks of the entry's day; on
+  Income, the income due and the planned income events. Tapping one on an
+  empty sheet fills in its planned amount and category, to be typed over
+  when the real amount differs. Logged for a bill or income, the entry
+  pays that month at the amount logged and the bill moves on a month; for
+  an income event, it closes the event; for an expense event, the pill
+  shows what is left of the event's budget and the spend stays out of the
+  weekly allowance. The bar then says Paid or Received. An entry being
+  edited offers events only, keeping the bill it paid.
 - Before saving, a pill says whether the amount fits the day's planned spend
   or how far over it goes. Income and fixed categories get no pill.
 - Saving gives a light haptic and a snackbar with Undo.

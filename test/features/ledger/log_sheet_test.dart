@@ -246,8 +246,10 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Food'));
     await tester.pump();
 
-    final birthday = find.widgetWithText(ChoiceChip, 'Birthday · RM100.00 left');
+    final id = world.events.firstWhere((e) => e.name == 'Birthday').id;
+    final birthday = find.byKey(ValueKey('due-event-$id'));
     await tester.ensureVisible(birthday);
+    expect(find.text('RM100.00 left'), findsOneWidget);
     expect(find.textContaining('Car service'), findsNothing);
     await tester.tap(birthday);
     await tester.pump();
@@ -255,17 +257,104 @@ void main() {
 
     await tester.tap(find.text('Log RM45.00'));
     await tester.pumpAndSettle();
-    final id = world.events.firstWhere((e) => e.name == 'Birthday').id;
     expect(world.entries.single.event, EventLink(id, DateTime.utc(2026, 7, 10)));
   });
 
-  testWidgets('income offers no events to spend on', (tester) async {
-    await pumpApp(tester, seed: (w) => w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: DateTime.utc(2026, 7, 10)));
+  testWidgets('income offers income and income events, never spending events', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.addEvent(name: 'Birthday', isIncome: false, amount: 10000, categoryKey: 'gifts', date: DateTime.utc(2026, 7, 10));
+      w.addEvent(name: 'KWSP cash out', isIncome: true, amount: 30000, categoryKey: 'salary', date: DateTime.utc(2026, 7, 12));
+      w.addRecurring(name: 'Gaji', isIncome: true, amount: 238445, categoryKey: 'salary', nextDue: DateTime.utc(2026, 7, 1));
+    });
     await openLogger(tester);
-    expect(find.textContaining('For an event'), findsOneWidget);
+    expect(find.text('For a bill or an event (optional)'), findsOneWidget);
+    expect(find.text('Birthday'), findsOneWidget);
     await tester.tap(find.text('Income'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('For an event'), findsNothing);
+    expect(find.text('For your income or an event (optional)'), findsOneWidget);
+    expect(find.text('Birthday'), findsNothing);
+    final row = find.ancestor(of: find.text('For your income or an event (optional)'), matching: find.byType(Column)).first;
+    expect(find.descendant(of: row, matching: find.text('Gaji')), findsOneWidget);
+    // The row scrolls sideways, building the later tiles as they come in.
+    await tester.scrollUntilVisible(find.text('KWSP cash out'), 200, scrollable: find.descendant(of: row, matching: find.byType(Scrollable)));
+    expect(find.text('KWSP cash out'), findsOneWidget);
+  });
+
+  testWidgets('a bill picked on an empty sheet fills it in, and logging it pays that month; Undo puts it back', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Claude Max 5x', isIncome: false, amount: 45099, categoryKey: 'bills', nextDue: DateTime.utc(2026, 7, 1)));
+    await openLogger(tester);
+    final bill = find.byKey(ValueKey('due-bill-${world.recurring.single.id}'));
+    await tester.ensureVisible(bill);
+    await tester.tap(bill);
+    await tester.pump();
+    expect(tester.widget<TextField>(amountField).controller!.text, 'RM450.99');
+    expect(find.text('Type what was really paid; it counts instead of the planned amount.'), findsOneWidget);
+
+    await tester.tap(find.text('Log RM450.99'));
+    await settleUnderBar(tester);
+    final paid = world.entries.single;
+    expect((paid.amount, paid.categoryKey, paid.label, paid.billId), (45099, 'bills', 'Claude Max 5x', world.recurring.single.id));
+    expect(world.recurring.single.nextDue, DateTime.utc(2026, 8, 1));
+    expect(find.text('Paid Claude Max 5x RM450.99'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.entries, isEmpty);
+    expect(world.recurring.single.nextDue, DateTime.utc(2026, 7, 1));
+  });
+
+  testWidgets('income received for Gaji counts the real amount typed, not the planned one', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Gaji', isIncome: true, amount: 238445, categoryKey: 'salary', nextDue: DateTime.utc(2026, 7, 1)));
+    await openLogger(tester);
+    await tester.tap(find.text('Income'));
+    await tester.pumpAndSettle();
+    await typeKeys(tester, '261230');
+    final gaji = find.byKey(ValueKey('due-bill-${world.recurring.single.id}'));
+    await tester.ensureVisible(gaji);
+    await tester.tap(gaji);
+    await tester.pump();
+    expect(tester.widget<TextField>(amountField).controller!.text, 'RM2,612.30', reason: 'what was typed stays');
+    await tester.tap(find.text('Add RM2,612.30'));
+    await settleUnderBar(tester);
+    expect((world.entries.single.amount, world.recurring.single.nextDue), (261230, DateTime.utc(2026, 8, 1)));
+    expect(find.text('Received Gaji RM2,612.30'), findsOneWidget);
+  });
+
+  testWidgets('income logged for an income event closes it with the real amount', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addEvent(name: 'KWSP cash out', isIncome: true, amount: 30000, categoryKey: 'salary', date: DateTime.utc(2026, 7, 12)));
+    await openLogger(tester);
+    await tester.tap(find.text('Income'));
+    await tester.pumpAndSettle();
+    await typeKeys(tester, '35000');
+    final kwsp = find.byKey(ValueKey('due-event-${world.events.single.id}'));
+    await tester.ensureVisible(kwsp);
+    await tester.tap(kwsp);
+    await tester.pump();
+    await tester.tap(find.text('Add RM350.00'));
+    await settleUnderBar(tester);
+    expect(world.entries.single.amount, 35000);
+    expect(world.events.single.done, isTrue);
+    expect(find.text('Received KWSP cash out RM350.00'), findsOneWidget);
+  });
+
+  testWidgets('an entry being edited offers events only, and keeps the bill it paid', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.addRecurring(name: 'Digi', isIncome: false, amount: 5000, categoryKey: 'bills', nextDue: DateTime.utc(2026, 8, 1));
+      w.add(EntryDraft(day: DateTime.utc(2026, 7, 1), isIncome: false, amount: 5000, categoryKey: 'bills', label: 'Digi', billId: 1));
+    });
+    final entry = world.entries.single;
+    final due = world.recurring.single.nextDue;
+    await tester.ensureVisible(find.text('See all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('See all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Digi').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Save changes'), findsOneWidget);
+    expect(find.text('For a bill or an event (optional)'), findsNothing);
+    await tester.tap(find.text('Save changes'));
+    await settleUnderBar(tester);
+    expect((world.entries.single.billId, world.recurring.single.nextDue), (entry.billId, due), reason: 'saving an edit moves no month');
   });
 
   testWidgets('a spend is paid from the account picked, and the next one starts there', (tester) async {
