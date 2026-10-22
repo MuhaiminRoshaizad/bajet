@@ -300,67 +300,74 @@ class TotalCard extends StatelessWidget {
         color: color,
         finish: look.finish,
         tilt: tilt,
-        child: LayoutBuilder(builder: (context, box) {
-          final k = box.maxWidth / _designWidth;
-          final inset = box.maxWidth * 0.065;
-          return Stack(children: [
-            Positioned(
-              left: inset,
-              right: inset,
-              top: box.maxHeight * 0.09,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                ExcludeSemantics(child: Text('Total balance', style: TextStyle(color: ink.withValues(alpha: 0.75), fontSize: 13 * k))),
-                // Counts up from three quarters on arrival, and to each new
-                // balance after a log, so a change is seen happening.
-                TweenAnimationBuilder<double>(
-                  // Starts afresh once the balance has loaded.
-                  key: ValueKey(balance == null),
-                  tween: Tween(begin: (balance ?? 0) * (countUp ? 0.75 : 1), end: (balance ?? 0).toDouble()),
-                  duration: !countUp || MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 1400),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, _) => FittedBox(
+        // A card keeps its shape, so its words grow with large text only so
+        // far, and the balance and the accounts line share one column so
+        // they can never run into each other.
+        child: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.3,
+          child: LayoutBuilder(builder: (context, box) {
+            final k = box.maxWidth / _designWidth;
+            final inset = box.maxWidth * 0.065;
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: inset, vertical: box.maxHeight * 0.09),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                // Smaller as one piece if a small phone's card is short of
+                // height, rather than overflowing it.
+                Flexible(
+                  child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.topLeft,
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      ExcludeSemantics(child: Text('Total balance', style: TextStyle(color: ink.withValues(alpha: 0.75), fontSize: 13 * k))),
+                      // Counts up from three quarters on arrival, and to each new
+                      // balance after a log, so a change is seen happening.
+                      TweenAnimationBuilder<double>(
+                        // Starts afresh once the balance has loaded.
+                        key: ValueKey(balance == null),
+                        tween: Tween(begin: (balance ?? 0) * (countUp ? 0.75 : 1), end: (balance ?? 0).toDouble()),
+                        duration: !countUp || MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 1400),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) => FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            balance == null ? '—' : Money.format(value.round()),
+                            semanticsLabel: balance == null ? 'Total balance loading' : 'Total balance ${Money.format(balance!)}',
+                            style: TextStyle(color: ink, fontSize: 38 * k, fontWeight: FontWeight.w800, letterSpacing: -0.5, height: 1.15, fontFeatures: const [FontFeature.tabularFigures()]),
+                          ),
+                        ),
+                      ),
+                      if (below != null) ...[SizedBox(height: 6 * k), below!],
+                    ]),
+                  ),
+                ),
+                Row(children: [
+                  Expanded(
                     child: Text(
-                      balance == null ? '—' : Money.format(value.round()),
-                      semanticsLabel: balance == null ? 'Total balance loading' : 'Total balance ${Money.format(balance!)}',
-                      style: TextStyle(color: ink, fontSize: 38 * k, fontWeight: FontWeight.w800, letterSpacing: -0.5, height: 1.15, fontFeatures: const [FontFeature.tabularFigures()]),
+                      '${accounts.length} ${accounts.length == 1 ? 'account' : 'accounts'}${hint == null ? '' : ' · $hint'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: ink.withValues(alpha: 0.8), fontSize: 12 * k),
                     ),
                   ),
-                ),
-                if (below != null) ...[SizedBox(height: 6 * k), below!],
-              ]),
-            ),
-            Positioned(
-              left: inset,
-              right: inset,
-              bottom: box.maxHeight * 0.09,
-              child: Row(children: [
-                Expanded(
-                  child: Text(
-                    '${accounts.length} ${accounts.length == 1 ? 'account' : 'accounts'}${hint == null ? '' : ' · $hint'}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: ink.withValues(alpha: 0.8), fontSize: 12 * k),
-                  ),
-                ),
-                for (final a in accounts.take(_dots))
-                  Padding(
-                    padding: EdgeInsets.only(left: 4 * k),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: Color(a.look.color), shape: BoxShape.circle, border: Border.all(color: Colors.black26)),
-                      child: SizedBox.square(dimension: 9 * k),
+                  for (final a in accounts.take(_dots))
+                    Padding(
+                      padding: EdgeInsets.only(left: 4 * k),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(color: Color(a.look.color), shape: BoxShape.circle, border: Border.all(color: Colors.black26)),
+                        child: SizedBox.square(dimension: 9 * k),
+                      ),
                     ),
-                  ),
-                if (accounts.length > _dots)
-                  Padding(
-                    padding: EdgeInsets.only(left: 4 * k),
-                    child: Text('+${accounts.length - _dots}', style: TextStyle(color: ink.withValues(alpha: 0.8), fontSize: 11 * k, fontWeight: FontWeight.w700)),
-                  ),
+                  if (accounts.length > _dots)
+                    Padding(
+                      padding: EdgeInsets.only(left: 4 * k),
+                      child: Text('+${accounts.length - _dots}', style: TextStyle(color: ink.withValues(alpha: 0.8), fontSize: 11 * k, fontWeight: FontWeight.w700)),
+                    ),
+                ]),
               ]),
-            ),
-          ]);
-        }),
+            );
+          }),
+        ),
       ),
     );
   }

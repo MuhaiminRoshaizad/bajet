@@ -41,12 +41,19 @@ class _PlanPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
-      decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
-      child: Text(
-        rule.plannedSpend > 0 ? '${rule.label} · up to ${Money.format(rule.plannedSpend)}' : '${rule.label} · no spending planned',
-        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.primary),
+    // One line on the card, made smaller rather than wrapped onto the
+    // accounts below it.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs + 1),
+        decoration: BoxDecoration(color: c.primarySoft, borderRadius: BorderRadius.circular(AppRadii.pill)),
+        child: Text(
+          rule.plannedSpend > 0 ? '${rule.label} · up to ${Money.format(rule.plannedSpend)}' : '${rule.label} · no spending planned',
+          maxLines: 1,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.primary),
+        ),
       ),
     );
   }
