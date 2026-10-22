@@ -93,8 +93,9 @@ void main() {
     expect(await favourites.watchAll().first, isEmpty);
   });
 
-  test('flexibleSpent leaves out income, fixed categories and other days', () {
+  test('flexibleSpent leaves out income, fixed categories, bills and other days', () {
     final entries = [
+      domain.Entry(id: 5, day: d(2026, 7, 8), isIncome: false, amount: 1500, categoryKey: 'pets', billId: 2),
       domain.Entry(id: 1, day: d(2026, 7, 6), isIncome: false, amount: 1000, categoryKey: 'food'),
       domain.Entry(id: 2, day: d(2026, 7, 7), isIncome: false, amount: 5000, categoryKey: 'bills'),
       domain.Entry(id: 3, day: d(2026, 7, 7), isIncome: true, amount: 9000, categoryKey: 'refund'),

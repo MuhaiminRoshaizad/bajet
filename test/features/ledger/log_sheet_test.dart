@@ -280,6 +280,21 @@ void main() {
     expect(find.text('KWSP cash out'), findsOneWidget);
   });
 
+  testWidgets('a bill outside the Bills category stays out of the allowance', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Cat food', isIncome: false, amount: 1500, categoryKey: 'pets', nextDue: DateTime.utc(2026, 7, 1)));
+    await openLogger(tester);
+    final bill = find.byKey(ValueKey('due-bill-${world.recurring.single.id}'));
+    await tester.ensureVisible(bill);
+    await tester.tap(bill);
+    await tester.pump();
+    expect(find.textContaining("today's"), findsNothing, reason: 'a bill gets no plan hint');
+
+    await tester.tap(find.text('Log RM15.00'));
+    await settleUnderBar(tester);
+    expect(world.entries.single.categoryKey, 'pets');
+    expect(find.text('Spent RM0.00 of RM50'), findsOneWidget);
+  });
+
   testWidgets('a bill picked on an empty sheet fills it in, and logging it pays that month; Undo puts it back', (tester) async {
     final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Claude Max 5x', isIncome: false, amount: 45099, categoryKey: 'bills', nextDue: DateTime.utc(2026, 7, 1)));
     await openLogger(tester);

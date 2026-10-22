@@ -79,9 +79,9 @@ class Entry {
   int get signedAmount => isIncome ? amount : -amount;
 
   /// Spending that comes out of the weekly allowance: not income, not a
-  /// fixed category, and not spent on a planned event, whose own budget
-  /// already plans for it.
-  bool isFlexible(Set<String> fixedKeys) => !isIncome && !fixedKeys.contains(categoryKey) && event == null;
+  /// fixed category, and not paid toward a bill or spent on a planned
+  /// event, which the plan already counts whatever their category.
+  bool isFlexible(Set<String> fixedKeys) => !isIncome && !fixedKeys.contains(categoryKey) && billId == null && event == null;
 }
 
 /// An entry not yet saved, as the logger builds it.
