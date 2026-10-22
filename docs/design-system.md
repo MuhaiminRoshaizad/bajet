@@ -509,7 +509,8 @@ inline line of text where it is.
   verdict first: the week against the target the last check-in saved for
   today, "In progress" before that day comes, or "Baseline set" with no
   target coming, and the goal judged apart from it,
-  then the week's spending against the allowance, finished days within plan
+  then the week's spending on wants against the allowance, with any needs
+  named apart as not counted, finished days within plan
   (today counts once it is over), the rhythm's rules kept or missed, the
   goal, the next seven days and anything flagged. Lines with nothing to say
   are left out. A fasting day is kept when nothing is spent on Food that
@@ -523,7 +524,7 @@ inline line of text where it is.
   repeated, never splitting a row.
 - This week can also be shared as an image (`CheckinCard`), a 4:5 card in
   the app's current theme, light or dark, shared as 1080 × 1350 pixels: the
-  week's spending against the allowance, a dot a day (filled within plan, a
+  week's spending on wants against the allowance, a chip for any needs, a dot a day (filled within plan, a
   ring for a day with nothing spent, red over plan, dashed for today, with a
   small mark on a fasting day), fasting kept, untracked money, and the goal's
   days to go and how far the week moved it. The preview springs in

@@ -6991,7 +6991,7 @@ class Checkin extends DataClass implements Insertable<Checkin> {
   /// was slightly off. It is not missed logging, so it is kept apart.
   final int startingAdjustment;
 
-  /// Flexible spending that week, Monday to the check-in.
+  /// Spending on wants that week, Monday to the check-in.
   final int allowanceSpent;
 
   /// What the first goal leaves after buying; null without a goal.

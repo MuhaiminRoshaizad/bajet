@@ -38,7 +38,7 @@ class Insights {
     required this.moneyIn,
     required this.moneyOut,
     required this.outParts,
-    required this.flexibleByCategory,
+    required this.wantsByCategory,
     required this.outByCategory,
     required this.outEntries,
     required this.lastDays,
@@ -70,8 +70,8 @@ class Insights {
   int get flexibleOut => outOf(OutPart.wants) + outOf(OutPart.needs);
   int get untrackedOut => outOf(OutPart.untracked);
 
-  /// Flexible spending per category key, largest first.
-  final List<(String, int)> flexibleByCategory;
+  /// Spending on wants per category key, largest first.
+  final List<(String, int)> wantsByCategory;
 
   /// All money out per category key, fixed and untracked included, largest
   /// first.
@@ -211,7 +211,7 @@ Insights insights({
     outParts: {
       for (final part in OutPart.values) part: [for (final e in newestFirst) if (partOf(e) == part) e],
     },
-    flexibleByCategory: byCategory(flexible),
+    wantsByCategory: byCategory(wants),
     outByCategory: byCategory(out),
     outEntries: newestFirst,
     lastDays: [

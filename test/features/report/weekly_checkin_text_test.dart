@@ -61,6 +61,16 @@ void main() {
     expect(text, endsWith('FLAGS\n- RM12.50 untracked, found at this check-in\n- Wed and Fri went over their plan'));
   });
 
+  test("a need leaves the week's spending and is named apart", () {
+    final need = Entry(id: 900, day: d(10, 21), isIncome: false, amount: 4500, categoryKey: 'food', label: 'Groceries', spendKind: SpendKind.need);
+    final w = checkin(entries: [...week, need], checkins: [lastWeek]);
+    final without = checkin(entries: week, checkins: [lastWeek]);
+    expect((w.spent, w.needs), (without.spent, 4500));
+    expect(w.categories.map((c) => (c.key, c.amount)), without.categories.map((c) => (c.key, c.amount)));
+    expect(weeklyCheckinText(w).split('\n'), contains('Needs RM45.00, not counted in the allowance'));
+    expect(weeklyCheckinText(without), isNot(contains('Needs')));
+  });
+
   test('the first check-in says how many days it covers and names the starting adjustment', () {
     final w = checkin(
       today: d(10, 18),

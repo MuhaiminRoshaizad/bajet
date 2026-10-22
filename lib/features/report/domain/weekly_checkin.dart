@@ -21,7 +21,7 @@ enum CheckinDayState {
   ahead,
 }
 
-/// One day of the week: its flexible spending against its plan, and the
+/// One day of the week: its spending on wants against its plan, and the
 /// rhythm rule it follows.
 class CheckinDay {
   const CheckinDay(this.date, this.spent, this.rule, this.state);
@@ -53,7 +53,7 @@ class RuleCheck {
   final bool kept;
 }
 
-/// Flexible spending in one category over the week.
+/// Spending on wants in one category over the week.
 class CategorySpend {
   const CategorySpend(this.key, this.label, this.amount);
 
@@ -81,6 +81,7 @@ class WeeklyCheckin {
     required this.untracked,
     required this.startingAdjustment,
     required this.spent,
+    required this.needs,
     required this.plan,
     required this.categories,
     required this.days,
@@ -115,14 +116,17 @@ class WeeklyCheckin {
   final int untracked;
   final int startingAdjustment;
 
-  /// Flexible spending from [from] to today, today included.
+  /// Spending on wants from [from] to today, today included.
   final int spent;
+
+  /// Spending on needs over the same days, which the allowance leaves out.
+  final int needs;
 
   /// The weekly allowance, or for a week that started late what the rhythm
   /// plans from [from] to Sunday.
   final int plan;
 
-  /// Flexible spending by category, largest first.
+  /// Spending on wants by category, largest first.
   final List<CategorySpend> categories;
 
   /// Monday to Sunday.
@@ -265,11 +269,12 @@ WeeklyCheckin weeklyCheckin({
     matched: saved?.matched,
     untracked: saved?.untracked ?? (first ? 0 : found),
     startingAdjustment: saved?.startingAdjustment ?? (first ? found : 0),
-    spent: week.flexibleOut,
+    spent: week.outOf(OutPart.wants),
+    needs: week.outOf(OutPart.needs),
     // A whole week is held to the allowance; a first, shorter one to what
     // the rhythm plans for the days it covers.
     plan: week.from == monday ? weeklyCap : days.where((d) => d.state != CheckinDayState.noData).fold(0, (sum, d) => sum + d.planned),
-    categories: [for (final (key, amount) in week.flexibleByCategory) CategorySpend(key, labels[key] ?? key, amount)],
+    categories: [for (final (key, amount) in week.wantsByCategory) CategorySpend(key, labels[key] ?? key, amount)],
     days: days,
     rules: ruleChecks,
     goal: goal,
@@ -328,6 +333,7 @@ String weeklyCheckinText(WeeklyCheckin w) {
     'Spent ${Money.format(w.spent)} of ${Money.format(w.plan)}${w.from == w.monday ? '' : ' planned for these days'} '
         '(${Money.format(under.abs())} ${under >= 0 ? 'under' : 'over'})',
     if (w.categories.isNotEmpty) '  ${w.categories.map((c) => '${c.label} ${Money.format(c.amount)}').join(' · ')}',
+    if (w.needs > 0) 'Needs ${Money.format(w.needs)}, not counted in the allowance',
     if (w.finished.isNotEmpty) 'Days: ${w.withinPlan} of ${w.finished.length} finished days within plan · ${w.noSpendDays} no-spend ${w.noSpendDays == 1 ? 'day' : 'days'}',
     if (w.days.any((d) => d.state == CheckinDayState.today)) '  Today counts once it is over',
     if (w.rules.isNotEmpty) 'Rules: ${w.rules.map((r) => '${r.name} ${r.kept ? 'kept' : 'missed'}').join(' · ')}',

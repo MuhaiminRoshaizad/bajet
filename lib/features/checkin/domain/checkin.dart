@@ -28,7 +28,7 @@ class Checkin {
   /// was slightly off. Not missed logging, so it is kept apart.
   final int startingAdjustment;
 
-  /// Flexible spending that week, Monday to [checkedOn].
+  /// Spending on wants that week, Monday to [checkedOn].
   final int allowanceSpent;
 
   /// What the first goal leaves after buying; null without a goal.

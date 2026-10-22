@@ -294,7 +294,7 @@ class Checkins extends Table {
   /// was slightly off. It is not missed logging, so it is kept apart.
   IntColumn get startingAdjustment => integer().withDefault(const Constant(0))();
 
-  /// Flexible spending that week, Monday to the check-in.
+  /// Spending on wants that week, Monday to the check-in.
   IntColumn get allowanceSpent => integer()();
 
   /// What the first goal leaves after buying; null without a goal.

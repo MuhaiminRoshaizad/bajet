@@ -122,7 +122,7 @@ pw.Document checkinDocument({
   final week = block([
     pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
       figure(w.from == w.monday ? 'Spent of allowance' : 'Spent of plan', '${Money.format(w.spent)} / ${Money.format(w.plan)}',
-          '${Money.format(under.abs())} ${under >= 0 ? 'under' : 'over'}'),
+          '${Money.format(under.abs())} ${under >= 0 ? 'under' : 'over'}${w.needs > 0 ? ' · needs ${Money.format(w.needs)} not counted' : ''}'),
       if (goal != null) ...[
         figure('Left after buying', Money.format(goal.leftAfterBuying), w.change == null ? 'first figure' : '${signedMoney(w.change!)} since last check-in'),
         figure('Days to buy day', '${w.daysToGo}', '${goal.goal.name} · ${Dates.dayFull(goal.goal.targetDate)}'),

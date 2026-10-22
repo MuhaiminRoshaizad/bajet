@@ -66,6 +66,7 @@ class CheckinCard extends StatelessWidget {
             Wrap(spacing: AppSpacing.s, runSpacing: AppSpacing.s, children: [
               if (fasting.isNotEmpty) _Chip('Fasting ${fasting.where((r) => r.kept).length} of ${fasting.length} kept'),
               _Chip('Untracked ${Money.format(w.untracked)}'),
+              if (w.needs > 0) _Chip('Needs ${Money.format(w.needs)}, not counted'),
               if (w.finished.isNotEmpty) _Chip('${w.withinPlan} of ${w.finished.length} days within plan'),
             ]),
             const Spacer(),

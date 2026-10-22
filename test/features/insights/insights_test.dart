@@ -40,7 +40,7 @@ void main() {
     expect((i.from, i.to), (d(7, 1), d(7, 15)));
     expect((i.moneyIn, i.moneyOut, i.kept), (300000, 58150, 241850));
     expect((i.fixedOut, i.flexibleOut, i.untrackedOut), (50000, 6150, 2000));
-    expect(i.flexibleByCategory, [('food', 3150), ('transport', 3000)]);
+    expect(i.wantsByCategory, [('food', 3150), ('transport', 3000)]);
     expect(i.outByCategory, [('bills', 50000), ('food', 3150), ('transport', 3000), (untrackedCategoryKey, 2000)]);
   });
 
