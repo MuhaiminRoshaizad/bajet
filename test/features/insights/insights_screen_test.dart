@@ -56,7 +56,7 @@ void main() {
     });
     await openInsights(tester);
     expect(find.text('Spending by kind'), findsOneWidget);
-    expect(find.text('Needs · bought anyway or asked for'), findsOneWidget);
+    expect(find.textContaining('Needs · bought anyway or asked for'), findsOneWidget);
     expect(find.byKey(const ValueKey(('drawer-entry', 2))), findsNothing);
     await tester.ensureVisible(find.byKey(const ValueKey('part-needs')));
     await tester.pumpAndSettle();

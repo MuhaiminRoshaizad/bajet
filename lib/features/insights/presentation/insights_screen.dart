@@ -319,23 +319,49 @@ class _SplitState extends State<_Split> {
               onTap: i.outParts[part]!.isEmpty ? null : () => setState(() => _open = _open == part ? null : part),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 40),
-                child: Row(
-                  children: [
-                    Container(width: 10, height: 10, decoration: BoxDecoration(color: colour, shape: BoxShape.circle)),
-                    const SizedBox(width: AppSpacing.s),
-                    Expanded(child: Text('$name · $what', style: const TextStyle(fontSize: 13))),
-                    Text(Money.format(i.outOf(part)), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFeatures: [FontFeature.tabularFigures()])),
-                    AnimatedOpacity(
-                      opacity: i.outParts[part]!.isEmpty ? 0 : 1,
-                      duration: AppMotion.fast,
-                      child: AnimatedRotation(
-                        turns: _open == part ? 0.5 : 0,
-                        duration: still ? Duration.zero : AppMotion.enter,
-                        curve: Curves.easeOutBack,
-                        child: Icon(Icons.expand_more_rounded, size: 20, color: c.muted),
+                // The dot, the figure and the chevron sit on the label's
+                // first line, so a label that wraps under large text still
+                // reads as one row.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs + 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Expanded(
+                        child: Text.rich(TextSpan(children: [
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: AppSpacing.s),
+                              child: Container(width: 10, height: 10, decoration: BoxDecoration(color: colour, shape: BoxShape.circle)),
+                            ),
+                          ),
+                          TextSpan(text: '$name · $what'),
+                        ]), style: const TextStyle(fontSize: 13)),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: AppSpacing.s),
+                      Text.rich(
+                        TextSpan(children: [
+                          TextSpan(text: Money.format(i.outOf(part))),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: AnimatedOpacity(
+                              opacity: i.outParts[part]!.isEmpty ? 0 : 1,
+                              duration: AppMotion.fast,
+                              child: AnimatedRotation(
+                                turns: _open == part ? 0.5 : 0,
+                                duration: still ? Duration.zero : AppMotion.enter,
+                                curve: Curves.easeOutBack,
+                                child: Icon(Icons.expand_more_rounded, size: 20, color: c.muted),
+                              ),
+                            ),
+                          ),
+                        ]),
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, fontFeatures: [FontFeature.tabularFigures()]),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
