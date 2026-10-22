@@ -75,4 +75,26 @@ void main() {
     await tester.pump(const Duration(seconds: 8));
     expect(find.text('Deleted Lunch'), findsOneWidget);
   });
+
+  testWidgets('a page opened halfway shows the same time left, without springing up again', (tester) async {
+    final messenger = await pumpPage(tester);
+    showBar(messenger, 'Saved MacBook', undo: () {});
+    await tester.pump();
+    for (var i = 0; i < 25; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(SnackBar), findsOneWidget);
+    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: SizedBox.expand())));
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final lines = find.byType(FractionallySizedBox, skipOffstage: false);
+    expect(lines.evaluate().length, 2, reason: 'each page draws its own copy');
+    for (var i = 0; i < 2; i++) {
+      expect(tester.widget<FractionallySizedBox>(lines.at(i)).widthFactor, closeTo(0.42, 0.05));
+      // The nearest Transform above the line is the bar's own rise.
+      final rise = tester.widget<Transform>(find.ancestor(of: lines.at(i), matching: find.byType(Transform, skipOffstage: false)).first);
+      expect(rise.transform.getTranslation().y, closeTo(0, 0.5), reason: 'the new copy is already up');
+    }
+  });
 }
