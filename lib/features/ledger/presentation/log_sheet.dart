@@ -12,6 +12,7 @@ import '../../../core/dates/dates.dart';
 import '../../../core/money/money.dart';
 import '../../../core/navigation/routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
@@ -24,6 +25,7 @@ import 'category_visuals.dart';
 import 'detail_tile.dart';
 import 'ledger_providers.dart';
 import 'receipt_widgets.dart';
+import 'spend_kind_choice.dart';
 
 /// What to fill the logger with when it opens from somewhere that already
 /// knows part of the entry. Nothing is saved until Log is pressed.
@@ -83,6 +85,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   /// The bill or income this entry pays or receives, if any.
   int? _billId;
 
+  /// A want or a need; it starts as the category's kind whenever a category
+  /// is picked, and the user changes it for this spend alone.
+  SpendKind _spendKind = SpendKind.want;
+
   /// Where the money came from or went to; null until known means the
   /// first account.
   int? _accountId;
@@ -109,6 +115,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _event = e.event;
       _accountId = e.accountId;
       _billId = e.billId;
+      _spendKind = e.spendKind;
     } else {
       // Most money goes where the last of it went.
       _accountId = ref.read(recentEntriesProvider).value?.firstOrNull?.accountId;
@@ -121,8 +128,12 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _label = p.label;
       _accountId = p.accountId ?? _accountId;
       _billId = p.billId;
+      if (p.categoryKey case final key?) _spendKind = _startingKind(key);
     }
   }
+
+  SpendKind _startingKind(String categoryKey) =>
+      ref.read(categoriesProvider).value?.where((c) => c.key == categoryKey).firstOrNull?.spendKind ?? SpendKind.want;
 
   @override
   void dispose() {
@@ -135,6 +146,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         _isIncome = false;
         _favouriteId = f.id;
         _categoryKey = f.categoryKey;
+        _spendKind = _startingKind(f.categoryKey);
         _label = f.label;
         _setAmount(f.amount);
       });
@@ -150,6 +162,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         _event = null;
         _favouriteId = null;
         _categoryKey = item.categoryKey;
+        _spendKind = _startingKind(item.categoryKey);
         _label = item.name;
         _accountId = item.accountId ?? _accountId;
         if (_amount == 0) _setAmount(item.amount);
@@ -165,8 +178,17 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         if (e.isIncome) _label ??= e.name;
       });
 
+  /// Only day-to-day spending is a want or a need: income, fixed
+  /// categories, bills and planned events are planned already.
+  bool get _asksKind =>
+      !_isIncome &&
+      _billId == null &&
+      _event == null &&
+      !(ref.read(categoriesProvider).value?.where((c) => c.key == _categoryKey).firstOrNull?.isFixed ?? false);
+
   void _pickCategory(String key) => setState(() {
         _categoryKey = key;
+        _spendKind = _startingKind(key);
         _favouriteId = null;
         _label = null;
       });
@@ -184,6 +206,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       event: _event,
       accountId: _accountId,
       billId: _billId,
+      spendKind: _spendKind,
     );
     final repo = ref.read(ledgerRepositoryProvider);
     final before = widget.editing;
@@ -194,7 +217,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       // What it was for says what happened to it: a bill paid, income received.
       final settled = _billId != null || (_isIncome && _event != null);
       final verb = settled ? (_isIncome ? 'Received' : 'Paid') : (_isIncome ? 'Added' : 'Logged');
-      message = '$verb ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(draft.amount)}';
+      final asNeed = _asksKind && _spendKind == SpendKind.need ? ' as a need' : '';
+      message = '$verb ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(draft.amount)}$asNeed';
       undo = () => repo.delete(id);
     } else {
       await repo.update(Entry(
@@ -209,6 +233,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         event: draft.event,
         accountId: draft.accountId,
         billId: before.billId,
+        spendKind: draft.spendKind,
       ));
       message = 'Saved changes';
       undo = () => repo.update(before);
@@ -396,6 +421,17 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       for (final cat in categories)
                         _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
                     ],
+                  ),
+                  AnimatedSize(
+                    duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.enter,
+                    curve: Curves.easeOutBack,
+                    alignment: Alignment.topCenter,
+                    child: _asksKind
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.m),
+                            child: SpendKindChoice(kind: _spendKind, onSelect: (k) => setState(() => _spendKind = k)),
+                          )
+                        : const SizedBox(width: double.infinity),
                   ),
                   // An entry being edited keeps the bill it paid; picking
                   // another would move a bill's month by surprise.

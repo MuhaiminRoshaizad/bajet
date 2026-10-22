@@ -40,6 +40,47 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Log RM4.50'), findsOneWidget);
   });
 
+  testWidgets("a spend starts as its category's kind, and a tap makes this one a need", (tester) async {
+    final world = await pumpApp(tester);
+    await openLogger(tester);
+    await typeKeys(tester, '4500');
+    ChoiceChip chip(SpendKind k) => tester.widget<ChoiceChip>(find.byKey(ValueKey('kind-${k.name}')));
+    await tester.tap(find.bySemanticsLabel('Family'));
+    await tester.pumpAndSettle();
+    expect(chip(SpendKind.need).selected, isTrue, reason: 'Family starts as a need');
+    expect(find.text('A need: bought anyway or asked for, so it stays out of your RM50.'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Personal'));
+    await tester.pumpAndSettle();
+    expect(chip(SpendKind.want).selected, isTrue);
+    await tester.ensureVisible(find.byKey(const ValueKey('kind-need')));
+    await tester.tap(find.byKey(const ValueKey('kind-need')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Log RM45.00'));
+    await settleUnderBar(tester);
+    expect(world.entries.single.spendKind, SpendKind.need);
+    expect(find.text('Logged Personal RM45.00 as a need'), findsOneWidget);
+  });
+
+  testWidgets('income, a fixed category and a bill ask no kind', (tester) async {
+    final world = await pumpApp(tester, seed: (w) => w.addRecurring(name: 'Phone', isIncome: false, amount: 5000, categoryKey: 'personal', nextDue: DateTime.utc(2026, 7, 1)));
+    await openLogger(tester);
+    expect(find.text('What kind?'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Bills'));
+    await tester.pumpAndSettle();
+    expect(find.text('What kind?'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Personal'));
+    await tester.pumpAndSettle();
+    final bill = find.byKey(ValueKey('due-bill-${world.recurring.single.id}'));
+    await tester.ensureVisible(bill);
+    await tester.tap(bill);
+    await tester.pumpAndSettle();
+    expect(find.text('What kind?'), findsNothing);
+    await tester.tap(find.text('Income'));
+    await tester.pumpAndSettle();
+    expect(find.text('What kind?'), findsNothing);
+  });
+
   testWidgets('logging saves the entry, closes the sheet and offers undo', (tester) async {
     final world = await pumpApp(tester);
     await openLogger(tester);

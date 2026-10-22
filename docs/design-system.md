@@ -417,6 +417,12 @@ inline line of text where it is.
   in the calendar, any day of the past year up to today. A day before the
   opening date shows a line under the tiles saying it counts in that week
   and Insights but not in the balance (decision 020).
+- Under Category, "What kind?" offers Want or Need as chips like Paid from,
+  starting on the category's kind (Family a need, the rest wants) each time
+  a category is picked, with a line saying whether the spend counts toward
+  the allowance. It slides away for income, a fixed category, a bill or a
+  planned event, which are planned already, and a need's bar says "as a
+  need" (decision 032).
 - Between Category and Paid from, a row of tiles built like Favourites
   (`_DueChoice`) offers what the entry can be *for*: on Spend, the bills due
   and the planned expense events within two weeks of the entry's day; on
@@ -429,7 +435,7 @@ inline line of text where it is.
   weekly allowance. The bar then says Paid or Received. An entry being
   edited offers events only, keeping the bill it paid.
 - Before saving, a pill says whether the amount fits the day's planned spend
-  or how far over it goes. Income and fixed categories get no pill.
+  or how far over it goes. Income, fixed categories and bills get no pill.
 - Saving gives a light haptic and a snackbar with Undo.
 - Anything that can be added can be changed and removed: tapping a goal,
   event, bill, income, favourite or entry opens its form, with Delete at the
