@@ -199,27 +199,35 @@ class _CategoryRingState extends State<CategoryRing> with TickerProviderStateMix
                     ),
                   ),
                   // Money never overshoots: the middle changes over, no bounce.
+                  // It stays inside the hole, smaller under large text rather
+                  // than running onto the ring.
                   child: Center(
-                    child: AnimatedSwitcher(
-                      duration: _still ? Duration.zero : AppMotion.fast,
-                      child: Column(
-                        key: ValueKey(open),
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(open == null ? 'Money out' : slices[open].$1, style: TextStyle(color: c.muted, fontSize: 12)),
-                          Text(
-                            Money.format(open == null ? total : slices[open].$2),
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()]),
+                    child: SizedBox(
+                      width: _hole,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: AnimatedSwitcher(
+                          duration: _still ? Duration.zero : AppMotion.fast,
+                          child: Column(
+                            key: ValueKey(open),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(open == null ? 'Money out' : slices[open].$1, style: TextStyle(color: c.muted, fontSize: 12)),
+                              Text(
+                                Money.format(open == null ? total : slices[open].$2),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()]),
+                              ),
+                              if (open != null)
+                                Text(
+                                  () {
+                                    final n = entriesOf(slices[open].$5).length;
+                                    return '${share(slices[open].$2)} · $n ${n == 1 ? 'entry' : 'entries'}';
+                                  }(),
+                                  style: TextStyle(color: c.muted, fontSize: 12, fontFeatures: const [FontFeature.tabularFigures()]),
+                                ),
+                            ],
                           ),
-                          if (open != null)
-                            Text(
-                              () {
-                                final n = entriesOf(slices[open].$5).length;
-                                return '${share(slices[open].$2)} · $n ${n == 1 ? 'entry' : 'entries'}';
-                              }(),
-                              style: TextStyle(color: c.muted, fontSize: 12, fontFeatures: const [FontFeature.tabularFigures()]),
-                            ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -269,9 +277,11 @@ class _CategoryRingState extends State<CategoryRing> with TickerProviderStateMix
                         ),
                       ),
                       Text(Money.format(amount), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
+                      // As wide as "100%" at this size of text, so shares never
+                      // wrap and every row's column lines up.
                       SizedBox(
-                        width: 44,
-                        child: Text(share(amount), textAlign: TextAlign.end, style: TextStyle(color: c.muted, fontSize: 13, fontFeatures: const [FontFeature.tabularFigures()])),
+                        width: 44 * math.max(1.0, MediaQuery.textScalerOf(context).scale(13) / 13),
+                        child: Text(share(amount), maxLines: 1, softWrap: false, textAlign: TextAlign.end, style: TextStyle(color: c.muted, fontSize: 13, fontFeatures: const [FontFeature.tabularFigures()])),
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       AnimatedRotation(
@@ -309,6 +319,10 @@ class _CategoryRingState extends State<CategoryRing> with TickerProviderStateMix
 }
 
 const _ring = 176.0;
+
+/// The room inside the ring for its middle: the hole, less a margin for the
+/// open slice, which thickens.
+const _hole = _ring - 2 * 22.0 - 24;
 
 /// Slices clockwise from the top, a hair apart, over a sunken track; only the
 /// first [sweep] of the circle is drawn yet. A slice popped out by its third
