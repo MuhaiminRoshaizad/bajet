@@ -115,6 +115,27 @@ void main() {
     expect(find.text('Fuel'), findsNothing);
   });
 
+  testWidgets('switching from one slice to another leaves only the new one lit', (tester) async {
+    await pumpRing(tester, [('food', 3000), ('transport', 2000), ('personal', 1000)]);
+    await tester.pumpAndSettle();
+    List<double> alphas() {
+      final painter = tester.widgetList<CustomPaint>(find.descendant(of: find.byType(CategoryRing), matching: find.byType(CustomPaint))).map((p) => p.painter).whereType<CustomPainter>().first;
+      return [for (final s in (painter as dynamic).slices as List) (s.$2 as Color).a];
+    }
+    await tester.tap(find.byKey(const ValueKey('ring-row-Personal')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('ring-row-Food')));
+    await tester.pumpAndSettle();
+    final a = alphas();
+    expect(a[0], closeTo(1, 0.01));
+    expect(a[1], closeTo(0.35, 0.01));
+    expect(a[2], closeTo(0.35, 0.01), reason: 'the slice open before dims with the others');
+
+    await tester.tap(find.byKey(const ValueKey('ring-row-Food')));
+    await tester.pumpAndSettle();
+    expect(alphas(), everyElement(closeTo(1, 0.01)));
+  });
+
   testWidgets('the open slice springs out past its place and settles', (tester) async {
     await pumpRing(tester, [('food', 3000), ('transport', 1000)]);
     await tester.pumpAndSettle();

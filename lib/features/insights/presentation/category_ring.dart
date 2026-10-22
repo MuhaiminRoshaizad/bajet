@@ -186,7 +186,9 @@ class _CategoryRingState extends State<CategoryRing> with TickerProviderStateMix
                           for (final (i, s) in slices.indexed)
                             (
                               fractions[i],
-                              s.$3.withValues(alpha: i == _open || i == _dropped ? 1 : 1 - 0.65 * _focus.value),
+                              // Only the open slice stays lit; the one just closed
+                              // dims with the rest as it drops back.
+                              s.$3.withValues(alpha: i == _open ? 1 : 1 - 0.65 * _focus.value),
                               i == _open ? _pop.value : (i == _dropped ? _drop.value : 0.0),
                             ),
                         ],
