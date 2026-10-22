@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 13);
+    expect(db.schemaVersion, 14);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -274,5 +274,16 @@ void main() {
     expect((kinds['family'], kinds['food']), (SpendKind.need, SpendKind.want));
     final entries = await (old.select(old.entries)..orderBy([(e) => OrderingTerm(expression: e.id)])).get();
     expect(entries.map((e) => e.spendKind), [SpendKind.need, SpendKind.want, SpendKind.want]);
+  });
+
+  test('a version 13 install sets nothing aside for needs', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v13.sql').readAsStringSync());
+      raw.execute("INSERT INTO app_settings (opening_date, weekly_cap, buffer) VALUES ('2026-10-13', 4000, 100000)");
+      raw.execute('PRAGMA user_version = 13');
+    }));
+    addTearDown(old.close);
+    final settings = await old.select(old.appSettings).getSingle();
+    expect((settings.weeklyCap, settings.needsReserve), (4000, 0));
   });
 }

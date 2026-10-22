@@ -28,6 +28,7 @@ One row, created during first-run setup.
 | `opening_date`      | day  | Balances ignore entries before this date; the week and Insights still count them (decision 020) |
 | `weekly_cap`        | int  | Spending on wants allowed per week        |
 | `buffer`            | int  | Minimum left after buying a goal          |
+| `needs_reserve`     | int  | Set aside each month for needs, so Runway plans for them; 0 for none |
 | `total_card_color`  | int? | The total card's colour as ARGB; null follows the app's theme |
 | `total_card_finish` | enum | `matte` (default), `gloss`, `mirror`, `pearl`, `frosted` or `guilloche` |
 | `user_name`         | text? | What the coach calls the user; null means it uses no name |
@@ -295,7 +296,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 13. Any change to a table bumps it and adds a step to
+`schemaVersion` is 14. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -314,3 +315,4 @@ data on the phone is left as it was.
 | 11      | `app_settings.user_name`, empty; added before the older steps run, since versions 6 and 7 rebuild that table in its latest shape |
 | 12      | `goals.listing_state` and `listing_checked_on`, empty, for whether a goal's listing was still up when last looked at |
 | 13      | `categories.spend_kind` and `entries.spend_kind`: Family becomes `need`, every other category `want`, and each spend so far takes its category's kind. The entries column is added before the older steps run, since version 6 rebuilds that table |
+| 14      | `app_settings.needs_reserve`, 0, the monthly amount Runway sets aside for needs; added before the older steps run, as version 11's was |

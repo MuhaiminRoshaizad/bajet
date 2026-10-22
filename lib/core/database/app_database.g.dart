@@ -48,6 +48,18 @@ class $AppSettingsTable extends AppSettings
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _needsReserveMeta = const VerificationMeta(
+    'needsReserve',
+  );
+  @override
+  late final GeneratedColumn<int> needsReserve = GeneratedColumn<int>(
+    'needs_reserve',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _totalCardColorMeta = const VerificationMeta(
     'totalCardColor',
   );
@@ -86,6 +98,7 @@ class $AppSettingsTable extends AppSettings
     openingDate,
     weeklyCap,
     buffer,
+    needsReserve,
     totalCardColor,
     totalCardFinish,
     userName,
@@ -120,6 +133,15 @@ class $AppSettingsTable extends AppSettings
       );
     } else if (isInserting) {
       context.missing(_bufferMeta);
+    }
+    if (data.containsKey('needs_reserve')) {
+      context.handle(
+        _needsReserveMeta,
+        needsReserve.isAcceptableOrUnknown(
+          data['needs_reserve']!,
+          _needsReserveMeta,
+        ),
+      );
     }
     if (data.containsKey('total_card_color')) {
       context.handle(
@@ -163,6 +185,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.int,
         data['${effectivePrefix}buffer'],
       )!,
+      needsReserve: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}needs_reserve'],
+      )!,
       totalCardColor: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}total_card_color'],
@@ -201,6 +227,10 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   /// The minimum that must remain after buying a goal.
   final int buffer;
 
+  /// Set aside each month for needs, which the allowance leaves out, so
+  /// Runway plans for them; 0 plans for none.
+  final int needsReserve;
+
   /// The total card's look; no colour means it follows the app's theme.
   final int? totalCardColor;
   final CardFinish totalCardFinish;
@@ -212,6 +242,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.openingDate,
     required this.weeklyCap,
     required this.buffer,
+    required this.needsReserve,
     this.totalCardColor,
     required this.totalCardFinish,
     this.userName,
@@ -227,6 +258,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     }
     map['weekly_cap'] = Variable<int>(weeklyCap);
     map['buffer'] = Variable<int>(buffer);
+    map['needs_reserve'] = Variable<int>(needsReserve);
     if (!nullToAbsent || totalCardColor != null) {
       map['total_card_color'] = Variable<int>(totalCardColor);
     }
@@ -247,6 +279,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       openingDate: Value(openingDate),
       weeklyCap: Value(weeklyCap),
       buffer: Value(buffer),
+      needsReserve: Value(needsReserve),
       totalCardColor: totalCardColor == null && nullToAbsent
           ? const Value.absent()
           : Value(totalCardColor),
@@ -267,6 +300,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       openingDate: serializer.fromJson<DateTime>(json['openingDate']),
       weeklyCap: serializer.fromJson<int>(json['weeklyCap']),
       buffer: serializer.fromJson<int>(json['buffer']),
+      needsReserve: serializer.fromJson<int>(json['needsReserve']),
       totalCardColor: serializer.fromJson<int?>(json['totalCardColor']),
       totalCardFinish: $AppSettingsTable.$convertertotalCardFinish.fromJson(
         serializer.fromJson<String>(json['totalCardFinish']),
@@ -282,6 +316,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'openingDate': serializer.toJson<DateTime>(openingDate),
       'weeklyCap': serializer.toJson<int>(weeklyCap),
       'buffer': serializer.toJson<int>(buffer),
+      'needsReserve': serializer.toJson<int>(needsReserve),
       'totalCardColor': serializer.toJson<int?>(totalCardColor),
       'totalCardFinish': serializer.toJson<String>(
         $AppSettingsTable.$convertertotalCardFinish.toJson(totalCardFinish),
@@ -295,6 +330,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     DateTime? openingDate,
     int? weeklyCap,
     int? buffer,
+    int? needsReserve,
     Value<int?> totalCardColor = const Value.absent(),
     CardFinish? totalCardFinish,
     Value<String?> userName = const Value.absent(),
@@ -303,6 +339,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     openingDate: openingDate ?? this.openingDate,
     weeklyCap: weeklyCap ?? this.weeklyCap,
     buffer: buffer ?? this.buffer,
+    needsReserve: needsReserve ?? this.needsReserve,
     totalCardColor: totalCardColor.present
         ? totalCardColor.value
         : this.totalCardColor,
@@ -317,6 +354,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           : this.openingDate,
       weeklyCap: data.weeklyCap.present ? data.weeklyCap.value : this.weeklyCap,
       buffer: data.buffer.present ? data.buffer.value : this.buffer,
+      needsReserve: data.needsReserve.present
+          ? data.needsReserve.value
+          : this.needsReserve,
       totalCardColor: data.totalCardColor.present
           ? data.totalCardColor.value
           : this.totalCardColor,
@@ -334,6 +374,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('openingDate: $openingDate, ')
           ..write('weeklyCap: $weeklyCap, ')
           ..write('buffer: $buffer, ')
+          ..write('needsReserve: $needsReserve, ')
           ..write('totalCardColor: $totalCardColor, ')
           ..write('totalCardFinish: $totalCardFinish, ')
           ..write('userName: $userName')
@@ -347,6 +388,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     openingDate,
     weeklyCap,
     buffer,
+    needsReserve,
     totalCardColor,
     totalCardFinish,
     userName,
@@ -359,6 +401,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.openingDate == this.openingDate &&
           other.weeklyCap == this.weeklyCap &&
           other.buffer == this.buffer &&
+          other.needsReserve == this.needsReserve &&
           other.totalCardColor == this.totalCardColor &&
           other.totalCardFinish == this.totalCardFinish &&
           other.userName == this.userName);
@@ -369,6 +412,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<DateTime> openingDate;
   final Value<int> weeklyCap;
   final Value<int> buffer;
+  final Value<int> needsReserve;
   final Value<int?> totalCardColor;
   final Value<CardFinish> totalCardFinish;
   final Value<String?> userName;
@@ -377,6 +421,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.openingDate = const Value.absent(),
     this.weeklyCap = const Value.absent(),
     this.buffer = const Value.absent(),
+    this.needsReserve = const Value.absent(),
     this.totalCardColor = const Value.absent(),
     this.totalCardFinish = const Value.absent(),
     this.userName = const Value.absent(),
@@ -386,6 +431,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     required DateTime openingDate,
     required int weeklyCap,
     required int buffer,
+    this.needsReserve = const Value.absent(),
     this.totalCardColor = const Value.absent(),
     this.totalCardFinish = const Value.absent(),
     this.userName = const Value.absent(),
@@ -397,6 +443,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<String>? openingDate,
     Expression<int>? weeklyCap,
     Expression<int>? buffer,
+    Expression<int>? needsReserve,
     Expression<int>? totalCardColor,
     Expression<String>? totalCardFinish,
     Expression<String>? userName,
@@ -406,6 +453,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (openingDate != null) 'opening_date': openingDate,
       if (weeklyCap != null) 'weekly_cap': weeklyCap,
       if (buffer != null) 'buffer': buffer,
+      if (needsReserve != null) 'needs_reserve': needsReserve,
       if (totalCardColor != null) 'total_card_color': totalCardColor,
       if (totalCardFinish != null) 'total_card_finish': totalCardFinish,
       if (userName != null) 'user_name': userName,
@@ -417,6 +465,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<DateTime>? openingDate,
     Value<int>? weeklyCap,
     Value<int>? buffer,
+    Value<int>? needsReserve,
     Value<int?>? totalCardColor,
     Value<CardFinish>? totalCardFinish,
     Value<String?>? userName,
@@ -426,6 +475,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       openingDate: openingDate ?? this.openingDate,
       weeklyCap: weeklyCap ?? this.weeklyCap,
       buffer: buffer ?? this.buffer,
+      needsReserve: needsReserve ?? this.needsReserve,
       totalCardColor: totalCardColor ?? this.totalCardColor,
       totalCardFinish: totalCardFinish ?? this.totalCardFinish,
       userName: userName ?? this.userName,
@@ -448,6 +498,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     }
     if (buffer.present) {
       map['buffer'] = Variable<int>(buffer.value);
+    }
+    if (needsReserve.present) {
+      map['needs_reserve'] = Variable<int>(needsReserve.value);
     }
     if (totalCardColor.present) {
       map['total_card_color'] = Variable<int>(totalCardColor.value);
@@ -472,6 +525,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('openingDate: $openingDate, ')
           ..write('weeklyCap: $weeklyCap, ')
           ..write('buffer: $buffer, ')
+          ..write('needsReserve: $needsReserve, ')
           ..write('totalCardColor: $totalCardColor, ')
           ..write('totalCardFinish: $totalCardFinish, ')
           ..write('userName: $userName')
@@ -7348,6 +7402,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       required DateTime openingDate,
       required int weeklyCap,
       required int buffer,
+      Value<int> needsReserve,
       Value<int?> totalCardColor,
       Value<CardFinish> totalCardFinish,
       Value<String?> userName,
@@ -7358,6 +7413,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<DateTime> openingDate,
       Value<int> weeklyCap,
       Value<int> buffer,
+      Value<int> needsReserve,
       Value<int?> totalCardColor,
       Value<CardFinish> totalCardFinish,
       Value<String?> userName,
@@ -7390,6 +7446,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<int> get buffer => $composableBuilder(
     column: $table.buffer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get needsReserve => $composableBuilder(
+    column: $table.needsReserve,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7439,6 +7500,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get needsReserve => $composableBuilder(
+    column: $table.needsReserve,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get totalCardColor => $composableBuilder(
     column: $table.totalCardColor,
     builder: (column) => ColumnOrderings(column),
@@ -7478,6 +7544,11 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<int> get buffer =>
       $composableBuilder(column: $table.buffer, builder: (column) => column);
+
+  GeneratedColumn<int> get needsReserve => $composableBuilder(
+    column: $table.needsReserve,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get totalCardColor => $composableBuilder(
     column: $table.totalCardColor,
@@ -7529,6 +7600,7 @@ class $$AppSettingsTableTableManager
                 Value<DateTime> openingDate = const Value.absent(),
                 Value<int> weeklyCap = const Value.absent(),
                 Value<int> buffer = const Value.absent(),
+                Value<int> needsReserve = const Value.absent(),
                 Value<int?> totalCardColor = const Value.absent(),
                 Value<CardFinish> totalCardFinish = const Value.absent(),
                 Value<String?> userName = const Value.absent(),
@@ -7537,6 +7609,7 @@ class $$AppSettingsTableTableManager
                 openingDate: openingDate,
                 weeklyCap: weeklyCap,
                 buffer: buffer,
+                needsReserve: needsReserve,
                 totalCardColor: totalCardColor,
                 totalCardFinish: totalCardFinish,
                 userName: userName,
@@ -7547,6 +7620,7 @@ class $$AppSettingsTableTableManager
                 required DateTime openingDate,
                 required int weeklyCap,
                 required int buffer,
+                Value<int> needsReserve = const Value.absent(),
                 Value<int?> totalCardColor = const Value.absent(),
                 Value<CardFinish> totalCardFinish = const Value.absent(),
                 Value<String?> userName = const Value.absent(),
@@ -7555,6 +7629,7 @@ class $$AppSettingsTableTableManager
                 openingDate: openingDate,
                 weeklyCap: weeklyCap,
                 buffer: buffer,
+                needsReserve: needsReserve,
                 totalCardColor: totalCardColor,
                 totalCardFinish: totalCardFinish,
                 userName: userName,

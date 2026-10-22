@@ -47,6 +47,10 @@ class AppSettings extends Table {
   /// The minimum that must remain after buying a goal.
   IntColumn get buffer => integer()();
 
+  /// Set aside each month for needs, which the allowance leaves out, so
+  /// Runway plans for them; 0 plans for none.
+  IntColumn get needsReserve => integer().withDefault(const Constant(0))();
+
   /// The total card's look; no colour means it follows the app's theme.
   IntColumn get totalCardColor => integer().nullable()();
   TextColumn get totalCardFinish => textEnum<CardFinish>().withDefault(const Constant('matte'))();
