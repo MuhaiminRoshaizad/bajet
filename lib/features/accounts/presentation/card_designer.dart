@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/capitalise_first_formatter.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/money_field.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../domain/account_models.dart';
@@ -168,25 +169,34 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
   }
 
   Future<void> _save() async {
+    final messenger = ScaffoldMessenger.of(context);
     final repo = ref.read(accountRepositoryProvider);
+    final nickname = _nickname.text.trim();
+    final called = nickname.isEmpty ? _name.trim() : nickname;
     if (_newKind case final kind?) {
       setState(() => _tried = true);
       if (_name.trim().isEmpty) return;
-      await repo.addAccount(AccountDraft(
+      final id = await repo.addAccount(AccountDraft(
         kind: kind,
         name: _name,
         nickname: _nickname.text,
         balance: RinggitCentsFormatter.parse(_balance.text),
         look: CardLook(color: _color!, ink: _ink, finish: _finish),
       ));
+      if (mounted) Navigator.of(context).pop();
+      showBar(messenger, 'Added $called', undo: () => repo.deleteAccount(id));
     } else if (_account case final account?) {
       setState(() => _tried = true);
       if (_name.trim().isEmpty) return;
       await repo.updateAccount(account.copyWith(name: _name, nickname: () => _nickname.text, look: CardLook(color: _color!, ink: _ink, finish: _finish)));
+      if (mounted) Navigator.of(context).pop();
+      showBar(messenger, "Saved $called's card", undo: () => repo.updateAccount(account));
     } else {
+      final before = ref.read(totalCardLookProvider).value;
       await repo.saveTotalLook(TotalCardLook(color: _color, finish: _finish));
+      if (mounted) Navigator.of(context).pop();
+      showBar(messenger, 'Saved the total card', undo: before == null ? null : () => repo.saveTotalLook(before));
     }
-    if (mounted) Navigator.of(context).pop();
   }
 
   /// Delete, below Save. The last account stays, since there must always be

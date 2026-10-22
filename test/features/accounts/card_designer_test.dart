@@ -101,6 +101,7 @@ void main() {
     await tester.tap(find.text('Save total card'));
     await tester.pumpAndSettle();
     expect(world.totalLook, const TotalCardLook(color: 0xFFCDB88A));
+    expect(find.text('Saved the total card'), findsOneWidget);
 
     await openTotal();
     await tester.ensureVisible(find.bySemanticsLabel('Match the app'));
@@ -135,6 +136,11 @@ void main() {
 
     final added = world.accounts.last;
     expect((added.kind, added.name, added.balance, added.look.color, added.look.ink), (AccountKind.bank, 'Bank Islam', 200000, 0xFF151515, 0xFFE6C674));
+    expect(find.text('Added Bank Islam'), findsWidgets);
+    // Each page under the bar draws it; the top one is the one seen.
+    await tester.tap(find.text('Undo').hitTestable().last);
+    await tester.pumpAndSettle();
+    expect(world.accounts, hasLength(1));
   });
 
   testWidgets('a provider not on the list can be typed in', (tester) async {
@@ -282,5 +288,9 @@ void main() {
     await tester.pumpAndSettle();
     final main = world.accounts.single;
     expect((main.name, main.look.color, main.balance), ('CIMB', 0xFF4A5866, 150000));
+    expect(find.text("Saved CIMB's card"), findsWidgets);
+    await tester.tap(find.text('Undo').hitTestable().last);
+    await tester.pumpAndSettle();
+    expect(world.accounts.single.name, 'Main account');
   });
 }

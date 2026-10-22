@@ -28,6 +28,10 @@ void main() {
     final f = world.favourites.all.single;
     expect((f.label, f.amount, f.categoryKey), ('Coffee', 450, 'food'));
     expect(find.text('Coffee'), findsOneWidget);
+    expect(find.text('Added Coffee'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.favourites.all, isEmpty);
   });
 
   testWidgets('saving without a category says so', (tester) async {

@@ -95,14 +95,18 @@ class _FavouriteFormState extends ConsumerState<_FavouriteForm> {
     setState(() => _categoryMissing = _category == null);
     if (!ok || _category == null) return;
     final repo = ref.read(favouriteRepositoryProvider);
+    final label = _name.text.trim();
     final amount = RinggitCentsFormatter.parse(_amount.text);
     final editing = widget.editing;
     if (editing == null) {
-      await repo.add(label: _name.text, categoryKey: _category!, amount: amount);
-    } else {
-      await repo.update(Favourite(id: editing.id, label: _name.text, categoryKey: _category!, amount: amount));
+      final id = await repo.add(label: label, categoryKey: _category!, amount: amount);
+      if (mounted) Navigator.of(context).pop();
+      showBar(widget.messenger, 'Added $label', undo: () => repo.delete(id));
+      return;
     }
+    await repo.update(Favourite(id: editing.id, label: label, categoryKey: _category!, amount: amount));
     if (mounted) Navigator.of(context).pop();
+    showBar(widget.messenger, 'Saved $label', undo: () => repo.update(editing));
   }
 
   Future<void> _remove() async {
