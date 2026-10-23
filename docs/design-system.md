@@ -395,6 +395,14 @@ inline line of text where it is.
 
 ## Interaction rules
 
+- Nothing tappable sits under the phone's navigation bar, three buttons or
+  gesture pill. Android 15 draws the app edge to edge, so content scrolls on
+  behind the bar but ends above it. Every sheet opens through `showAppSheet`,
+  which keeps its content above the bar while its colour runs behind it, and
+  every page over the tabs ends its list with `clearOfSystemBar`; the tabs
+  end theirs with `underBar`, past the floating bar. The conventions test
+  refuses any other way of opening a sheet, and `system_bar_test.dart` opens
+  each page and sheet with a three-button bar.
 - Back at the top of the app never closes bajet by surprise
   (`LeaveGuard`): on Runway, Insights or Coach it goes to Today, and on
   Today it asks "Leave bajet?" under the app icon, saying what App lock
