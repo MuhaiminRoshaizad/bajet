@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -24,10 +25,9 @@ class ProviderPicker extends StatelessWidget {
   String get _label => kind == AccountKind.bank ? 'Which bank?' : 'Which e-wallet?';
 
   Future<void> _open(BuildContext context) async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showAppSheet<String>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => _ProviderSheet(kind: kind, title: _label, current: controller.text),
     );
     if (picked != null) onChoose(picked);

@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,7 +19,7 @@ String lockSummary(LockSettings s) => !s.enabled
         : 'Fingerprint · after ${s.grace.label}';
 
 Future<void> showAppLockSheet(BuildContext context) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _AppLockSheet());
+    showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => const _AppLockSheet());
 
 class _AppLockSheet extends ConsumerStatefulWidget {
   const _AppLockSheet();

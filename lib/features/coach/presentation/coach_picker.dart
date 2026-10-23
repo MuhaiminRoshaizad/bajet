@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,9 +11,8 @@ import 'coach_providers.dart';
 
 /// The sheet in Settings → Coach that picks the coach new chats start
 /// with. A chat changes its own in its chat settings.
-Future<void> showCoachPicker(BuildContext context) => showModalBottomSheet<void>(
+Future<void> showCoachPicker(BuildContext context) => showAppSheet<void>(
       context: context,
-      useSafeArea: true,
       isScrollControlled: true,
       builder: (_) => const _CoachPicker(),
     );

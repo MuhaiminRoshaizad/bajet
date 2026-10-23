@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,7 +22,7 @@ import '../../plan/presentation/plan_providers.dart';
 /// difference, which the check-in records; the second rewrites that
 /// account's opening balance, so everything since moves with it.
 Future<void> showBalanceSheet(BuildContext context) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => const _BalanceSheet());
+    showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => const _BalanceSheet());
 
 class _BalanceSheet extends ConsumerStatefulWidget {
   const _BalanceSheet();

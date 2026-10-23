@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -119,7 +120,7 @@ class _RecurringRow extends StatelessWidget {
 }
 
 void _openForm(BuildContext context, RecurringItem? item) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _RecurringForm(item: item));
+    showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => _RecurringForm(item: item));
 
 /// Adds a new item, or changes [item] when one is given.
 class _RecurringForm extends ConsumerStatefulWidget {

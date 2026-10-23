@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -48,13 +49,12 @@ class LogPrefill {
 /// Opens the logger, with [prefill] filled in, or with [editing] the same
 /// form filled in with an existing entry. Saving shows a snackbar with undo
 /// on [messengerContext]'s scaffold, which outlives the sheet.
-Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing, LogPrefill? prefill}) => showModalBottomSheet<void>(
+Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing, LogPrefill? prefill}) => showAppSheet<void>(
       context: messengerContext,
       // Over the bottom bar wherever it is opened from; from inside a tab it
       // would otherwise sit under the bar, its Log button beneath it.
       useRootNavigator: true,
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing, prefill: prefill),
     );
 

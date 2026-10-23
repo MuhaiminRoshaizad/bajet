@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,10 +16,9 @@ import 'account_providers.dart';
 /// Moves money from one account to another, starting from [fromId]. It is
 /// neither spending nor income, so the week, Runway and Insights stay as
 /// they are; only the two balances change.
-Future<void> showMoveMoney(BuildContext context, {required int fromId}) => showModalBottomSheet<void>(
+Future<void> showMoveMoney(BuildContext context, {required int fromId}) => showAppSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => _MoveMoney(fromId: fromId, messenger: ScaffoldMessenger.of(context)),
     );
 

@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -169,7 +170,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 }
 
 void _openForm(BuildContext context, Goal? goal) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _GoalForm(goal: goal));
+    showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => _GoalForm(goal: goal));
 
 /// Asks, deletes, and offers to undo. A bought goal's purchase entry stays.
 Future<bool> _deleteGoal(BuildContext context, WidgetRef ref, Goal goal) async {

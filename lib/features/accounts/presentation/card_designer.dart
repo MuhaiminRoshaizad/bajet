@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,7 +23,7 @@ import 'provider_picker.dart';
 /// when they asked to delete the account instead; the caller deletes it once
 /// it has closed whatever showed the card.
 Future<DeleteChoice?> showCardDesigner(BuildContext context, Account account) =>
-    showModalBottomSheet<DeleteChoice>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _CardDesigner(account: account));
+    showAppSheet<DeleteChoice>(context: context, isScrollControlled: true, builder: (_) => _CardDesigner(account: account));
 
 /// Changes how the total card looks.
 Future<void> showTotalCardDesigner(BuildContext context) => _open(context, const _CardDesigner());
@@ -30,7 +31,7 @@ Future<void> showTotalCardDesigner(BuildContext context) => _open(context, const
 /// Asks what kind of account to add, then opens it in the designer with what
 /// it holds now.
 Future<void> showAddAccount(BuildContext context) async {
-  final kind = await showModalBottomSheet<AccountKind>(context: context, useSafeArea: true, builder: (_) => const _KindChooser());
+  final kind = await showAppSheet<AccountKind>(context: context, builder: (_) => const _KindChooser());
   if (kind != null && context.mounted) await showNewAccount(context, kind);
 }
 
@@ -77,7 +78,7 @@ class AccountKindTiles extends StatelessWidget {
 }
 
 Future<void> _open(BuildContext context, Widget sheet) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => sheet);
+    showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => sheet);
 
 class _CardDesigner extends ConsumerStatefulWidget {
   /// With neither, it designs the total card.
@@ -155,7 +156,7 @@ class _CardDesignerState extends ConsumerState<_CardDesigner> {
       });
 
   Future<void> _match() async {
-    final source = await showModalBottomSheet<PhotoSource>(context: context, useSafeArea: true, builder: (_) => const _PhotoSourceChooser());
+    final source = await showAppSheet<PhotoSource>(context: context, builder: (_) => const _PhotoSourceChooser());
     if (source == null || !mounted) return;
     final photo = await ref.read(photoColoursProvider).pick(source);
     if (photo == null || !mounted) return;

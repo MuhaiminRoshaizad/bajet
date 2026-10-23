@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,11 +39,10 @@ Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat
       await chats.pin(chat.id, !chat.pinned);
       showBar(messenger, '${chat.pinned ? 'Unpinned' : 'Pinned'} $name', undo: () => chats.pin(chat.id, chat.pinned));
     case ChatAction.rename:
-      final title = await showModalBottomSheet<String>(
+      final title = await showAppSheet<String>(
         context: context,
         useRootNavigator: true,
         isScrollControlled: true,
-        useSafeArea: true,
         builder: (_) => _RenameSheet(title: chat.title),
       );
       if (title == null || title == chat.title) return;
@@ -68,11 +68,10 @@ Future<void> runChatAction(BuildContext context, WidgetRef ref, CoachThread chat
 Future<void> showChatActions(BuildContext context, WidgetRef ref, CoachThread chat) async {
   HapticFeedback.mediumImpact();
   final idle = ref.read(coachIdleMotionProvider);
-  final action = await showModalBottomSheet<ChatAction>(
+  final action = await showAppSheet<ChatAction>(
     context: context,
     // Over the bottom bar, which would otherwise cover its last rows.
     useRootNavigator: true,
-    useSafeArea: true,
     builder: (context) {
       final c = context.colors;
       return Padding(

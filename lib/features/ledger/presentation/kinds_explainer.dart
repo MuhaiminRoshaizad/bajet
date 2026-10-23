@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,11 +13,10 @@ import 'spend_kind_choice.dart';
 
 /// Explains wants and needs in a sheet over whichever page is open, with a
 /// quick check on an everyday example.
-Future<void> showKindsExplainer(BuildContext context) => showModalBottomSheet<void>(
+Future<void> showKindsExplainer(BuildContext context) => showAppSheet<void>(
       context: context,
       // Over whichever page is open, the bar included.
       useRootNavigator: true,
-      useSafeArea: true,
       isScrollControlled: true,
       builder: (context) => const _KindsExplainer(),
     );

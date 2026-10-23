@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,10 +58,9 @@ class FavouritesScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openForm(BuildContext context, Favourite? editing) => showModalBottomSheet<void>(
+  Future<void> _openForm(BuildContext context, Favourite? editing) => showAppSheet<void>(
         context: context,
         isScrollControlled: true,
-        useSafeArea: true,
         builder: (_) => _FavouriteForm(editing: editing, messenger: ScaffoldMessenger.of(context)),
       );
 }

@@ -29,4 +29,8 @@ void main() {
   test('every bar goes through showBar, so none stays up for good', () {
     expect([for (final (path, text) in sources()) if (text.contains('showSnackBar(') && !path.replaceAll(r'\', '/').endsWith('core/widgets/done_bar.dart')) path], isEmpty);
   });
+
+  test('every sheet goes through showAppSheet, so none sits under the navigation bar', () {
+    expect([for (final (path, text) in sources()) if (text.contains('showModalBottomSheet') && !path.replaceAll(r'\', '/').endsWith('core/widgets/app_sheet.dart')) path], isEmpty);
+  });
 }

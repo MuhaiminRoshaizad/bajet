@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,10 +15,9 @@ import 'coach_controller.dart';
 /// One chat's coach and personality, changed for that chat only. The
 /// sheet stays open as they change, so the chat can be seen answering to
 /// its new coach.
-Future<void> showChatSettings(BuildContext context, int chat) => showModalBottomSheet<void>(
+Future<void> showChatSettings(BuildContext context, int chat) => showAppSheet<void>(
       context: context,
       useRootNavigator: true,
-      useSafeArea: true,
       isScrollControlled: true,
       builder: (_) => _ChatSettings(chat: chat),
     );

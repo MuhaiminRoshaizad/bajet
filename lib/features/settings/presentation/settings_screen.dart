@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -161,7 +162,7 @@ class SettingsScreen extends ConsumerWidget {
                 tint: Tint.neutral,
                 title: 'Appearance',
                 value: _themeNames[ref.watch(themeModeProvider)]!,
-                onTap: () => showModalBottomSheet<void>(context: context, useSafeArea: true, builder: (_) => const _AppearanceSheet()),
+                onTap: () => showAppSheet<void>(context: context, builder: (_) => const _AppearanceSheet()),
               ),
             ],
           ),
@@ -182,10 +183,9 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _editAllowance(BuildContext context, PlanSettings settings) => showModalBottomSheet<void>(
+  Future<void> _editAllowance(BuildContext context, PlanSettings settings) => showAppSheet<void>(
         context: context,
         isScrollControlled: true,
-        useSafeArea: true,
         builder: (_) => _AllowanceSheet(settings: settings),
       );
 }

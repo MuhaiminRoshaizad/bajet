@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -269,11 +270,10 @@ class ListingPreview extends StatelessWidget {
 
 /// Asks, once the user is back from the listing, whether it is still up.
 /// Null when they would rather not say.
-Future<ListingCheck?> askListingCheck(BuildContext context, Goal goal) => showModalBottomSheet<ListingCheck>(
+Future<ListingCheck?> askListingCheck(BuildContext context, Goal goal) => showAppSheet<ListingCheck>(
       context: context,
       // Over whichever page is open, the bar included.
       useRootNavigator: true,
-      useSafeArea: true,
       builder: (context) {
         final c = context.colors;
         Widget answer(ListingCheck check, String label, Color fill, Color ink) => Expanded(

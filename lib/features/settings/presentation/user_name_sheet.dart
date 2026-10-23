@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,10 +34,9 @@ class UserNameField extends StatelessWidget {
 }
 
 /// Changes or clears the name the coach uses.
-Future<void> showUserNameSheet(BuildContext context, String? current) => showModalBottomSheet<void>(
+Future<void> showUserNameSheet(BuildContext context, String? current) => showAppSheet<void>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => _UserNameSheet(current: current),
     );
 

@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -79,7 +80,7 @@ class EventsScreen extends ConsumerWidget {
 }
 
 void _openForm(BuildContext context, PlannedEvent? event) =>
-    showModalBottomSheet<void>(context: context, isScrollControlled: true, useSafeArea: true, builder: (_) => _EventForm(event: event));
+    showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => _EventForm(event: event));
 
 /// Adds an event, or changes [event] when one is given.
 class _EventForm extends ConsumerStatefulWidget {
@@ -269,7 +270,7 @@ class _EventFormState extends ConsumerState<_EventForm> {
                   IconButton(
                     tooltip: 'What does Plan for it mean?',
                     icon: Icon(Icons.info_outline_rounded, size: 20, color: c.primary),
-                    onPressed: () => showModalBottomSheet<void>(context: context, useSafeArea: true, isScrollControlled: true, builder: (_) => const _HowEventsWork()),
+                    onPressed: () => showAppSheet<void>(context: context, isScrollControlled: true, builder: (_) => const _HowEventsWork()),
                   ),
                 ]),
                 // An expense is nearly always planned for; an income only once

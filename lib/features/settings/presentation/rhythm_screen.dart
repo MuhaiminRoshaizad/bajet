@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -85,10 +86,9 @@ class RhythmScreen extends ConsumerWidget {
                           child: Text(r.isFastingDay ? 'Fasting' : 'No spending', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600, fontSize: 13)),
                         )
                       : Text(Money.format(r.plannedSpend), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
-                  onTap: () => showModalBottomSheet<void>(
+                  onTap: () => showAppSheet<void>(
                     context: context,
                     isScrollControlled: true,
-                    useSafeArea: true,
                     builder: (_) => _RuleForm(rule: r),
                   ),
                 ),

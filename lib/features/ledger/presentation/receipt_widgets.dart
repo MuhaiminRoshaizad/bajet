@@ -1,3 +1,4 @@
+import '../../../core/widgets/app_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,9 +18,8 @@ class ReceiptTile extends ConsumerWidget {
   final ValueChanged<String?> onChanged;
 
   Future<void> _open(BuildContext context, WidgetRef ref) async {
-    final choice = await showModalBottomSheet<_ReceiptChoice>(
+    final choice = await showAppSheet<_ReceiptChoice>(
       context: context,
-      useSafeArea: true,
       builder: (_) => _ReceiptSheet(receipt: receipt),
     );
     switch (choice) {
