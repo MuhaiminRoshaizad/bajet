@@ -1,3 +1,4 @@
+import '../../../core/widgets/under_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -93,7 +94,7 @@ class _HistoryList extends ConsumerWidget {
     final c = context.colors;
     final names = {for (final a in ref.watch(accountsProvider).value ?? const <Account>[]) a.id: a.name};
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.xxl),
+      padding: clearOfSystemBar(context, const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.xxl)),
       itemCount: rows.length,
       itemBuilder: (context, i) => switch (rows[i]) {
         _DayRow(:final day, :final spent) => Padding(

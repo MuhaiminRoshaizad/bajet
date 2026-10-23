@@ -1,3 +1,4 @@
+import '../../../core/widgets/under_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -82,7 +83,7 @@ class _CoachKeyScreenState extends ConsumerState<CoachKeyScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Coach')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.l),
+        padding: clearOfSystemBar(context, const EdgeInsets.all(AppSpacing.l)),
         children: [
           SoftWell(
             radius: AppRadii.card,

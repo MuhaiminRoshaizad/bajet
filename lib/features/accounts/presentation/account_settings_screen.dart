@@ -1,3 +1,4 @@
+import '../../../core/widgets/under_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,7 +26,7 @@ class AccountSettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.l),
+        padding: clearOfSystemBar(context, const EdgeInsets.all(AppSpacing.l)),
         children: [
           CardGroup(
             label: 'Cards',

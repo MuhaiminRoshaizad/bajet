@@ -1,3 +1,4 @@
+import '../../../core/widgets/under_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -122,7 +123,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
               appBar: AppBar(title: const Text('Your accounts'), backgroundColor: Colors.transparent),
               body: ListView(
                 controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.xxl),
+                padding: clearOfSystemBar(context, const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.xxl)),
                 children: [
                   AnimatedBuilder(
                     animation: Listenable.merge([_scroll, above]),

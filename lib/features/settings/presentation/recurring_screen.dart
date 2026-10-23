@@ -1,4 +1,5 @@
 import '../../../core/widgets/app_sheet.dart';
+import '../../../core/widgets/under_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -49,7 +50,7 @@ class RecurringScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Bills and income')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.l),
+        padding: clearOfSystemBar(context, const EdgeInsets.all(AppSpacing.l)),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, AppSpacing.xs, AppSpacing.xl),

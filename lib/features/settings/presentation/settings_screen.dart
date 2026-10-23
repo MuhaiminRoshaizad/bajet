@@ -1,4 +1,5 @@
 import '../../../core/widgets/app_sheet.dart';
+import '../../../core/widgets/under_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -48,7 +49,7 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.l),
+        padding: clearOfSystemBar(context, const EdgeInsets.all(AppSpacing.l)),
         children: [
           CardGroup(
             label: 'You',

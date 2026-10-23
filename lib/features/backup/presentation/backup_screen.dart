@@ -1,3 +1,4 @@
+import '../../../core/widgets/under_bar.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -64,7 +65,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Backup')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.l),
+        padding: clearOfSystemBar(context, const EdgeInsets.all(AppSpacing.l)),
         children: [
           SoftWell(
             padding: const EdgeInsets.all(AppSpacing.l + 2),
