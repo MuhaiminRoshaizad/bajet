@@ -307,22 +307,29 @@ class _Flyers extends StatelessWidget {
       );
     }
     final side = 1 - 0.15 * a;
-    // Lying flat the card is as wide as in the list; upright, its long side
-    // is the upright card's height.
-    final grow = upright.height * side / from.width;
+    // The copy is drawn at the size the card lands at and shrunk to its
+    // place in the list, never enlarged, so its corners, lines and shadow
+    // are the landed card's all the way and nothing changes as it lands.
+    final landed = Size(upright.height, upright.width);
+    final shrink = from.width / landed.width;
     final to = centre + Offset(t * width * 0.70, 0);
     final mid = Offset.lerp(from.center, to, k)!;
     return Positioned(
-      left: mid.dx - from.width / 2,
-      top: mid.dy - from.height / 2,
-      width: from.width,
-      height: from.height,
+      left: mid.dx - landed.width / 2,
+      top: mid.dy - landed.height / 2,
+      width: landed.width,
+      height: landed.height,
       child: IgnorePointer(
         child: Opacity(
           opacity: 1 - 0.4 * a * k,
           child: Transform.rotate(
             angle: k * math.pi / 2,
-            child: Transform.scale(scale: 1 + (grow - 1) * k, child: AccountCard(account: accounts[j])),
+            child: Transform.scale(
+              scale: shrink + (side - shrink) * k,
+              // Turned as the landed card will be, so a mirror's shine
+              // slides into place.
+              child: AccountCard(account: accounts[j], tilt: t.clamp(-1, 1) * k),
+            ),
           ),
         ),
       ),

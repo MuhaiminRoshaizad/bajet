@@ -162,6 +162,27 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets("a card's flying copy looks as it will once landed, so nothing jumps as it lands", (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 3));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+    // The cards on screen, as drawn before any transform: their size sets
+    // the corners, lines and shadow, and their tilt sets a mirror's shine.
+    List<(Size, double)> onScreen() => [
+          for (final card in tester.elementList(find.byType(AccountCard)))
+            if (!_fadedOut(card)) (card.size!, (card.widget as AccountCard).tilt),
+        ]..sort((a, b) => a.$2.compareTo(b.$2));
+    await tester.tap(find.text('Wallet 1').hitTestable().first);
+    await tester.pump();
+    // The last frame of the 700 ms arrival, still the flying copies.
+    for (var ms = 0; ms < 680; ms += 16) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    final flying = onScreen();
+    await tester.pumpAndSettle();
+    expect(flying, onScreen());
+  });
+
   testWidgets("scrolling down a card's page shows that account's own activity, moves included", (tester) async {
     await pumpApp(tester, seed: (w) {
       addAccounts(w, 1);
@@ -220,4 +241,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Move money from Wallet 1'), findsOneWidget);
   });
+}
+
+/// Whether anything above [card] fades it out entirely.
+bool _fadedOut(Element card) {
+  var faded = false;
+  card.visitAncestorElements((e) {
+    final w = e.widget;
+    if (w is Opacity && w.opacity == 0) faded = true;
+    return !faded;
+  });
+  return faded;
 }
