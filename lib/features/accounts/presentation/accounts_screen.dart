@@ -132,8 +132,10 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                       accounts: accounts,
                       offset: _offset,
                       // In flight, from Today or to a card's own page, the
-                      // cards here wait unseen.
-                      hidden: settled && above.status == AnimationStatus.dismissed ? const {} : {for (final a in accounts) a.id},
+                      // cards here wait unseen. The card's page is first drawn
+                      // the frame after it starts, so they stay until it has
+                      // moved off its start and its own copies are on screen.
+                      hidden: settled && (above.status == AnimationStatus.dismissed || above.value == 0) ? const {} : {for (final a in accounts) a.id},
                       onTap: settled ? (a) => context.push(Routes.account(a.id), extra: _placeOf) : null,
                       onReorder: (ids) => ref.read(accountRepositoryProvider).reorderAccounts(ids),
                     ),

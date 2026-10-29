@@ -138,6 +138,30 @@ void main() {
     expect(listOpacities(), everyElement(1.0));
   });
 
+  testWidgets("opening a card's page never leaves a frame with no card on screen", (tester) async {
+    await pumpApp(tester, seed: (w) => addAccounts(w, 3));
+    await tester.tap(find.byType(AccountStack));
+    await tester.pumpAndSettle();
+    // A card is on screen when nothing above it is fully faded out.
+    int shown() => tester.elementList(find.byType(AccountCard)).where((card) {
+          var visible = true;
+          card.visitAncestorElements((e) {
+            final w = e.widget;
+            if (w is Opacity && w.opacity == 0) visible = false;
+            return visible;
+          });
+          return visible;
+        }).length;
+    await tester.tap(find.text('Wallet 1').hitTestable().first);
+    await tester.pump();
+    expect(shown(), greaterThanOrEqualTo(3), reason: 'the frame the page starts keeps every card where it sat');
+    for (var ms = 0; ms < 700; ms += 16) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(shown(), greaterThan(0), reason: 'no card on screen at $ms ms');
+    }
+    await tester.pumpAndSettle();
+  });
+
   testWidgets("scrolling down a card's page shows that account's own activity, moves included", (tester) async {
     await pumpApp(tester, seed: (w) {
       addAccounts(w, 1);
