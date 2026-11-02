@@ -235,7 +235,7 @@ class CoachController extends Notifier<CoachChat> {
         // a bill paid meanwhile from the Plan tab is not paid again.
         final paid = await ref.read(planRepositoryProvider).confirmRecurring(item.id, due: item.nextDue, paidOn: ref.read(todayProvider));
         if (paid == null) return _setCard(message, card, c.copyWith(state: CardState.outdated));
-        undoId = null;
+        undoId = paid;
     }
     _mood(CoachMood.cheer);
     await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
@@ -277,12 +277,10 @@ class CoachController extends Notifier<CoachChat> {
     final c = state.messages[message].cards[card];
     if (!c.canUndo) return;
     switch (c.proposal) {
-      case LogProposal():
+      case LogProposal() || BillPaidProposal():
         await ref.read(ledgerRepositoryProvider).delete(c.undoId!);
       case MoveProposal():
         await ref.read(accountRepositoryProvider).deleteTransfer(c.undoId!);
-      case BillPaidProposal():
-        return;
     }
     await _setCard(message, card, c.copyWith(state: CardState.undone));
   }

@@ -126,8 +126,7 @@ class CoachCard {
   /// The entry or transfer the tap created, so Undo can remove it.
   final int? undoId;
 
-  /// Marking a bill paid moves it to next month too, so like the Paid button
-  /// on Today it has no Undo.
+  /// Undo takes back the entry, and with it whatever the entry settled.
   bool get canUndo => state == CardState.done && undoId != null;
 
   String get action => switch (proposal) {
@@ -138,7 +137,7 @@ class CoachCard {
 
   String get outcome => switch (state) {
         CardState.waiting => proposal.question,
-        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal() => 'Marked paid' },
+        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid' },
         CardState.declined => 'Not done',
         CardState.undone => 'Undone, nothing changed',
         CardState.outdated => 'Already changed elsewhere, nothing done',

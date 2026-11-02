@@ -125,6 +125,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(world.entries.singleWhere((e) => e.label == 'Rent').amount, 50000);
     expect(find.text('✓ Marked paid'), findsOneWidget);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.entries.where((e) => e.label == 'Rent'), isEmpty);
+    expect(world.recurring.single.nextDue, due);
   });
 
   testWidgets('after three messages turned away in a row, more spam is turned away without asking anyone', (tester) async {

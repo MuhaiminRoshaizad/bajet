@@ -158,6 +158,11 @@ void main() {
     expect((backEvent.draft.event, backEvent.spent, backEvent.rows[1]), (spent.draft.event, 12000, spent.rows[1]));
   });
 
+  test('a saved card for income reads as received once done', () {
+    final pay = RecurringItem(id: 8, name: 'Pay', amount: 250000, categoryKey: 'salary', isIncome: true, nextDue: d(10, 15));
+    expect(CoachCard(BillPaidProposal(pay), state: CardState.done).outcome, 'Received');
+  });
+
   test('the coach no longer offers a card that can only log the plan', () {
     expect(proposalTools.map((t) => t.name), isNot(contains('bajet_propose_bill_paid')));
     final (r, p) = propose('bajet_propose_bill_paid', {'bill': 'Rent'}, data);
