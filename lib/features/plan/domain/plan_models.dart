@@ -8,7 +8,8 @@ import 'listing.dart';
 
 export 'listing.dart';
 
-enum DayType { zero, spend, flex }
+/// A day that plans nothing, or one that plans an amount.
+enum DayType { zero, spend }
 
 /// One weekday of the spending rhythm. [weekday] follows [DateTime.weekday]:
 /// 1 is Monday.
@@ -18,17 +19,15 @@ class WeeklyRule {
     required this.label,
     required this.type,
     required this.plannedSpend,
-    this.isFastingDay = false,
   });
 
   final int weekday;
   final String label;
   final DayType type;
   final int plannedSpend;
-  final bool isFastingDay;
 
   WeeklyRule copyWith({int? plannedSpend}) =>
-      WeeklyRule(weekday: weekday, label: label, type: type, plannedSpend: plannedSpend ?? this.plannedSpend, isFastingDay: isFastingDay);
+      WeeklyRule(weekday: weekday, label: label, type: type, plannedSpend: plannedSpend ?? this.plannedSpend);
 }
 
 /// The longest window a monthly item may land in: short enough that one

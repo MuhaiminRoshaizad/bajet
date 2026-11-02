@@ -14,7 +14,7 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// and `listingCheckedOn`, what their listing showed when last looked at.
 /// 11: categories and entries carry `spendKind`, `want` or `need`.
 /// 12: settings carry `needsReserve`, set aside each month for needs.
-const backupFormatVersion = 12;
+const backupFormatVersion = 13;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws

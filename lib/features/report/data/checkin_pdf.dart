@@ -132,7 +132,7 @@ pw.Document checkinDocument({
     pw.Row(children: [
       for (final (n, d) in w.days.indexed) ...[
         if (n > 0) pw.SizedBox(width: 4),
-        pw.Expanded(child: _day(d, text: text, muted: muted, line: line, well: colour(c.well), over: colour(c.badSurface), fast: colour(c.keep))),
+        pw.Expanded(child: _day(d, text: text, muted: muted, line: line, well: colour(c.well), over: colour(c.badSurface))),
       ],
     ]),
   ]);
@@ -275,8 +275,7 @@ pw.Document checkinDocument({
   return doc;
 }
 
-/// One day of the week: its spending, its kind and, on a fasting day, a
-/// mark.
+/// One day of the week: its spending and its kind.
 pw.Widget _day(
   CheckinDay d, {
   required pw.TextStyle Function({double size, PdfColor? colour, bool strong}) text,
@@ -284,15 +283,13 @@ pw.Widget _day(
   required PdfColor line,
   required PdfColor well,
   required PdfColor over,
-  required PdfColor fast,
 }) {
   final finished = d.state == CheckinDayState.finished;
   final kind = switch (d.state) {
     CheckinDayState.noData => 'No data',
     CheckinDayState.today => 'Today',
     CheckinDayState.ahead => 'Later',
-    CheckinDayState.finished when d.rule.isFastingDay => 'Fasting',
-    CheckinDayState.finished => switch (d.rule.type) { DayType.zero => 'No spending', DayType.flex => 'Flexible', DayType.spend => 'Spending' },
+    CheckinDayState.finished => switch (d.rule.type) { DayType.zero => 'No spending', DayType.spend => 'Spending' },
   };
   return pw.Container(
     height: 58,
@@ -307,13 +304,7 @@ pw.Widget _day(
       pw.SizedBox(height: 3),
       pw.Text(finished || d.state == CheckinDayState.today ? Money.format(d.spent) : '–', style: text(size: 9.5, strong: true)),
       pw.Spacer(),
-      pw.Row(mainAxisAlignment: pw.MainAxisAlignment.center, children: [
-        if (d.rule.isFastingDay && d.state != CheckinDayState.noData) ...[
-          pw.Container(width: 5, height: 5, decoration: pw.BoxDecoration(color: fast, shape: pw.BoxShape.circle)),
-          pw.SizedBox(width: 2),
-        ],
-        pw.Text(kind, style: text(size: 7, colour: muted)),
-      ]),
+      pw.Text(kind, style: text(size: 7, colour: muted)),
     ]),
   );
 }

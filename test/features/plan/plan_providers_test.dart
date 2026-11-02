@@ -99,7 +99,7 @@ void main() {
   });
 
   test('today rule follows the weekday', () async {
-    await plan().saveRule(const WeeklyRule(weekday: 3, label: 'Midweek', type: DayType.flex, plannedSpend: 500));
+    await plan().saveRule(const WeeklyRule(weekday: 3, label: 'Midweek', type: DayType.spend, plannedSpend: 500));
     expect((await settle(todayRuleProvider))!.label, 'Midweek');
   });
 

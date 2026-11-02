@@ -12,10 +12,10 @@ Future<void> show(WidgetTester tester, Widget card) => tester.pumpWidget(Materia
     ));
 
 void main() {
-  testWidgets('the card shows the week against the allowance, fasting, untracked money and the goal', (tester) async {
+  testWidgets('the card shows the week against the allowance, untracked money and the goal', (tester) async {
     await show(tester, CheckinCard(w: checkin(entries: week, checkins: [lastWeek])));
     expect(find.textContaining('RM21.50'), findsOneWidget);
-    expect(find.text('Fasting 1 of 1 kept'), findsOneWidget);
+    expect(find.textContaining('Fasting'), findsNothing);
     expect(find.text('Untracked RM0.00'), findsOneWidget);
     expect(find.text('6 of 6 days within plan'), findsOneWidget);
     expect(find.textContaining('76 days to go · +RM'), findsOneWidget);

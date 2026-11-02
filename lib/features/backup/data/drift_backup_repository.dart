@@ -71,7 +71,7 @@ class DriftBackupRepository implements BackupRepository {
       ],
       'weeklyRules': [
         for (final r in await _db.select(_db.weeklyRules).get())
-          {'weekday': r.weekday, 'label': r.label, 'dayType': r.dayType.name, 'plannedSpend': r.plannedSpend, 'isFastingDay': r.isFastingDay},
+          {'weekday': r.weekday, 'label': r.label, 'dayType': r.dayType == RhythmDayType.zero ? 'zero' : 'spend', 'plannedSpend': r.plannedSpend},
       ],
       'recurringItems': [
         for (final r in await _db.select(_db.recurringItems).get())
@@ -234,9 +234,9 @@ class DriftBackupRepository implements BackupRepository {
               WeeklyRulesCompanion.insert(
                 weekday: Value(r['weekday']! as int),
                 label: r['label']! as String,
-                dayType: RhythmDayType.values.byName(r['dayType']! as String),
+                // Flexible days, from files before format 13, are spending days.
+                dayType: r['dayType'] == 'zero' ? RhythmDayType.zero : RhythmDayType.spend,
                 plannedSpend: Value(r['plannedSpend']! as int),
-                isFastingDay: Value(r['isFastingDay']! as bool),
               ),
           ]);
           b.insertAll(_db.recurringItems, [

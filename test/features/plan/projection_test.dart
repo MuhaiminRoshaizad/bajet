@@ -11,7 +11,7 @@ const rules = [
   WeeklyRule(weekday: 3, label: 'Workday', type: DayType.spend, plannedSpend: 1000),
   WeeklyRule(weekday: 4, label: 'Workday', type: DayType.spend, plannedSpend: 1000),
   WeeklyRule(weekday: 5, label: 'Workday', type: DayType.spend, plannedSpend: 1000),
-  WeeklyRule(weekday: 6, label: 'Weekend', type: DayType.flex, plannedSpend: 1500),
+  WeeklyRule(weekday: 6, label: 'Weekend', type: DayType.spend, plannedSpend: 1500),
   WeeklyRule(weekday: 7, label: 'Rest', type: DayType.zero, plannedSpend: 0),
 ];
 

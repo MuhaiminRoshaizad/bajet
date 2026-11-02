@@ -15,7 +15,7 @@ import '../../plan/domain/plan_models.dart';
 import '../../plan/presentation/plan_providers.dart';
 
 const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const _typeLabels = {DayType.zero: 'No spending', DayType.spend: 'Spending', DayType.flex: 'Flexible'};
+const _typeLabels = {DayType.zero: 'No spending', DayType.spend: 'Spending'};
 
 /// What each weekday usually costs. The projection subtracts these amounts
 /// day by day, and the week strip judges each day against them.
@@ -78,13 +78,13 @@ class RhythmScreen extends ConsumerWidget {
                 ListTile(
                   minTileHeight: 60,
                   title: Text(_weekdays[r.weekday - 1], style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text([r.label, if (r.type != DayType.zero) _typeLabels[r.type]!].join(' · ')),
+                  subtitle: Text(r.label),
                   // A pill, not a grey RM0.00, so the days that do spend stand out.
                   trailing: r.type == DayType.zero
                       ? Container(
                           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
                           decoration: BoxDecoration(color: c.well, borderRadius: BorderRadius.circular(AppRadii.pill)),
-                          child: Text(r.isFastingDay ? 'Fasting' : 'No spending', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600, fontSize: 13)),
+                          child: Text('No spending', style: TextStyle(color: c.muted, fontWeight: FontWeight.w600, fontSize: 13)),
                         )
                       : Text(Money.format(r.plannedSpend), style: const TextStyle(fontWeight: FontWeight.w700, fontFeatures: [FontFeature.tabularFigures()])),
                   onTap: () => showAppSheet<void>(
@@ -115,7 +115,6 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
   late final _label = TextEditingController(text: widget.rule.label);
   late final _amount = TextEditingController(text: widget.rule.plannedSpend == 0 ? '' : RinggitCentsFormatter.format(widget.rule.plannedSpend));
   late DayType _type = widget.rule.type;
-  late bool _fasting = widget.rule.isFastingDay;
 
   @override
   void dispose() {
@@ -124,8 +123,7 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
     super.dispose();
   }
 
-  /// No-spending days, fasting ones included, plan nothing, so their amount
-  /// is fixed at RM0.
+  /// No-spending days plan nothing, so their amount is fixed at RM0.
   bool get _plansNothing => _type == DayType.zero;
 
   /// A day that was off fills in its share of the week the moment it starts
@@ -150,14 +148,6 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
 
   int get _othersPlan => _others.fold(0, (s, r) => s + r.plannedSpend);
 
-  void _setFasting(bool fasting) => setState(() {
-        _fasting = fasting;
-        if (fasting) {
-          _type = DayType.zero;
-          _amount.clear();
-        }
-      });
-
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     final changed = WeeklyRule(
@@ -165,7 +155,6 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
       label: _label.text.trim(),
       type: _type,
       plannedSpend: RinggitCentsFormatter.parse(_amount.text),
-      isFastingDay: _fasting,
     );
     final messenger = ScaffoldMessenger.of(context);
     final rules = ref.read(rulesProvider).value ?? [widget.rule];
@@ -246,14 +235,6 @@ class _RuleFormState extends ConsumerState<_RuleForm> {
                   enabled: !_plansNothing,
                   textInputAction: TextInputAction.done,
                 ),
-              ),
-              const SizedBox(height: AppSpacing.s),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Fasting day'),
-                subtitle: const Text('Makes it a no-spending day. Switch it to Spending to plan an amount anyway.'),
-                value: _fasting,
-                onChanged: _setFasting,
               ),
               const SizedBox(height: AppSpacing.l),
               FilledButton(onPressed: _save, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)), child: const Text('Save')),

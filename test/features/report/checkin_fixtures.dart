@@ -15,12 +15,12 @@ const categories = [
   Category(key: 'salary', label: 'Salary', isIncome: true, tint: 'sage', isFixed: true),
 ];
 
-// RM30.00 a week: Monday a fasting day, Thursday flexible, Saturday no spending.
+// RM30.00 a week, Saturday no spending.
 const rules = [
-  WeeklyRule(weekday: 1, label: 'Fast', type: DayType.spend, plannedSpend: 300, isFastingDay: true),
+  WeeklyRule(weekday: 1, label: 'Light', type: DayType.spend, plannedSpend: 300),
   WeeklyRule(weekday: 2, label: 'Workday', type: DayType.spend, plannedSpend: 600),
   WeeklyRule(weekday: 3, label: 'Workday', type: DayType.spend, plannedSpend: 600),
-  WeeklyRule(weekday: 4, label: 'Flex', type: DayType.flex, plannedSpend: 900),
+  WeeklyRule(weekday: 4, label: 'Busy', type: DayType.spend, plannedSpend: 900),
   WeeklyRule(weekday: 5, label: 'Workday', type: DayType.spend, plannedSpend: 600),
   WeeklyRule(weekday: 6, label: 'Rest', type: DayType.zero, plannedSpend: 0),
   WeeklyRule(weekday: 7, label: 'Rest', type: DayType.spend, plannedSpend: 0),

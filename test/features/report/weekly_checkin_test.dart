@@ -13,7 +13,7 @@ void main() {
     expect((w.spent, w.plan), (2150, 3000));
     expect([for (final c in w.categories) (c.key, c.label, c.amount)], [('food', 'Food', 1550), ('transport', 'Transport', 600)]);
     expect((w.finished.length, w.withinPlan, w.noSpendDays), (6, 6, 2));
-    expect([for (final r in w.rules) (r.name, r.kept)], [('Fast (Mon)', true), ('Flex (Thu)', true), ('Rest (Sat)', true)]);
+    expect([for (final r in w.rules) (r.name, r.kept)], [('Rest (Sat)', true)]);
     expect((w.change, w.withUnconfirmed, w.daysToGo), (left - 170000, left + 30000, 76));
     expect([for (final n in w.next) n.name], ['Birthday dinner', 'Salary', 'Bills']);
     // Next week's plan, the dinner and the 1st's pay and bills.
@@ -48,11 +48,11 @@ void main() {
     expect(w.days.map((d) => d.state).toList(), [...List.filled(4, CheckinDayState.noData), CheckinDayState.finished, CheckinDayState.finished, CheckinDayState.today]);
   });
 
-  test('a fasting day is broken only by Food spending', () {
-    final monday = d(10, 19);
-    bool fastKept(List<Entry> entries) => checkin(entries: entries, checkins: [lastWeek]).rules.firstWhere((r) => r.name == 'Fast (Mon)').kept;
-    expect(fastKept([spend(monday, 300, 'transport'), spend(monday, 5000, 'bills')]), isTrue);
-    expect(fastKept([spend(monday, 200, 'food')]), isFalse);
+  test("a no-spending day is kept only when nothing that was the user's call is spent", () {
+    final saturday = d(10, 24);
+    bool restKept(List<Entry> entries) => checkin(entries: entries, checkins: [lastWeek]).rules.firstWhere((r) => r.name == 'Rest (Sat)').kept;
+    expect(restKept([spend(saturday, 5000, 'bills')]), isTrue);
+    expect(restKept([spend(saturday, 200, 'food')]), isFalse);
   });
 
   test('a saved check-in today supplies the bank match, the untracked money and the next target', () {

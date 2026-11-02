@@ -48,12 +48,12 @@ void main() {
     await openDay(tester, 'Monday');
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Name'), 'Office day');
-    await tester.tap(find.text('Flexible'));
+    await tester.tap(find.text('Spending'));
     await tester.enterText(find.widgetWithText(TextFormField, 'Planned spend'), '1200');
     await save(tester);
 
     expect(find.textContaining('Planned in total: RM12.00 a week.'), findsOneWidget);
-    expect(find.text('Office day · Flexible'), findsOneWidget);
+    expect(find.text('Office day'), findsOneWidget);
     expect(find.text('Saved Monday: RM12.00'), findsOneWidget);
   });
 
@@ -108,21 +108,14 @@ void main() {
     expect(await planned(world), [0, 1000, 0, 0, 0, 0, 0]);
   });
 
-  testWidgets('a fasting day becomes a no-spending day at RM0', (tester) async {
-    final world = await pumpApp(tester, seed: spreadWeek);
+  testWidgets('a day is either a no-spending day or a spending day, with no fasting switch', (tester) async {
+    await pumpApp(tester);
     await openRhythm(tester);
     await openDay(tester, 'Monday');
-
-    await tester.tap(find.text('Fasting day'));
-    await tester.pump();
-    final amount = tester.widget<TextField>(find.descendant(of: find.widgetWithText(TextFormField, 'Planned spend'), matching: find.byType(TextField)));
-    expect((amount.enabled, amount.controller!.text), (false, ''));
-    await save(tester);
-
-    final monday = (await world.watchRules().first).first;
-    expect((monday.type, monday.plannedSpend, monday.isFastingDay), (DayType.zero, 0, true));
-    expect(find.text('Fasting'), findsOneWidget);
-    expect(find.text('RM0.00'), findsNothing);
+    expect(find.text('No spending'), findsWidgets);
+    expect(find.text('Spending'), findsOneWidget);
+    expect(find.text('Flexible'), findsNothing);
+    expect(find.text('Fasting day'), findsNothing);
   });
 
   testWidgets('an allowance the days do not add up to can be spread over them again', (tester) async {

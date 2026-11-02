@@ -8,7 +8,7 @@ import '../../opening/presentation/titanium_card.dart';
 import '../domain/weekly_checkin.dart';
 
 /// The check-in as a picture to share, in the app's own theme: the week's
-/// spending against the allowance, its days as dots, fasting kept, money
+/// spending against the allowance, its days as dots, money
 /// found untracked and how the goal moved. Drawn at [size], a 4:5 portrait
 /// that shares as 1080 × 1350 at three pixels a point. It is a picture, so
 /// its text keeps its own size whatever the phone's text setting; the
@@ -24,7 +24,6 @@ class CheckinCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final goal = w.goal;
-    final fasting = w.rules.where((r) => r.kind == RuleKind.fasting).toList();
     const figures = [FontFeature.tabularFigures()];
     return MediaQuery.withNoTextScaling(
       child: Container(
@@ -64,7 +63,6 @@ class CheckinCard extends StatelessWidget {
             Row(children: [for (final d in w.days) Expanded(child: _Dot(day: d))]),
             const Spacer(),
             Wrap(spacing: AppSpacing.s, runSpacing: AppSpacing.s, children: [
-              if (fasting.isNotEmpty) _Chip('Fasting ${fasting.where((r) => r.kept).length} of ${fasting.length} kept'),
               _Chip('Untracked ${Money.format(w.untracked)}'),
               if (w.needs > 0) _Chip('Not my call ${Money.format(w.needs)}, not counted'),
               if (w.finished.isNotEmpty) _Chip('${w.withinPlan} of ${w.finished.length} days within plan'),
@@ -98,7 +96,7 @@ class CheckinCard extends StatelessWidget {
 
 /// One day: filled when it kept to its plan, a ring when nothing was spent,
 /// red when it went over, dashed while it is still today, and faint before
-/// the first day or later in the week. A small mark tops a fasting day.
+/// the first day or later in the week.
 class _Dot extends StatelessWidget {
   const _Dot({required this.day});
 
@@ -107,7 +105,6 @@ class _Dot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final finished = day.state == CheckinDayState.finished;
     final decoration = switch (day.state) {
       CheckinDayState.today => BoxDecoration(shape: BoxShape.circle, border: Border.all(color: c.muted, width: 2)),
       CheckinDayState.noData || CheckinDayState.ahead => BoxDecoration(shape: BoxShape.circle, color: c.well),
@@ -118,19 +115,7 @@ class _Dot extends StatelessWidget {
     return Column(children: [
       SizedBox.square(
         dimension: 30,
-        child: Stack(clipBehavior: Clip.none, children: [
-          Positioned.fill(child: DecoratedBox(decoration: decoration)),
-          if (day.rule.isFastingDay && (finished || day.state == CheckinDayState.today))
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                width: 11,
-                height: 11,
-                decoration: BoxDecoration(color: c.keep, shape: BoxShape.circle, border: Border.all(color: c.background, width: 2)),
-              ),
-            ),
-        ]),
+        child: DecoratedBox(decoration: decoration),
       ),
       const SizedBox(height: AppSpacing.xs + 2),
       Text(Dates.weekday(day.date), style: TextStyle(color: c.muted, fontSize: 11, fontWeight: FontWeight.w600)),

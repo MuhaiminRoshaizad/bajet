@@ -23,7 +23,7 @@ void main() {
       '  Food RM15.50 · Transport RM6.00',
       'Days: 6 of 6 finished days within plan · 2 no-spend days',
       '  Today counts once it is over',
-      'Rules: Fast (Mon) kept · Flex (Thu) kept · Rest (Sat) kept',
+      'Rules: Rest (Sat) kept',
       '',
       'GOAL · Laptop · RM3,000.00 · Sat 09/01/2027 (76 days)',
       'Left after buying: ${Money.format(left)} (+${Money.format(left - 170000)} since last check-in)',
