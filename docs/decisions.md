@@ -333,6 +333,8 @@ key and still within 10 questions a day.
 
 ## 023: The coach suggests changes; only the user's tap makes them
 
+*Amended by 033, which widens what a card can do.*
+
 **Decided:** the coach can suggest logging a spend or income, moving money
 between accounts, or marking a bill paid. Each suggestion is checked by the
 app and shown as a card; nothing is written until the user taps it. The
@@ -504,7 +506,8 @@ without any of that.
 **Costs:** a new package, and a `<queries>` entry so Android 11 and later
 let bajet find an app for https links. The answer is only as fresh as the
 last look, so the preview shows the day beside it. The link stays on the
-phone and in backups, and the coach never sees it.
+phone and in backups. The coach reads only what the user last said about
+it and when, never the link.
 
 ## 032: Only wants count toward the allowance
 
@@ -525,3 +528,26 @@ shows how much family asked for.
 category's starting kind. Needs still leave the balance and show in
 Insights, but they no longer slow the week's dial, so Runway alone has to
 plan for them.
+
+## 033: The coach's cards do what the log sheet does
+
+**Decided:** a coach card logs a spend with its want or need, and pays a
+bill, receives income or spends from a planned event at the real amount,
+linked as the log sheet links them. Change details opens the log sheet
+filled in from the card. Two cards are added to 023's: fixing an entry
+already logged, and adding a planned event. The coach reads every lookup
+the app's screens rest on: events with their budgets, moves between
+accounts, categories and favourites, the check-in, and Runway's own sums
+for "what if". Deleting, settings, the rhythm, bills and goals stay by
+hand.
+
+**Why:** the coach was built before wants and needs, bill tiles and
+events had their place on the log sheet, so its cards wrote entries the
+rest of the app read wrongly: income it logged was counted twice by
+Runway, and bills it logged stayed due. Each card still waits for a tap
+and is checked again when tapped, so 023's reasons hold.
+
+**Costs:** more tools are sent with every request, so each question costs
+a little more on the user's key, and a card can now change an entry, not
+only add one; Undo puts it back.
+

@@ -32,9 +32,12 @@ own API key; without a key, nothing leaves the phone.
 - **Launcher shortcuts**: long-press the app icon to open the logger, empty
   or filled in from a favourite.
 - **Coach** answers questions about your money by looking up the figures it
-  needs, any week, month, entry, account or the plan, using your own
-  Anthropic key, up to ten a day. It can suggest logging a spend, moving money
-  or marking a bill paid, which happens only when you tap to confirm. Pick
+  needs, any week, month, entry, move, account, check-in or the plan, and
+  tries "what if" with Runway's own sums, using your own Anthropic key, up to
+  ten a day. It can suggest logging a spend as a want or a need, paying a
+  bill, spending from a planned event, moving money, fixing an entry or adding
+  an event, which happens only when you tap to confirm, or after you change
+  the details on the usual log sheet. Pick
   who coaches you, bajety the titanium orb or one of three finance people,
   and how they talk, from friendly to roasting; their face reacts as you
   chat, scroll and type. Chats are kept apart in a list you can search, pin,
