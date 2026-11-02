@@ -85,7 +85,8 @@ final coachDataProvider = Provider<CoachData?>((ref) {
   final events = ref.watch(eventsProvider).value;
   final bought = ref.watch(achievedGoalsProvider).value;
   final favourites = ref.watch(favouritesProvider).value;
-  if (favourites == null || settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
+  final moves = ref.watch(transfersProvider).value;
+  if (favourites == null || moves == null || settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
     return null;
   }
   return CoachData(
@@ -102,5 +103,6 @@ final coachDataProvider = Provider<CoachData?>((ref) {
     events: events,
     boughtGoals: bought,
     favourites: favourites,
+    moves: moves,
   );
 });

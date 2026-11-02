@@ -179,4 +179,31 @@ void main() {
     expect(text, isNot(contains('Untracked')));
     expect(text, contains('- Coffee: Food, RM5.50'));
   });
+
+  test('moves between accounts can be read, by days and by account', () {
+    final withMoves = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: const [],
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: data.rules,
+      recurring: const [],
+      projection: null,
+      upcoming: const [],
+      moves: [
+        Transfer(id: 2, day: d(10, 9), fromId: 1, toId: 2, amount: 5000, note: 'Top up'),
+        Transfer(id: 1, day: d(10, 2), fromId: 2, toId: 1, amount: 1000),
+        Transfer(id: 3, day: d(9, 2), fromId: 1, toId: 2, amount: 7000),
+      ],
+    );
+    final r = runLookup('bajet_moves', {'from': '2026-10-01', 'to': '2026-10-15'}, withMoves);
+    expect(r.text, '2 moves from 01/10/2026 to 15/10/2026, RM60.00 in all.\n'
+        '- 02/10/2026 · RM10.00 · Wallet to Main account\n'
+        '- 09/10/2026 · RM50.00 · Main account to Wallet · note: Top up');
+    expect(r.label, 'Moves · 01/10 to 15/10/2026');
+    expect(runLookup('bajet_moves', {'from': '2026-09-01', 'to': '2026-10-15', 'account': 'wallet'}, withMoves).text, startsWith('3 moves'));
+    expect(runLookup('bajet_moves', {'from': '2026-09-01', 'to': '2026-10-15', 'account': 'Swiss bank'}, withMoves).failed, isTrue);
+  });
 }
