@@ -81,7 +81,8 @@ final coachDataProvider = Provider<CoachData?>((ref) {
   final accounts = ref.watch(accountsProvider).value;
   final rules = ref.watch(rulesProvider).value;
   final recurring = ref.watch(recurringProvider).value;
-  if (settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null) {
+  final events = ref.watch(eventsProvider).value;
+  if (settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null) {
     return null;
   }
   return CoachData(
@@ -95,5 +96,6 @@ final coachDataProvider = Provider<CoachData?>((ref) {
     recurring: recurring,
     projection: ref.watch(projectionProvider),
     upcoming: ref.watch(upcomingProvider) ?? const [],
+    events: events,
   );
 });

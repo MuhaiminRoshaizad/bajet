@@ -24,6 +24,7 @@ class CoachData {
     required this.recurring,
     required this.projection,
     required this.upcoming,
+    this.events = const [],
   });
 
   final DateTime today;
@@ -36,6 +37,7 @@ class CoachData {
   final List<RecurringItem> recurring;
   final Projection? projection;
   final List<UpcomingItem> upcoming;
+  final List<PlannedEvent> events;
 }
 
 /// A read-only question the coach can ask bajet, in the shape Anthropic's

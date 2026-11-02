@@ -21,7 +21,7 @@ sealed class CoachProposal {
 }
 
 class LogProposal extends CoachProposal {
-  const LogProposal(this.draft, this.categoryName, this.accountName, {this.allowance});
+  const LogProposal(this.draft, this.categoryName, this.accountName, {this.allowance, this.billName, this.planned, this.billDue, this.eventName, this.budget, this.spent = 0});
 
   /// The row saying whether a spend is a want or a need.
   static const kindRow = 'Kind';
@@ -34,22 +34,50 @@ class LogProposal extends CoachProposal {
   /// that is a want or a need; null on any other card.
   final int? allowance;
 
+  /// The bill or income it settles, with its plan and the month it settles,
+  /// so a card that waited is not tapped into paying a month twice.
+  final String? billName;
+  final int? planned;
+  final DateTime? billDue;
+
+  /// The planned event it is for; an expense's budget and what is already
+  /// spent of it before this.
+  final String? eventName;
+  final int? budget;
+  final int spent;
+
   @override
-  String get question => draft.isIncome ? 'Log this income?' : 'Log this spend?';
+  String get question => switch ((billName, draft.isIncome)) {
+        (_?, true) => 'Mark this received?',
+        (_?, false) => 'Pay this bill?',
+        (null, true) => 'Log this income?',
+        (null, false) => 'Log this spend?',
+      };
   @override
   int get amount => draft.amount;
   @override
   List<(String, String)> get rows => [
-        ('What', [if (draft.label != null) draft.label!, categoryName].join(' · ')),
+        if (billName != null) ...[
+          (draft.isIncome ? 'Income' : 'Bill', billName!),
+          if (planned != null) ('Planned', Money.format(planned!)),
+        ] else if (eventName != null) ...[
+          ('For', eventName!),
+          if (budget != null) ('Budget left', '${Money.format((budget! - spent - draft.amount).clamp(0, budget!))} of ${Money.format(budget!)}'),
+        ] else
+          ('What', [if (draft.label != null) draft.label!, categoryName].join(' · ')),
         if (allowance != null) (kindRow, draft.spendKind == SpendKind.need ? 'Need' : 'Want'),
         (draft.isIncome ? 'Into' : 'From', accountName),
         ('Day', Dates.full(draft.day)),
       ];
   @override
-  String? get effect => switch (allowance) {
-        null => null,
-        final cap => draft.spendKind == SpendKind.need ? 'Stays out of your ${Money.format(cap)} allowance.' : 'Counts toward your ${Money.format(cap)} allowance.',
-      };
+  String? get effect {
+    if (billDue case final due?) return '$billName moves on to ${Dates.full(DateTime.utc(due.year, due.month + 1, due.day))}.';
+    if (budget != null) return 'Planned already, so it stays out of your allowance.';
+    return switch (allowance) {
+      null => null,
+      final cap => draft.spendKind == SpendKind.need ? 'Stays out of your ${Money.format(cap)} allowance.' : 'Counts toward your ${Money.format(cap)} allowance.',
+    };
+  }
 }
 
 class MoveProposal extends CoachProposal {
@@ -68,6 +96,9 @@ class MoveProposal extends CoachProposal {
   List<(String, String)> get rows => [('From', fromName), ('To', toName), ('Day', Dates.full(day))];
 }
 
+/// A bill marked paid at its planned amount. The coach no longer offers it,
+/// since a log card for the bill carries the real amount; it stays so cards
+/// already in a remembered chat still work.
 class BillPaidProposal extends CoachProposal {
   const BillPaidProposal(this.item);
 
@@ -100,14 +131,14 @@ class CoachCard {
   bool get canUndo => state == CardState.done && undoId != null;
 
   String get action => switch (proposal) {
-        LogProposal() => 'Log it',
+        LogProposal(:final draft) => draft.billId == null ? 'Log it' : (draft.isIncome ? 'Received' : 'Pay it'),
         MoveProposal() => 'Move it',
         BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Mark paid',
       };
 
   String get outcome => switch (state) {
         CardState.waiting => proposal.question,
-        CardState.done => switch (proposal) { LogProposal() => 'Logged', MoveProposal() => 'Moved', BillPaidProposal() => 'Marked paid' },
+        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal() => 'Marked paid' },
         CardState.declined => 'Not done',
         CardState.undone => 'Undone, nothing changed',
         CardState.outdated => 'Already changed elsewhere, nothing done',
@@ -121,7 +152,7 @@ Map<String, Object?> cardToJson(CoachCard c) => {
       'state': c.state.name,
       if (c.undoId != null) 'undoId': c.undoId,
       ...switch (c.proposal) {
-        LogProposal(:final draft, :final categoryName, :final accountName, :final allowance) => {
+        LogProposal(:final draft, :final categoryName, :final accountName, :final allowance, :final billName, :final planned, :final billDue, :final eventName, :final budget, :final spent) => {
             'kind': 'log',
             'day': _iso(draft.day),
             'income': draft.isIncome,
@@ -133,6 +164,14 @@ Map<String, Object?> cardToJson(CoachCard c) => {
             'accountName': accountName,
             'spendKind': draft.spendKind.name,
             'allowance': ?allowance,
+            'billId': ?draft.billId,
+            'billName': ?billName,
+            'planned': ?planned,
+            if (billDue != null) 'billDue': _iso(billDue),
+            if (draft.event case final link?) ...{'eventId': link.eventId, 'eventOn': _iso(link.on)},
+            'eventName': ?eventName,
+            'budget': ?budget,
+            if (spent != 0) 'spent': spent,
           },
         MoveProposal(:final fromId, :final toId, :final fromName, :final toName, :final amount, :final day, :final note) => {
             'kind': 'move',
@@ -172,10 +211,18 @@ CoachCard? cardFromJson(Map<String, Object?> j) {
             accountId: j['account'] as int?,
             // Cards saved before spends had a kind always logged wants.
             spendKind: SpendKind.values.asNameMap()[j['spendKind']] ?? SpendKind.want,
+            billId: j['billId'] as int?,
+            event: j['eventId'] == null ? null : EventLink(j['eventId']! as int, _day(j['eventOn']! as String)!),
           ),
           j['categoryName']! as String,
           j['accountName']! as String,
           allowance: j['allowance'] as int?,
+          billName: j['billName'] as String?,
+          planned: j['planned'] as int?,
+          billDue: j['billDue'] == null ? null : _day(j['billDue']! as String),
+          eventName: j['eventName'] as String?,
+          budget: j['budget'] as int?,
+          spent: j['spent'] as int? ?? 0,
         ),
       'move' => MoveProposal(
           fromId: j['from']! as int,
@@ -214,13 +261,16 @@ const proposalTools = [
     'Suggests logging one spend or income for the user to confirm. It does not log anything: the app shows the user a card with '
         'Log it and Not now, and only their tap writes it. Use it when the user asks you to log, record or add something. Give the '
         'amount in ringgit, the category by its name, and the account by its name if they said one. A day-to-day spend is a want or a '
-        'need, and only wants count toward the weekly allowance, so say which when you can tell.',
+        'need, and only wants count toward the weekly allowance, so say which when you can tell. When it pays a monthly bill, receives '
+        'monthly income or goes on a planned event, name that in for, with the real amount if they said one: only then does the plan '
+        'know it is settled, and Runway stops counting it.',
     {
       'type': 'object',
       'properties': {
         'kind': {'type': 'string', 'enum': ['spending', 'income']},
-        'amount_rm': {'type': 'number', 'description': 'The amount in ringgit, such as 12.5 for RM12.50.'},
-        'category': {'type': 'string', 'description': 'An existing category name, such as Food.'},
+        'amount_rm': {'type': 'number', 'description': 'The amount in ringgit, such as 12.5 for RM12.50. May be left out only with for, to use what is planned.'},
+        'category': {'type': 'string', 'description': 'An existing category name, such as Food. Leave out with for.'},
+        'for': {'type': 'string', 'description': 'The monthly bill, monthly income or planned event this settles or is spent on, named as bajet_plan lists it.'},
         'label': {'type': 'string', 'description': 'A short label, such as Lunch.'},
         'spend_kind': {
           'type': 'string',
@@ -231,7 +281,7 @@ const proposalTools = [
         'account': {'type': 'string', 'description': 'The account name; leave out for the first account.'},
         'day': {'type': 'string', 'description': 'The day as yyyy-mm-dd; leave out for today.'},
       },
-      'required': ['kind', 'amount_rm', 'category'],
+      'required': ['kind'],
     },
   ),
   CoachLookup(
@@ -247,18 +297,6 @@ const proposalTools = [
         'note': {'type': 'string'},
       },
       'required': ['amount_rm', 'from', 'to'],
-    },
-  ),
-  CoachLookup(
-    'bajet_propose_bill_paid',
-    'Suggests marking one monthly bill as paid, or one income as received, for the user to confirm; this logs it and moves it to '
-        'next month. It does nothing itself: the app shows a card and only the user\'s tap does it. Name the bill as bajet_plan lists it.',
-    {
-      'type': 'object',
-      'properties': {
-        'bill': {'type': 'string', 'description': 'The bill or income name.'},
-      },
-      'required': ['bill'],
     },
   ),
 ];
@@ -292,16 +330,27 @@ const proposalTools = [
 
   switch (name) {
     case 'bajet_propose_log':
-      final income = input['kind'] == 'income';
-      final sen = amount();
+      final wantedFor = text('for')?.toLowerCase();
+      final bill = d.recurring.where((r) => r.active && r.name.toLowerCase() == wantedFor).firstOrNull;
+      final event = bill != null ? null : d.events.where((e) => !e.done && e.name.toLowerCase() == wantedFor).firstOrNull;
+      if (wantedFor != null && bill == null && event == null) {
+        final names = [for (final r in d.recurring) if (r.active) r.name, for (final e in d.events) if (!e.done) e.name].join(', ');
+        return (no('there is no bill, income or planned event called "${text('for')}". They are: $names.'), null);
+      }
+      final income = bill?.isIncome ?? event?.isIncome ?? input['kind'] == 'income';
+      // What is planned, when the user gave no amount for what it settles.
+      final expected = bill?.amount ?? event?.outstanding ?? 0;
+      final sen = input.containsKey('amount_rm') || expected == 0 ? amount() : expected;
       if (sen == null) return (no('the amount must be more than RM0.00 and at most ${Money.format(proposalLimit)}.'), null);
+      // As the log sheet: a bill or event brings its own category.
       final wantedCategory = text('category')?.toLowerCase();
-      final category = d.categories.where((c) => c.isIncome == income && c.label.toLowerCase() == wantedCategory).firstOrNull;
+      final categoryKey = bill?.categoryKey ?? event?.categoryKey;
+      final category = d.categories.where((c) => categoryKey != null ? c.key == categoryKey : c.isIncome == income && c.label.toLowerCase() == wantedCategory).firstOrNull;
       if (category == null) {
         final names = d.categories.where((c) => c.isIncome == income).map((c) => c.label).join(', ');
-        return (no('there is no ${income ? 'income' : 'spending'} category called "${text('category')}". The categories are: $names.'), null);
+        return (no('there is no ${income ? 'income' : 'spending'} category called "${text('category') ?? categoryKey}". The categories are: $names.'), null);
       }
-      final accountId = account(text('account'));
+      final accountId = text('account') == null ? bill?.accountId ?? account(null) : account(text('account'));
       if (accountId == null) return (no('there is no account called "${text('account')}". The accounts are: $accountsList.'), null);
       final dayText = text('day');
       final day = dayText == null ? d.today : _day(dayText);
@@ -310,12 +359,33 @@ const proposalTools = [
       }
       // As the log sheet: a spend starts as its category's kind, and only
       // day-to-day spending asks.
-      final dayToDay = !income && !category.isFixed;
+      final dayToDay = !income && !category.isFixed && bill == null && event == null;
       final kind = (dayToDay ? SpendKind.values.asNameMap()[input['spend_kind']] : null) ?? category.spendKind;
-      final draft = EntryDraft(day: day, isIncome: income, amount: sen, categoryKey: category.key, label: text('label'), accountId: accountId, spendKind: kind);
-      final p = LogProposal(draft, category.label, called(accountId), allowance: dayToDay ? d.settings.weeklyCap : null);
+      final draft = EntryDraft(
+        day: day,
+        isIncome: income,
+        amount: sen,
+        categoryKey: category.key,
+        label: bill?.name ?? (event?.isIncome == true ? event!.name : text('label')),
+        accountId: accountId,
+        spendKind: kind,
+        billId: bill?.id,
+        event: event == null ? null : EventLink(event.id, event.date),
+      );
+      final p = LogProposal(
+        draft,
+        category.label,
+        called(accountId),
+        allowance: dayToDay ? d.settings.weeklyCap : null,
+        billName: bill?.name,
+        planned: bill?.amount,
+        billDue: bill?.nextDue,
+        eventName: event?.name,
+        budget: event != null && !event.isIncome ? event.amount : null,
+        spent: event?.spent ?? 0,
+      );
       final asKind = dayToDay ? ', as a ${kind.name}' : '';
-      return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${Money.format(sen)}$asKind. Nothing is logged unless they tap Log it.', 'A suggestion'), p);
+      return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${Money.format(sen)}$asKind. Nothing is logged unless they tap ${CoachCard(p).action}.', 'A suggestion'), p);
     case 'bajet_propose_move':
       final sen = amount();
       if (sen == null) return (no('the amount must be more than RM0.00 and at most ${Money.format(proposalLimit)}.'), null);
@@ -328,14 +398,6 @@ const proposalTools = [
       if (sen > holds) return (no('${called(from)} only holds ${Money.format(holds)}; the user can move more by hand.'), null);
       final p = MoveProposal(fromId: from, toId: to, fromName: called(from), toName: called(to), amount: sen, day: d.today, note: text('note'));
       return (LookupResult('Shown to the user as a card to confirm: move ${Money.format(sen)} from ${p.fromName} to ${p.toName}. Nothing moves unless they tap.', 'A suggestion'), p);
-    case 'bajet_propose_bill_paid':
-      final wanted = text('bill')?.toLowerCase();
-      final item = d.recurring.where((r) => r.active && r.name.toLowerCase() == wanted).firstOrNull;
-      if (item == null) {
-        return (no('there is no active bill or income called "${text('bill')}". They are: ${d.recurring.where((r) => r.active).map((r) => r.name).join(', ')}.'), null);
-      }
-      final p = BillPaidProposal(item);
-      return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${item.name}. Nothing changes unless they tap.', 'A suggestion'), p);
     default:
       return (no('there is no suggestion called $name.'), null);
   }

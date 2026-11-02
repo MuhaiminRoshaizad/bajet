@@ -80,8 +80,10 @@ void main() {
     expect(same.failed, isTrue);
   });
 
-  test('marking a bill paid needs an active bill of that name, and has no Undo', () {
-    final rent = RecurringItem(id: 7, name: 'Rent', amount: 50000, categoryKey: 'bills', isIncome: false, nextDue: d(11, 1));
+  test('a card for a bill, income or event settles it at the real amount', () {
+    final rent = RecurringItem(id: 7, name: 'Rent', amount: 50000, categoryKey: 'bills', isIncome: false, nextDue: d(11, 1), accountId: 2);
+    final pay = RecurringItem(id: 8, name: 'Pay', amount: 250000, categoryKey: 'salary', isIncome: true, nextDue: d(10, 15));
+    final dinner = PlannedEvent(id: 3, name: 'Dinner', amount: 30000, categoryKey: 'gifts', isIncome: false, date: d(11, 20), spent: 12000);
     final withBill = CoachData(
       today: data.today,
       settings: data.settings,
@@ -90,15 +92,46 @@ void main() {
       categories: data.categories,
       accounts: data.accounts,
       rules: data.rules,
-      recurring: [rent],
+      recurring: [rent, pay],
       projection: null,
       upcoming: const [],
+      events: [dinner],
     );
-    final (r, p) = propose('bajet_propose_bill_paid', {'bill': 'rent'}, withBill);
-    expect(r.failed, isFalse);
-    expect(CoachCard(p!, state: CardState.done).canUndo, isFalse);
-    final (none, _) = propose('bajet_propose_bill_paid', {'bill': 'Netflix'}, withBill);
-    expect(none.failed, isTrue);
+    LogProposal card(Map<String, Object?> input) => propose('bajet_propose_log', {'kind': 'spending', ...input}, withBill).$2! as LogProposal;
+
+    final paid = card({'for': 'rent', 'amount_rm': 492.4});
+    expect((paid.draft.billId, paid.draft.amount, paid.draft.categoryKey, paid.draft.accountId, paid.draft.label), (7, 49240, 'bills', 2, 'Rent'));
+    expect(paid.rows.take(2), [('Bill', 'Rent'), ('Planned', 'RM500.00')]);
+    expect(paid.effect, 'Rent moves on to 01/12/2026.');
+    expect((CoachCard(paid).outcome, CoachCard(paid).action), ('Pay this bill?', 'Pay it'));
+    expect(CoachCard(paid, state: CardState.done).outcome, 'Paid');
+    expect(card({'for': 'Rent'}).draft.amount, 50000, reason: 'no amount said: what is planned');
+
+    final received = card({'for': 'Pay', 'amount_rm': 2480});
+    expect((received.draft.isIncome, received.draft.billId, CoachCard(received).action), (true, 8, 'Received'));
+    expect(CoachCard(received, state: CardState.done).outcome, 'Received');
+
+    final spent = card({'for': 'dinner', 'amount_rm': 60, 'label': 'Cake', 'spend_kind': 'need'});
+    expect((spent.draft.event, spent.draft.billId, spent.draft.categoryKey, spent.draft.label), (EventLink(3, d(11, 20)), null, 'gifts', 'Cake'));
+    expect(spent.rows.take(2), [('For', 'Dinner'), ('Budget left', 'RM120.00 of RM300.00')]);
+    expect(spent.rows.map((r) => r.$1), isNot(contains('Kind')));
+    expect(spent.effect, 'Planned already, so it stays out of your allowance.');
+    expect(card({'for': 'Dinner'}).draft.amount, 18000, reason: 'no amount said: what is left of its budget');
+
+    final (none, nothing) = propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 5, 'for': 'Netflix'}, withBill);
+    expect((none.failed, nothing), (true, null));
+    expect(none.text, contains('They are: Rent, Pay, Dinner.'));
+
+    final back = cardFromJson(cardToJson(CoachCard(paid)))!.proposal as LogProposal;
+    expect((back.draft.billId, back.billDue, back.planned, back.effect), (7, d(11, 1), 50000, paid.effect));
+    final backEvent = cardFromJson(cardToJson(CoachCard(spent)))!.proposal as LogProposal;
+    expect((backEvent.draft.event, backEvent.spent, backEvent.rows[1]), (spent.draft.event, 12000, spent.rows[1]));
+  });
+
+  test('the coach no longer offers a card that can only log the plan', () {
+    expect(proposalTools.map((t) => t.name), isNot(contains('bajet_propose_bill_paid')));
+    final (r, p) = propose('bajet_propose_bill_paid', {'bill': 'Rent'}, data);
+    expect((r.failed, p), (true, null));
   });
 
   test('a card reads as what it will do, then as what happened', () {

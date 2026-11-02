@@ -219,7 +219,14 @@ class CoachController extends Notifier<CoachChat> {
   Future<void> _make(int message, int card, CoachCard c) async {
     final int? undoId;
     switch (c.proposal) {
-      case LogProposal(:final draft):
+      case LogProposal(:final draft, :final billDue):
+        // A card waits in the remembered chat for as long as the user likes;
+        // what it settles may have been settled from elsewhere meanwhile.
+        final bill = ref.read(recurringProvider).value?.where((r) => r.id == draft.billId).firstOrNull;
+        final event = ref.read(eventsProvider).value?.where((e) => e.id == draft.event?.eventId).firstOrNull;
+        final billGone = draft.billId != null && (bill == null || !bill.active || bill.nextDue != billDue);
+        final eventGone = draft.event != null && (event == null || event.done || event.date != draft.event!.on);
+        if (billGone || eventGone) return _setCard(message, card, c.copyWith(state: CardState.outdated));
         undoId = await ref.read(ledgerRepositoryProvider).add(draft);
       case MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note):
         undoId = await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note);
