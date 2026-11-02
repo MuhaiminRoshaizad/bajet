@@ -7,7 +7,9 @@ import '../../plan/domain/plan_models.dart';
 import '../../plan/domain/plan_repository.dart';
 import '../../plan/domain/projection.dart';
 import '../../plan/domain/upcoming.dart';
+import '../../checkin/domain/checkin.dart';
 import '../../report/domain/report.dart';
+import '../../report/domain/weekly_checkin.dart';
 import 'week_summary.dart';
 
 /// Everything the coach may read, as of one moment. The app builds it from
@@ -28,6 +30,8 @@ class CoachData {
     this.boughtGoals = const [],
     this.favourites = const [],
     this.moves = const [],
+    this.checkin,
+    this.checkins = const [],
   });
 
   final DateTime today;
@@ -48,6 +52,11 @@ class CoachData {
 
   /// Money moved between the user's own accounts.
   final List<Transfer> moves;
+
+  /// This week's check-in report, null until it can be worked out, and
+  /// every finished check-in, newest first.
+  final WeeklyCheckin? checkin;
+  final List<Checkin> checkins;
 }
 
 /// A read-only question the coach can ask bajet, in the shape Anthropic's
@@ -140,6 +149,14 @@ const coachLookups = [
     },
   ),
   CoachLookup(
+    'bajet_checkin',
+    "The Sunday check-in: this week's report, with the balance against the target the last check-in set, whether every account "
+        'matched the bank, money found untracked, the week against its allowance, the rhythm\'s rules kept or missed, the first goal, '
+        'the next seven days and the target to stay above, then past check-ins. Use it for questions about being on target, the '
+        'check-in or untracked money. It takes no input.',
+    _noInput,
+  ),
+  CoachLookup(
     'bajet_categories',
     'Every category the user can log to, each spending one with the kind it starts as, want or need, or marked fixed when it is '
         'planned spending kept out of the allowance, and their favourites: spends saved for one tap, with category and amount. Use it '
@@ -216,6 +233,8 @@ LookupResult runLookup(String name, Map<String, Object?> input, CoachData d) {
       return LookupResult(_plan(d, categories), 'Plan and goals');
     case 'bajet_moves':
       return _moves(input, d);
+    case 'bajet_checkin':
+      return LookupResult(_checkin(d), 'Check-in');
     case 'bajet_categories':
       return LookupResult(_categories(d, categories), 'Categories');
     default:
@@ -295,6 +314,17 @@ LookupResult _moves(Map<String, Object?> input, CoachData d) {
   ];
   return LookupResult(lines.join('\n'), ['Moves', if (named != null) named.called, Dates.span(from, to)].join(' · '));
 }
+
+String _checkin(CoachData d) => [
+      if (d.checkin case final w?) weeklyCheckinText(w) else "This week's check-in cannot be worked out yet.",
+      '',
+      'Past check-ins:',
+      if (d.checkins.isEmpty) '- None yet',
+      for (final c in d.checkins.take(8))
+        '- ${Dates.full(c.checkedOn)}: balance ${Money.format(c.balance)}, ${c.matched ? 'every account matched' : 'not every account matched'}'
+            '${c.untracked > 0 ? ', ${Money.format(c.untracked)} untracked' : ''}, wants ${Money.format(c.allowanceSpent)}, '
+            'target ${Money.format(c.nextTarget)} for ${Dates.full(c.targetOn)}',
+    ].join('\n');
 
 String _categories(CoachData d, Map<String, Category> categories) {
   final pickable = [for (final c in d.categories) if (!c.isAutomatic) c];

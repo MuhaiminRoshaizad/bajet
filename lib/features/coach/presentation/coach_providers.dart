@@ -5,6 +5,8 @@ import '../../accounts/presentation/account_providers.dart';
 import '../../ledger/presentation/ledger_providers.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../plan/presentation/runway_screen.dart';
+import '../../checkin/presentation/checkin_providers.dart';
+import '../../report/presentation/report_providers.dart';
 import '../data/anthropic_coach_client.dart';
 import '../data/drift_coach_chat_repository.dart';
 import '../data/drift_coach_settings_repository.dart';
@@ -86,7 +88,8 @@ final coachDataProvider = Provider<CoachData?>((ref) {
   final bought = ref.watch(achievedGoalsProvider).value;
   final favourites = ref.watch(favouritesProvider).value;
   final moves = ref.watch(transfersProvider).value;
-  if (favourites == null || moves == null || settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
+  final checkins = ref.watch(checkinsProvider).value;
+  if (checkins == null || favourites == null || moves == null || settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
     return null;
   }
   return CoachData(
@@ -104,5 +107,7 @@ final coachDataProvider = Provider<CoachData?>((ref) {
     boughtGoals: bought,
     favourites: favourites,
     moves: moves,
+    checkin: ref.watch(weeklyCheckinProvider),
+    checkins: checkins,
   );
 });

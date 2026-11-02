@@ -1,4 +1,5 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
+import 'package:bajet/features/checkin/domain/checkin.dart';
 import 'package:bajet/features/coach/domain/coach_lookups.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
@@ -205,5 +206,28 @@ void main() {
     expect(r.label, 'Moves · 01/10 to 15/10/2026');
     expect(runLookup('bajet_moves', {'from': '2026-09-01', 'to': '2026-10-15', 'account': 'wallet'}, withMoves).text, startsWith('3 moves'));
     expect(runLookup('bajet_moves', {'from': '2026-09-01', 'to': '2026-10-15', 'account': 'Swiss bank'}, withMoves).failed, isTrue);
+  });
+
+  test("the check-in lookup gives this week's report and the past ones", () {
+    final past = Checkin(checkedOn: d(10, 11), balance: 250000, matched: false, untracked: 1500, allowanceSpent: 3200, nextTarget: 245000);
+    final none = runLookup('bajet_checkin', const {}, data);
+    expect(none.text, contains("This week's check-in cannot be worked out yet."));
+    expect(none.text, contains('- None yet'));
+    final withPast = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: data.entries,
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: data.rules,
+      recurring: const [],
+      projection: null,
+      upcoming: const [],
+      checkins: [past],
+    );
+    final r = runLookup('bajet_checkin', const {}, withPast);
+    expect(r.text, contains('- 11/10/2026: balance RM2,500.00, not every account matched, RM15.00 untracked, wants RM32.00, target RM2,450.00 for 18/10/2026'));
+    expect(r.label, 'Check-in');
   });
 }
