@@ -13,6 +13,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
 import '../../../core/widgets/spring_menu.dart';
+import '../../ledger/presentation/spend_kind_choice.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
@@ -462,9 +463,21 @@ class _ProposalCard extends StatelessWidget {
               children: [
                 Text(label, style: TextStyle(color: c.muted)),
                 const SizedBox(width: AppSpacing.m),
-                Expanded(child: Text(value, textAlign: TextAlign.end, overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
+                    style: p is LogProposal && label == LogProposal.kindRow ? TextStyle(fontWeight: FontWeight.w700, color: p.draft.spendKind.colour(c)) : null,
+                  ),
+                ),
               ],
             ),
+          ),
+        if (p.effect case final effect?)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s),
+            child: Text(effect, style: TextStyle(color: c.muted, fontSize: 13)),
           ),
         if (card.state == CardState.waiting) ...[
           const SizedBox(height: AppSpacing.m),

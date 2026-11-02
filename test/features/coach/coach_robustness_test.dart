@@ -1,5 +1,6 @@
 import 'package:bajet/features/coach/presentation/coach_controller.dart';
 import 'package:bajet/features/coach/presentation/coach_chat_screen.dart';
+import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,6 +33,17 @@ void main() {
     coach.confirm(at, 0);
     await tester.pumpAndSettle();
     expect(world.entries.where((e) => e.label == 'Lunch'), hasLength(1));
+  });
+
+  testWidgets('a card says a spend is a need, logs it as one, and leaves the allowance alone', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': 'Personal', 'label': 'Shampoo', 'spend_kind': 'need'}));
+    await ask(tester, 'Log RM18 shampoo, I ran out');
+    expect(find.text('Need'), findsOneWidget);
+    expect(find.textContaining('Stays out of your'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Log it'));
+    await tester.pumpAndSettle();
+    expect(world.entries.singleWhere((e) => e.label == 'Shampoo').spendKind, SpendKind.need);
   });
 
   testWidgets('a bill already paid from the Plan tab is not paid again from an old card', (tester) async {

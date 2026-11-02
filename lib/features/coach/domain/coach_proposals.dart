@@ -15,14 +15,24 @@ sealed class CoachProposal {
   /// The amount in large type, then label and value rows.
   int get amount;
   List<(String, String)> get rows;
+
+  /// A line under the rows saying what it does to the plan, if anything.
+  String? get effect => null;
 }
 
 class LogProposal extends CoachProposal {
-  const LogProposal(this.draft, this.categoryName, this.accountName);
+  const LogProposal(this.draft, this.categoryName, this.accountName, {this.allowance});
+
+  /// The row saying whether a spend is a want or a need.
+  static const kindRow = 'Kind';
 
   final EntryDraft draft;
   final String categoryName;
   final String accountName;
+
+  /// The weekly allowance, on a card for day-to-day spending, the only kind
+  /// that is a want or a need; null on any other card.
+  final int? allowance;
 
   @override
   String get question => draft.isIncome ? 'Log this income?' : 'Log this spend?';
@@ -31,9 +41,15 @@ class LogProposal extends CoachProposal {
   @override
   List<(String, String)> get rows => [
         ('What', [if (draft.label != null) draft.label!, categoryName].join(' · ')),
+        if (allowance != null) (kindRow, draft.spendKind == SpendKind.need ? 'Need' : 'Want'),
         (draft.isIncome ? 'Into' : 'From', accountName),
         ('Day', Dates.full(draft.day)),
       ];
+  @override
+  String? get effect => switch (allowance) {
+        null => null,
+        final cap => draft.spendKind == SpendKind.need ? 'Stays out of your ${Money.format(cap)} allowance.' : 'Counts toward your ${Money.format(cap)} allowance.',
+      };
 }
 
 class MoveProposal extends CoachProposal {
@@ -105,7 +121,7 @@ Map<String, Object?> cardToJson(CoachCard c) => {
       'state': c.state.name,
       if (c.undoId != null) 'undoId': c.undoId,
       ...switch (c.proposal) {
-        LogProposal(:final draft, :final categoryName, :final accountName) => {
+        LogProposal(:final draft, :final categoryName, :final accountName, :final allowance) => {
             'kind': 'log',
             'day': _iso(draft.day),
             'income': draft.isIncome,
@@ -115,6 +131,8 @@ Map<String, Object?> cardToJson(CoachCard c) => {
             'account': draft.accountId,
             'categoryName': categoryName,
             'accountName': accountName,
+            'spendKind': draft.spendKind.name,
+            'allowance': ?allowance,
           },
         MoveProposal(:final fromId, :final toId, :final fromName, :final toName, :final amount, :final day, :final note) => {
             'kind': 'move',
@@ -152,9 +170,12 @@ CoachCard? cardFromJson(Map<String, Object?> j) {
             categoryKey: j['category']! as String,
             label: j['label'] as String?,
             accountId: j['account'] as int?,
+            // Cards saved before spends had a kind always logged wants.
+            spendKind: SpendKind.values.asNameMap()[j['spendKind']] ?? SpendKind.want,
           ),
           j['categoryName']! as String,
           j['accountName']! as String,
+          allowance: j['allowance'] as int?,
         ),
       'move' => MoveProposal(
           fromId: j['from']! as int,
@@ -192,7 +213,8 @@ const proposalTools = [
     'bajet_propose_log',
     'Suggests logging one spend or income for the user to confirm. It does not log anything: the app shows the user a card with '
         'Log it and Not now, and only their tap writes it. Use it when the user asks you to log, record or add something. Give the '
-        'amount in ringgit, the category by its name, and the account by its name if they said one.',
+        'amount in ringgit, the category by its name, and the account by its name if they said one. A day-to-day spend is a want or a '
+        'need, and only wants count toward the weekly allowance, so say which when you can tell.',
     {
       'type': 'object',
       'properties': {
@@ -200,6 +222,12 @@ const proposalTools = [
         'amount_rm': {'type': 'number', 'description': 'The amount in ringgit, such as 12.5 for RM12.50.'},
         'category': {'type': 'string', 'description': 'An existing category name, such as Food.'},
         'label': {'type': 'string', 'description': 'A short label, such as Lunch.'},
+        'spend_kind': {
+          'type': 'string',
+          'enum': ['want', 'need'],
+          'description': 'For a spend: need if it would be bought anyway or was asked for, want if the user chose it and could have skipped it or waited without harm. '
+              "Leave out when unsure, for the category's usual kind.",
+        },
         'account': {'type': 'string', 'description': 'The account name; leave out for the first account.'},
         'day': {'type': 'string', 'description': 'The day as yyyy-mm-dd; leave out for today.'},
       },
@@ -280,9 +308,14 @@ const proposalTools = [
       if (day == null || day.isAfter(d.today) || day.isBefore(DateTime.utc(d.today.year - 1, d.today.month, d.today.day))) {
         return (no('the day must be yyyy-mm-dd, no later than today and within the last year.'), null);
       }
-      final draft = EntryDraft(day: day, isIncome: income, amount: sen, categoryKey: category.key, label: text('label'), accountId: accountId);
-      final p = LogProposal(draft, category.label, called(accountId));
-      return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${Money.format(sen)}. Nothing is logged unless they tap Log it.', 'A suggestion'), p);
+      // As the log sheet: a spend starts as its category's kind, and only
+      // day-to-day spending asks.
+      final dayToDay = !income && !category.isFixed;
+      final kind = (dayToDay ? SpendKind.values.asNameMap()[input['spend_kind']] : null) ?? category.spendKind;
+      final draft = EntryDraft(day: day, isIncome: income, amount: sen, categoryKey: category.key, label: text('label'), accountId: accountId, spendKind: kind);
+      final p = LogProposal(draft, category.label, called(accountId), allowance: dayToDay ? d.settings.weeklyCap : null);
+      final asKind = dayToDay ? ', as a ${kind.name}' : '';
+      return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${Money.format(sen)}$asKind. Nothing is logged unless they tap Log it.', 'A suggestion'), p);
     case 'bajet_propose_move':
       final sen = amount();
       if (sen == null) return (no('the amount must be more than RM0.00 and at most ${Money.format(proposalLimit)}.'), null);
