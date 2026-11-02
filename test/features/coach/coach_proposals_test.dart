@@ -64,6 +64,28 @@ void main() {
     expect(r2.text, contains('The accounts are: Main account, Wallet.'));
   });
 
+  test('with no account named, a card uses the one last logged to, as the log sheet does', () {
+    CoachData withEntries(List<Entry> entries) => CoachData(
+          today: data.today,
+          settings: data.settings,
+          balance: data.balance,
+          entries: entries,
+          categories: data.categories,
+          accounts: data.accounts,
+          rules: data.rules,
+          recurring: const [],
+          projection: null,
+          upcoming: const [],
+        );
+    int? used(List<Entry> entries) => (propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 5, 'category': 'Food'}, withEntries(entries)).$2! as LogProposal).draft.accountId;
+    Entry entry(int id, DateTime day, int? account) => Entry(id: id, day: day, isIncome: false, amount: 100, categoryKey: 'food', accountId: account);
+
+    expect(used([entry(1, d(10, 1), 1), entry(2, d(10, 9), 2)]), 2);
+    expect(used([entry(2, d(10, 9), 2), entry(1, d(10, 1), 1)]), 2, reason: 'newest wins, in any order');
+    expect(used(const []), 1, reason: 'nothing logged yet: the first account');
+    expect(used([entry(1, d(10, 1), 99)]), 1, reason: 'that account has since gone');
+  });
+
   test('the categories only the app logs to are not offered, as on the log sheet', () {
     for (final category in ['Goals', 'Untracked']) {
       final (r, p) = propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 5, 'category': category}, data);

@@ -278,7 +278,7 @@ const proposalTools = [
           'description': 'For a spend: need if it would be bought anyway or was asked for, want if the user chose it and could have skipped it or waited without harm. '
               "Leave out when unsure, for the category's usual kind.",
         },
-        'account': {'type': 'string', 'description': 'The account name; leave out for the first account.'},
+        'account': {'type': 'string', 'description': 'The account name; leave out for the one the user last logged to.'},
         'day': {'type': 'string', 'description': 'The day as yyyy-mm-dd; leave out for today.'},
       },
       'required': ['kind'],
@@ -318,7 +318,11 @@ const proposalTools = [
 
   int? account(String? wanted) {
     if (d.accounts.isEmpty) return null;
-    if (wanted == null) return d.accounts.first.id;
+    // As the log sheet: most money goes where the last of it went.
+    if (wanted == null) {
+      final last = d.entries.isEmpty ? null : d.entries.reduce((a, b) => a.day.compareTo(b.day) != 0 ? (a.day.isAfter(b.day) ? a : b) : (a.id > b.id ? a : b)).accountId;
+      return d.accounts.any((a) => a.id == last) ? last : d.accounts.first.id;
+    }
     for (final a in d.accounts) {
       if (a.called.toLowerCase() == wanted.toLowerCase() || a.name.toLowerCase() == wanted.toLowerCase()) return a.id;
     }
