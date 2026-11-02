@@ -32,6 +32,7 @@ class CoachData {
     this.moves = const [],
     this.checkin,
     this.checkins = const [],
+    this.goals = const [],
   });
 
   final DateTime today;
@@ -57,6 +58,9 @@ class CoachData {
   /// every finished check-in, newest first.
   final WeeklyCheckin? checkin;
   final List<Checkin> checkins;
+
+  /// Goals still being saved for, which a what-if runs Runway over.
+  final List<Goal> goals;
 }
 
 /// A read-only question the coach can ask bajet, in the shape Anthropic's
@@ -157,6 +161,23 @@ const coachLookups = [
     _noInput,
   ),
   CoachLookup(
+    'bajet_what_if',
+    "Runs Runway's own sums with a change that is not saved: a one-off spend, or money in, on a day; more or less day-to-day "
+        'spending each week; a new monthly cost; or counting income that is not yet confirmed. Says what each goal would leave after '
+        'buying, against now and the buffer, the lowest the balance would go, and what is left of this week\'s allowance. Use it for '
+        '"can I afford this" and "what if" questions instead of working the sums out yourself. Give at least one change.',
+    {
+      'type': 'object',
+      'properties': {
+        'one_off_rm': {'type': 'number', 'description': 'A one-off amount in ringgit: positive for a spend, negative for money coming in.'},
+        'one_off_day': {'type': 'string', 'description': 'The day of the one-off as yyyy-mm-dd; leave out for today.'},
+        'weekly_change_rm': {'type': 'number', 'description': 'Ringgit more (or, negative, less) day-to-day spending every week from today.'},
+        'monthly_cost_rm': {'type': 'number', 'description': 'A new cost on the 1st of every month, such as a subscription, in ringgit.'},
+        'count_unconfirmed': {'type': 'boolean', 'description': 'Also count planned income and costs marked as not counted.'},
+      },
+    },
+  ),
+  CoachLookup(
     'bajet_categories',
     'Every category the user can log to, each spending one with the kind it starts as, want or need, or marked fixed when it is '
         'planned spending kept out of the allowance, and their favourites: spends saved for one tap, with category and amount. Use it '
@@ -235,6 +256,8 @@ LookupResult runLookup(String name, Map<String, Object?> input, CoachData d) {
       return _moves(input, d);
     case 'bajet_checkin':
       return LookupResult(_checkin(d), 'Check-in');
+    case 'bajet_what_if':
+      return _whatIf(input, d);
     case 'bajet_categories':
       return LookupResult(_categories(d, categories), 'Categories');
     default:
@@ -313,6 +336,61 @@ LookupResult _moves(Map<String, Object?> input, CoachData d) {
     if (picked.length > cap) '(${picked.length - cap} more not listed; ask for a shorter span.)',
   ];
   return LookupResult(lines.join('\n'), ['Moves', if (named != null) named.called, Dates.span(from, to)].join(' · '));
+}
+
+LookupResult _whatIf(Map<String, Object?> input, CoachData d) {
+  LookupResult no(String why) => LookupResult(why, 'What if', failed: true);
+  int? sen(String key) => switch (input[key]) { num n => (n * 100).round(), _ => null };
+  final oneOff = sen('one_off_rm') ?? 0, weekly = sen('weekly_change_rm') ?? 0, monthly = sen('monthly_cost_rm') ?? 0;
+  final unconfirmed = input['count_unconfirmed'] == true;
+  if (oneOff == 0 && weekly == 0 && monthly == 0 && !unconfirmed) return no('Give at least one change.');
+  if ([oneOff, weekly, monthly].any((a) => a.abs() > 10000000)) return no('Each amount must be at most RM100,000.00.');
+  final dayText = _text(input['one_off_day']);
+  final on = dayText == null ? d.today : _day(dayText);
+  if (on == null || on.isBefore(d.today) || on.isAfter(DateTime.utc(d.today.year + 2, d.today.month, d.today.day))) {
+    return no('one_off_day must be yyyy-mm-dd, from today to two years ahead.');
+  }
+  final fixed = {for (final c in d.categories) if (c.isFixed) c.key};
+  Projection run(WhatIf whatIf, List<PlannedEvent> extra) => project(
+        balance: d.balance,
+        today: d.today,
+        rules: d.rules,
+        recurring: d.recurring,
+        events: [...d.events, ...extra],
+        goals: d.goals,
+        buffer: d.settings.buffer,
+        flexSpentToday: wantsSpent(d.entries, fixed, d.today, d.today),
+        needsReserve: d.settings.needsReserve,
+        whatIf: whatIf,
+      );
+  final now = run(WhatIf.none, const []);
+  final changed = run(
+    WhatIf(weeklyChange: weekly, monthlyCost: monthly, countUnconfirmed: unconfirmed),
+    [if (oneOff != 0) PlannedEvent(id: -1, name: 'What if', amount: oneOff.abs(), categoryKey: 'other', isIncome: oneOff < 0, date: on)],
+  );
+  String signed(int sen) => '${sen < 0 ? '−' : '+'}${Money.format(sen.abs())}';
+  final lowest = changed.days.reduce((a, b) => b.balance < a.balance ? b : a);
+  final weekLeft = d.settings.weeklyCap - wantsSpent(d.entries, fixed, weekStart(d.today), d.today);
+  final change = [
+    if (oneOff != 0) '${oneOff > 0 ? 'a one-off spend of' : 'one-off money in of'} ${Money.format(oneOff.abs())} on ${Dates.full(on)}',
+    if (weekly != 0) '${Money.format(weekly.abs())} ${weekly > 0 ? 'more' : 'less'} day-to-day spending a week',
+    if (monthly != 0) 'a new ${Money.format(monthly)} cost every month',
+    if (unconfirmed) 'unconfirmed income and costs counted',
+  ];
+  final lines = [
+    'With ${change.join(', ')}:',
+    if (changed.goals.isEmpty)
+      '- On ${Dates.full(changed.days.last.date)}: ${Money.format(changed.days.last.balance)}, against ${Money.format(now.days.last.balance)} without it',
+    for (final (i, g) in changed.goals.indexed)
+      () {
+        final before = now.goals.length > i ? now.goals[i].leftAfterBuying : g.leftAfterBuying;
+        return '- ${g.goal.name} on ${Dates.full(g.goal.targetDate)}: ${Money.format(g.leftAfterBuying)} left after buying, against '
+            '${Money.format(before)} now (${signed(g.leftAfterBuying - before)}); ${g.onTrack ? 'still at or above' : 'below'} the ${Money.format(d.settings.buffer)} buffer';
+      }(),
+    '- Lowest balance: ${Money.format(lowest.balance)} on ${Dates.full(lowest.date)}${lowest.balance < d.settings.buffer ? ', under the buffer' : ''}',
+    "- This week's allowance has ${weekLeft >= 0 ? '${Money.format(weekLeft)} left' : '${Money.format(-weekLeft)} gone over'} before any of this",
+  ];
+  return LookupResult(lines.join('\n'), 'What if');
 }
 
 String _checkin(CoachData d) => [

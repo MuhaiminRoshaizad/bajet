@@ -1,5 +1,6 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/checkin/domain/checkin.dart';
+import 'package:bajet/core/money/money.dart';
 import 'package:bajet/features/coach/domain/coach_lookups.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
@@ -229,5 +230,38 @@ void main() {
     final r = runLookup('bajet_checkin', const {}, withPast);
     expect(r.text, contains('- 11/10/2026: balance RM2,500.00, not every account matched, RM15.00 untracked, wants RM32.00, target RM2,450.00 for 18/10/2026'));
     expect(r.label, 'Check-in');
+  });
+
+  test("what-if runs Runway's sums, so a treat is answered with real figures", () {
+    final bike = Goal(id: 1, name: 'Bicycle', price: 20000, targetDate: d(12, 20));
+    CoachData withGoals(List<Goal> goals) => CoachData(
+          today: data.today,
+          settings: data.settings,
+          balance: data.balance,
+          entries: data.entries,
+          categories: data.categories,
+          accounts: data.accounts,
+          rules: data.rules,
+          recurring: const [],
+          projection: null,
+          upcoming: const [],
+          goals: goals,
+        );
+    final now = project(balance: data.balance, today: data.today, rules: data.rules, recurring: const [], events: const [], goals: [bike], buffer: 50000, flexSpentToday: 0)
+        .goals
+        .single
+        .leftAfterBuying;
+    final r = runLookup('bajet_what_if', {'one_off_rm': 50}, withGoals([bike]));
+    expect(r.failed, isFalse);
+    expect(r.text, startsWith('With a one-off spend of RM50.00 on 15/10/2026:'));
+    expect(r.text, contains('- Bicycle on 20/12/2026: ${Money.format(now - 5000)} left after buying, against ${Money.format(now)} now (−RM50.00); still at or above the RM500.00 buffer'));
+    expect(r.text, contains("This week's allowance has RM32.00 left before any of this"));
+
+    final weekly = runLookup('bajet_what_if', {'weekly_change_rm': -10, 'monthly_cost_rm': 30}, withGoals([bike])).text;
+    expect(weekly, contains('RM10.00 less day-to-day spending a week, a new RM30.00 cost every month'));
+    expect(runLookup('bajet_what_if', {'one_off_rm': 50}, withGoals(const [])).text, contains('without it'));
+    for (final bad in [<String, Object?>{}, {'one_off_rm': 50, 'one_off_day': '2026-10-01'}, {'monthly_cost_rm': 200000}]) {
+      expect(runLookup('bajet_what_if', bad, withGoals([bike])).failed, isTrue, reason: '$bad');
+    }
   });
 }
