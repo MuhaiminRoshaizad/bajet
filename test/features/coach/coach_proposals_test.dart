@@ -207,4 +207,26 @@ void main() {
     expect((back.after.spendKind, back.before.spendKind, back.effect), (SpendKind.need, SpendKind.want, change.effect));
     expect(back.rows, change.rows);
   });
+
+  test('an event card says what it does to Runway, and refuses what cannot be planned', () {
+    final (r, p) = propose('bajet_propose_event', {'name': 'Dinner', 'kind': 'spending', 'amount_rm': 300, 'category': 'Gifts', 'day': '2026-11-20', 'yearly': true}, data);
+    expect(r.failed, isFalse);
+    final event = p! as EventProposal;
+    expect(event.rows, [('What', 'Dinner · Gifts'), ('On', '20/11/2026'), ('Repeats', 'Every year'), ('Runway', 'Counts it')]);
+    expect(event.effect, startsWith('On '));
+    expect(event.effect, contains(', was '));
+    final (_, maybe) = propose('bajet_propose_event', {'name': 'Bonus', 'kind': 'income', 'amount_rm': 500, 'category': 'Refund', 'day': '2026-12-01', 'counted': false}, data);
+    expect(maybe!.effect, 'Runway leaves it out until it is counted.');
+    for (final bad in [
+      <String, Object?>{'name': 'Late', 'kind': 'spending', 'amount_rm': 5, 'category': 'Food', 'day': '2026-10-01'},
+      {'name': 'X', 'kind': 'spending', 'amount_rm': 5, 'category': 'Goals', 'day': '2026-11-01'},
+      {'kind': 'spending', 'amount_rm': 5, 'category': 'Food', 'day': '2026-11-01'},
+    ]) {
+      final (no, none) = propose('bajet_propose_event', bad, data);
+      expect((no.failed, none), (true, null), reason: '$bad');
+    }
+    final back = cardFromJson(cardToJson(CoachCard(event)))!.proposal as EventProposal;
+    expect((back.name, back.yearly, back.effect), ('Dinner', true, event.effect));
+    expect(back.rows, event.rows);
+  });
 }

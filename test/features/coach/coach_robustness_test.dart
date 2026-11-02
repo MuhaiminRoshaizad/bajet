@@ -115,6 +115,20 @@ void main() {
     expect(find.text('Already changed elsewhere, nothing done'), findsOneWidget);
   });
 
+  testWidgets('an event card adds the event, and Undo takes it away', (tester) async {
+    final world = await openCoach(tester);
+    final day = DateTime.utc(testToday.year, testToday.month, testToday.day + 10);
+    final iso = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+    world.coach.lookups.add(('bajet_propose_event', {'name': 'Dinner', 'kind': 'spending', 'amount_rm': 300, 'category': 'Gifts', 'day': iso}));
+    await ask(tester, 'Add a RM300 dinner to my plan');
+    await tester.tap(find.widgetWithText(FilledButton, 'Add it'));
+    await tester.pumpAndSettle();
+    expect((world.events.single.name, world.events.single.amount, world.events.single.date), ('Dinner', 30000, day));
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.events, isEmpty);
+  });
+
   testWidgets('a card pays a bill at the real amount and moves it on, and Undo takes both back', (tester) async {
     final due = DateTime.utc(testToday.year, testToday.month, testToday.day + 3);
     final world = await openCoach(tester, seed: (w) async {

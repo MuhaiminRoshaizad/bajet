@@ -351,22 +351,11 @@ LookupResult _whatIf(Map<String, Object?> input, CoachData d) {
     return no('one_off_day must be yyyy-mm-dd, from today to two years ahead.');
   }
   final fixed = {for (final c in d.categories) if (c.isFixed) c.key};
-  Projection run(WhatIf whatIf, List<PlannedEvent> extra) => project(
-        balance: d.balance,
-        today: d.today,
-        rules: d.rules,
-        recurring: d.recurring,
-        events: [...d.events, ...extra],
-        goals: d.goals,
-        buffer: d.settings.buffer,
-        flexSpentToday: wantsSpent(d.entries, fixed, d.today, d.today),
-        needsReserve: d.settings.needsReserve,
-        whatIf: whatIf,
-      );
-  final now = run(WhatIf.none, const []);
-  final changed = run(
-    WhatIf(weeklyChange: weekly, monthlyCost: monthly, countUnconfirmed: unconfirmed),
-    [if (oneOff != 0) PlannedEvent(id: -1, name: 'What if', amount: oneOff.abs(), categoryKey: 'other', isIncome: oneOff < 0, date: on)],
+  final now = runway(d);
+  final changed = runway(
+    d,
+    whatIf: WhatIf(weeklyChange: weekly, monthlyCost: monthly, countUnconfirmed: unconfirmed),
+    extra: [if (oneOff != 0) PlannedEvent(id: -1, name: 'What if', amount: oneOff.abs(), categoryKey: 'other', isIncome: oneOff < 0, date: on)],
   );
   String signed(int sen) => '${sen < 0 ? '−' : '+'}${Money.format(sen.abs())}';
   final lowest = changed.days.reduce((a, b) => b.balance < a.balance ? b : a);
@@ -391,6 +380,24 @@ LookupResult _whatIf(Map<String, Object?> input, CoachData d) {
     "- This week's allowance has ${weekLeft >= 0 ? '${Money.format(weekLeft)} left' : '${Money.format(-weekLeft)} gone over'} before any of this",
   ];
   return LookupResult(lines.join('\n'), 'What if');
+}
+
+/// Runway over [d] as the app runs it, with [whatIf] and [extra] events
+/// tried on top without being saved.
+Projection runway(CoachData d, {WhatIf whatIf = WhatIf.none, List<PlannedEvent> extra = const []}) {
+  final fixed = {for (final c in d.categories) if (c.isFixed) c.key};
+  return project(
+    balance: d.balance,
+    today: d.today,
+    rules: d.rules,
+    recurring: d.recurring,
+    events: [...d.events, ...extra],
+    goals: d.goals,
+    buffer: d.settings.buffer,
+    flexSpentToday: wantsSpent(d.entries, fixed, d.today, d.today),
+    needsReserve: d.settings.needsReserve,
+    whatIf: whatIf,
+  );
 }
 
 String _checkin(CoachData d) => [

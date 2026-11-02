@@ -234,6 +234,16 @@ class CoachController extends Notifier<CoachChat> {
         if (now == null || !_sameEntry(now, before)) return _setCard(message, card, c.copyWith(state: CardState.outdated));
         await ref.read(ledgerRepositoryProvider).update(after);
         undoId = after.id;
+      case EventProposal() && final p:
+        undoId = await ref.read(planRepositoryProvider).addEvent(
+              name: p.name,
+              isIncome: p.isIncome,
+              amount: p.amount,
+              categoryKey: p.categoryKey,
+              date: p.date,
+              countInProjection: p.counted,
+              repeatsYearly: p.yearly,
+            );
       case BillPaidProposal(:final item):
         // A card waits in the remembered chat for as long as the user likes;
         // a bill paid meanwhile from the Plan tab is not paid again.
@@ -341,6 +351,8 @@ class CoachController extends Notifier<CoachChat> {
         await ref.read(accountRepositoryProvider).deleteTransfer(c.undoId!);
       case ChangeProposal(:final before):
         await ref.read(ledgerRepositoryProvider).update(before);
+      case EventProposal():
+        await ref.read(planRepositoryProvider).deleteEvent(c.undoId!);
     }
     await _setCard(message, card, c.copyWith(state: CardState.undone));
   }

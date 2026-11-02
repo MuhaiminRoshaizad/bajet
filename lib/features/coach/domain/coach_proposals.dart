@@ -172,6 +172,45 @@ class ChangeProposal extends CoachProposal {
   }
 }
 
+/// A planned event to add, with what it does to Runway.
+class EventProposal extends CoachProposal {
+  const EventProposal({
+    required this.name,
+    required this.amount,
+    required this.isIncome,
+    required this.categoryKey,
+    required this.categoryName,
+    required this.date,
+    this.yearly = false,
+    this.counted = true,
+    this.runway,
+  });
+
+  final String name;
+  @override
+  final int amount;
+  final bool isIncome;
+  final String categoryKey, categoryName;
+  final DateTime date;
+  final bool yearly, counted;
+
+  /// What Runway expects with it against without it, worked out when the
+  /// card was made.
+  final String? runway;
+
+  @override
+  String get question => 'Add this planned event?';
+  @override
+  List<(String, String)> get rows => [
+        ('What', '$name · $categoryName'),
+        ('On', Dates.full(date)),
+        if (yearly) ('Repeats', 'Every year'),
+        ('Runway', counted ? 'Counts it' : 'Leaves it out'),
+      ];
+  @override
+  String? get effect => runway;
+}
+
 String _kindName(SpendKind k) => k == SpendKind.need ? 'Need' : 'Want';
 
 /// Where a card stands. [outdated] is a card that would no longer do what it
@@ -196,11 +235,12 @@ class CoachCard {
         MoveProposal() => 'Move it',
         BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Mark paid',
         ChangeProposal() => 'Change it',
+        EventProposal() => 'Add it',
       };
 
   String get outcome => switch (state) {
         CardState.waiting => proposal.question,
-        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid', ChangeProposal() => 'Changed' },
+        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid', ChangeProposal() => 'Changed', EventProposal() => 'Added' },
         CardState.declined => 'Not done',
         CardState.undone => 'Undone, nothing changed',
         CardState.outdated => 'Already changed elsewhere, nothing done',
@@ -253,6 +293,18 @@ Map<String, Object?> cardToJson(CoachCard c) => {
             'category': item.categoryKey,
             'income': item.isIncome,
             'due': _iso(item.nextDue),
+          },
+        EventProposal() && final p => {
+            'kind': 'event',
+            'name': p.name,
+            'amount': p.amount,
+            'income': p.isIncome,
+            'category': p.categoryKey,
+            'categoryName': p.categoryName,
+            'day': _iso(p.date),
+            'yearly': p.yearly,
+            'counted': p.counted,
+            'runway': ?p.runway,
           },
         ChangeProposal() && final p => {
             'kind': 'change',
@@ -345,6 +397,17 @@ CoachCard? cardFromJson(Map<String, Object?> j) {
           isIncome: j['income']! as bool,
           nextDue: _day(j['due']! as String)!,
         )),
+      'event' => EventProposal(
+          name: j['name']! as String,
+          amount: j['amount']! as int,
+          isIncome: j['income']! as bool,
+          categoryKey: j['category']! as String,
+          categoryName: j['categoryName']! as String,
+          date: _day(j['day']! as String)!,
+          yearly: j['yearly'] as bool? ?? false,
+          counted: j['counted'] as bool? ?? true,
+          runway: j['runway'] as String?,
+        ),
       'change' => ChangeProposal(
           before: _entryFromJson((j['before']! as Map).cast()),
           after: _entryFromJson((j['after']! as Map).cast()),
@@ -371,6 +434,25 @@ String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toStr
 const proposalLimit = 10000000;
 
 const proposalTools = [
+  CoachLookup(
+    'bajet_propose_event',
+    'Suggests adding a planned event, a one-off or yearly cost or income such as a birthday dinner or a bonus, for the user to '
+        'confirm. It adds nothing itself: the app shows a card with what it does to Runway, and only the user\'s tap adds it, with Undo. '
+        'Use it when the user wants something coming up in their plan. Something monthly is a bill, which they add by hand.',
+    {
+      'type': 'object',
+      'properties': {
+        'name': {'type': 'string', 'description': 'A short name, such as Birthday dinner.'},
+        'kind': {'type': 'string', 'enum': ['spending', 'income']},
+        'amount_rm': {'type': 'number', 'description': 'The amount in ringgit; for spending, its budget.'},
+        'category': {'type': 'string', 'description': 'An existing category name.'},
+        'day': {'type': 'string', 'description': 'The day as yyyy-mm-dd, today or later.'},
+        'yearly': {'type': 'boolean', 'description': 'True when it comes back on the same day every year.'},
+        'counted': {'type': 'boolean', 'description': 'False for money that may not come, such as an unconfirmed bonus. True if left out.'},
+      },
+      'required': ['name', 'kind', 'amount_rm', 'category', 'day'],
+    },
+  ),
   CoachLookup(
     'bajet_propose_change',
     'Suggests changing one entry already logged, for the user to confirm: its kind (want or need), amount, category, label, day or '
@@ -537,6 +619,39 @@ const proposalTools = [
       if (sen > holds) return (no('${called(from)} only holds ${Money.format(holds)}; the user can move more by hand.'), null);
       final p = MoveProposal(fromId: from, toId: to, fromName: called(from), toName: called(to), amount: sen, day: d.today, note: text('note'));
       return (LookupResult('Shown to the user as a card to confirm: move ${Money.format(sen)} from ${p.fromName} to ${p.toName}. Nothing moves unless they tap.', 'A suggestion'), p);
+    case 'bajet_propose_event':
+      final eventName = text('name');
+      if (eventName == null || eventName.length > 40) return (no('give a name of at most 40 characters.'), null);
+      if (d.events.any((e) => !e.done && e.name.toLowerCase() == eventName.toLowerCase())) {
+        return (no('there is already a planned event called "$eventName".'), null);
+      }
+      final income = input['kind'] == 'income';
+      final sen = amount();
+      if (sen == null) return (no('the amount must be more than RM0.00 and at most ${Money.format(proposalLimit)}.'), null);
+      final wanted = text('category')?.toLowerCase();
+      final category = d.categories.where((c) => c.isIncome == income && !c.isAutomatic && c.label.toLowerCase() == wanted).firstOrNull;
+      if (category == null) {
+        final names = d.categories.where((c) => c.isIncome == income && !c.isAutomatic).map((c) => c.label).join(', ');
+        return (no('there is no such category. The categories are: $names.'), null);
+      }
+      final day = _day(text('day') ?? '');
+      if (day == null || day.isBefore(d.today) || day.isAfter(DateTime.utc(d.today.year + 3, d.today.month, d.today.day))) {
+        return (no('the day must be yyyy-mm-dd, from today to three years ahead.'), null);
+      }
+      final counted = input['counted'] != false;
+      final event = PlannedEvent(id: -1, name: eventName, amount: sen, categoryKey: category.key, isIncome: income, date: day, repeatsYearly: input['yearly'] == true);
+      final p = EventProposal(
+        name: eventName,
+        amount: sen,
+        isIncome: income,
+        categoryKey: category.key,
+        categoryName: category.label,
+        date: day,
+        yearly: event.repeatsYearly,
+        counted: counted,
+        runway: counted ? _runwayLine(d, event) : 'Runway leaves it out until it is counted.',
+      );
+      return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${p.effect} Nothing is added unless they tap Add it.', 'A suggestion'), p);
     case 'bajet_propose_change':
       final id = input['entry_id'];
       final before = d.entries.where((e) => e.id == (id is num ? id.toInt() : int.tryParse('$id'))).firstOrNull;
@@ -593,6 +708,16 @@ const proposalTools = [
     default:
       return (no('there is no suggestion called $name.'), null);
   }
+}
+
+/// What adding [event] does to Runway, in one line.
+String _runwayLine(CoachData d, PlannedEvent event) {
+  final before = runway(d), after = runway(d, extra: [event]);
+  if (after.goals.isNotEmpty && before.goals.isNotEmpty) {
+    final goal = after.goals.first;
+    return 'After buying ${goal.goal.name}: ${Money.format(goal.leftAfterBuying)} left, was ${Money.format(before.goals.first.leftAfterBuying)}.';
+  }
+  return 'On ${Dates.full(after.days.last.date)}: ${Money.format(after.days.last.balance)}, was ${Money.format(before.days.last.balance)}.';
 }
 
 DateTime? _day(String v) {
