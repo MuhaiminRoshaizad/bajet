@@ -69,6 +69,7 @@ final weekSummaryProvider = Provider<String?>((ref) {
     rules: rules,
     projection: ref.watch(projectionProvider),
     upcoming: ref.watch(upcomingProvider) ?? const [],
+    needsReserve: settings.needsReserve,
   );
 });
 
@@ -82,7 +83,8 @@ final coachDataProvider = Provider<CoachData?>((ref) {
   final rules = ref.watch(rulesProvider).value;
   final recurring = ref.watch(recurringProvider).value;
   final events = ref.watch(eventsProvider).value;
-  if (settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null) {
+  final bought = ref.watch(achievedGoalsProvider).value;
+  if (settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
     return null;
   }
   return CoachData(
@@ -97,5 +99,6 @@ final coachDataProvider = Provider<CoachData?>((ref) {
     projection: ref.watch(projectionProvider),
     upcoming: ref.watch(upcomingProvider) ?? const [],
     events: events,
+    boughtGoals: bought,
   );
 });

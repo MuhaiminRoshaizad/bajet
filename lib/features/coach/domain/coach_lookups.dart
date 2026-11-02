@@ -25,6 +25,7 @@ class CoachData {
     required this.projection,
     required this.upcoming,
     this.events = const [],
+    this.boughtGoals = const [],
   });
 
   final DateTime today;
@@ -38,6 +39,9 @@ class CoachData {
   final Projection? projection;
   final List<UpcomingItem> upcoming;
   final List<PlannedEvent> events;
+
+  /// Goals marked bought, most recent first.
+  final List<Goal> boughtGoals;
 }
 
 /// A read-only question the coach can ask bajet, in the shape Anthropic's
@@ -117,8 +121,9 @@ const coachLookups = [
   CoachLookup(
     'bajet_plan',
     "The user's plan: the weekly allowance, the buffer they keep, what each weekday is planned to cost, every goal with what Runway "
-        'expects to be left after buying it, monthly bills and income with their next due day, and the next ten things coming up. Use it '
-        'for questions about affording something, goals, bills or the weeks ahead. It takes no input.',
+        'expects to be left after buying it and what its listing showed when last checked, goals already bought, monthly bills and '
+        'income with their next due day, every planned event with its budget and what is spent of it, and the next ten things coming '
+        'up. Use it for questions about affording something, goals, bills, events or the weeks ahead. It takes no input.',
     _noInput,
   ),
 ];
@@ -139,6 +144,7 @@ LookupResult runLookup(String name, Map<String, Object?> input, CoachData d) {
           rules: d.rules,
           projection: d.projection,
           upcoming: d.upcoming,
+          needsReserve: d.settings.needsReserve,
         ),
         'This week',
       );
@@ -249,12 +255,24 @@ String _plan(CoachData d, Map<String, Category> categories) {
     if (goals.isEmpty) '- None',
     for (final g in goals)
       '- ${g.goal.name}: ${Money.format(g.goal.price)} on ${Dates.full(g.goal.targetDate)}; Runway expects ${Money.format(g.leftAfterBuying)} '
-          'left after buying, ${g.onTrack ? 'on track' : 'short'} against the buffer',
+          'left after buying, ${g.onTrack ? 'on track' : 'short'} against the buffer${_listing(g.goal.listing)}',
+    if (d.boughtGoals.isNotEmpty) ...[
+      '',
+      'Goals already bought:',
+      for (final g in d.boughtGoals) '- ${g.name}: ${Money.format(g.price)}${g.achievedOn == null ? '' : ', bought ${Dates.full(g.achievedOn!)}'}',
+    ],
     '',
     'Monthly bills and income:',
     if (d.recurring.where((r) => r.active).isEmpty) '- None',
     for (final r in d.recurring.where((r) => r.active))
       '- ${r.name} (${categories[r.categoryKey]?.label ?? r.categoryKey}): ${r.isIncome ? '+' : '−'}${Money.format(r.amount)}, next due ${Dates.full(r.nextDue)}',
+    '',
+    'Planned events:',
+    if (!d.events.any((e) => !e.done)) '- None',
+    for (final e in [...d.events.where((e) => !e.done)]..sort((a, b) => a.date.compareTo(b.date)))
+      '- ${e.name} (${categories[e.categoryKey]?.label ?? e.categoryKey}) on ${Dates.full(e.date)}: '
+          '${e.isIncome ? '+${Money.format(e.amount)}' : '${Money.format(e.amount)} budget, ${Money.format(e.spent)} spent, ${Money.format(e.outstanding)} left'}'
+          '${e.repeatsYearly ? ', every year' : ''}${e.countInProjection ? '' : ', not counted by Runway'}',
     '',
     'Coming up next:',
     if (d.upcoming.isEmpty) '- Nothing planned',
@@ -262,6 +280,15 @@ String _plan(CoachData d, Map<String, Category> categories) {
       '- ${Dates.full(u.date)} ${u.name}: ${u.signedAmount > 0 ? '+' : '−'}${Money.format(u.signedAmount.abs())}${u.counted ? '' : ' (not counted by Runway)'}',
   ].join('\n');
 }
+
+/// What a goal's listing showed when the user last looked, as a clause.
+/// The link itself is never sent.
+String _listing(Listing? l) => switch (l) {
+      null => '',
+      Listing(check: null) => '; it has a listing, not checked yet',
+      Listing(check: ListingCheck.up, :final checkedOn) => '; its listing was still up when checked${checkedOn == null ? '' : ' on ${Dates.full(checkedOn)}'}',
+      Listing(check: ListingCheck.sold, :final checkedOn) => '; its listing was marked sold${checkedOn == null ? '' : ' on ${Dates.full(checkedOn)}'}',
+    };
 
 /// A text input, or null when the model sent something else: tools are not
 /// strict, so its input can stray from the schema.

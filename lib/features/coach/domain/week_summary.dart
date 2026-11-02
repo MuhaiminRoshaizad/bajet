@@ -17,6 +17,7 @@ String weekSummary({
   required List<WeeklyRule> rules,
   required Projection? projection,
   required List<UpcomingItem> upcoming,
+  int needsReserve = 0,
 }) {
   final monday = weekStart(today);
   final sunday = DateTime.utc(monday.year, monday.month, monday.day + 6);
@@ -47,6 +48,9 @@ String weekSummary({
     'Spending on wants this week: ${Money.format(spent)} of ${Money.format(weeklyCap)} '
         '(${spent <= weeklyCap ? '${Money.format(weeklyCap - spent)} left' : '${Money.format(spent - weeklyCap)} over'})',
     if (needs > 0) 'Needs this week, kept out of the allowance: ${Money.format(needs)}',
+    if (needsReserve > 0)
+      'Needs this month: ${Money.format(needsSpent(entries, fixed, DateTime.utc(today.year, today.month), today))} '
+          'of the ${Money.format(needsReserve)} set aside for them',
     '',
     'By category:',
     if (categoryLines.isEmpty) '- Nothing spent yet' else ...categoryLines,

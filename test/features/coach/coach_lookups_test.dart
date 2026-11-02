@@ -3,6 +3,7 @@ import 'package:bajet/features/coach/domain/coach_lookups.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
+import 'package:bajet/features/plan/domain/projection.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_repositories.dart';
@@ -123,5 +124,37 @@ void main() {
     expect(lines({'spend': 'planned'}), startsWith('2 entries'));
     expect(lines({'spend': 'want'}), contains('Lunch'));
     expect(runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', 'spend': 'need'}, mixed).label, 'Entries · need · 10/10/2026');
+  });
+
+  test('the plan names every event with its budget, each listing as last seen, and goals bought', () {
+    final bike = Goal(id: 1, name: 'Bicycle', price: 200000, targetDate: d(12, 20), listing: Listing(Uri.parse('https://example.com/b'), check: ListingCheck.sold, checkedOn: d(10, 12)));
+    final rules = data.rules;
+    final withPlan = CoachData(
+      today: data.today,
+      settings: PlanSettings(openingDate: d(9, 1), weeklyCap: 4000, buffer: 50000, needsReserve: 10000),
+      balance: data.balance,
+      entries: [Entry(id: 1, day: d(10, 3), isIncome: false, amount: 2500, categoryKey: 'personal', spendKind: SpendKind.need)],
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: rules,
+      recurring: const [],
+      projection: project(balance: data.balance, today: data.today, rules: rules, recurring: const [], events: const [], goals: [bike], buffer: 50000),
+      upcoming: const [],
+      events: [
+        PlannedEvent(id: 1, name: 'Dinner', amount: 30000, categoryKey: 'gifts', isIncome: false, date: d(11, 20), spent: 12000),
+        PlannedEvent(id: 2, name: 'Bonus', amount: 50000, categoryKey: 'refund', isIncome: true, date: d(12, 1), countInProjection: false),
+        PlannedEvent(id: 3, name: 'Old trip', amount: 9000, categoryKey: 'other', isIncome: false, date: d(9, 1), done: true),
+      ],
+      boughtGoals: [Goal(id: 2, name: 'Desk lamp', price: 8000, targetDate: d(9, 30), achievedOn: d(9, 28))],
+    );
+    final plan = runLookup('bajet_plan', const {}, withPlan).text;
+    expect(plan, contains('- Dinner (Gifts) on 20/11/2026: RM300.00 budget, RM120.00 spent, RM180.00 left'));
+    expect(plan, contains('- Bonus (Refund) on 01/12/2026: +RM500.00, not counted by Runway'));
+    expect(plan, isNot(contains('Old trip')));
+    expect(plan, contains('; its listing was marked sold on 12/10/2026'));
+    expect(plan, isNot(contains('example.com')), reason: 'the link stays on the phone');
+    expect(plan, contains('- Desk lamp: RM80.00, bought 28/09/2026'));
+    final overview = runLookup('bajet_overview', const {}, withPlan).text;
+    expect(overview, contains('Needs this month: RM25.00 of the RM100.00 set aside for them'));
   });
 }
