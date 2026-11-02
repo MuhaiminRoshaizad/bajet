@@ -1,3 +1,4 @@
+import 'package:bajet/features/coach/domain/coach_lookups.dart';
 import 'package:bajet/features/coach/domain/coach_prompt.dart';
 import 'package:bajet/features/coach/domain/coach_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,5 +23,14 @@ void main() {
     for (final p in CoachPersonality.values) {
       expect(coachSystemPrompt(today, p, userName: 'Sara'), endsWith('Your voice: ${p.voice}'));
     }
+  });
+
+  test('the rules say what a want and a need are, name every lookup, and link logs to what they settle', () {
+    final prompt = coachSystemPrompt(DateTime.utc(2026, 11, 2), CoachPersonality.friendly);
+    expect(prompt, contains('could have skipped it or waited a few weeks without harm'));
+    for (final l in coachLookups) {
+      expect(prompt, contains(l.name), reason: l.name);
+    }
+    expect(prompt, contains('names it in for, or the plan counts it twice'));
   });
 }
