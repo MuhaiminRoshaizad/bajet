@@ -75,15 +75,15 @@ A folder under `core/` appears only once two features need it.
 | Feature  | Owns                                                                  |
 |----------|-----------------------------------------------------------------------|
 | `accounts` | The places money is kept (cash, banks, e-wallets), each one's balance and card, and money moved between them |
-| `ledger` | Entries, categories and favourites, the log sheet, history, balance and the maths of wants and needs |
+| `ledger` | Entries, categories and favourites, the log sheet, history, balance and the maths of my call and not my call |
 | `plan`   | Settings, weekly rhythm, recurring items, planned events, goals, the projection and the Runway screen |
-| `today`  | The Today screen: balance, today's rule, bills due, the week dial of wants with the week's needs under it, goal, recent entries |
-| `settings` | The Settings hub behind Today's gear: the user's name for the coach, balance, accounts, allowance, the monthly amount for needs (with a suggestion from the last four weeks) and buffer, goals with their listing links, bills and income, planned events, the weekly rhythm and favourites, and About bajet with the installed version |
+| `today`  | The Today screen: balance, today's rule, bills due, the week dial of my-call spending with the week's not-my-call spending under it, goal, recent entries |
+| `settings` | The Settings hub behind Today's gear: the user's name for the coach, balance, accounts, allowance, the monthly amount for not-my-call spending (with a suggestion from the last four weeks) and buffer, goals with their listing links, bills and income, planned events, the weekly rhythm and favourites, and About bajet with the installed version |
 | `backup` | JSON export saved to a folder or through the share sheet, and restore from a picked file |
 | `checkin` | The Sunday check-in: compare each account with what it really holds (the bank app as a whole while there is one account), log any gap to that account (a starting adjustment at the first one), look back at the week, and finish it to save next week's target (decision 027) |
 | `report` | Reports of a week, a month or all time, shared as text, PDF (the `pdf` package) or CSV; the current week as the weekly check-in |
 | `launch` | Launcher shortcuts: one `bajet://log` link format, a pending launch held until the shell can open the logger, and keeping the shortcuts in step with the favourites |
-| `insights` | The Insights tab: money in and out, spending by kind (planned, wants, needs) with each part's entries, categories, the last fourteen days and habits, for a week, a month or all time |
+| `insights` | The Insights tab: money in and out, spending by kind (planned, my call, not my call) with each part's entries, categories, the last fourteen days and habits, for a week, a month or all time |
 | `coach`  | The Coach tab: a list of chats, each opening on its own page, with questions answered by Anthropic with the user's own key from Settings → Coach, up to 10 a day. The model reads the user's figures through read-only lookups run on the phone (`coach_lookups.dart`, looped in `coach_answer.dart`); the week's summary can still be copied |
 | `opening` | The opening played on a cold start: its timeline as plain data, the titanium cards and the lock screen's fan, and the cards' flight into Today's stack that the unlock shares; the overlay that plays it lives in `app/` because it draws Today's and the lock screen's cards |
 | `lock`   | The app lock: the lock screen over the whole app, asking for the phone's fingerprint or PIN on a cold start and after time away, its fan flying into Today's stack once it passes, and the user's lock choices |

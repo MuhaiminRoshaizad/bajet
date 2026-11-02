@@ -22,8 +22,8 @@ own API key; without a key, nothing leaves the phone.
 - **Runway** charts the projected balance up to a goal's buy day and says what
   will be left after buying it, against a buffer you choose. What-if sliders
   try a change to weekly spending or a new monthly cost without saving it.
-- **Insights** shows money in and out, spending split into planned, wants
-  and needs, a ring of where the money went, the last fourteen days against
+- **Insights** shows money in and out, spending split into planned, my call
+  and not my call, a ring of where the money went, the last fourteen days against
   the plan, and habits, for any week, any month or all time.
 - **Reports** share any of those periods as text, a PDF or a CSV file, broken
   down by account, category and kind, and PDFs, CSVs and backups save
@@ -34,7 +34,7 @@ own API key; without a key, nothing leaves the phone.
 - **Coach** answers questions about your money by looking up the figures it
   needs, any week, month, entry, move, account, check-in or the plan, and
   tries "what if" with Runway's own sums, using your own Anthropic key, up to
-  ten a day. It can suggest logging a spend as a want or a need, paying a
+  ten a day. It can suggest logging a spend as my call or not, paying a
   bill, spending from a planned event, moving money, fixing an entry or adding
   an event, which happens only when you tap to confirm, or after you change
   the details on the usual log sheet. Pick

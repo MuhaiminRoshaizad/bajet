@@ -551,3 +551,18 @@ and is checked again when tapped, so 023's reasons hold.
 a little more on the user's key, and a card can now change an entry, not
 only add one; Undo puts it back.
 
+## 034: The kinds are called My call and Not my call
+
+**Decided:** the two kinds of day-to-day spend from 032 are shown as My
+call and Not my call everywhere the user or the coach sees them. The
+stored values stay `want` and `need`.
+
+**Why:** want and need sort spending by how essential it is, which is not
+the line the allowance draws. A repair after something broke is hardly a
+"need" in that sense, but the user had no say in it. The new names say
+whose decision it was, which is what keeps it out of the allowance.
+
+**Costs:** longer labels, so Today's line under the dial wraps on narrow
+screens and large text. The CSV's kind column now reads `my call` and
+`not my call`; backups are unchanged.
+
