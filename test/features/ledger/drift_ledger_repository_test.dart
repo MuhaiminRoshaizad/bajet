@@ -53,7 +53,7 @@ void main() {
     expect(list.map((e) => e.amount), [300, 200]);
   });
 
-  test('a spend keeps its kind through add, update and restore, and Family starts as a need', () async {
+  test('a spend keeps its kind through add, update and restore, and Family starts as not my call', () async {
     final id = await ledger.add(domain.EntryDraft(day: d(2026, 7, 1), isIncome: false, amount: 1040, categoryKey: 'personal', spendKind: domain.SpendKind.need));
     var e = (await ledger.watchSince(d(2026, 7, 1)).first).single;
     expect(e.spendKind, domain.SpendKind.need);

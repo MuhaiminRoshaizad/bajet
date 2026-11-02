@@ -100,8 +100,8 @@ String reportText({
 /// Money out's parts as reports name them, in the order Insights shows.
 const outPartNames = [
   (OutPart.planned, 'Planned (bills, goals, events)'),
-  (OutPart.wants, 'Wants'),
-  (OutPart.needs, 'Needs (bought anyway or asked for)'),
+  (OutPart.wants, 'My call'),
+  (OutPart.needs, 'Not my call (no real say)'),
   (OutPart.untracked, 'Untracked'),
 ];
 
@@ -120,7 +120,7 @@ String reportCsv(List<Entry> entries, Map<String, Category> categories, List<Acc
   String field(String v) => RegExp(r'[",\r\n]').hasMatch(v) ? '"${v.replaceAll('"', '""')}"' : v;
   String day(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   final fixed = {for (final c in categories.values) if (c.isFixed) c.key};
-  String kind(Entry e) => e.isIncome ? '' : (e.isFlexible(fixed) ? e.spendKind.name : 'planned');
+  String kind(Entry e) => e.isIncome ? '' : (e.isFlexible(fixed) ? e.spendKind.words : 'planned');
   final rows = [
     'date,type,account,category,label,note,amount,kind',
     for (final e in entries)

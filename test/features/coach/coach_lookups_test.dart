@@ -49,7 +49,7 @@ void main() {
     final r = runLookup('bajet_entries', {'from': '2026-09-01', 'to': '2026-09-30', 'category': 'food'}, data);
     expect(r.failed, isFalse);
     expect(r.text, startsWith('2 entries from 01/09/2026 to 30/09/2026: money out RM42.00, money in RM0.00.'));
-    expect(r.text, contains('- 03/09/2026 · Food · Lunch · Wallet · −RM12.00 · want'));
+    expect(r.text, contains('- 03/09/2026 · Food · Lunch · Wallet · −RM12.00 · my call'));
     expect(r.label, 'Entries · food · 01/09 to 30/09/2026');
   });
 
@@ -88,7 +88,7 @@ void main() {
 
   test('the plan names the allowance, the buffer and every weekday', () {
     final r = runLookup('bajet_plan', const {}, data);
-    expect(r.text, contains('Weekly allowance for wants: RM40.00'));
+    expect(r.text, contains('Weekly allowance, for my-call spending: RM40.00'));
     expect(r.text, contains('- Friday (Day): no spending'));
   });
 
@@ -117,15 +117,15 @@ void main() {
     );
     String lines(Map<String, Object?> extra) => runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', ...extra}, mixed).text;
     final all = lines(const {});
-    expect(all, contains('Lunch · Main account · −RM12.00 · want'));
-    expect(all, contains('Shampoo · Main account · −RM18.00 · need'));
+    expect(all, contains('Lunch · Main account · −RM12.00 · my call'));
+    expect(all, contains('Shampoo · Main account · −RM18.00 · not my call'));
     expect(all, contains('Rent · Main account · −RM492.40 · planned, paid toward Rent'));
     expect(all, contains('Cake · Main account · −RM180.00 · planned, spent on Dinner'));
     expect(all, endsWith('Refund · Main account · +RM20.00 · id 5'));
-    expect(lines({'spend': 'need'}), startsWith('1 entry from 10/10/2026 to 10/10/2026: money out RM18.00'));
+    expect(lines({'spend': 'not_my_call'}), startsWith('1 entry from 10/10/2026 to 10/10/2026: money out RM18.00'));
     expect(lines({'spend': 'planned'}), startsWith('2 entries'));
-    expect(lines({'spend': 'want'}), contains('Lunch'));
-    expect(runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', 'spend': 'need'}, mixed).label, 'Entries · need · 10/10/2026');
+    expect(lines({'spend': 'my_call'}), contains('Lunch'));
+    expect(runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', 'spend': 'not_my_call'}, mixed).label, 'Entries · not_my_call · 10/10/2026');
   });
 
   test('the plan names every event with its budget, each listing as last seen, and goals bought', () {
@@ -157,7 +157,7 @@ void main() {
     expect(plan, isNot(contains('example.com')), reason: 'the link stays on the phone');
     expect(plan, contains('- Desk lamp: RM80.00, bought 28/09/2026'));
     final overview = runLookup('bajet_overview', const {}, withPlan).text;
-    expect(overview, contains('Needs this month: RM25.00 of the RM100.00 set aside for them'));
+    expect(overview, contains('Not-my-call spending this month: RM25.00 of the RM100.00 set aside for them'));
   });
 
   test('categories say how each starts, leave out the ones only the app uses, and list favourites', () {
@@ -175,8 +175,8 @@ void main() {
       favourites: const [Favourite(id: 1, label: 'Coffee', categoryKey: 'food', amount: 550)],
     );
     final text = runLookup('bajet_categories', const {}, withFavourites).text;
-    expect(text, contains('- Food: starts as a want'));
-    expect(text, contains('- Family: starts as a need'));
+    expect(text, contains('- Food: starts as my call'));
+    expect(text, contains('- Family: starts as not my call'));
     expect(text, contains('- Bills: fixed, kept out of the allowance'));
     expect(text, isNot(contains('Untracked')));
     expect(text, contains('- Coffee: Food, RM5.50'));
@@ -228,7 +228,7 @@ void main() {
       checkins: [past],
     );
     final r = runLookup('bajet_checkin', const {}, withPast);
-    expect(r.text, contains('- 11/10/2026: balance RM2,500.00, not every account matched, RM15.00 untracked, wants RM32.00, target RM2,450.00 for 18/10/2026'));
+    expect(r.text, contains('- 11/10/2026: balance RM2,500.00, not every account matched, RM15.00 untracked, my call RM32.00, target RM2,450.00 for 18/10/2026'));
     expect(r.label, 'Check-in');
   });
 

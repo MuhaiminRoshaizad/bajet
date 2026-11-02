@@ -42,7 +42,7 @@ class _KindsExplainerState extends State<_KindsExplainer> {
             const SizedBox(width: AppSpacing.m),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${k.label}s', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(k.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 Text(says, style: TextStyle(color: c.muted, height: 1.4)),
               ]),
             ),
@@ -57,18 +57,18 @@ class _KindsExplainerState extends State<_KindsExplainer> {
           Text('Not all spending is a choice', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: AppSpacing.s),
           Text(
-            'bajet sorts each spend two ways. Only wants count toward your weekly allowance. Needs still come off your balance and show in Insights.',
+            'bajet sorts each spend two ways. Only spending that was your call counts toward your weekly allowance. The rest still comes off your balance and shows in Insights.',
             style: TextStyle(color: c.muted, height: 1.4),
           ),
           const SizedBox(height: AppSpacing.l),
-          kind(SpendKind.want, 'You chose it: eating out, snacks, treats.'),
-          kind(SpendKind.need, "You'd buy it anyway, or family asked: toothpaste, medicine, a parent's groceries."),
+          kind(SpendKind.want, 'You decided: eating out, snacks, treats.'),
+          kind(SpendKind.need, 'You had no real say: a repair after something broke, a check-up, an errand someone asked of you.'),
           SoftWell(
             padding: const EdgeInsets.all(AppSpacing.l),
-            child: const Text('Not sure? Ask: could I have skipped it, or waited a few weeks, without harm? Then it is a want.', style: TextStyle(height: 1.4)),
+            child: const Text('Not sure? Ask: could I have skipped it, or waited a few weeks, without harm? Then it was my call.', style: TextStyle(height: 1.4)),
           ),
           const SizedBox(height: AppSpacing.l),
-          Text('Quick check: toothpaste that ran out', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.muted)),
+          Text('Quick check: a cracked phone screen, fixed', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.muted)),
           const SizedBox(height: AppSpacing.s),
           Wrap(spacing: AppSpacing.s, children: [
             for (final k in SpendKind.values)
@@ -86,8 +86,8 @@ class _KindsExplainerState extends State<_KindsExplainer> {
             alignment: Alignment.topLeft,
             child: switch (_answer) {
               null => const SizedBox(width: double.infinity),
-              SpendKind.need => _Reply("Right: you'd have bought it anyway.", c.good),
-              SpendKind.want => _Reply("Not quite: you'd have bought it anyway, so it is a need.", c.muted),
+              SpendKind.need => _Reply('Right: once it cracked, you had no real say.', c.good),
+              SpendKind.want => _Reply('Not quite: once it cracked, you had no real say, so it is not your call.', c.muted),
             },
           ),
           const SizedBox(height: AppSpacing.l),

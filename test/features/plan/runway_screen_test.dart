@@ -68,11 +68,11 @@ void main() {
     // RM1.00 a day for 2 to 31 July.
     expect(headline('RM970.00'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('How it adds up'), 200);
-    expect(find.text('Needs until buy day'), findsOneWidget);
+    expect(find.text('Not my call until buy day'), findsOneWidget);
     expect(inSums('−RM30.00'), findsOneWidget);
     await world.saveSettings(PlanSettings(openingDate: testToday, weeklyCap: 5000, buffer: 50000));
     await tester.pumpAndSettle();
-    expect(find.text('Needs until buy day'), findsNothing);
+    expect(find.text('Not my call until buy day'), findsNothing);
   });
 
   testWidgets('planned income is counted and the warning goes', (tester) async {

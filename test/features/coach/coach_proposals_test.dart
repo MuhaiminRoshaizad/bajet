@@ -13,7 +13,7 @@ void main() {
     expect(result.text, contains('Nothing is logged unless they tap Log it.'));
     final log = p! as LogProposal;
     expect((log.draft.amount, log.draft.categoryKey, log.draft.accountId, log.draft.day, log.draft.label), (1250, 'food', 2, d(10, 15), 'Lunch'));
-    expect(log.rows, [('What', 'Lunch · Food'), ('Kind', 'Want'), ('From', 'Wallet'), ('Day', '15/10/2026')]);
+    expect(log.rows, [('What', 'Lunch · Food'), ('Whose call', 'My call'), ('From', 'Wallet'), ('Day', '15/10/2026')]);
     expect(log.effect, 'Counts toward your RM40.00 allowance.');
   });
 
@@ -22,18 +22,18 @@ void main() {
         propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': category, 'spend_kind': ?kind}, data).$2! as LogProposal;
     expect(log('Family').draft.spendKind, SpendKind.need);
     expect(log('Food').draft.spendKind, SpendKind.want);
-    expect(log('Food', 'need').draft.spendKind, SpendKind.need);
-    expect(log('Family', 'want').draft.spendKind, SpendKind.want);
+    expect(log('Food', 'not_my_call').draft.spendKind, SpendKind.need);
+    expect(log('Family', 'my_call').draft.spendKind, SpendKind.want);
     expect(log('Food', 'nonsense').draft.spendKind, SpendKind.want);
     expect(log('Family').effect, 'Stays out of your RM40.00 allowance.');
-    expect(log('Family').rows, contains(('Kind', 'Need')));
+    expect(log('Family').rows, contains(('Whose call', 'Not my call')));
   });
 
   test('only day-to-day spending says a kind', () {
-    final (_, bill) = propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 50, 'category': 'Bills', 'spend_kind': 'need'}, data);
-    final (_, income) = propose('bajet_propose_log', {'kind': 'income', 'amount_rm': 50, 'category': 'Refund', 'spend_kind': 'need'}, data);
+    final (_, bill) = propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 50, 'category': 'Bills', 'spend_kind': 'not_my_call'}, data);
+    final (_, income) = propose('bajet_propose_log', {'kind': 'income', 'amount_rm': 50, 'category': 'Refund', 'spend_kind': 'not_my_call'}, data);
     for (final p in [bill!, income!]) {
-      expect(p.rows.map((r) => r.$1), isNot(contains('Kind')));
+      expect(p.rows.map((r) => r.$1), isNot(contains('Whose call')));
       expect(p.effect, isNull);
     }
     expect((bill as LogProposal).draft.spendKind, SpendKind.want);
@@ -141,10 +141,10 @@ void main() {
     expect((received.draft.isIncome, received.draft.billId, CoachCard(received).action), (true, 8, 'Received'));
     expect(CoachCard(received, state: CardState.done).outcome, 'Received');
 
-    final spent = card({'for': 'dinner', 'amount_rm': 60, 'label': 'Cake', 'spend_kind': 'need'});
+    final spent = card({'for': 'dinner', 'amount_rm': 60, 'label': 'Cake', 'spend_kind': 'not_my_call'});
     expect((spent.draft.event, spent.draft.billId, spent.draft.categoryKey, spent.draft.label), (EventLink(3, d(11, 20)), null, 'gifts', 'Cake'));
     expect(spent.rows.take(2), [('For', 'Dinner'), ('Budget left', 'RM120.00 of RM300.00')]);
-    expect(spent.rows.map((r) => r.$1), isNot(contains('Kind')));
+    expect(spent.rows.map((r) => r.$1), isNot(contains('Whose call')));
     expect(spent.effect, 'Planned already, so it stays out of your allowance.');
     expect(card({'for': 'Dinner'}).draft.amount, 18000, reason: 'no amount said: what is left of its budget');
 
@@ -178,10 +178,10 @@ void main() {
   });
 
   test('a change card shows only what changes, and what it does to the allowance', () {
-    final (r, p) = propose('bajet_propose_change', {'entry_id': 2, 'spend_kind': 'need'}, data);
+    final (r, p) = propose('bajet_propose_change', {'entry_id': 2, 'spend_kind': 'not_my_call'}, data);
     expect(r.failed, isFalse);
     final change = p! as ChangeProposal;
-    expect(change.rows, [('Entry', 'Lunch · 03/09/2026'), ('Kind', 'Want → Need')]);
+    expect(change.rows, [('Entry', 'Lunch · 03/09/2026'), ('Whose call', 'My call → Not my call')]);
     expect(change.effect, "Gives RM12.00 back to that week's allowance.");
     expect((CoachCard(change).action, CoachCard(change, state: CardState.done).outcome), ('Change it', 'Changed'));
 
@@ -193,9 +193,9 @@ void main() {
     expect(moved.failed, isFalse);
 
     for (final bad in [
-      <String, Object?>{'entry_id': 99, 'spend_kind': 'need'},
+      <String, Object?>{'entry_id': 99, 'spend_kind': 'not_my_call'},
       {'entry_id': 2},
-      {'entry_id': 1, 'spend_kind': 'need'},
+      {'entry_id': 1, 'spend_kind': 'not_my_call'},
       {'entry_id': 2, 'category': 'Goals'},
       {'entry_id': 2, 'day': '2026-12-01'},
     ]) {

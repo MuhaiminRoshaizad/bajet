@@ -53,7 +53,7 @@ Future<void> fillMoneyStep(WidgetTester tester) async {
   await addCash(tester, '250000');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
-  await tester.enterText(field('Weekly allowance, for your wants'), '5000');
+  await tester.enterText(field('Weekly allowance, for your own calls'), '5000');
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
 }
@@ -122,7 +122,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(field('Weekly allowance, for your wants'), '5000');
+    await tester.enterText(field('Weekly allowance, for your own calls'), '5000');
     await tester.pumpAndSettle();
     expect(find.text('Enter how much you allow each week'), findsNothing);
     expect(find.text('50.00'), findsOneWidget);
@@ -148,8 +148,8 @@ void main() {
     await toWeekStep(tester);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    await tester.enterText(field('Weekly allowance, for your wants'), '5000');
-    await tester.enterText(field('Needs, a month (optional)'), '8000');
+    await tester.enterText(field('Weekly allowance, for your own calls'), '5000');
+    await tester.enterText(field('Not my call, a month (optional)'), '8000');
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Skip for now'));
@@ -186,10 +186,10 @@ void main() {
     await openSetup(tester);
     await toWeekStep(tester);
     InputDecoration decoration() =>
-        tester.widget<TextField>(find.descendant(of: field('Weekly allowance, for your wants'), matching: find.byType(TextField))).decoration!;
+        tester.widget<TextField>(find.descendant(of: field('Weekly allowance, for your own calls'), matching: find.byType(TextField))).decoration!;
     expect((decoration().prefixText, decoration().hintText), (null, 'e.g. 50.00'));
 
-    await tester.enterText(field('Weekly allowance, for your wants'), '5000');
+    await tester.enterText(field('Weekly allowance, for your own calls'), '5000');
     await tester.pump();
     expect(decoration().prefixText, 'RM');
   });

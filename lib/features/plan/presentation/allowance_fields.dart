@@ -11,9 +11,9 @@ class AllowanceField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MoneyField(
         controller: controller,
-        label: 'Weekly allowance, for your wants',
+        label: 'Weekly allowance, for your own calls',
         hint: 'e.g. 50.00',
-        helper: 'What you let yourself spend Monday to Sunday on your wants: food, transport and extras. Needs and bills do not count.',
+        helper: 'What you let yourself spend Monday to Sunday when it is your call: food, transport and extras. Spending that is not your call, and bills, do not count.',
         validator: (sen) => sen > 0 ? null : 'Enter how much you allow each week',
       );
 }
@@ -27,9 +27,9 @@ class NeedsReserveField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MoneyField(
         controller: controller,
-        label: 'Needs, a month (optional)',
+        label: 'Not my call, a month (optional)',
         hint: 'e.g. 80.00',
-        helper: 'Set aside for things bought anyway or asked for by family. Runway takes it off each month. Leave empty for none.',
+        helper: 'Set aside for spending you have no real say in. Runway takes it off each month. Leave empty for none.',
       );
 }
 

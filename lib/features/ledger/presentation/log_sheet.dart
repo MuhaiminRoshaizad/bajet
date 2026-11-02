@@ -239,7 +239,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       // What it was for says what happened to it: a bill paid, income received.
       final settled = _billId != null || (_isIncome && _event != null);
       final verb = settled ? (_isIncome ? 'Received' : 'Paid') : (_isIncome ? 'Added' : 'Logged');
-      final asNeed = _asksKind && _spendKind == SpendKind.need ? ' as a need' : '';
+      final asNeed = _asksKind && _spendKind == SpendKind.need ? ' as not my call' : '';
       message = '$verb ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(draft.amount)}$asNeed';
       undo = () {
         repo.delete(id);

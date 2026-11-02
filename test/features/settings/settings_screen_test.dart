@@ -24,7 +24,7 @@ void main() {
     await tester.tap(find.text('Allowance and buffer'));
     await settleUnderBar(tester);
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your wants'), '7500');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your own calls'), '7500');
     await tester.enterText(find.widgetWithText(TextFormField, 'Keep at least (optional)'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await settleUnderBar(tester);
@@ -46,7 +46,7 @@ void main() {
     await openSettings(tester);
     await tester.tap(find.text('Allowance and buffer'));
     await settleUnderBar(tester);
-    final needs = find.widgetWithText(TextFormField, 'Needs, a month (optional)');
+    final needs = find.widgetWithText(TextFormField, 'Not my call, a month (optional)');
     expect(find.text('Use RM30.00, from your last 4 weeks'), findsOneWidget);
     await tester.tap(find.text('Use RM30.00, from your last 4 weeks'));
     await tester.pumpAndSettle();
@@ -57,11 +57,11 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await settleUnderBar(tester);
     expect(world.settings!.needsReserve, 8000);
-    expect(find.text('Allowance saved: RM50.00 a week, RM80.00 a month for needs'), findsOneWidget);
+    expect(find.text('Allowance saved: RM50.00 a week, RM80.00 a month not my call'), findsOneWidget);
 
     await tester.tap(find.text('Allowance and buffer'));
     await settleUnderBar(tester);
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your wants'), '4000');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your own calls'), '4000');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await settleUnderBar(tester);
     expect((world.settings!.weeklyCap, world.settings!.needsReserve), (4000, 8000));
@@ -73,7 +73,7 @@ void main() {
     await tester.tap(find.text('Allowance and buffer'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your wants'), '');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Weekly allowance, for your own calls'), '');
     await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
 

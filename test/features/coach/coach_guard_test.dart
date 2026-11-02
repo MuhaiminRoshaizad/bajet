@@ -50,7 +50,7 @@ void main() {
     final world = FakeCoach();
     gate(world, 'key', 'Is shampoo a want or a need?');
     final system = world.gateRequests.isEmpty ? null : world.gateRequests.single.system;
-    for (final topic in ['planned events', 'wants and needs', 'the weekly check-in', 'afford']) {
+    for (final topic in ['planned events', 'whether a spend was their own call', 'the weekly check-in', 'afford']) {
       expect(system, contains(topic), reason: topic);
     }
   });

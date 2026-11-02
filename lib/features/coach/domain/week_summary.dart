@@ -45,11 +45,11 @@ String weekSummary({
     'bajet summary, week of ${Dates.full(monday)} to ${Dates.full(sunday)}',
     '',
     'Balance: ${Money.format(balance)}',
-    'Spending on wants this week: ${Money.format(spent)} of ${Money.format(weeklyCap)} '
+    'My-call spending this week: ${Money.format(spent)} of ${Money.format(weeklyCap)} '
         '(${spent <= weeklyCap ? '${Money.format(weeklyCap - spent)} left' : '${Money.format(spent - weeklyCap)} over'})',
-    if (needs > 0) 'Needs this week, kept out of the allowance: ${Money.format(needs)}',
+    if (needs > 0) 'Not-my-call spending this week, kept out of the allowance: ${Money.format(needs)}',
     if (needsReserve > 0)
-      'Needs this month: ${Money.format(needsSpent(entries, fixed, DateTime.utc(today.year, today.month), today))} '
+      'Not-my-call spending this month: ${Money.format(needsSpent(entries, fixed, DateTime.utc(today.year, today.month), today))} '
           'of the ${Money.format(needsReserve)} set aside for them',
     '',
     'By category:',

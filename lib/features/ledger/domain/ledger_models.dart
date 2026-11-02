@@ -2,10 +2,27 @@
 /// Amounts are positive integer sen; [isIncome] carries the direction.
 library;
 
-/// Whose choice a day-to-day spend was: a want the user chose, or a need
-/// that would be bought anyway or that family asked for. Only wants count
-/// toward the weekly allowance.
-enum SpendKind { want, need }
+/// Whose choice a day-to-day spend was: the user's own call, or not their
+/// call, when they had no real say in it. Only their own calls count toward
+/// the weekly allowance. The names are stored; [label] is what is shown.
+enum SpendKind {
+  want('My call'),
+  need('Not my call');
+
+  const SpendKind(this.label);
+
+  /// The kind as the app and the coach name it to the user.
+  final String label;
+
+  /// The kind in running text, such as "not my call".
+  String get words => label.toLowerCase();
+
+  /// The kind as the coach's tools name it, such as `not_my_call`.
+  String get toolName => words.replaceAll(' ', '_');
+
+  /// The kind the coach named, or null when it named none.
+  static SpendKind? fromTool(Object? name) => values.where((k) => k.toolName == name).firstOrNull;
+}
 
 class Category {
   const Category({

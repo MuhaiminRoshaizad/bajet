@@ -276,8 +276,8 @@ class _SplitState extends State<_Split> {
     final still = MediaQuery.disableAnimationsOf(context);
     final parts = [
       (OutPart.planned, 'Planned', 'bills, goals, events', c.tintInk(Tint.teal)),
-      (OutPart.wants, 'Wants', 'your choice', SpendKind.want.colour(c)),
-      (OutPart.needs, 'Needs', 'bought anyway or asked for', SpendKind.need.colour(c)),
+      (OutPart.wants, SpendKind.want.label, 'you decided', SpendKind.want.colour(c)),
+      (OutPart.needs, SpendKind.need.label, 'you had no real say', SpendKind.need.colour(c)),
       if (i.untrackedOut > 0) (OutPart.untracked, 'Untracked', 'not logged', c.bad),
     ];
     return Column(

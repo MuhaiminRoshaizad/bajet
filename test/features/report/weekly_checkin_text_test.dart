@@ -67,7 +67,7 @@ void main() {
     final without = checkin(entries: week, checkins: [lastWeek]);
     expect((w.spent, w.needs), (without.spent, 4500));
     expect(w.categories.map((c) => (c.key, c.amount)), without.categories.map((c) => (c.key, c.amount)));
-    expect(weeklyCheckinText(w).split('\n'), contains('Needs RM45.00, not counted in the allowance'));
+    expect(weeklyCheckinText(w).split('\n'), contains('Not my call RM45.00, not counted in the allowance'));
     expect(weeklyCheckinText(without), isNot(contains('Needs')));
   });
 

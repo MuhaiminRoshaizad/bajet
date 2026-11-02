@@ -71,7 +71,7 @@ Future<Uint8List> reportPdf({
         // A week rarely holds a payday, so it shows what went on wants
         // rather than in against out.
         if (i.period == InsightsPeriod.week)
-          figure('Wants', Money.format(i.outOf(OutPart.wants)), ink)
+          figure(SpendKind.want.label, Money.format(i.outOf(OutPart.wants)), ink)
         else
           figure(i.kept >= 0 ? 'Kept' : 'Spent more than came in', Money.format(i.kept.abs()), i.kept >= 0 ? keep : bad),
         figure('Untracked', Money.format(i.untrackedOut), i.untrackedOut > 0 ? bad : ink),

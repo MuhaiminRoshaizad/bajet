@@ -292,7 +292,7 @@ class _AllowanceSheetState extends ConsumerState<_AllowanceSheet> {
     final needs = RinggitCentsFormatter.parse(_needs.text);
     await repo.saveSettings(PlanSettings(openingDate: s.openingDate, weeklyCap: cap, buffer: RinggitCentsFormatter.parse(_buffer.text), needsReserve: needs));
     if (mounted) Navigator.of(context).pop();
-    final forNeeds = needs == 0 ? '' : ', ${Money.format(needs)} a month for needs';
+    final forNeeds = needs == 0 ? '' : ', ${Money.format(needs)} a month not my call';
     showBar(messenger, 'Allowance saved: ${Money.format(cap)} a week$forNeeds', undo: () => repo.saveSettings(s));
   }
 

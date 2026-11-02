@@ -41,9 +41,9 @@ void main() {
 
   testWidgets('a card says a spend is a need, logs it as one, and leaves the allowance alone', (tester) async {
     final world = await openCoach(tester);
-    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': 'Personal', 'label': 'Shampoo', 'spend_kind': 'need'}));
+    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': 'Personal', 'label': 'Shampoo', 'spend_kind': 'not_my_call'}));
     await ask(tester, 'Log RM18 shampoo, I ran out');
-    expect(find.text('Need'), findsOneWidget);
+    expect(find.text('Not my call'), findsOneWidget);
     expect(find.textContaining('Stays out of your'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Log it'));
     await tester.pumpAndSettle();
@@ -52,7 +52,7 @@ void main() {
 
   testWidgets('Change details opens the log sheet with the card in it, and the card follows what is saved', (tester) async {
     final world = await openCoach(tester);
-    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': 'Personal', 'label': 'Shampoo', 'spend_kind': 'need'}));
+    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': 'Personal', 'label': 'Shampoo', 'spend_kind': 'not_my_call'}));
     await ask(tester, 'Log RM18 shampoo');
     await tester.tap(find.text('Change details'));
     await tester.pumpAndSettle();
@@ -91,9 +91,9 @@ void main() {
   testWidgets('a change card turns a want into a need, and Undo turns it back', (tester) async {
     final world = await openCoach(tester);
     final lunch = world.entries.single;
-    world.coach.lookups.add(('bajet_propose_change', {'entry_id': lunch.id, 'spend_kind': 'need'}));
+    world.coach.lookups.add(('bajet_propose_change', {'entry_id': lunch.id, 'spend_kind': 'not_my_call'}));
     await ask(tester, 'That food was a need actually');
-    expect(find.text('Want → Need'), findsOneWidget);
+    expect(find.text('My call → Not my call'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Change it'));
     await tester.pumpAndSettle();
     expect(world.entries.single.spendKind, SpendKind.need);

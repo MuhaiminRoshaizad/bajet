@@ -73,7 +73,7 @@ void main() {
       rules: rules,
     );
     final text = reportText(i: week, accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
-    expect(text, contains('Money out: RM8.00\n\nMoney out by kind:\n- Wants: RM8.00\n'));
+    expect(text, contains('Money out: RM8.00\n\nMoney out by kind:\n- My call: RM8.00\n'));
     for (final missing in ['Money in', 'Spent more than came in', 'Kept', 'Fixed', 'None']) {
       expect(text, isNot(contains(missing)), reason: missing);
     }
@@ -96,7 +96,7 @@ void main() {
     expect(csv.split('\r\n'), [
       'date,type,account,category,label,note,amount,kind',
       '2026-07-01,income,Main account,Salary,Salary,,3000.00,',
-      '2026-07-02,expense,Wallet,Food,Lunch,"With team, then ""coffee""",8.00,want',
+      '2026-07-02,expense,Wallet,Food,Lunch,"With team, then ""coffee""",8.00,my call',
       '2026-07-03,expense,Main account,Bills,Rent,,500.00,planned',
       '',
     ]);
@@ -114,8 +114,8 @@ void main() {
       rules: rules,
     );
     final text = reportText(i: i, accounts: [lines().first], balance: 249200, weeklyCap: 5000, buffer: 50000, categories: categories, goal: null);
-    expect(text, contains('- Planned (bills, goals, events): RM500.00\n- Wants: RM8.00\n- Needs (bought anyway or asked for): RM45.00\n'));
-    expect(reportCsv([need], categories, lines()).split('\r\n')[1], endsWith(',45.00,need'));
+    expect(text, contains('- Planned (bills, goals, events): RM500.00\n- My call: RM8.00\n- Not my call (no real say): RM45.00\n'));
+    expect(reportCsv([need], categories, lines()).split('\r\n')[1], endsWith(',45.00,not my call'));
   });
 
   test('the PDF builds with the bundled font, over several pages if needed', () async {

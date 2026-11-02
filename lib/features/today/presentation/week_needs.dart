@@ -45,10 +45,12 @@ class _WeekNeedsState extends State<WeekNeeds> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                // Wraps rather than overflowing when the label and large text
+                // leave no room on one line.
+                Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
                   CircleAvatar(backgroundColor: SpendKind.need.colour(c), radius: 5),
                   const SizedBox(width: AppSpacing.s),
-                  Text('Needs ', style: TextStyle(color: c.muted)),
+                  Text('${SpendKind.need.label} ', style: TextStyle(color: c.muted)),
                   Text(Money.format(total), style: const TextStyle(fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()])),
                   AnimatedRotation(
                     turns: _open ? 0.5 : 0,

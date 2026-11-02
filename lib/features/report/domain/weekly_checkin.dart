@@ -333,7 +333,7 @@ String weeklyCheckinText(WeeklyCheckin w) {
     'Spent ${Money.format(w.spent)} of ${Money.format(w.plan)}${w.from == w.monday ? '' : ' planned for these days'} '
         '(${Money.format(under.abs())} ${under >= 0 ? 'under' : 'over'})',
     if (w.categories.isNotEmpty) '  ${w.categories.map((c) => '${c.label} ${Money.format(c.amount)}').join(' · ')}',
-    if (w.needs > 0) 'Needs ${Money.format(w.needs)}, not counted in the allowance',
+    if (w.needs > 0) 'Not my call ${Money.format(w.needs)}, not counted in the allowance',
     if (w.finished.isNotEmpty) 'Days: ${w.withinPlan} of ${w.finished.length} finished days within plan · ${w.noSpendDays} no-spend ${w.noSpendDays == 1 ? 'day' : 'days'}',
     if (w.days.any((d) => d.state == CheckinDayState.today)) '  Today counts once it is over',
     if (w.rules.isNotEmpty) 'Rules: ${w.rules.map((r) => '${r.name} ${r.kept ? 'kept' : 'missed'}').join(' · ')}',

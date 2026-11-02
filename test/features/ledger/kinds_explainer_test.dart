@@ -13,10 +13,12 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('check-want')));
     await tester.pumpAndSettle();
-    expect(find.text("Not quite: you'd have bought it anyway, so it is a need."), findsOneWidget);
+    expect(find.text('Not quite: once it cracked, you had no real say, so it is not your call.'), findsOneWidget);
+    // The longer answer above pushes the chips toward the sheet's edge.
+    await tester.ensureVisible(find.byKey(const ValueKey('check-need')));
     await tester.tap(find.byKey(const ValueKey('check-need')));
     await tester.pumpAndSettle();
-    expect(find.text("Right: you'd have bought it anyway."), findsOneWidget);
+    expect(find.text('Right: once it cracked, you had no real say.'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Got it'));
     await tester.tap(find.text('Got it'));

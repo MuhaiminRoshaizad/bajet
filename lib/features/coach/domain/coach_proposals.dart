@@ -24,7 +24,7 @@ class LogProposal extends CoachProposal {
   const LogProposal(this.draft, this.categoryName, this.accountName, {this.allowance, this.billName, this.planned, this.billDue, this.eventName, this.budget, this.spent = 0});
 
   /// The row saying whether a spend is a want or a need.
-  static const kindRow = 'Kind';
+  static const kindRow = 'Whose call';
 
   final EntryDraft draft;
   final String categoryName;
@@ -80,7 +80,7 @@ class LogProposal extends CoachProposal {
           if (budget != null) ('Budget left', '${Money.format((budget! - spent - draft.amount).clamp(0, budget!))} of ${Money.format(budget!)}'),
         ] else
           ('What', [if (draft.label != null) draft.label!, categoryName].join(' · ')),
-        if (allowance != null) (kindRow, draft.spendKind == SpendKind.need ? 'Need' : 'Want'),
+        if (allowance != null) (kindRow, draft.spendKind.label),
         (draft.isIncome ? 'Into' : 'From', accountName),
         ('Day', Dates.full(draft.day)),
       ];
@@ -162,7 +162,7 @@ class ChangeProposal extends CoachProposal {
         if (after.label != before.label) ('Label', '${before.label ?? 'none'} → ${after.label ?? 'none'}'),
         if (after.day != before.day) ('Day', '${Dates.full(before.day)} → ${Dates.full(after.day)}'),
         if (afterAccount != beforeAccount) (after.isIncome ? 'Into' : 'From', '$beforeAccount → $afterAccount'),
-        if (allowance != null && after.spendKind != before.spendKind) (LogProposal.kindRow, '${_kindName(before.spendKind)} → ${_kindName(after.spendKind)}'),
+        if (allowance != null && after.spendKind != before.spendKind) (LogProposal.kindRow, '${before.spendKind.label} → ${after.spendKind.label}'),
       ];
   @override
   String? get effect {
@@ -211,7 +211,6 @@ class EventProposal extends CoachProposal {
   String? get effect => runway;
 }
 
-String _kindName(SpendKind k) => k == SpendKind.need ? 'Need' : 'Want';
 
 /// Where a card stands. [outdated] is a card that would no longer do what it
 /// said, because the same change was made somewhere else first.
@@ -455,15 +454,15 @@ const proposalTools = [
   ),
   CoachLookup(
     'bajet_propose_change',
-    'Suggests changing one entry already logged, for the user to confirm: its kind (want or need), amount, category, label, day or '
+    'Suggests changing one entry already logged, for the user to confirm: whose call it was, amount, category, label, day or '
         'account. It changes nothing itself: the app shows a card with the change and only the user\'s tap makes it, with Undo. Use it '
-        'when the user says an entry is wrong, such as "that was a need actually". Find the entry\'s id with bajet_entries. Give only '
+        'when the user says an entry is wrong, such as "that one was not my call actually". Find the entry\'s id with bajet_entries. Give only '
         'what changes. A bill or event an entry settles stays as it is.',
     {
       'type': 'object',
       'properties': {
         'entry_id': {'type': 'integer', 'description': 'The id bajet_entries gives the entry.'},
-        'spend_kind': {'type': 'string', 'enum': ['want', 'need'], 'description': 'For day-to-day spending only.'},
+        'spend_kind': {'type': 'string', 'enum': ['my_call', 'not_my_call'], 'description': 'For day-to-day spending only.'},
         'amount_rm': {'type': 'number', 'description': 'The new amount in ringgit.'},
         'category': {'type': 'string', 'description': 'The new category, by its name.'},
         'label': {'type': 'string', 'description': 'The new label.'},
@@ -477,8 +476,8 @@ const proposalTools = [
     'bajet_propose_log',
     'Suggests logging one spend or income for the user to confirm. It does not log anything: the app shows the user a card with '
         'Log it and Not now, and only their tap writes it. Use it when the user asks you to log, record or add something. Give the '
-        'amount in ringgit, the category by its name, and the account by its name if they said one. A day-to-day spend is a want or a '
-        'need, and only wants count toward the weekly allowance, so say which when you can tell. When it pays a monthly bill, receives '
+        'amount in ringgit, the category by its name, and the account by its name if they said one. A day-to-day spend is my call or '
+        'not my call, and only my calls count toward the weekly allowance, so say which when you can tell. When it pays a monthly bill, receives '
         'monthly income or goes on a planned event, name that in for, with the real amount if they said one: only then does the plan '
         'know it is settled, and Runway stops counting it.',
     {
@@ -491,8 +490,8 @@ const proposalTools = [
         'label': {'type': 'string', 'description': 'A short label, such as Lunch.'},
         'spend_kind': {
           'type': 'string',
-          'enum': ['want', 'need'],
-          'description': 'For a spend: need if it would be bought anyway or was asked for, want if the user chose it and could have skipped it or waited without harm. '
+          'enum': ['my_call', 'not_my_call'],
+          'description': 'For a spend: not_my_call if the user had no real say in it, my_call if they decided and could have skipped it or waited without harm. '
               "Leave out when unsure, for the category's usual kind.",
         },
         'account': {'type': 'string', 'description': 'The account name; leave out for the one the user last logged to.'},
@@ -581,7 +580,7 @@ const proposalTools = [
       // As the log sheet: a spend starts as its category's kind, and only
       // day-to-day spending asks.
       final dayToDay = !income && !category.isFixed && bill == null && event == null;
-      final kind = (dayToDay ? SpendKind.values.asNameMap()[input['spend_kind']] : null) ?? category.spendKind;
+      final kind = (dayToDay ? SpendKind.fromTool(input['spend_kind']) : null) ?? category.spendKind;
       final draft = EntryDraft(
         day: day,
         isIncome: income,
@@ -605,7 +604,7 @@ const proposalTools = [
         budget: event != null && !event.isIncome ? event.amount : null,
         spent: event?.spent ?? 0,
       );
-      final asKind = dayToDay ? ', as a ${kind.name}' : '';
+      final asKind = dayToDay ? ', as ${kind.words}' : '';
       return (LookupResult('Shown to the user as a card to confirm: ${p.question} ${Money.format(sen)}$asKind. Nothing is logged unless they tap ${CoachCard(p).action}.', 'A suggestion'), p);
     case 'bajet_propose_move':
       final sen = amount();
@@ -673,9 +672,9 @@ const proposalTools = [
       final accountId = text('account') == null ? before.accountId : account(text('account'));
       if (text('account') != null && accountId == null) return (no('there is no account called "${text('account')}". The accounts are: $accountsList.'), null);
       final categoryKey = category?.key ?? before.categoryKey;
-      final askedKind = SpendKind.values.asNameMap()[input['spend_kind']];
+      final askedKind = SpendKind.fromTool(input['spend_kind']);
       final dayToDay = !before.isIncome && !fixed.contains(categoryKey) && before.billId == null && before.event == null;
-      if (askedKind != null && !dayToDay) return (no('only day-to-day spending is a want or a need; this entry is planned or income.'), null);
+      if (askedKind != null && !dayToDay) return (no('only day-to-day spending is my call or not my call; this entry is planned or income.'), null);
       final after = Entry(
         id: before.id,
         day: day,

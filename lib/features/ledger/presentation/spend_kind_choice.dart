@@ -11,11 +11,6 @@ import 'kinds_explainer.dart';
 
 /// How a kind of spend reads wherever it is shown.
 extension SpendKindLook on SpendKind {
-  String get label => switch (this) {
-        SpendKind.want => 'Want',
-        SpendKind.need => 'Need',
-      };
-
   Color colour(AppColors c) => switch (this) {
         SpendKind.want => c.primary,
         SpendKind.need => c.good,
@@ -36,12 +31,12 @@ class SpendKindChoice extends ConsumerWidget {
     final cap = ref.watch(settingsProvider).value?.weeklyCap;
     final allowance = cap == null ? 'your allowance' : 'your ${Money.formatWhole(cap)}';
     final meaning = switch (kind) {
-      SpendKind.want => 'A want: you chose it, so it counts toward $allowance.',
-      SpendKind.need => 'A need: bought anyway or asked for, so it stays out of $allowance.',
+      SpendKind.want => 'Your call: you decided, so it counts toward $allowance.',
+      SpendKind.need => 'Not your call: you had no real say, so it stays out of $allowance.',
     };
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
-        Expanded(child: Text('What kind?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.muted))),
+        Expanded(child: Text('Whose call?', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.muted))),
         TextButton(onPressed: () => showKindsExplainer(context), child: const Text("What's this?")),
       ]),
       Wrap(spacing: AppSpacing.s, runSpacing: AppSpacing.s, children: [
