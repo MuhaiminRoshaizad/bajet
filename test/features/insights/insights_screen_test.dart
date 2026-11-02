@@ -124,4 +124,14 @@ void main() {
     expect(find.text('22/06 to 28/06/2026'), findsOneWidget);
     expect(find.textContaining('bajet report, 22/06/2026 to 28/06/2026'), findsOneWidget);
   });
+
+  testWidgets("the goal card names the price and the buffer it adds", (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 800, categoryKey: 'food', label: 'Lunch'));
+      w.addGoal(name: 'Bicycle', price: 200000, targetDate: DateTime.utc(testToday.year + 1, 1, 1));
+    });
+    await openInsights(tester);
+    await tester.scrollUntilVisible(find.text('Toward Bicycle'), 300, scrollable: find.byType(Scrollable).first);
+    expect(find.textContaining('RM2,000.00 price + RM'), findsOneWidget);
+  });
 }

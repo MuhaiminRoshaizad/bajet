@@ -528,7 +528,7 @@ class _GoalProgress extends ConsumerWidget {
           Semantics(label: '${(share * 100).round()} percent of what is needed', excludeSemantics: true, child: SoftMeter(value: share, color: c.keep)),
           const SizedBox(height: AppSpacing.s),
           Text('${Money.format(math.max(0, balance))} of ${Money.format(needed)} needed', style: TextStyle(color: c.keep)),
-          if (buffer > 0) Text('The price plus ${Money.formatWhole(buffer)} to keep', style: TextStyle(color: c.muted, fontSize: 13)),
+          if (buffer > 0) Text('${Money.format(goal.price)} price + ${Money.format(buffer)} to keep after', style: TextStyle(color: c.muted, fontSize: 13)),
           // Only shown and opened here; it is changed in Settings → Goals.
           if (goal.listing case final listing?) ...[
             const SizedBox(height: AppSpacing.m),
