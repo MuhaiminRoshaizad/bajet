@@ -1,3 +1,4 @@
+import 'package:bajet/core/dates/dates.dart';
 import 'package:bajet/core/storage/device_flags.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
@@ -133,5 +134,34 @@ void main() {
     await openInsights(tester);
     await tester.scrollUntilVisible(find.text('Toward Bicycle'), 300, scrollable: find.byType(Scrollable).first);
     expect(find.textContaining('RM2,000.00 price + RM'), findsOneWidget);
+  });
+
+  testWidgets('a tapped day in the last 14 days names itself and opens what was spent, and a second tap closes it', (tester) async {
+    final yesterday = DateTime.utc(testToday.year, testToday.month, testToday.day - 1);
+    await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: yesterday, isIncome: false, amount: 750, categoryKey: 'food', label: 'Lunch'));
+      w.add(EntryDraft(day: yesterday, isIncome: false, amount: 4500, categoryKey: 'personal', label: 'Repair', spendKind: SpendKind.need));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 300, categoryKey: 'food', label: 'Coffee'));
+    });
+    await openInsights(tester);
+    await tester.scrollUntilVisible(find.text('Last 14 days'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -150));
+    await tester.pumpAndSettle();
+    // The first day's date, at the chart's left end until a day is tapped.
+    final firstDay = find.text(Dates.short(DateTime.utc(testToday.year, testToday.month, testToday.day - 13)));
+    expect(firstDay, findsOneWidget);
+    final chart = tester.getRect(find.descendant(of: find.ancestor(of: find.text('Last 14 days'), matching: find.byType(Column)).first, matching: find.byType(GestureDetector)).last);
+    final slot = chart.width / 14;
+    await tester.tapAt(Offset(chart.left + slot * 12.5, chart.center.dy));
+    await tester.pumpAndSettle();
+    expect(firstDay, findsNothing);
+    expect(find.text('${Dates.weekday(yesterday)} ${Dates.short(yesterday)}'), findsOneWidget);
+    expect(find.text('Lunch'), findsOneWidget);
+    expect(find.text('Coffee'), findsNothing, reason: "today's bar is not open");
+    expect(find.textContaining('Also RM45.00 not my call or planned'), findsOneWidget);
+    await tester.tapAt(Offset(chart.left + slot * 12.5, chart.center.dy));
+    await tester.pumpAndSettle();
+    expect(firstDay, findsOneWidget);
+    expect(find.text('Lunch'), findsNothing);
   });
 }

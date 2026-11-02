@@ -387,36 +387,101 @@ class _SplitState extends State<_Split> {
 }
 
 /// Fourteen bars of spending on wants, each against its own day's plan:
-/// rose when over, blue when within, a short mark where the plan sat.
-class _LastDays extends StatelessWidget {
+/// rose when over, blue when within, a short mark where the plan sat. A tap
+/// on a bar names its day and opens what was spent.
+class _LastDays extends ConsumerStatefulWidget {
   const _LastDays({required this.days});
 
   final List<DayAgainstPlan> days;
 
   @override
+  ConsumerState<_LastDays> createState() => _LastDaysState();
+}
+
+class _LastDaysState extends ConsumerState<_LastDays> {
+  int? _picked;
+
+  @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final days = widget.days;
     final over = days.where((d) => d.over).length;
+    final still = MediaQuery.disableAnimationsOf(context);
+    final picked = _picked == null ? null : days[_picked!];
+    final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
+    final fixed = {for (final x in categories.values) if (x.isFixed) x.key};
+    final onDay = [for (final e in ref.watch(allEntriesProvider).value ?? const <Entry>[]) if (picked != null && e.day == picked.date && !e.isIncome) e];
+    final mine = [for (final e in onDay) if (e.isWant(fixed)) e];
+    final elsewhere = onDay.where((e) => !e.isWant(fixed)).fold(0, (s, e) => s + e.amount);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Title('Last 14 days', trailing: over == 0 ? 'every day within plan' : '$over ${over == 1 ? 'day' : 'days'} over plan'),
         const SizedBox(height: AppSpacing.m),
-        Semantics(
-          label: 'Flexible spending for the last 14 days. ${[for (final d in days) '${Dates.short(d.date)} ${Money.format(d.spent)}'].join(', ')}',
-          excludeSemantics: true,
-          child: SizedBox(
-            height: 120,
-            child: CustomPaint(painter: _BarsPainter(days: days, within: c.primary, over: c.bad, plan: c.muted, empty: c.well)),
+        LayoutBuilder(
+          builder: (context, box) => Semantics(
+            label: 'Spending that was your call, the last 14 days. ${[for (final d in days) '${Dates.short(d.date)} ${Money.format(d.spent)}'].join(', ')}',
+            hint: 'Tap a day to see what was spent',
+            child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: (t) {
+              final i = (t.localPosition.dx / (box.maxWidth / days.length)).floor().clamp(0, days.length - 1);
+              setState(() => _picked = _picked == i ? null : i);
+            },
+            child: SizedBox(
+              height: 120,
+              child: CustomPaint(painter: _BarsPainter(days: days, within: c.primary, over: c.bad, plan: c.muted, empty: c.well, picked: _picked)),
+            ),
+          ),
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Row(
-          children: [
-            Text(Dates.short(days.first.date), style: TextStyle(color: c.muted, fontSize: 11)),
-            const Spacer(),
-            Text('Today', style: TextStyle(color: c.muted, fontSize: 11)),
-          ],
+        AnimatedSwitcher(
+          duration: still ? Duration.zero : AppMotion.fast,
+          child: picked == null
+              ? Row(
+                  key: const ValueKey('ends'),
+                  children: [
+                    Text(Dates.short(days.first.date), style: TextStyle(color: c.muted, fontSize: 11)),
+                    const Spacer(),
+                    Text('Today', style: TextStyle(color: c.muted, fontSize: 11)),
+                  ],
+                )
+              : Align(
+                  key: ValueKey(_picked),
+                  alignment: Alignment(-1 + 2 * (_picked! + 0.5) / days.length, 0),
+                  child: Text(
+                    '${Dates.weekday(picked.date)} ${Dates.short(picked.date)}',
+                    style: TextStyle(color: picked.over ? c.bad : c.primary, fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
+        ),
+        AnimatedSize(
+          duration: still ? Duration.zero : AppMotion.enter,
+          curve: Curves.easeOutBack,
+          alignment: Alignment.topCenter,
+          child: picked == null
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.m),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Text(
+                      '${Money.format(picked.spent)} your call, of ${Money.format(picked.planned)} planned'
+                      '${picked.over ? ' · ${Money.format(picked.spent - picked.planned)} over' : ''}',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: picked.over ? c.bad : c.ink),
+                    ),
+                    const SizedBox(height: AppSpacing.s),
+                    if (mine.isEmpty)
+                      Text('Nothing that was your call this day.', style: TextStyle(color: c.muted))
+                    else
+                      EntryDrawer(entries: mine, categories: categories, today: ref.watch(todayProvider), onOpen: (e) => showLogSheet(context, editing: e)),
+                    if (elsewhere > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.s),
+                        child: Text('Also ${Money.format(elsewhere)} not my call or planned, not counted here.', style: TextStyle(color: c.muted, fontSize: 13)),
+                      ),
+                  ]),
+                ),
         ),
       ],
     );
@@ -424,10 +489,13 @@ class _LastDays extends StatelessWidget {
 }
 
 class _BarsPainter extends CustomPainter {
-  _BarsPainter({required this.days, required this.within, required this.over, required this.plan, required this.empty});
+  _BarsPainter({required this.days, required this.within, required this.over, required this.plan, required this.empty, this.picked});
 
   final List<DayAgainstPlan> days;
   final Color within, over, plan, empty;
+
+  /// The bar tapped open; the others fade back.
+  final int? picked;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -437,14 +505,15 @@ class _BarsPainter extends CustomPainter {
     for (final (i, d) in days.indexed) {
       final x = i * slot + (slot - bar) / 2;
       final h = d.spent == 0 ? 3.0 : math.max(3.0, size.height * d.spent / top);
+      final colour = d.spent == 0 ? empty : (d.over ? over : within);
       canvas.drawRRect(
         RRect.fromRectAndRadius(Rect.fromLTWH(x, size.height - h, bar, h), const Radius.circular(4)),
-        Paint()..color = d.spent == 0 ? empty : (d.over ? over : within),
+        Paint()..color = picked == null || picked == i ? colour : colour.withValues(alpha: 0.3),
       );
       if (d.planned > 0) {
         final y = size.height - size.height * d.planned / top;
         canvas.drawLine(Offset(x - 2, y), Offset(x + bar + 2, y), Paint()
-          ..color = plan
+          ..color = picked == null || picked == i ? plan : plan.withValues(alpha: 0.3)
           ..strokeWidth = 2
           ..strokeCap = StrokeCap.round);
       }
@@ -452,7 +521,7 @@ class _BarsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_BarsPainter old) => old.days != days || old.within != within;
+  bool shouldRepaint(_BarsPainter old) => old.days != days || old.within != within || old.picked != picked;
 }
 
 class _Habits extends StatelessWidget {
