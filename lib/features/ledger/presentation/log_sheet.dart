@@ -379,7 +379,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 const SizedBox(height: AppSpacing.s),
                 Center(
                   child: _event == null || _isIncome
-                      ? _PlanHint(amount: _amount, isIncome: _isIncome, forBill: _billId != null, categoryKey: _categoryKey, day: _day, editing: widget.editing)
+                      ? _PlanHint(amount: _amount, isIncome: _isIncome, forBill: _billId != null, categoryKey: _categoryKey, day: _day, editing: widget.editing, mine: _spendKind == SpendKind.want)
                       : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
                 ),
               ],
@@ -714,7 +714,7 @@ class _EventHint extends ConsumerWidget {
 /// Says whether the amount fits the day's planned spend, and by how much it
 /// would set the goal back if not. Fixed costs, bills and income get no hint.
 class _PlanHint extends ConsumerWidget {
-  const _PlanHint({required this.amount, required this.isIncome, required this.forBill, required this.categoryKey, required this.day, required this.editing});
+  const _PlanHint({required this.amount, required this.isIncome, required this.forBill, required this.categoryKey, required this.day, required this.editing, required this.mine});
 
   final int amount;
   final bool isIncome;
@@ -722,6 +722,10 @@ class _PlanHint extends ConsumerWidget {
   final String? categoryKey;
   final DateTime day;
   final Entry? editing;
+
+  /// Whether the spend is the user's own call; only then does it count
+  /// against the day's plan.
+  final bool mine;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -741,15 +745,22 @@ class _PlanHint extends ConsumerWidget {
     final room = (planned - wantsSpent(entries, fixed, day, day)).clamp(0, planned);
     final over = amount - room;
     final whose = day == ref.read(todayProvider) ? "today's" : "that day's";
-    final (bg, fg, text) = over > 0
-        ? (c.badSurface, c.bad, '${Money.format(over)} over $whose ${Money.format(planned)} plan')
-        : (c.goodSurface, c.good, 'Within $whose plan');
-    return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadii.pill)),
-      child: Text(text, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w600)),
+    final (bg, fg, text) = !mine
+        ? (c.well, c.muted, 'Stays out of $whose ${Money.format(planned)} plan')
+        : over > 0
+            ? (c.badSurface, c.bad, '${Money.format(over)} over $whose ${Money.format(planned)} plan')
+            : (c.goodSurface, c.good, 'Within $whose plan');
+    // Changes as the kind is picked, so it fades across rather than jumping.
+    return AnimatedSwitcher(
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.fast,
+      child: Container(
+        key: ValueKey(text),
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadii.pill)),
+        child: Text(text, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w600)),
+      ),
     );
   }
 }

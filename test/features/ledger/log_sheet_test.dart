@@ -441,4 +441,25 @@ void main() {
     await openLogger(tester);
     expect(find.text('Paid from'), findsNothing);
   });
+
+  testWidgets("a spend that is not the user's call stays out of the day's plan line", (tester) async {
+    await pumpApp(tester, seed: (w) {
+      for (var i = 1; i <= 7; i++) {
+        w.saveRule(WeeklyRule(weekday: i, label: 'Day', type: DayType.spend, plannedSpend: 1000));
+      }
+    });
+    await openLogger(tester);
+    await typeKeys(tester, '1500');
+    await tester.tap(find.bySemanticsLabel('Personal'));
+    await tester.pumpAndSettle();
+    expect(find.text("RM5.00 over today's RM10.00 plan"), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('kind-need')));
+    await tester.tap(find.byKey(const ValueKey('kind-need')));
+    await tester.pumpAndSettle();
+    expect(find.text("Stays out of today's RM10.00 plan"), findsOneWidget);
+    expect(find.textContaining('over today'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('kind-want')));
+    await tester.pumpAndSettle();
+    expect(find.text("RM5.00 over today's RM10.00 plan"), findsOneWidget);
+  });
 }
