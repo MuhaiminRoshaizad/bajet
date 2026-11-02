@@ -46,7 +46,7 @@ void main() {
     final r = runLookup('bajet_entries', {'from': '2026-09-01', 'to': '2026-09-30', 'category': 'food'}, data);
     expect(r.failed, isFalse);
     expect(r.text, startsWith('2 entries from 01/09/2026 to 30/09/2026: money out RM42.00, money in RM0.00.'));
-    expect(r.text, contains('- 03/09/2026 · Food · Lunch · Wallet · −RM12.00'));
+    expect(r.text, contains('- 03/09/2026 · Food · Lunch · Wallet · −RM12.00 · want'));
     expect(r.label, 'Entries · food · 01/09 to 30/09/2026');
   });
 
@@ -87,5 +87,41 @@ void main() {
     final r = runLookup('bajet_plan', const {}, data);
     expect(r.text, contains('Weekly allowance for wants: RM40.00'));
     expect(r.text, contains('- Friday (Day): no spending'));
+  });
+
+  test('entries say what each spend was, and can be narrowed to wants, needs or planned', () {
+    final rent = RecurringItem(id: 7, name: 'Rent', amount: 50000, categoryKey: 'bills', isIncome: false, nextDue: d(11, 1));
+    final dinner = PlannedEvent(id: 3, name: 'Dinner', amount: 30000, categoryKey: 'gifts', isIncome: false, date: d(10, 20));
+    final day = d(10, 10);
+    final mixed = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: [
+        Entry(id: 1, day: day, isIncome: false, amount: 1200, categoryKey: 'food', label: 'Lunch'),
+        Entry(id: 2, day: day, isIncome: false, amount: 1800, categoryKey: 'personal', label: 'Shampoo', spendKind: SpendKind.need),
+        Entry(id: 3, day: day, isIncome: false, amount: 49240, categoryKey: 'bills', label: 'Rent', billId: 7),
+        Entry(id: 4, day: day, isIncome: false, amount: 18000, categoryKey: 'gifts', label: 'Cake', event: EventLink(3, d(10, 20))),
+        Entry(id: 5, day: day, isIncome: true, amount: 2000, categoryKey: 'refund', label: 'Refund'),
+      ],
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: data.rules,
+      recurring: [rent],
+      projection: null,
+      upcoming: const [],
+      events: [dinner],
+    );
+    String lines(Map<String, Object?> extra) => runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', ...extra}, mixed).text;
+    final all = lines(const {});
+    expect(all, contains('Lunch · Main account · −RM12.00 · want'));
+    expect(all, contains('Shampoo · Main account · −RM18.00 · need'));
+    expect(all, contains('Rent · Main account · −RM492.40 · planned, paid toward Rent'));
+    expect(all, contains('Cake · Main account · −RM180.00 · planned, spent on Dinner'));
+    expect(all, endsWith('Refund · Main account · +RM20.00'));
+    expect(lines({'spend': 'need'}), startsWith('1 entry from 10/10/2026 to 10/10/2026: money out RM18.00'));
+    expect(lines({'spend': 'planned'}), startsWith('2 entries'));
+    expect(lines({'spend': 'want'}), contains('Lunch'));
+    expect(runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', 'spend': 'need'}, mixed).label, 'Entries · need · 10/10/2026');
   });
 }
