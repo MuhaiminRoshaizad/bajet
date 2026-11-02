@@ -64,6 +64,14 @@ void main() {
     expect(r2.text, contains('The accounts are: Main account, Wallet.'));
   });
 
+  test('the categories only the app logs to are not offered, as on the log sheet', () {
+    for (final category in ['Goals', 'Untracked']) {
+      final (r, p) = propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 5, 'category': category}, data);
+      expect((r.failed, p), (true, null), reason: category);
+      expect(r.text, isNot(contains(', Goals')));
+    }
+  });
+
   test('a log cannot be dated in the future or more than a year back', () {
     for (final day in ['2026-10-16', '2025-10-14', '15/10/2026']) {
       final (r, p) = propose('bajet_propose_log', {'kind': 'spending', 'amount_rm': 5, 'category': 'Food', 'day': day}, data);

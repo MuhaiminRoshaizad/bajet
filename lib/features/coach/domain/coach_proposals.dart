@@ -345,9 +345,9 @@ const proposalTools = [
       // As the log sheet: a bill or event brings its own category.
       final wantedCategory = text('category')?.toLowerCase();
       final categoryKey = bill?.categoryKey ?? event?.categoryKey;
-      final category = d.categories.where((c) => categoryKey != null ? c.key == categoryKey : c.isIncome == income && c.label.toLowerCase() == wantedCategory).firstOrNull;
+      final category = d.categories.where((c) => categoryKey != null ? c.key == categoryKey : c.isIncome == income && !c.isAutomatic && c.label.toLowerCase() == wantedCategory).firstOrNull;
       if (category == null) {
-        final names = d.categories.where((c) => c.isIncome == income).map((c) => c.label).join(', ');
+        final names = d.categories.where((c) => c.isIncome == income && !c.isAutomatic).map((c) => c.label).join(', ');
         return (no('there is no ${income ? 'income' : 'spending'} category called "${text('category') ?? categoryKey}". The categories are: $names.'), null);
       }
       final accountId = text('account') == null ? bill?.accountId ?? account(null) : account(text('account'));
