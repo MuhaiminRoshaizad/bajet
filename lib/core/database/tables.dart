@@ -25,7 +25,7 @@ class DayConverter extends TypeConverter<DateTime, String> {
 
 enum EntryKind { income, expense }
 
-enum RhythmDayType { zero, spend, flex }
+enum RhythmDayType { zero, spend }
 
 enum GoalStatus { active, paused, achieved, archived }
 
@@ -152,7 +152,6 @@ class WeeklyRules extends Table {
   TextColumn get label => text()();
   TextColumn get dayType => textEnum<RhythmDayType>()();
   IntColumn get plannedSpend => integer().withDefault(const Constant(0))();
-  BoolColumn get isFastingDay => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {weekday};

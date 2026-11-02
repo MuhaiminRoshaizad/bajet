@@ -4231,29 +4231,8 @@ class $WeeklyRulesTable extends WeeklyRules
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _isFastingDayMeta = const VerificationMeta(
-    'isFastingDay',
-  );
   @override
-  late final GeneratedColumn<bool> isFastingDay = GeneratedColumn<bool>(
-    'is_fasting_day',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_fasting_day" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    weekday,
-    label,
-    dayType,
-    plannedSpend,
-    isFastingDay,
-  ];
+  List<GeneratedColumn> get $columns => [weekday, label, dayType, plannedSpend];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -4289,15 +4268,6 @@ class $WeeklyRulesTable extends WeeklyRules
         ),
       );
     }
-    if (data.containsKey('is_fasting_day')) {
-      context.handle(
-        _isFastingDayMeta,
-        isFastingDay.isAcceptableOrUnknown(
-          data['is_fasting_day']!,
-          _isFastingDayMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -4325,10 +4295,6 @@ class $WeeklyRulesTable extends WeeklyRules
         DriftSqlType.int,
         data['${effectivePrefix}planned_spend'],
       )!,
-      isFastingDay: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_fasting_day'],
-      )!,
     );
   }
 
@@ -4347,13 +4313,11 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
   final String label;
   final RhythmDayType dayType;
   final int plannedSpend;
-  final bool isFastingDay;
   const WeeklyRule({
     required this.weekday,
     required this.label,
     required this.dayType,
     required this.plannedSpend,
-    required this.isFastingDay,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4366,7 +4330,6 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
       );
     }
     map['planned_spend'] = Variable<int>(plannedSpend);
-    map['is_fasting_day'] = Variable<bool>(isFastingDay);
     return map;
   }
 
@@ -4376,7 +4339,6 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
       label: Value(label),
       dayType: Value(dayType),
       plannedSpend: Value(plannedSpend),
-      isFastingDay: Value(isFastingDay),
     );
   }
 
@@ -4392,7 +4354,6 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
         serializer.fromJson<String>(json['dayType']),
       ),
       plannedSpend: serializer.fromJson<int>(json['plannedSpend']),
-      isFastingDay: serializer.fromJson<bool>(json['isFastingDay']),
     );
   }
   @override
@@ -4405,7 +4366,6 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
         $WeeklyRulesTable.$converterdayType.toJson(dayType),
       ),
       'plannedSpend': serializer.toJson<int>(plannedSpend),
-      'isFastingDay': serializer.toJson<bool>(isFastingDay),
     };
   }
 
@@ -4414,13 +4374,11 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
     String? label,
     RhythmDayType? dayType,
     int? plannedSpend,
-    bool? isFastingDay,
   }) => WeeklyRule(
     weekday: weekday ?? this.weekday,
     label: label ?? this.label,
     dayType: dayType ?? this.dayType,
     plannedSpend: plannedSpend ?? this.plannedSpend,
-    isFastingDay: isFastingDay ?? this.isFastingDay,
   );
   WeeklyRule copyWithCompanion(WeeklyRulesCompanion data) {
     return WeeklyRule(
@@ -4430,9 +4388,6 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
       plannedSpend: data.plannedSpend.present
           ? data.plannedSpend.value
           : this.plannedSpend,
-      isFastingDay: data.isFastingDay.present
-          ? data.isFastingDay.value
-          : this.isFastingDay,
     );
   }
 
@@ -4442,15 +4397,13 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
           ..write('weekday: $weekday, ')
           ..write('label: $label, ')
           ..write('dayType: $dayType, ')
-          ..write('plannedSpend: $plannedSpend, ')
-          ..write('isFastingDay: $isFastingDay')
+          ..write('plannedSpend: $plannedSpend')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(weekday, label, dayType, plannedSpend, isFastingDay);
+  int get hashCode => Object.hash(weekday, label, dayType, plannedSpend);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4458,8 +4411,7 @@ class WeeklyRule extends DataClass implements Insertable<WeeklyRule> {
           other.weekday == this.weekday &&
           other.label == this.label &&
           other.dayType == this.dayType &&
-          other.plannedSpend == this.plannedSpend &&
-          other.isFastingDay == this.isFastingDay);
+          other.plannedSpend == this.plannedSpend);
 }
 
 class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
@@ -4467,20 +4419,17 @@ class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
   final Value<String> label;
   final Value<RhythmDayType> dayType;
   final Value<int> plannedSpend;
-  final Value<bool> isFastingDay;
   const WeeklyRulesCompanion({
     this.weekday = const Value.absent(),
     this.label = const Value.absent(),
     this.dayType = const Value.absent(),
     this.plannedSpend = const Value.absent(),
-    this.isFastingDay = const Value.absent(),
   });
   WeeklyRulesCompanion.insert({
     this.weekday = const Value.absent(),
     required String label,
     required RhythmDayType dayType,
     this.plannedSpend = const Value.absent(),
-    this.isFastingDay = const Value.absent(),
   }) : label = Value(label),
        dayType = Value(dayType);
   static Insertable<WeeklyRule> custom({
@@ -4488,14 +4437,12 @@ class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
     Expression<String>? label,
     Expression<String>? dayType,
     Expression<int>? plannedSpend,
-    Expression<bool>? isFastingDay,
   }) {
     return RawValuesInsertable({
       if (weekday != null) 'weekday': weekday,
       if (label != null) 'label': label,
       if (dayType != null) 'day_type': dayType,
       if (plannedSpend != null) 'planned_spend': plannedSpend,
-      if (isFastingDay != null) 'is_fasting_day': isFastingDay,
     });
   }
 
@@ -4504,14 +4451,12 @@ class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
     Value<String>? label,
     Value<RhythmDayType>? dayType,
     Value<int>? plannedSpend,
-    Value<bool>? isFastingDay,
   }) {
     return WeeklyRulesCompanion(
       weekday: weekday ?? this.weekday,
       label: label ?? this.label,
       dayType: dayType ?? this.dayType,
       plannedSpend: plannedSpend ?? this.plannedSpend,
-      isFastingDay: isFastingDay ?? this.isFastingDay,
     );
   }
 
@@ -4532,9 +4477,6 @@ class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
     if (plannedSpend.present) {
       map['planned_spend'] = Variable<int>(plannedSpend.value);
     }
-    if (isFastingDay.present) {
-      map['is_fasting_day'] = Variable<bool>(isFastingDay.value);
-    }
     return map;
   }
 
@@ -4544,8 +4486,7 @@ class WeeklyRulesCompanion extends UpdateCompanion<WeeklyRule> {
           ..write('weekday: $weekday, ')
           ..write('label: $label, ')
           ..write('dayType: $dayType, ')
-          ..write('plannedSpend: $plannedSpend, ')
-          ..write('isFastingDay: $isFastingDay')
+          ..write('plannedSpend: $plannedSpend')
           ..write(')'))
         .toString();
   }
@@ -11121,7 +11062,6 @@ typedef $$WeeklyRulesTableCreateCompanionBuilder =
       required String label,
       required RhythmDayType dayType,
       Value<int> plannedSpend,
-      Value<bool> isFastingDay,
     });
 typedef $$WeeklyRulesTableUpdateCompanionBuilder =
     WeeklyRulesCompanion Function({
@@ -11129,7 +11069,6 @@ typedef $$WeeklyRulesTableUpdateCompanionBuilder =
       Value<String> label,
       Value<RhythmDayType> dayType,
       Value<int> plannedSpend,
-      Value<bool> isFastingDay,
     });
 
 class $$WeeklyRulesTableFilterComposer
@@ -11159,11 +11098,6 @@ class $$WeeklyRulesTableFilterComposer
 
   ColumnFilters<int> get plannedSpend => $composableBuilder(
     column: $table.plannedSpend,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isFastingDay => $composableBuilder(
-    column: $table.isFastingDay,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -11196,11 +11130,6 @@ class $$WeeklyRulesTableOrderingComposer
     column: $table.plannedSpend,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get isFastingDay => $composableBuilder(
-    column: $table.isFastingDay,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$WeeklyRulesTableAnnotationComposer
@@ -11223,11 +11152,6 @@ class $$WeeklyRulesTableAnnotationComposer
 
   GeneratedColumn<int> get plannedSpend => $composableBuilder(
     column: $table.plannedSpend,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get isFastingDay => $composableBuilder(
-    column: $table.isFastingDay,
     builder: (column) => column,
   );
 }
@@ -11267,13 +11191,11 @@ class $$WeeklyRulesTableTableManager
                 Value<String> label = const Value.absent(),
                 Value<RhythmDayType> dayType = const Value.absent(),
                 Value<int> plannedSpend = const Value.absent(),
-                Value<bool> isFastingDay = const Value.absent(),
               }) => WeeklyRulesCompanion(
                 weekday: weekday,
                 label: label,
                 dayType: dayType,
                 plannedSpend: plannedSpend,
-                isFastingDay: isFastingDay,
               ),
           createCompanionCallback:
               ({
@@ -11281,13 +11203,11 @@ class $$WeeklyRulesTableTableManager
                 required String label,
                 required RhythmDayType dayType,
                 Value<int> plannedSpend = const Value.absent(),
-                Value<bool> isFastingDay = const Value.absent(),
               }) => WeeklyRulesCompanion.insert(
                 weekday: weekday,
                 label: label,
                 dayType: dayType,
                 plannedSpend: plannedSpend,
-                isFastingDay: isFastingDay,
               ),
           withReferenceMapper: (p0) => p0
               .map(

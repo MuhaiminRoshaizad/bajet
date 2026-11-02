@@ -19,7 +19,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,12 +55,20 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(goals, goals.listingCheckedOn);
           }
           if (from < 13) await _sortSpending(m);
+          if (from < 15) await _foldFlexibleDays(m);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
           await ensureBuiltInCategories();
         },
       );
+
+  /// Version 15 keeps two kinds of day: flexible days become spending days,
+  /// which they already behaved as, and the fasting flag goes.
+  Future<void> _foldFlexibleDays(Migrator m) async {
+    await customStatement("UPDATE weekly_rules SET day_type = 'spend' WHERE day_type = 'flex'");
+    await m.alterTable(TableMigration(weeklyRules));
+  }
 
   /// Version 6 keeps money in accounts. The one starting balance becomes the
   /// first account's, and every entry and bill so far belongs to it; the

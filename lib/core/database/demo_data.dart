@@ -35,7 +35,7 @@ Future<void> fillWithDemoData(AppDatabase db, DateTime today) async {
       await db.into(db.weeklyRules).insertOnConflictUpdate(WeeklyRulesCompanion.insert(
             weekday: Value(w),
             label: w <= 5 ? 'Workday' : 'Weekend',
-            dayType: w <= 5 ? RhythmDayType.spend : RhythmDayType.flex,
+            dayType: RhythmDayType.spend,
             plannedSpend: const Value(1000),
           ));
     }

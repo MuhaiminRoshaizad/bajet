@@ -33,7 +33,7 @@ class DriftPlanRepository implements PlanRepository {
             domain.WeeklyRule(
               weekday: r.weekday,
               label: r.label,
-              type: r.dayType == RhythmDayType.zero ? domain.DayType.zero : domain.DayType.spend,
+              type: domain.DayType.values.byName(r.dayType.name),
               plannedSpend: r.plannedSpend,
             ),
         ]);
@@ -46,7 +46,6 @@ class DriftPlanRepository implements PlanRepository {
           label: rule.label,
           dayType: RhythmDayType.values.byName(rule.type.name),
           plannedSpend: Value(rule.plannedSpend),
-          isFastingDay: const Value(false),
         ),
       );
 

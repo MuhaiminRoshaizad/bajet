@@ -19,7 +19,7 @@ void main() {
 
     final rules = await db.select(db.weeklyRules).get();
     expect(rules.map((r) => r.weekday), [1, 2, 3, 4, 5, 6, 7]);
-    expect(rules.every((r) => r.plannedSpend == 0 && !r.isFastingDay), isTrue);
+    expect(rules.every((r) => r.plannedSpend == 0), isTrue);
 
     expect(await db.select(db.favourites).get(), isEmpty);
     expect(await db.select(db.appSettings).getSingleOrNull(), isNull);
@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 14);
+    expect(db.schemaVersion, 15);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -285,5 +285,21 @@ void main() {
     addTearDown(old.close);
     final settings = await old.select(old.appSettings).getSingle();
     expect((settings.weeklyCap, settings.needsReserve), (4000, 0));
+  });
+
+  test('a version 14 database turns its flexible days into spending days and forgets fasting', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v14.sql').readAsStringSync());
+      raw.execute("INSERT INTO weekly_rules (weekday, label, day_type, planned_spend, is_fasting_day) VALUES "
+          "(1, 'Light', 'zero', 0, 1), (2, 'Workday', 'spend', 1000, 0), (6, 'Weekend', 'flex', 1500, 0)");
+      raw.execute('PRAGMA user_version = 14');
+    }));
+    addTearDown(old.close);
+    final rules = {for (final r in await old.select(old.weeklyRules).get()) r.weekday: (r.label, r.dayType, r.plannedSpend)};
+    expect(rules[1], ('Light', RhythmDayType.zero, 0));
+    expect(rules[2], ('Workday', RhythmDayType.spend, 1000));
+    expect(rules[6], ('Weekend', RhythmDayType.spend, 1500));
+    final columns = await old.customSelect('PRAGMA table_info(weekly_rules)').get();
+    expect(columns.map((c) => c.read<String>('name')), isNot(contains('is_fasting_day')));
   });
 }

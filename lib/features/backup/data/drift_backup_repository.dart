@@ -71,7 +71,7 @@ class DriftBackupRepository implements BackupRepository {
       ],
       'weeklyRules': [
         for (final r in await _db.select(_db.weeklyRules).get())
-          {'weekday': r.weekday, 'label': r.label, 'dayType': r.dayType == RhythmDayType.zero ? 'zero' : 'spend', 'plannedSpend': r.plannedSpend},
+          {'weekday': r.weekday, 'label': r.label, 'dayType': r.dayType.name, 'plannedSpend': r.plannedSpend},
       ],
       'recurringItems': [
         for (final r in await _db.select(_db.recurringItems).get())
