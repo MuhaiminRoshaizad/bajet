@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/dates/clock.dart';
 import '../../accounts/presentation/account_providers.dart';
+import '../../ledger/domain/ledger_models.dart';
 import '../../ledger/presentation/ledger_providers.dart';
+import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/coach_answer.dart';
 import '../domain/coach_client.dart';
@@ -222,11 +224,7 @@ class CoachController extends Notifier<CoachChat> {
       case LogProposal(:final draft, :final billDue):
         // A card waits in the remembered chat for as long as the user likes;
         // what it settles may have been settled from elsewhere meanwhile.
-        final bill = ref.read(recurringProvider).value?.where((r) => r.id == draft.billId).firstOrNull;
-        final event = ref.read(eventsProvider).value?.where((e) => e.id == draft.event?.eventId).firstOrNull;
-        final billGone = draft.billId != null && (bill == null || !bill.active || bill.nextDue != billDue);
-        final eventGone = draft.event != null && (event == null || event.done || event.date != draft.event!.on);
-        if (billGone || eventGone) return _setCard(message, card, c.copyWith(state: CardState.outdated));
+        if (_settledElsewhere(draft, billDue)) return _setCard(message, card, c.copyWith(state: CardState.outdated));
         undoId = await ref.read(ledgerRepositoryProvider).add(draft);
       case MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note):
         undoId = await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note);
@@ -239,6 +237,56 @@ class CoachController extends Notifier<CoachChat> {
     }
     _mood(CoachMood.cheer);
     await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
+  }
+
+  /// A waiting card's bill or event has already moved on, or gone.
+  bool _settledElsewhere(EntryDraft draft, DateTime? billDue) {
+    final bill = ref.read(recurringProvider).value?.where((r) => r.id == draft.billId).firstOrNull;
+    final event = ref.read(eventsProvider).value?.where((e) => e.id == draft.event?.eventId).firstOrNull;
+    final billGone = draft.billId != null && (bill == null || !bill.active || bill.nextDue != billDue);
+    final eventGone = draft.event != null && (event == null || event.done || event.date != draft.event!.on);
+    return billGone || eventGone;
+  }
+
+  /// What the log sheet should start with to change card [card] of message
+  /// [message], or null when the card is out of date, which it then says.
+  LogPrefill? changing(int message, int card) {
+    final c = state.messages[message].cards[card];
+    final p = c.proposal;
+    if (c.state != CardState.waiting || p is! LogProposal) return null;
+    if (_settledElsewhere(p.draft, p.billDue)) {
+      _setCard(message, card, c.copyWith(state: CardState.outdated));
+      return null;
+    }
+    final d = p.draft;
+    return LogPrefill(isIncome: d.isIncome, amount: d.amount, categoryKey: d.categoryKey, label: d.label, accountId: d.accountId, billId: d.billId, day: d.day, event: d.event, spendKind: d.spendKind);
+  }
+
+  /// The user changed the card on the log sheet and saved it there; the card
+  /// now shows what they saved.
+  Future<void> changed(int message, int card, LoggedEntry saved) async {
+    final c = state.messages[message].cards[card];
+    final p = c.proposal;
+    if (p is! LogProposal) return;
+    final d = saved.draft;
+    final category = ref.read(categoriesProvider).value?.where((x) => x.key == d.categoryKey).firstOrNull;
+    final accounts = ref.read(accountsProvider).value ?? const [];
+    final account = accounts.where((a) => a.id == d.accountId).firstOrNull ?? accounts.firstOrNull;
+    final dayToDay = d.isFlexibleSpend(category?.isFixed ?? false);
+    final proposal = p.changedTo(
+      d,
+      categoryName: category?.label ?? d.categoryKey,
+      accountName: account?.called ?? p.accountName,
+      allowance: dayToDay ? ref.read(settingsProvider).value?.weeklyCap : null,
+    );
+    _mood(CoachMood.cheer);
+    await _setCard(message, card, CoachCard(proposal, state: CardState.done, undoId: saved.id));
+  }
+
+  /// The log sheet's bar took back what the card saved.
+  Future<void> undoneOnBar(int message, int card) {
+    final c = state.messages[message].cards[card];
+    return _setCard(message, card, c.copyWith(state: CardState.undone));
   }
 
   /// Switches this chat's coach. The chat stays; the new face says hello in

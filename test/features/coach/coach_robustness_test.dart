@@ -50,6 +50,44 @@ void main() {
     expect(world.entries.singleWhere((e) => e.label == 'Shampoo').spendKind, SpendKind.need);
   });
 
+  testWidgets('Change details opens the log sheet with the card in it, and the card follows what is saved', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'amount_rm': 18, 'category': 'Personal', 'label': 'Shampoo', 'spend_kind': 'need'}));
+    await ask(tester, 'Log RM18 shampoo');
+    await tester.tap(find.text('Change details'));
+    await tester.pumpAndSettle();
+    expect(find.text('Log RM18.00'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('amount')), '2050');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log RM20.50'));
+    await settleUnderBar(tester);
+    final saved = world.entries.singleWhere((e) => e.label == 'Shampoo');
+    expect((saved.amount, saved.spendKind), (2050, SpendKind.need));
+    expect(find.text('✓ Logged'), findsOneWidget);
+    expect(find.text('RM20.50'), findsWidgets);
+    expect(find.text('Change details'), findsNothing);
+    // The bar's Undo and the card agree.
+    await tester.tap(find.descendant(of: find.byType(SnackBar), matching: find.text('Undo')));
+    await settleUnderBar(tester);
+    expect(world.entries.where((e) => e.label == 'Shampoo'), isEmpty);
+    expect(find.text('Undone, nothing changed'), findsOneWidget);
+  });
+
+  testWidgets('a card already settled elsewhere says so instead of opening the log sheet', (tester) async {
+    late int rent;
+    final world = await openCoach(tester, seed: (w) async {
+      rent = await w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: DateTime.utc(testToday.year, testToday.month, testToday.day + 3));
+    });
+    world.coach.lookups.add(('bajet_propose_log', {'kind': 'spending', 'for': 'Rent'}));
+    await ask(tester, 'I paid the rent');
+    await world.confirmRecurring(rent, due: world.recurring.single.nextDue, paidOn: testToday);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Change details'));
+    await tester.pumpAndSettle();
+    expect(find.text('Already changed elsewhere, nothing done'), findsOneWidget);
+    expect(find.byType(TextField).hitTestable(), findsOneWidget, reason: 'only the chat box');
+  });
+
   testWidgets('a card pays a bill at the real amount and moves it on, and Undo takes both back', (tester) async {
     final due = DateTime.utc(testToday.year, testToday.month, testToday.day + 3);
     final world = await openCoach(tester, seed: (w) async {

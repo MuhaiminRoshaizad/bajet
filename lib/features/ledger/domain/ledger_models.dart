@@ -136,6 +136,10 @@ class EntryDraft {
   /// next month, as Paid does, at the amount actually logged.
   final int? billId;
   final SpendKind spendKind;
+
+  /// Whether, once saved, it is day-to-day spending, given whether its
+  /// category [isFixed]: the only kind of entry that is a want or a need.
+  bool isFlexibleSpend(bool isFixed) => !isIncome && !isFixed && billId == null && event == null;
 }
 
 class Favourite {

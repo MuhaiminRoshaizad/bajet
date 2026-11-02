@@ -32,7 +32,7 @@ import 'spend_kind_choice.dart';
 /// What to fill the logger with when it opens from somewhere that already
 /// knows part of the entry. Nothing is saved until Log is pressed.
 class LogPrefill {
-  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label, this.accountId, this.billId});
+  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label, this.accountId, this.billId, this.day, this.event, this.spendKind});
 
   final bool isIncome;
   final int? amount;
@@ -44,26 +44,42 @@ class LogPrefill {
 
   /// The bill or income it is for, already picked, as Paid on Today does.
   final int? billId;
+
+  /// The day, the planned event and the kind someone has already worked out,
+  /// such as the coach; each starts as usual when left out.
+  final DateTime? day;
+  final EventLink? event;
+  final SpendKind? spendKind;
+}
+
+/// A new entry the log sheet saved.
+class LoggedEntry {
+  const LoggedEntry(this.id, this.draft);
+
+  final int id;
+  final EntryDraft draft;
 }
 
 /// Opens the logger, with [prefill] filled in, or with [editing] the same
 /// form filled in with an existing entry. Saving shows a snackbar with undo
-/// on [messengerContext]'s scaffold, which outlives the sheet.
-Future<void> showLogSheet(BuildContext messengerContext, {Entry? editing, LogPrefill? prefill}) => showAppSheet<void>(
+/// on [messengerContext]'s scaffold, which outlives the sheet. Returns the
+/// entry when a new one was saved; [onUndone] runs if its bar's Undo is used.
+Future<LoggedEntry?> showLogSheet(BuildContext messengerContext, {Entry? editing, LogPrefill? prefill, VoidCallback? onUndone}) => showAppSheet<LoggedEntry>(
       context: messengerContext,
       // Over the bottom bar wherever it is opened from; from inside a tab it
       // would otherwise sit under the bar, its Log button beneath it.
       useRootNavigator: true,
       isScrollControlled: true,
-      builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing, prefill: prefill),
+      builder: (_) => _LogSheet(messenger: ScaffoldMessenger.of(messengerContext), editing: editing, prefill: prefill, onUndone: onUndone),
     );
 
 class _LogSheet extends ConsumerStatefulWidget {
-  const _LogSheet({required this.messenger, this.editing, this.prefill});
+  const _LogSheet({required this.messenger, this.editing, this.prefill, this.onUndone});
 
   final ScaffoldMessengerState messenger;
   final Entry? editing;
   final LogPrefill? prefill;
+  final VoidCallback? onUndone;
 
   @override
   ConsumerState<_LogSheet> createState() => _LogSheetState();
@@ -130,6 +146,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _accountId = p.accountId ?? _accountId;
       _billId = p.billId;
       if (p.categoryKey case final key?) _spendKind = _startingKind(key);
+      _spendKind = p.spendKind ?? _spendKind;
+      _day = p.day ?? _day;
+      _event = p.event;
     }
   }
 
@@ -213,14 +232,19 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final before = widget.editing;
     final String message;
     final VoidCallback undo;
+    LoggedEntry? logged;
     if (before == null) {
       final id = await repo.add(draft);
+      logged = LoggedEntry(id, draft);
       // What it was for says what happened to it: a bill paid, income received.
       final settled = _billId != null || (_isIncome && _event != null);
       final verb = settled ? (_isIncome ? 'Received' : 'Paid') : (_isIncome ? 'Added' : 'Logged');
       final asNeed = _asksKind && _spendKind == SpendKind.need ? ' as a need' : '';
       message = '$verb ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(draft.amount)}$asNeed';
-      undo = () => repo.delete(id);
+      undo = () {
+        repo.delete(id);
+        widget.onUndone?.call();
+      };
     } else {
       await repo.update(Entry(
         id: before.id,
@@ -241,7 +265,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     }
     unawaited(HapticFeedback.lightImpact());
     if (!mounted) return;
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(logged);
     showBar(widget.messenger, message, undo: undo);
   }
 

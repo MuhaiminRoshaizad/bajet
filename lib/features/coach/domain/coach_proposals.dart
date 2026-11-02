@@ -46,6 +46,21 @@ class LogProposal extends CoachProposal {
   final int? budget;
   final int spent;
 
+  /// The same card once the user has changed [saved] on the log sheet: what
+  /// it shows follows what they kept.
+  LogProposal changedTo(EntryDraft saved, {required String categoryName, required String accountName, required int? allowance}) => LogProposal(
+        saved,
+        categoryName,
+        accountName,
+        allowance: allowance,
+        billName: saved.billId == draft.billId ? billName : null,
+        planned: saved.billId == draft.billId ? planned : null,
+        billDue: saved.billId == draft.billId ? billDue : null,
+        eventName: saved.event == draft.event ? eventName : null,
+        budget: saved.event == draft.event ? budget : null,
+        spent: saved.event == draft.event ? spent : 0,
+      );
+
   @override
   String get question => switch ((billName, draft.isIncome)) {
         (_?, true) => 'Mark this received?',

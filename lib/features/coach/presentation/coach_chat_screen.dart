@@ -13,6 +13,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
 import '../../../core/widgets/spring_menu.dart';
+import '../../ledger/presentation/log_sheet.dart';
 import '../../ledger/presentation/spend_kind_choice.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
@@ -282,6 +283,13 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                               onConfirm: () => ref.read(coachControllerProvider(id).notifier).confirm(i, j),
                               onDecline: () => ref.read(coachControllerProvider(id).notifier).decline(i, j),
                               onUndo: () => ref.read(coachControllerProvider(id).notifier).undo(i, j),
+                              onChange: () async {
+                                final coach = ref.read(coachControllerProvider(id).notifier);
+                                final prefill = coach.changing(i, j);
+                                if (prefill == null) return;
+                                final saved = await showLogSheet(context, prefill: prefill, onUndone: () => coach.undoneOnBar(i, j));
+                                if (saved != null) await coach.changed(i, j, saved);
+                              },
                             ),
                         ],
                         if (chat.sending) _Thinking(reading: chat.reading),
@@ -439,10 +447,10 @@ class _Bubble extends StatelessWidget {
 /// A change the coach suggested: what it would do, and the buttons that
 /// decide it. Nothing is written until Confirm is tapped.
 class _ProposalCard extends StatelessWidget {
-  const _ProposalCard({required this.card, required this.onConfirm, required this.onDecline, required this.onUndo});
+  const _ProposalCard({required this.card, required this.onConfirm, required this.onDecline, required this.onUndo, required this.onChange});
 
   final CoachCard card;
-  final VoidCallback onConfirm, onDecline, onUndo;
+  final VoidCallback onConfirm, onDecline, onUndo, onChange;
 
   @override
   Widget build(BuildContext context) {
@@ -488,6 +496,8 @@ class _ProposalCard extends StatelessWidget {
               Expanded(child: FilledButton(onPressed: onConfirm, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)), child: Text(card.action))),
             ],
           ),
+          // Anything the coach got wrong is fixed on the usual form.
+          if (p is LogProposal) Center(child: TextButton(onPressed: onChange, child: const Text('Change details'))),
         ] else if (card.canUndo)
           Align(alignment: Alignment.centerRight, child: TextButton(onPressed: onUndo, child: const Text('Undo'))),
       ],
