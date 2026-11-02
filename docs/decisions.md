@@ -566,3 +566,18 @@ whose decision it was, which is what keeps it out of the allowance.
 screens and large text. The CSV's kind column now reads `my call` and
 `not my call`; backups are unchanged.
 
+## 035: A day plans nothing or plans an amount
+
+**Decided:** a day of the weekly rhythm is either No spending or Spending.
+Flexible days are Spending days, and fasting days are gone: a fasting day
+is whatever its type says, and the check-in judges it like any other.
+
+**Why:** a flexible day was counted exactly as a spending day everywhere;
+its only extra was a check-in rule repeating the check-in's own "went over
+its plan". A fasting day asked the user to flip a switch for something
+the no-spending check already covers, and the user would rather not track
+it at all.
+
+**Costs:** the check-in no longer notes a day kept from Food alone. Older
+backups still restore, their flexible days as spending.
+

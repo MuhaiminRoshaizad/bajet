@@ -116,11 +116,10 @@ The spending rhythm, one row per weekday (1 is Monday).
 |------------------|------|-----------------------------------------|
 | `weekday`        | int  | Primary key, 1–7                        |
 | `label`          | text | e.g. "Weekday"                          |
-| `day_type`       | enum | `zero`, `spend` or `flex`               |
+| `day_type`       | enum | `zero` or `spend`                       |
 | `planned_spend`  | int  | Used by the projection; 0 on `zero` days|
-| `is_fasting_day` | bool | Turning it on makes the day `zero`      |
 
-A day saved as `zero` (fasting days included) plans RM0.00, and whatever it
+A day saved as `zero` plans RM0.00, and whatever it
 had planned moves evenly onto the days that still spend (`withRule`), so the
 week keeps its total. A `zero` day switched back to spending works the other
 way: its amount box fills with its even share of the week (`startingShare`;
@@ -289,6 +288,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 10     | Each goal carries `listingState` and `listingCheckedOn`; older files restore with neither |
 | 11     | Categories and entries carry `spendKind`; in older files Family and its spends become `need`, everything else `want` |
 | 12     | Settings carry `needsReserve`; older files restore with 0 |
+| 13     | Weekly rules carry no `isFastingDay`, and their `dayType` is `zero` or `spend`; older files' `flex` days restore as `spend` |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
@@ -297,7 +297,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 14. Any change to a table bumps it and adds a step to
+`schemaVersion` is 15. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -317,3 +317,4 @@ data on the phone is left as it was.
 | 12      | `goals.listing_state` and `listing_checked_on`, empty, for whether a goal's listing was still up when last looked at |
 | 13      | `categories.spend_kind` and `entries.spend_kind`: Family becomes `need`, every other category `want`, and each spend so far takes its category's kind. The entries column is added before the older steps run, since version 6 rebuilds that table |
 | 14      | `app_settings.needs_reserve`, 0, the monthly amount Runway sets aside for needs; added before the older steps run, as version 11's was |
+| 15      | `weekly_rules`: `flex` days become `spend`, keeping their label and amount, and the table is rebuilt without `is_fasting_day` |
