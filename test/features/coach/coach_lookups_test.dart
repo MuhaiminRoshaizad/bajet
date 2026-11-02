@@ -157,4 +157,26 @@ void main() {
     final overview = runLookup('bajet_overview', const {}, withPlan).text;
     expect(overview, contains('Needs this month: RM25.00 of the RM100.00 set aside for them'));
   });
+
+  test('categories say how each starts, leave out the ones only the app uses, and list favourites', () {
+    final withFavourites = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: const [],
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: data.rules,
+      recurring: const [],
+      projection: null,
+      upcoming: const [],
+      favourites: const [Favourite(id: 1, label: 'Coffee', categoryKey: 'food', amount: 550)],
+    );
+    final text = runLookup('bajet_categories', const {}, withFavourites).text;
+    expect(text, contains('- Food: starts as a want'));
+    expect(text, contains('- Family: starts as a need'));
+    expect(text, contains('- Bills: fixed, kept out of the allowance'));
+    expect(text, isNot(contains('Untracked')));
+    expect(text, contains('- Coffee: Food, RM5.50'));
+  });
 }

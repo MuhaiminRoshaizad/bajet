@@ -26,6 +26,7 @@ class CoachData {
     required this.upcoming,
     this.events = const [],
     this.boughtGoals = const [],
+    this.favourites = const [],
   });
 
   final DateTime today;
@@ -42,6 +43,7 @@ class CoachData {
 
   /// Goals marked bought, most recent first.
   final List<Goal> boughtGoals;
+  final List<Favourite> favourites;
 }
 
 /// A read-only question the coach can ask bajet, in the shape Anthropic's
@@ -119,6 +121,13 @@ const coachLookups = [
     _noInput,
   ),
   CoachLookup(
+    'bajet_categories',
+    'Every category the user can log to, each spending one with the kind it starts as, want or need, or marked fixed when it is '
+        'planned spending kept out of the allowance, and their favourites: spends saved for one tap, with category and amount. Use it '
+        'before suggesting a log, or when the user says "my usual". It takes no input.',
+    _noInput,
+  ),
+  CoachLookup(
     'bajet_plan',
     "The user's plan: the weekly allowance, the buffer they keep, what each weekday is planned to cost, every goal with what Runway "
         'expects to be left after buying it and what its listing showed when last checked, goals already bought, monthly bills and '
@@ -186,6 +195,8 @@ LookupResult runLookup(String name, Map<String, Object?> input, CoachData d) {
       return LookupResult(lines.join('\n'), 'Accounts');
     case 'bajet_plan':
       return LookupResult(_plan(d, categories), 'Plan and goals');
+    case 'bajet_categories':
+      return LookupResult(_categories(d, categories), 'Categories');
     default:
       return LookupResult('There is no lookup called $name.', name, failed: true);
   }
@@ -237,6 +248,21 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
   ];
   final filter = [if (wantCategory != null && wantCategory.isNotEmpty) input['category'], if (wantAccount != null && wantAccount.isNotEmpty) input['account'], ?spend];
   return LookupResult(lines.join('\n'), ['Entries', ...filter, Dates.span(from, to)].join(' · '));
+}
+
+String _categories(CoachData d, Map<String, Category> categories) {
+  final pickable = [for (final c in d.categories) if (!c.isAutomatic) c];
+  return [
+    'Spending categories:',
+    for (final c in pickable.where((c) => !c.isIncome)) '- ${c.label}: ${c.isFixed ? 'fixed, kept out of the allowance' : 'starts as a ${c.spendKind.name}'}',
+    '',
+    'Income categories:',
+    for (final c in pickable.where((c) => c.isIncome)) '- ${c.label}',
+    '',
+    'Favourites:',
+    if (d.favourites.isEmpty) '- None',
+    for (final f in d.favourites) '- ${f.label}: ${categories[f.categoryKey]?.label ?? f.categoryKey}, ${Money.format(f.amount)}',
+  ].join('\n');
 }
 
 String _plan(CoachData d, Map<String, Category> categories) {
