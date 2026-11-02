@@ -121,7 +121,7 @@ void main() {
     expect(all, contains('Shampoo · Main account · −RM18.00 · need'));
     expect(all, contains('Rent · Main account · −RM492.40 · planned, paid toward Rent'));
     expect(all, contains('Cake · Main account · −RM180.00 · planned, spent on Dinner'));
-    expect(all, endsWith('Refund · Main account · +RM20.00'));
+    expect(all, endsWith('Refund · Main account · +RM20.00 · id 5'));
     expect(lines({'spend': 'need'}), startsWith('1 entry from 10/10/2026 to 10/10/2026: money out RM18.00'));
     expect(lines({'spend': 'planned'}), startsWith('2 entries'));
     expect(lines({'spend': 'want'}), contains('Lunch'));

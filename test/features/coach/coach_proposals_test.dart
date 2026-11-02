@@ -176,4 +176,35 @@ void main() {
     expect(card.copyWith(state: CardState.done, undoId: 9).canUndo, isTrue);
     expect(card.copyWith(state: CardState.declined).outcome, 'Not done');
   });
+
+  test('a change card shows only what changes, and what it does to the allowance', () {
+    final (r, p) = propose('bajet_propose_change', {'entry_id': 2, 'spend_kind': 'need'}, data);
+    expect(r.failed, isFalse);
+    final change = p! as ChangeProposal;
+    expect(change.rows, [('Entry', 'Lunch · 03/09/2026'), ('Kind', 'Want → Need')]);
+    expect(change.effect, "Gives RM12.00 back to that week's allowance.");
+    expect((CoachCard(change).action, CoachCard(change, state: CardState.done).outcome), ('Change it', 'Changed'));
+
+    final (_, bigger) = propose('bajet_propose_change', {'entry_id': 2, 'amount_rm': 15}, data);
+    expect(bigger!.rows.last, ('Amount', 'RM12.00 → RM15.00'));
+    expect(bigger.effect, "Takes RM3.00 more from that week's allowance.");
+
+    final (moved, _) = propose('bajet_propose_change', {'entry_id': 2, 'category': 'Family'}, data);
+    expect(moved.failed, isFalse);
+
+    for (final bad in [
+      <String, Object?>{'entry_id': 99, 'spend_kind': 'need'},
+      {'entry_id': 2},
+      {'entry_id': 1, 'spend_kind': 'need'},
+      {'entry_id': 2, 'category': 'Goals'},
+      {'entry_id': 2, 'day': '2026-12-01'},
+    ]) {
+      final (no, none) = propose('bajet_propose_change', bad, data);
+      expect((no.failed, none), (true, null), reason: '$bad');
+    }
+
+    final back = cardFromJson(cardToJson(CoachCard(change)))!.proposal as ChangeProposal;
+    expect((back.after.spendKind, back.before.spendKind, back.effect), (SpendKind.need, SpendKind.want, change.effect));
+    expect(back.rows, change.rows);
+  });
 }

@@ -127,6 +127,53 @@ class BillPaidProposal extends CoachProposal {
   List<(String, String)> get rows => [('Bill', item.name), ('Was due', Dates.full(item.nextDue))];
 }
 
+/// A change to an entry already logged, such as a spend that was a need.
+/// Links to a bill or event stay as they are.
+class ChangeProposal extends CoachProposal {
+  const ChangeProposal({
+    required this.before,
+    required this.after,
+    required this.beforeCategory,
+    required this.afterCategory,
+    required this.beforeAccount,
+    required this.afterAccount,
+    this.allowance,
+    this.wantBefore = false,
+    this.wantAfter = false,
+  });
+
+  final Entry before, after;
+  final String beforeCategory, afterCategory, beforeAccount, afterAccount;
+
+  /// The weekly allowance, when a kind row is shown, with whether the entry
+  /// counted toward it before and would after.
+  final int? allowance;
+  final bool wantBefore, wantAfter;
+
+  @override
+  String get question => 'Change this entry?';
+  @override
+  int get amount => after.amount;
+  @override
+  List<(String, String)> get rows => [
+        ('Entry', '${before.label ?? beforeCategory} · ${Dates.full(before.day)}'),
+        if (after.amount != before.amount) ('Amount', '${Money.format(before.amount)} → ${Money.format(after.amount)}'),
+        if (afterCategory != beforeCategory) ('Category', '$beforeCategory → $afterCategory'),
+        if (after.label != before.label) ('Label', '${before.label ?? 'none'} → ${after.label ?? 'none'}'),
+        if (after.day != before.day) ('Day', '${Dates.full(before.day)} → ${Dates.full(after.day)}'),
+        if (afterAccount != beforeAccount) (after.isIncome ? 'Into' : 'From', '$beforeAccount → $afterAccount'),
+        if (allowance != null && after.spendKind != before.spendKind) (LogProposal.kindRow, '${_kindName(before.spendKind)} → ${_kindName(after.spendKind)}'),
+      ];
+  @override
+  String? get effect {
+    final change = (wantAfter ? after.amount : 0) - (wantBefore ? before.amount : 0);
+    if (allowance == null || change == 0) return null;
+    return change < 0 ? "Gives ${Money.format(-change)} back to that week's allowance." : "Takes ${Money.format(change)} more from that week's allowance.";
+  }
+}
+
+String _kindName(SpendKind k) => k == SpendKind.need ? 'Need' : 'Want';
+
 /// Where a card stands. [outdated] is a card that would no longer do what it
 /// said, because the same change was made somewhere else first.
 enum CardState { waiting, done, declined, undone, outdated }
@@ -148,11 +195,12 @@ class CoachCard {
         LogProposal(:final draft) => draft.billId == null ? 'Log it' : (draft.isIncome ? 'Received' : 'Pay it'),
         MoveProposal() => 'Move it',
         BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Mark paid',
+        ChangeProposal() => 'Change it',
       };
 
   String get outcome => switch (state) {
         CardState.waiting => proposal.question,
-        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid' },
+        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid', ChangeProposal() => 'Changed' },
         CardState.declined => 'Not done',
         CardState.undone => 'Undone, nothing changed',
         CardState.outdated => 'Already changed elsewhere, nothing done',
@@ -206,8 +254,50 @@ Map<String, Object?> cardToJson(CoachCard c) => {
             'income': item.isIncome,
             'due': _iso(item.nextDue),
           },
+        ChangeProposal() && final p => {
+            'kind': 'change',
+            'before': _entryToJson(p.before),
+            'after': _entryToJson(p.after),
+            'beforeCategory': p.beforeCategory,
+            'afterCategory': p.afterCategory,
+            'beforeAccount': p.beforeAccount,
+            'afterAccount': p.afterAccount,
+            'allowance': ?p.allowance,
+            'wantBefore': p.wantBefore,
+            'wantAfter': p.wantAfter,
+          },
       },
     };
+
+Map<String, Object?> _entryToJson(Entry e) => {
+      'id': e.id,
+      'day': _iso(e.day),
+      'income': e.isIncome,
+      'amount': e.amount,
+      'category': e.categoryKey,
+      'label': e.label,
+      'note': e.note,
+      'receipt': e.receipt,
+      'account': e.accountId,
+      'billId': e.billId,
+      if (e.event case final link?) ...{'eventId': link.eventId, 'eventOn': _iso(link.on)},
+      'spendKind': e.spendKind.name,
+    };
+
+Entry _entryFromJson(Map<String, Object?> j) => Entry(
+      id: j['id']! as int,
+      day: _day(j['day']! as String)!,
+      isIncome: j['income']! as bool,
+      amount: j['amount']! as int,
+      categoryKey: j['category']! as String,
+      label: j['label'] as String?,
+      note: j['note'] as String?,
+      receipt: j['receipt'] as String?,
+      accountId: j['account'] as int?,
+      billId: j['billId'] as int?,
+      event: j['eventId'] == null ? null : EventLink(j['eventId']! as int, _day(j['eventOn']! as String)!),
+      spendKind: SpendKind.values.byName(j['spendKind']! as String),
+    );
 
 /// A remembered card, or null if it cannot be read, which drops just that
 /// card rather than the chat.
@@ -255,6 +345,17 @@ CoachCard? cardFromJson(Map<String, Object?> j) {
           isIncome: j['income']! as bool,
           nextDue: _day(j['due']! as String)!,
         )),
+      'change' => ChangeProposal(
+          before: _entryFromJson((j['before']! as Map).cast()),
+          after: _entryFromJson((j['after']! as Map).cast()),
+          beforeCategory: j['beforeCategory']! as String,
+          afterCategory: j['afterCategory']! as String,
+          beforeAccount: j['beforeAccount']! as String,
+          afterAccount: j['afterAccount']! as String,
+          allowance: j['allowance'] as int?,
+          wantBefore: j['wantBefore'] as bool? ?? false,
+          wantAfter: j['wantAfter'] as bool? ?? false,
+        ),
       _ => throw const FormatException('unknown card'),
     };
     return CoachCard(p, state: state, undoId: j['undoId'] as int?);
@@ -270,6 +371,26 @@ String _iso(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toStr
 const proposalLimit = 10000000;
 
 const proposalTools = [
+  CoachLookup(
+    'bajet_propose_change',
+    'Suggests changing one entry already logged, for the user to confirm: its kind (want or need), amount, category, label, day or '
+        'account. It changes nothing itself: the app shows a card with the change and only the user\'s tap makes it, with Undo. Use it '
+        'when the user says an entry is wrong, such as "that was a need actually". Find the entry\'s id with bajet_entries. Give only '
+        'what changes. A bill or event an entry settles stays as it is.',
+    {
+      'type': 'object',
+      'properties': {
+        'entry_id': {'type': 'integer', 'description': 'The id bajet_entries gives the entry.'},
+        'spend_kind': {'type': 'string', 'enum': ['want', 'need'], 'description': 'For day-to-day spending only.'},
+        'amount_rm': {'type': 'number', 'description': 'The new amount in ringgit.'},
+        'category': {'type': 'string', 'description': 'The new category, by its name.'},
+        'label': {'type': 'string', 'description': 'The new label.'},
+        'day': {'type': 'string', 'description': 'The new day as yyyy-mm-dd.'},
+        'account': {'type': 'string', 'description': 'The new account, by its name.'},
+      },
+      'required': ['entry_id'],
+    },
+  ),
   CoachLookup(
     'bajet_propose_log',
     'Suggests logging one spend or income for the user to confirm. It does not log anything: the app shows the user a card with '
@@ -416,6 +537,59 @@ const proposalTools = [
       if (sen > holds) return (no('${called(from)} only holds ${Money.format(holds)}; the user can move more by hand.'), null);
       final p = MoveProposal(fromId: from, toId: to, fromName: called(from), toName: called(to), amount: sen, day: d.today, note: text('note'));
       return (LookupResult('Shown to the user as a card to confirm: move ${Money.format(sen)} from ${p.fromName} to ${p.toName}. Nothing moves unless they tap.', 'A suggestion'), p);
+    case 'bajet_propose_change':
+      final id = input['entry_id'];
+      final before = d.entries.where((e) => e.id == (id is num ? id.toInt() : int.tryParse('$id'))).firstOrNull;
+      if (before == null) return (no('there is no entry with id $id. Find it with bajet_entries.'), null);
+      final fixed = {for (final c in d.categories) if (c.isFixed) c.key};
+      final wantedCategory = text('category')?.toLowerCase();
+      final category = wantedCategory == null
+          ? null
+          : d.categories.where((c) => c.isIncome == before.isIncome && !c.isAutomatic && c.label.toLowerCase() == wantedCategory).firstOrNull;
+      if (wantedCategory != null && category == null) {
+        final names = d.categories.where((c) => c.isIncome == before.isIncome && !c.isAutomatic).map((c) => c.label).join(', ');
+        return (no('there is no such category. The categories are: $names.'), null);
+      }
+      final sen = input.containsKey('amount_rm') ? amount() : before.amount;
+      if (sen == null) return (no('the amount must be more than RM0.00 and at most ${Money.format(proposalLimit)}.'), null);
+      final dayText = text('day');
+      final day = dayText == null ? before.day : _day(dayText);
+      if (day == null || day.isAfter(d.today)) return (no('the day must be yyyy-mm-dd and no later than today.'), null);
+      final accountId = text('account') == null ? before.accountId : account(text('account'));
+      if (text('account') != null && accountId == null) return (no('there is no account called "${text('account')}". The accounts are: $accountsList.'), null);
+      final categoryKey = category?.key ?? before.categoryKey;
+      final askedKind = SpendKind.values.asNameMap()[input['spend_kind']];
+      final dayToDay = !before.isIncome && !fixed.contains(categoryKey) && before.billId == null && before.event == null;
+      if (askedKind != null && !dayToDay) return (no('only day-to-day spending is a want or a need; this entry is planned or income.'), null);
+      final after = Entry(
+        id: before.id,
+        day: day,
+        isIncome: before.isIncome,
+        amount: sen,
+        categoryKey: categoryKey,
+        label: text('label') ?? before.label,
+        note: before.note,
+        receipt: before.receipt,
+        event: before.event,
+        accountId: accountId,
+        billId: before.billId,
+        spendKind: askedKind ?? (category != null ? category.spendKind : before.spendKind),
+      );
+      String categoryOf(String key) => d.categories.where((c) => c.key == key).firstOrNull?.label ?? key;
+      String accountOf(int? id) => d.accounts.where((a) => a.id == (id ?? d.accounts.first.id)).firstOrNull?.called ?? 'an account';
+      final p = ChangeProposal(
+        before: before,
+        after: after,
+        beforeCategory: categoryOf(before.categoryKey),
+        afterCategory: categoryOf(after.categoryKey),
+        beforeAccount: accountOf(before.accountId),
+        afterAccount: accountOf(after.accountId),
+        allowance: dayToDay ? d.settings.weeklyCap : null,
+        wantBefore: before.isWant(fixed),
+        wantAfter: after.isWant(fixed),
+      );
+      if (p.rows.length == 1) return (no('nothing about the entry would change.'), null);
+      return (LookupResult('Shown to the user as a card to confirm: ${p.question} Nothing changes unless they tap Change it.', 'A suggestion'), p);
     default:
       return (no('there is no suggestion called $name.'), null);
   }

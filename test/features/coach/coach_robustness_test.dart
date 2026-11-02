@@ -88,6 +88,33 @@ void main() {
     expect(find.byType(TextField).hitTestable(), findsOneWidget, reason: 'only the chat box');
   });
 
+  testWidgets('a change card turns a want into a need, and Undo turns it back', (tester) async {
+    final world = await openCoach(tester);
+    final lunch = world.entries.single;
+    world.coach.lookups.add(('bajet_propose_change', {'entry_id': lunch.id, 'spend_kind': 'need'}));
+    await ask(tester, 'That food was a need actually');
+    expect(find.text('Want → Need'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Change it'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.spendKind, SpendKind.need);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.spendKind, SpendKind.want);
+  });
+
+  testWidgets('a change card for an entry changed meanwhile does nothing', (tester) async {
+    final world = await openCoach(tester);
+    final lunch = world.entries.single;
+    world.coach.lookups.add(('bajet_propose_change', {'entry_id': lunch.id, 'amount_rm': 15}));
+    await ask(tester, 'That was RM15');
+    await world.update(Entry(id: lunch.id, day: lunch.day, isIncome: false, amount: 1300, categoryKey: lunch.categoryKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Change it'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.amount, 1300);
+    expect(find.text('Already changed elsewhere, nothing done'), findsOneWidget);
+  });
+
   testWidgets('a card pays a bill at the real amount and moves it on, and Undo takes both back', (tester) async {
     final due = DateTime.utc(testToday.year, testToday.month, testToday.day + 3);
     final world = await openCoach(tester, seed: (w) async {

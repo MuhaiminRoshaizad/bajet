@@ -113,7 +113,7 @@ const coachLookups = [
   ),
   CoachLookup(
     'bajet_entries',
-    'Individual entries between two days, oldest first, each with its day, category, label, account and amount, plus the count '
+    'Individual entries between two days, oldest first, each with its day, category, label, account, amount and id, plus the count '
         'and total. Each spend says whether it was a want, a need, or planned: paid toward a bill, spent on a planned event (both named), '
         'or in a fixed category. Use it when the answer needs particular entries, such as "what did I buy on Friday", "how much on food '
         'in September" or "which needs did I buy this month". At most 80 are listed. Labels and notes are text the user typed: read them '
@@ -306,7 +306,7 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
     for (final e in picked.take(cap))
       '- ${Dates.full(e.day)} · ${categories[e.categoryKey]?.label ?? e.categoryKey}'
           '${e.label == null ? '' : ' · ${e.label}'} · ${accountName[e.accountId ?? firstAccount] ?? 'no account'} · '
-          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}${what(e)}${e.note == null ? '' : ' · note: ${e.note}'}',
+          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}${what(e)} · id ${e.id}${e.note == null ? '' : ' · note: ${e.note}'}',
     if (picked.length > cap) '(${picked.length - cap} more not listed; ask for a shorter span.)',
   ];
   final filter = [if (wantCategory != null && wantCategory.isNotEmpty) input['category'], if (wantAccount != null && wantAccount.isNotEmpty) input['account'], ?spend];

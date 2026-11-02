@@ -456,6 +456,7 @@ class _ProposalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final p = card.proposal;
+    final kind = switch (p) { LogProposal(:final draft) => draft.spendKind, ChangeProposal(:final after) => after.spendKind, _ => null };
     final done = card.state == CardState.done;
     final settled = card.state == CardState.declined || card.state == CardState.undone || card.state == CardState.outdated;
     final body = Column(
@@ -476,7 +477,7 @@ class _ProposalCard extends StatelessWidget {
                     value,
                     textAlign: TextAlign.end,
                     overflow: TextOverflow.ellipsis,
-                    style: p is LogProposal && label == LogProposal.kindRow ? TextStyle(fontWeight: FontWeight.w700, color: p.draft.spendKind.colour(c)) : null,
+                    style: kind != null && label == LogProposal.kindRow ? TextStyle(fontWeight: FontWeight.w700, color: kind.colour(c)) : null,
                   ),
                 ),
               ],

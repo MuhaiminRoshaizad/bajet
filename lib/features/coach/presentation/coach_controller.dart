@@ -228,6 +228,12 @@ class CoachController extends Notifier<CoachChat> {
         undoId = await ref.read(ledgerRepositoryProvider).add(draft);
       case MoveProposal(:final fromId, :final toId, :final amount, :final day, :final note):
         undoId = await ref.read(accountRepositoryProvider).transfer(fromId: fromId, toId: toId, amount: amount, day: day, note: note);
+      case ChangeProposal(:final before, :final after):
+        // Changed or deleted since the card was made: it would undo that.
+        final now = ref.read(allEntriesProvider).value?.where((e) => e.id == before.id).firstOrNull;
+        if (now == null || !_sameEntry(now, before)) return _setCard(message, card, c.copyWith(state: CardState.outdated));
+        await ref.read(ledgerRepositoryProvider).update(after);
+        undoId = after.id;
       case BillPaidProposal(:final item):
         // A card waits in the remembered chat for as long as the user likes;
         // a bill paid meanwhile from the Plan tab is not paid again.
@@ -238,6 +244,10 @@ class CoachController extends Notifier<CoachChat> {
     _mood(CoachMood.cheer);
     await _setCard(message, card, c.copyWith(state: CardState.done, undoId: undoId));
   }
+
+  /// Whether [a] still reads as [b] did, for every field a change touches.
+  static bool _sameEntry(Entry a, Entry b) =>
+      a.amount == b.amount && a.day == b.day && a.categoryKey == b.categoryKey && a.label == b.label && a.accountId == b.accountId && a.spendKind == b.spendKind;
 
   /// A waiting card's bill or event has already moved on, or gone.
   bool _settledElsewhere(EntryDraft draft, DateTime? billDue) {
@@ -329,6 +339,8 @@ class CoachController extends Notifier<CoachChat> {
         await ref.read(ledgerRepositoryProvider).delete(c.undoId!);
       case MoveProposal():
         await ref.read(accountRepositoryProvider).deleteTransfer(c.undoId!);
+      case ChangeProposal(:final before):
+        await ref.read(ledgerRepositoryProvider).update(before);
     }
     await _setCard(message, card, c.copyWith(state: CardState.undone));
   }
