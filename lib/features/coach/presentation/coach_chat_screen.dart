@@ -31,6 +31,7 @@ import 'coach_controller.dart';
 import 'coach_reply_text.dart';
 import 'coach_reply_box.dart';
 import 'coach_swipe_reply.dart';
+import 'thinking_sphere.dart';
 import 'coach_message_menu.dart';
 import 'coach_providers.dart';
 
@@ -408,6 +409,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                 replyTo: _replyTo,
                 face: settings.face,
                 onCancelReply: () => setState(() => _replyTo = null),
+                thinking: chat.sending,
               ),
             ],
           ),
@@ -804,7 +806,11 @@ class _Composer extends StatelessWidget {
     required this.replyTo,
     required this.face,
     required this.onCancelReply,
+    required this.thinking,
   });
+
+  /// The coach is working on an answer: the button is its sphere.
+  final bool thinking;
 
   /// The coach's words being replied to, shown with the field while set.
   final String? replyTo;
@@ -819,7 +825,6 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, AppSpacing.m),
       child: Column(
@@ -870,12 +875,7 @@ class _Composer extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.s),
-              IconButton.filled(
-                onPressed: enabled ? () => onSend() : null,
-                icon: const Icon(Icons.arrow_upward_rounded),
-                tooltip: 'Send',
-                style: IconButton.styleFrom(minimumSize: const Size(52, 52), backgroundColor: c.primary, foregroundColor: c.onPrimary),
-              ),
+              ThinkingSendButton(thinking: thinking, onSend: enabled ? () => onSend() : null),
             ],
           ),
         ],
