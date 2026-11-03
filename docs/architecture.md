@@ -163,7 +163,10 @@ runs the loop: send, run any lookups the reply asks for, send their results
 back as `tool_result` blocks with the assistant turn unchanged, and after
 eight rounds send `tool_choice: none` so the model must answer. Requests use
 `claude-sonnet-5-5` at `effort: medium` (decision 036) with server-side `fallbacks: "default"`;
-a `refusal` stop reason becomes `CoachProblem.refused`.
+a `refusal` stop reason becomes `CoachProblem.refused`. A chat whose
+`webSearch` is on (off by default, decision 038) also sends Anthropic's
+`web_search_20260209` and `web_fetch_20260209` server tools (`webTools`),
+searched from Malaysia; a `pause_turn` goes back unchanged and carries on.
 
 The coach's voice is one of six fixed personalities (`CoachPersonality` in
 `coach_settings.dart`: Friendly, Strict, Cheerleader, Roaster, Sees

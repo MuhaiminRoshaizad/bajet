@@ -615,3 +615,23 @@ keeps 023's rule that only the user's tap changes anything.
 **Costs:** a card whose entry has changed since it was made is refused as
 out of date rather than deleting something else. Settings, rules, goals
 and bills stay out of the coach's reach.
+
+## 038: The coach searches the web only in chats that allow it
+
+**Decided:** the coach can search the web and read pages through
+Anthropic's own server tools, for prices, places and offers, but only in a
+chat whose settings turn it on; every chat starts with it off. Searches
+carry no figures, name or entries, only the thing asked about and the area
+the user gave, and are told only the country and time zone. The coach says
+where a price came from and when, and says so when a page gives none.
+
+**Why:** questions such as "a vet near me and how much" need the outside
+world, and the coach is most useful when it can tie the answer back to the
+budget. A switch per chat keeps the cost and the outside traffic to the
+chats where the user wants them.
+
+**Costs:** about US$10 per 1,000 searches on the user's key, plus the pages
+read; at most three searches and two pages a question. The app asks for no
+location, so the user names the area, and the coach cannot measure
+distance or read map reviews. Page text is untrusted, and any change it
+leads to still needs the user's tap.

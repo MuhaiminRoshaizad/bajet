@@ -99,6 +99,9 @@ class CoachChatsController extends Notifier<CoachChats> {
 
   Future<void> setCoach(int id, {CoachFace? face, CoachPersonality? personality}) => _save(id, (t) => t.copyWith(face: face, personality: personality));
 
+  /// Lets the coach search the web in chat [id], or stops it.
+  Future<void> setWebSearch(int id, bool on) => _save(id, (t) => t.copyWith(webSearch: on));
+
   Future<void> _save(int id, CoachThread Function(CoachThread) change) async {
     _edit(id, change);
     final t = state.byId(id);

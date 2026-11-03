@@ -86,6 +86,24 @@ class _ChatSettings extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s),
           Text('New chats start with the coach and personality in Coach settings.', style: TextStyle(color: c.muted, fontSize: 13)),
+          const SizedBox(height: AppSpacing.l),
+          SwitchListTile(
+            key: const ValueKey('web-search'),
+            contentPadding: EdgeInsets.zero,
+            value: thread.webSearch,
+            title: const Text('Let the coach search the web', style: TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(
+              'For prices, places and offers. About 1 US cent a search on your key, and your figures and name never go into one.',
+              style: TextStyle(color: c.muted),
+            ),
+            onChanged: (on) async {
+              final messenger = ScaffoldMessenger.of(context);
+              // Held now: Undo can come after the sheet, and its ref, are gone.
+              final chats = ref.read(coachChatsProvider.notifier);
+              await chats.setWebSearch(chat, on);
+              showBar(messenger, on ? 'Web search on for this chat' : 'Web search off for this chat', undo: () => chats.setWebSearch(chat, !on));
+            },
+          ),
         ],
       ),
     );

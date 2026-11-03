@@ -11,6 +11,7 @@ class CoachThread {
     required this.personality,
     required this.createdAt,
     this.pinned = false,
+    this.webSearch = false,
     this.messages = const [],
   });
 
@@ -21,19 +22,24 @@ class CoachThread {
   final CoachPersonality personality;
   final DateTime createdAt;
 
+  /// Whether the coach may search the web in this chat.
+  final bool webSearch;
+
   /// Oldest first.
   final List<CoachMessage> messages;
 
   /// When something was last said in it, for ordering the list.
   DateTime get lastAt => messages.lastOrNull?.sentAt ?? createdAt;
 
-  CoachThread copyWith({String? title, bool? pinned, CoachFace? face, CoachPersonality? personality, List<CoachMessage>? messages}) => CoachThread(
+  CoachThread copyWith({String? title, bool? pinned, CoachFace? face, CoachPersonality? personality, bool? webSearch, List<CoachMessage>? messages}) =>
+      CoachThread(
         id: id,
         title: title ?? this.title,
         pinned: pinned ?? this.pinned,
         face: face ?? this.face,
         personality: personality ?? this.personality,
         createdAt: createdAt,
+        webSearch: webSearch ?? this.webSearch,
         messages: messages ?? this.messages,
       );
 }

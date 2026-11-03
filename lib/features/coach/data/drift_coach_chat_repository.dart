@@ -68,6 +68,7 @@ class DriftCoachChatRepository implements CoachChatRepository {
         face: t.face.name,
         personality: t.personality.name,
         createdAt: t.createdAt.millisecondsSinceEpoch,
+        webSearch: Value(t.webSearch),
       );
 
   CoachThread _thread(db.CoachThread r, List<CoachMessage> messages) => CoachThread(
@@ -79,6 +80,7 @@ class DriftCoachChatRepository implements CoachChatRepository {
         face: CoachFace.values.asNameMap()[r.face] ?? CoachFace.bajety,
         personality: CoachPersonality.values.asNameMap()[r.personality] ?? CoachPersonality.friendly,
         createdAt: DateTime.fromMillisecondsSinceEpoch(r.createdAt),
+        webSearch: r.webSearch,
         messages: messages,
       );
 

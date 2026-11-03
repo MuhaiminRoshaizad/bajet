@@ -684,6 +684,10 @@ class FakeCoach implements CoachClient {
   String gateKind = 'money';
   final gateRequests = <CoachRequest>[];
 
+  /// Turns given back as they are, before any [lookups], such as a paused
+  /// web search.
+  final turns = <CoachTurn>[];
+
   /// While set, each of the coach's own turns waits on it, so a test can
   /// look at the screen mid-answer.
   Completer<void>? hold;
@@ -709,6 +713,7 @@ class FakeCoach implements CoachClient {
     }
     requests.add(request);
     await hold?.future;
+    if (turns.isNotEmpty) return turns.removeAt(0);
     if (lookups.isNotEmpty) {
       final (name, input) = lookups.removeAt(0);
       return CoachTurn(stopReason: 'tool_use', content: [
@@ -722,13 +727,14 @@ class FakeCoach implements CoachClient {
 }
 
 /// A chat holding [messages], named after its first question, for seeding.
-CoachThread chatWith(List<CoachMessage> messages, {int id = 1, CoachFace face = CoachFace.bajety, CoachPersonality personality = CoachPersonality.friendly}) =>
+CoachThread chatWith(List<CoachMessage> messages, {int id = 1, CoachFace face = CoachFace.bajety, CoachPersonality personality = CoachPersonality.friendly, bool webSearch = false}) =>
     CoachThread(
       id: id,
       title: chatTitleFrom(messages.firstWhere((m) => m.fromUser, orElse: () => messages.first).text),
       face: face,
       personality: personality,
       createdAt: messages.first.sentAt ?? DateTime(2026),
+      webSearch: webSearch,
       messages: messages,
     );
 

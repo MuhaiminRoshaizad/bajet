@@ -14,7 +14,7 @@ class MemoryCoachChatRepository implements CoachChatRepository {
   @override
   Future<int> createThread(CoachThread t) async {
     final id = _nextThread++;
-    _threads.add(CoachThread(id: id, title: t.title, pinned: t.pinned, face: t.face, personality: t.personality, createdAt: t.createdAt));
+    _threads.add(CoachThread(id: id, title: t.title, pinned: t.pinned, face: t.face, personality: t.personality, createdAt: t.createdAt, webSearch: t.webSearch));
     return id;
   }
 

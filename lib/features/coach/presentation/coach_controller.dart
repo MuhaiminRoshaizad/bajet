@@ -91,6 +91,7 @@ class CoachController extends Notifier<CoachChat> {
   CoachThread? get _thread => ref.read(coachChatsProvider).byId(chat);
   CoachFace get _face => _thread?.face ?? CoachFace.bajety;
   CoachPersonality get _personality => _thread?.personality ?? CoachPersonality.friendly;
+  bool get _web => _thread?.webSearch ?? false;
   CoachChatsController get _chats => ref.read(coachChatsProvider.notifier);
   CoachPushback get _pushback => ref.read(coachPushbackProvider);
 
@@ -176,7 +177,8 @@ class CoachController extends Notifier<CoachChat> {
       final answer = await coachAnswer(
         client: client,
         apiKey: key,
-        system: coachSystemPrompt(today, _personality, face: _face, userName: await ref.read(coachSettingsRepositoryProvider).watchUserName().first),
+        system: coachSystemPrompt(today, _personality, face: _face, userName: await ref.read(coachSettingsRepositoryProvider).watchUserName().first, web: _web),
+        web: _web,
         conversation: conversation,
         tools: [...coachLookups, if (older.isNotEmpty) pastChatsLookup, ...proposalTools],
         lookup: (name, input) {
