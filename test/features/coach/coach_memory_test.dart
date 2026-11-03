@@ -84,6 +84,17 @@ void main() {
     expect([for (final m in left.messages) m.text], ['Laptop']);
   });
 
+  test('a question sent as a reply comes back with the words it answered', () async {
+    final database = db.AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repo = DriftCoachChatRepository(database);
+    final at = DateTime(2026, 10, 18, 12);
+    final chat = await repo.createThread(chatWith([said(true, 'Hi', at)]));
+    await repo.add(chat, CoachMessage(fromUser: true, text: 'paid it', sentAt: at, quote: 'Phone plan: RM45.00'));
+    final back = (await repo.load()).single.messages.single;
+    expect((back.text, back.quote), ('paid it', 'Phone plan: RM45.00'));
+  });
+
   test('a note is kept as a note and never sent to the model', () async {
     final database = db.AppDatabase(NativeDatabase.memory());
     addTearDown(database.close);

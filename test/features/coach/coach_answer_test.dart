@@ -17,6 +17,19 @@ Future<CoachAnswer> answer(FakeCoach coach, {LookupResult Function(String, Map<S
     );
 
 void main() {
+  test('a question sent as a reply reaches the coach with the words it answers ahead of it', () async {
+    final coach = FakeCoach();
+    await coachAnswer(
+      client: coach,
+      apiKey: 'test-key',
+      system: 'Be brief.',
+      conversation: const [CoachMessage(fromUser: true, text: 'paid this one', quote: 'Phone plan: RM45.00')],
+      tools: coachLookups,
+      lookup: (name, _) => LookupResult('', name),
+    );
+    expect(coach.requests.single.messages.single['content'], 'Replying to your words: "Phone plan: RM45.00"\n\npaid this one');
+  });
+
   test('a lookup runs on the phone and its result goes back as a tool result, then the reply comes', () async {
     final coach = FakeCoach()..lookups.add(('bajet_accounts', const {}));
     final a = await answer(coach);

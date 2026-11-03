@@ -107,7 +107,8 @@ class CoachController extends Notifier<CoachChat> {
     state = CoachChat(messages: state.messages, sending: sending, reading: reading, error: error);
   }
 
-  Future<void> ask(String question) async {
+  /// Asks [question]; with [quote], as a reply to those words of the coach.
+  Future<void> ask(String question, {String? quote}) async {
     final text = question.trim();
     if (text.isEmpty || _sending) return;
     // Busy from the first moment, so a second send while this one is still
@@ -119,7 +120,7 @@ class CoachController extends Notifier<CoachChat> {
     final previous = answered ? messages.lastWhere((m) => m.fromUser).text : null;
     final repeat = isRepeat(text, previous, now.difference(_lastAskedAt ?? now));
     _lastAskedAt = now;
-    await _add(CoachMessage(fromUser: true, text: text, sentAt: now));
+    await _add(CoachMessage(fromUser: true, text: text, sentAt: now, quote: quote));
     if (repeat) {
       // Asked again within a minute: answered on the phone, costing nothing
       // and counting against nothing.

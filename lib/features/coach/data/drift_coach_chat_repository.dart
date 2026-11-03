@@ -91,6 +91,7 @@ class DriftCoachChatRepository implements CoachChatRepository {
         looked: Value(m.looked.join('\n')),
         cards: Value(_cards(m.cards)),
         note: Value(m.note),
+        quote: Value(m.quote),
       );
 
   CoachMessage _message(db.CoachMessage r) {
@@ -103,6 +104,7 @@ class DriftCoachChatRepository implements CoachChatRepository {
       text: r.body,
       face: CoachFace.values.asNameMap()[r.face],
       looked: r.looked.isEmpty ? const [] : r.looked.split('\n'),
+      quote: r.quote,
       cards: r.cards.isEmpty
           ? const []
           : [for (final j in (jsonDecode(r.cards) as List).cast<Map<String, Object?>>()) ?cardFromJson(j)],

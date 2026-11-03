@@ -16,6 +16,10 @@ class CoachAnswer {
   final List<String> looked;
 }
 
+/// What the coach is sent for [m]: a reply carries the words it answers
+/// ahead of the question, so "this one" can be understood.
+String asked(CoachMessage m) => m.quote == null ? m.text : 'Replying to your words: "${m.quote}"\n\n${m.text}';
+
 /// Answers the last question in [conversation], letting the model call
 /// [tools] and running each call with [lookup]. Results go back inside
 /// tool_result blocks, the place Anthropic keeps untrusted data, and after
@@ -29,7 +33,7 @@ Future<CoachAnswer> coachAnswer({
   required LookupResult Function(String name, Map<String, Object?> input) lookup,
 }) async {
   final messages = <Map<String, Object?>>[
-    for (final m in conversation) {'role': m.fromUser ? 'user' : 'assistant', 'content': m.text},
+    for (final m in conversation) {'role': m.fromUser ? 'user' : 'assistant', 'content': asked(m)},
   ];
   final looked = <String>[];
   for (var round = 0;; round++) {

@@ -3,7 +3,7 @@ import 'coach_settings.dart';
 
 /// One turn of the conversation with the coach.
 class CoachMessage {
-  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const [], this.id, this.sentAt, this.face, this.note = false});
+  const CoachMessage({required this.fromUser, required this.text, this.looked = const [], this.cards = const [], this.id, this.sentAt, this.face, this.note = false, this.quote});
 
   /// A line in the chat that nobody said, such as "bajety is now Strict".
   /// The coach is never sent it.
@@ -12,7 +12,8 @@ class CoachMessage {
         note = true,
         face = null,
         looked = const [],
-        cards = const [];
+        cards = const [],
+        quote = null;
 
   final bool fromUser;
   final String text;
@@ -32,10 +33,13 @@ class CoachMessage {
   final List<CoachCard> cards;
   final bool note;
 
-  CoachMessage withCards(List<CoachCard> cards) =>
-      CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face, note: note);
+  /// For a question sent as a reply: the coach's words it answers.
+  final String? quote;
 
-  CoachMessage withId(int id) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face, note: note);
+  CoachMessage withCards(List<CoachCard> cards) =>
+      CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face, note: note, quote: quote);
+
+  CoachMessage withId(int id) => CoachMessage(fromUser: fromUser, text: text, looked: looked, cards: cards, id: id, sentAt: sentAt, face: face, note: note, quote: quote);
 }
 
 enum CoachProblem { offline, badKey, busy, refused, other }
