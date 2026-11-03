@@ -19,7 +19,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -35,6 +35,8 @@ class AppDatabase extends _$AppDatabase {
           if (from < 11) await m.addColumn(appSettings, appSettings.userName);
           if (from < 13) await m.addColumn(entries, entries.spendKind);
           if (from < 14) await m.addColumn(appSettings, appSettings.needsReserve);
+          // Versions 8 and 10 build coach_messages in its latest shape.
+          if (from >= 10 && from < 16) await m.addColumn(coachMessages, coachMessages.quote);
           if (from < 2) await m.addColumn(entries, entries.receipt);
           if (from < 3) await m.addColumn(recurringItems, recurringItems.windowDays);
           if (from < 4) await m.addColumn(plannedEvents, plannedEvents.repeatsYearly);
@@ -117,7 +119,7 @@ class AppDatabase extends _$AppDatabase {
     }
     await m.alterTable(TableMigration(
       coachMessages,
-      newColumns: [coachMessages.threadId, coachMessages.note],
+      newColumns: [coachMessages.threadId, coachMessages.note, coachMessages.quote],
       columnTransformer: {coachMessages.threadId: const Constant(1)},
     ));
   }

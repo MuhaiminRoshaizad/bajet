@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 15);
+    expect(db.schemaVersion, 16);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -301,5 +301,17 @@ void main() {
     expect(rules[6], ('Weekend', RhythmDayType.spend, 1500));
     final columns = await old.customSelect('PRAGMA table_info(weekly_rules)').get();
     expect(columns.map((c) => c.read<String>('name')), isNot(contains('is_fasting_day')));
+  });
+
+  test('a version 15 database keeps its chats, with no message yet sent as a reply', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v15.sql').readAsStringSync());
+      raw.execute("INSERT INTO coach_threads (id, title, face, personality, created_at) VALUES (1, 'Lunch', 'bajety', 'friendly', 0)");
+      raw.execute("INSERT INTO coach_messages (thread_id, sent_at, from_user, body) VALUES (1, 0, 1, 'How was lunch?')");
+      raw.execute('PRAGMA user_version = 15');
+    }));
+    addTearDown(old.close);
+    final messages = await old.select(old.coachMessages).get();
+    expect([for (final m in messages) (m.body, m.quote)], [('How was lunch?', null)]);
   });
 }

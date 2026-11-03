@@ -6294,6 +6294,15 @@ class $CoachMessagesTable extends CoachMessages
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _quoteMeta = const VerificationMeta('quote');
+  @override
+  late final GeneratedColumn<String> quote = GeneratedColumn<String>(
+    'quote',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6305,6 +6314,7 @@ class $CoachMessagesTable extends CoachMessages
     looked,
     cards,
     note,
+    quote,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6377,6 +6387,12 @@ class $CoachMessagesTable extends CoachMessages
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('quote')) {
+      context.handle(
+        _quoteMeta,
+        quote.isAcceptableOrUnknown(data['quote']!, _quoteMeta),
+      );
+    }
     return context;
   }
 
@@ -6422,6 +6438,10 @@ class $CoachMessagesTable extends CoachMessages
         DriftSqlType.bool,
         data['${effectivePrefix}note'],
       )!,
+      quote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quote'],
+      ),
     );
   }
 
@@ -6452,6 +6472,9 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
 
   /// A line in the chat said by nobody, such as a change of personality.
   final bool note;
+
+  /// For a question sent as a reply: the coach's line it answers, as quoted.
+  final String? quote;
   const CoachMessage({
     required this.id,
     required this.threadId,
@@ -6462,6 +6485,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     required this.looked,
     required this.cards,
     required this.note,
+    this.quote,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6477,6 +6501,9 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     map['looked'] = Variable<String>(looked);
     map['cards'] = Variable<String>(cards);
     map['note'] = Variable<bool>(note);
+    if (!nullToAbsent || quote != null) {
+      map['quote'] = Variable<String>(quote);
+    }
     return map;
   }
 
@@ -6491,6 +6518,9 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
       looked: Value(looked),
       cards: Value(cards),
       note: Value(note),
+      quote: quote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quote),
     );
   }
 
@@ -6509,6 +6539,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
       looked: serializer.fromJson<String>(json['looked']),
       cards: serializer.fromJson<String>(json['cards']),
       note: serializer.fromJson<bool>(json['note']),
+      quote: serializer.fromJson<String?>(json['quote']),
     );
   }
   @override
@@ -6524,6 +6555,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
       'looked': serializer.toJson<String>(looked),
       'cards': serializer.toJson<String>(cards),
       'note': serializer.toJson<bool>(note),
+      'quote': serializer.toJson<String?>(quote),
     };
   }
 
@@ -6537,6 +6569,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     String? looked,
     String? cards,
     bool? note,
+    Value<String?> quote = const Value.absent(),
   }) => CoachMessage(
     id: id ?? this.id,
     threadId: threadId ?? this.threadId,
@@ -6547,6 +6580,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     looked: looked ?? this.looked,
     cards: cards ?? this.cards,
     note: note ?? this.note,
+    quote: quote.present ? quote.value : this.quote,
   );
   CoachMessage copyWithCompanion(CoachMessagesCompanion data) {
     return CoachMessage(
@@ -6559,6 +6593,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
       looked: data.looked.present ? data.looked.value : this.looked,
       cards: data.cards.present ? data.cards.value : this.cards,
       note: data.note.present ? data.note.value : this.note,
+      quote: data.quote.present ? data.quote.value : this.quote,
     );
   }
 
@@ -6573,7 +6608,8 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
           ..write('face: $face, ')
           ..write('looked: $looked, ')
           ..write('cards: $cards, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('quote: $quote')
           ..write(')'))
         .toString();
   }
@@ -6589,6 +6625,7 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
     looked,
     cards,
     note,
+    quote,
   );
   @override
   bool operator ==(Object other) =>
@@ -6602,7 +6639,8 @@ class CoachMessage extends DataClass implements Insertable<CoachMessage> {
           other.face == this.face &&
           other.looked == this.looked &&
           other.cards == this.cards &&
-          other.note == this.note);
+          other.note == this.note &&
+          other.quote == this.quote);
 }
 
 class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
@@ -6615,6 +6653,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
   final Value<String> looked;
   final Value<String> cards;
   final Value<bool> note;
+  final Value<String?> quote;
   const CoachMessagesCompanion({
     this.id = const Value.absent(),
     this.threadId = const Value.absent(),
@@ -6625,6 +6664,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     this.looked = const Value.absent(),
     this.cards = const Value.absent(),
     this.note = const Value.absent(),
+    this.quote = const Value.absent(),
   });
   CoachMessagesCompanion.insert({
     this.id = const Value.absent(),
@@ -6636,6 +6676,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     this.looked = const Value.absent(),
     this.cards = const Value.absent(),
     this.note = const Value.absent(),
+    this.quote = const Value.absent(),
   }) : threadId = Value(threadId),
        sentAt = Value(sentAt),
        fromUser = Value(fromUser),
@@ -6650,6 +6691,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     Expression<String>? looked,
     Expression<String>? cards,
     Expression<bool>? note,
+    Expression<String>? quote,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6661,6 +6703,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
       if (looked != null) 'looked': looked,
       if (cards != null) 'cards': cards,
       if (note != null) 'note': note,
+      if (quote != null) 'quote': quote,
     });
   }
 
@@ -6674,6 +6717,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     Value<String>? looked,
     Value<String>? cards,
     Value<bool>? note,
+    Value<String?>? quote,
   }) {
     return CoachMessagesCompanion(
       id: id ?? this.id,
@@ -6685,6 +6729,7 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
       looked: looked ?? this.looked,
       cards: cards ?? this.cards,
       note: note ?? this.note,
+      quote: quote ?? this.quote,
     );
   }
 
@@ -6718,6 +6763,9 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
     if (note.present) {
       map['note'] = Variable<bool>(note.value);
     }
+    if (quote.present) {
+      map['quote'] = Variable<String>(quote.value);
+    }
     return map;
   }
 
@@ -6732,7 +6780,8 @@ class CoachMessagesCompanion extends UpdateCompanion<CoachMessage> {
           ..write('face: $face, ')
           ..write('looked: $looked, ')
           ..write('cards: $cards, ')
-          ..write('note: $note')
+          ..write('note: $note, ')
+          ..write('quote: $quote')
           ..write(')'))
         .toString();
   }
@@ -12379,6 +12428,7 @@ typedef $$CoachMessagesTableCreateCompanionBuilder =
       Value<String> looked,
       Value<String> cards,
       Value<bool> note,
+      Value<String?> quote,
     });
 typedef $$CoachMessagesTableUpdateCompanionBuilder =
     CoachMessagesCompanion Function({
@@ -12391,6 +12441,7 @@ typedef $$CoachMessagesTableUpdateCompanionBuilder =
       Value<String> looked,
       Value<String> cards,
       Value<bool> note,
+      Value<String?> quote,
     });
 
 final class $$CoachMessagesTableReferences
@@ -12468,6 +12519,11 @@ class $$CoachMessagesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get quote => $composableBuilder(
+    column: $table.quote,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CoachThreadsTableFilterComposer get threadId {
     final $$CoachThreadsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -12541,6 +12597,11 @@ class $$CoachMessagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get quote => $composableBuilder(
+    column: $table.quote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CoachThreadsTableOrderingComposer get threadId {
     final $$CoachThreadsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -12597,6 +12658,9 @@ class $$CoachMessagesTableAnnotationComposer
 
   GeneratedColumn<bool> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<String> get quote =>
+      $composableBuilder(column: $table.quote, builder: (column) => column);
 
   $$CoachThreadsTableAnnotationComposer get threadId {
     final $$CoachThreadsTableAnnotationComposer composer = $composerBuilder(
@@ -12659,6 +12723,7 @@ class $$CoachMessagesTableTableManager
                 Value<String> looked = const Value.absent(),
                 Value<String> cards = const Value.absent(),
                 Value<bool> note = const Value.absent(),
+                Value<String?> quote = const Value.absent(),
               }) => CoachMessagesCompanion(
                 id: id,
                 threadId: threadId,
@@ -12669,6 +12734,7 @@ class $$CoachMessagesTableTableManager
                 looked: looked,
                 cards: cards,
                 note: note,
+                quote: quote,
               ),
           createCompanionCallback:
               ({
@@ -12681,6 +12747,7 @@ class $$CoachMessagesTableTableManager
                 Value<String> looked = const Value.absent(),
                 Value<String> cards = const Value.absent(),
                 Value<bool> note = const Value.absent(),
+                Value<String?> quote = const Value.absent(),
               }) => CoachMessagesCompanion.insert(
                 id: id,
                 threadId: threadId,
@@ -12691,6 +12758,7 @@ class $$CoachMessagesTableTableManager
                 looked: looked,
                 cards: cards,
                 note: note,
+                quote: quote,
               ),
           withReferenceMapper: (p0) => p0
               .map(

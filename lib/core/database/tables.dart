@@ -276,6 +276,9 @@ class CoachMessages extends Table {
 
   /// A line in the chat said by nobody, such as a change of personality.
   BoolColumn get note => boolean().withDefault(const Constant(false))();
+
+  /// For a question sent as a reply: the coach's line it answers, as quoted.
+  TextColumn get quote => text().nullable()();
 }
 
 /// One finished Sunday check-in, one a day: finishing again the same day
