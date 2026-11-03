@@ -36,6 +36,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.bad,
     required this.tintFills,
     required this.tintInks,
+    required this.sphere,
   });
 
   final Color background;
@@ -80,6 +81,10 @@ class AppColors extends ThemeExtension<AppColors> {
 
   final Map<Tint, Color> tintFills;
   final Map<Tint, Color> tintInks;
+
+  /// The coach's thinking sphere: a light, not a surface, so it is the same
+  /// in both themes.
+  final SphereColours sphere;
 
   Color tintFill(Tint tint) => tintFills[tint]!;
   Color tintInk(Tint tint) => tintInks[tint]!;
@@ -130,6 +135,14 @@ class AppColors extends ThemeExtension<AppColors> {
       Tint.olive: Color(0xFF71640B),
       Tint.neutral: Color(0xFF606A74),
     },
+    sphere: SphereColours(
+      night: Color(0xFF0A2744),
+      abyss: Color(0xFF020A14),
+      blue: Color(0xFF3A8EEA),
+      sea: Color(0xFF34C3B4),
+      glow: Color(0xFF6FE3E9),
+      core: Color(0xFFFFFFFF),
+    ),
   );
 
   /// Dark slate rather than black, so the shadowed edge still has somewhere
@@ -183,6 +196,14 @@ class AppColors extends ThemeExtension<AppColors> {
       Tint.olive: Color(0xFFD6CC8F),
       Tint.neutral: Color(0xFF9DA6AE),
     },
+    sphere: SphereColours(
+      night: Color(0xFF0A2744),
+      abyss: Color(0xFF020A14),
+      blue: Color(0xFF3A8EEA),
+      sea: Color(0xFF34C3B4),
+      glow: Color(0xFF6FE3E9),
+      core: Color(0xFFFFFFFF),
+    ),
   );
 
   @override
@@ -191,6 +212,20 @@ class AppColors extends ThemeExtension<AppColors> {
   // Two fixed palettes; animating between them is not something bajet does.
   @override
   AppColors lerp(AppColors? other, double t) => t < 0.5 ? this : (other ?? this);
+}
+
+/// The coach's thinking sphere, deep blue glass lit from within: [night] to
+/// [abyss] its body, [blue], [sea] and [glow] the lights drifting in it and
+/// the rings around it, [core] its brightest point.
+class SphereColours {
+  const SphereColours({required this.night, required this.abyss, required this.blue, required this.sea, required this.glow, required this.core});
+
+  final Color night;
+  final Color abyss;
+  final Color blue;
+  final Color sea;
+  final Color glow;
+  final Color core;
 }
 
 extension AppColorsContext on BuildContext {

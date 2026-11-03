@@ -6,9 +6,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../domain/coach_settings.dart';
 import 'coach_avatar.dart';
 
-/// The cyan the reply marks lean into, beside the app's blue.
-const _replyGlow = Color(0xFF6FE3E9);
-
 /// A quoted line as the coach wrote it: whatever comes before a colon, such
 /// as a bill's name, in bold. At most two lines.
 class QuoteText extends StatelessWidget {
@@ -93,7 +90,7 @@ class ReplyBox extends StatelessWidget {
                           height: 40,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(2),
-                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c.primary, _replyGlow]),
+                            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c.primary, c.sphere.glow]),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.s),
