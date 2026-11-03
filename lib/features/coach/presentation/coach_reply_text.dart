@@ -6,8 +6,8 @@ import '../domain/reply_format.dart';
 
 /// A reply from the coach as it reads, not as it was typed: bold and italic
 /// where the coach marked them, headings as bold lines, and lists with real
-/// bullets or numbers hanging beside their wrapped lines. It can be selected
-/// and copied as one, without the marks.
+/// bullets or numbers hanging beside their wrapped lines. Holding it opens
+/// the message's menu, whose Copy and Select text leave the marks out.
 class CoachReplyText extends StatelessWidget {
   const CoachReplyText(this.text, {super.key, required this.style});
 
@@ -17,8 +17,8 @@ class CoachReplyText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blocks = parseReply(text);
-    return SelectionArea(
-      child: Column(
+    return Builder(
+      builder: (context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final (i, b) in blocks.indexed)

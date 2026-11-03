@@ -57,4 +57,9 @@ of one paragraph
     expect(blocks.single.kind, ReplyBlockKind.paragraph);
     expect(blocks.single.runs, [const ReplyRun('You are on track.')]);
   });
+
+  test('a reply copies as plain text: no marks, a line a block, real bullets and numbers', () {
+    expect(plainReply('**Left:** RM20.00\n\n- **Phone:** RM45.00\n- Rent\n\n1. Pay it\n2. Log it'),
+        'Left: RM20.00\n• Phone: RM45.00\n• Rent\n1. Pay it\n2. Log it');
+  });
 }

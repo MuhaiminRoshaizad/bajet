@@ -72,6 +72,17 @@ List<ReplyBlock> parseReply(String text) {
   return blocks;
 }
 
+/// A reply as plain text, as copied out of the chat: the words without the
+/// marks, a line each for paragraphs, headings and items, bullets as •.
+String plainReply(String text) => [
+      for (final b in parseReply(text))
+        switch (b.kind) {
+          ReplyBlockKind.bullet => '• ${b.text}',
+          ReplyBlockKind.numbered => '${b.number}. ${b.text}',
+          _ => b.text,
+        },
+    ].join('\n');
+
 final _inline = RegExp(r'\*\*(.+?)\*\*|__(.+?)__|(?<![\w*])\*(?!\s)(.+?)(?<!\s)\*(?![\w*])|`([^`]+)`|\[([^\]]+)\]\([^)]*\)');
 
 /// The bold and italic runs of one block's text. An asterisk that opens

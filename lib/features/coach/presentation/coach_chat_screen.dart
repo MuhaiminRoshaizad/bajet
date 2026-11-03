@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
@@ -10,6 +11,7 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../../../core/widgets/spring_in.dart';
 import '../../../core/widgets/spring_menu.dart';
@@ -18,6 +20,7 @@ import '../../ledger/presentation/spend_kind_choice.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
+import '../domain/reply_format.dart';
 import '../domain/coach_settings.dart';
 import 'coach_attention.dart';
 import 'coach_avatar.dart';
@@ -26,6 +29,7 @@ import 'coach_chat_settings.dart';
 import 'coach_chats.dart';
 import 'coach_controller.dart';
 import 'coach_reply_text.dart';
+import 'coach_message_menu.dart';
 import 'coach_providers.dart';
 
 /// One chat with the coach, on a page of its own over the bottom bar: its
@@ -60,6 +64,10 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   /// The messages on screen, by index, so a new reply can be measured.
   final _rows = <int, BuildContext>{};
 
+  /// The message lifted out by a hold, hidden in its place while its menu
+  /// is up.
+  final _held = ValueNotifier<int?>(null);
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +86,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     _chats.discardIfEmpty(widget.chat);
     _question.dispose();
     _typing.dispose();
+    _held.dispose();
     _attention.dispose();
     _scroll.dispose();
     super.dispose();
@@ -120,6 +129,30 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     if (question.trim().isEmpty) return;
     _question.clear();
     await ref.read(coachControllerProvider(widget.chat).notifier).ask(question);
+  }
+
+  /// Holding message [i]: its menu, and what was picked from it.
+  Future<void> _hold(BuildContext bubble, int i, CoachMessage m) async {
+    final box = bubble.findRenderObject()! as RenderBox;
+    final messenger = ScaffoldMessenger.of(context);
+    final words = m.fromUser ? m.text : plainReply(m.text);
+    _held.value = i;
+    final action = await showMessageMenu(
+      context,
+      bubble: _Bubble(message: m),
+      at: box.localToGlobal(Offset.zero) & box.size,
+      mine: m.fromUser,
+    );
+    _held.value = null;
+    if (!mounted) return;
+    switch (action) {
+      case MessageAction.copy:
+        await Clipboard.setData(ClipboardData(text: words));
+        showBar(messenger, 'Message copied');
+      case MessageAction.select:
+        if (mounted) await showSelectText(context, words);
+      case null:
+    }
   }
 
   @override
@@ -274,7 +307,17 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                 : SpringIn(
                                     animate: _shown,
                                     alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
-                                    child: _Bubble(message: m),
+                                    child: Builder(
+                                      builder: (bubble) => GestureDetector(
+                                        key: ValueKey(('hold', i)),
+                                        onLongPress: () => _hold(bubble, i, m),
+                                        child: ValueListenableBuilder<int?>(
+                                          valueListenable: _held,
+                                          builder: (_, held, child) => Opacity(opacity: held == i ? 0 : 1, child: child),
+                                          child: _Bubble(message: m),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                           ),
                           for (final (j, card) in m.cards.indexed)
@@ -398,7 +441,7 @@ class _Bubble extends StatelessWidget {
     final mine = message.fromUser;
     final style = TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45);
     // The user's words as typed; the coach's as it means them read.
-    final text = mine ? SelectableText(message.text, style: style) : CoachReplyText(message.text, style: style);
+    final text = mine ? Text(message.text, style: style) : CoachReplyText(message.text, style: style);
     const padding = EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m);
     final bubble = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),

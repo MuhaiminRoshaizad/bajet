@@ -1,11 +1,14 @@
 import 'package:bajet/core/navigation/routes.dart';
 import 'package:bajet/core/storage/device_flags.dart';
+import 'package:bajet/features/coach/domain/coach_client.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/coach/coach_screen_test.dart' show openCoach;
 import '../helpers/app_harness.dart';
+import '../helpers/fake_repositories.dart';
 
 /// A phone with Android's three-button navigation: 48 points across the
 /// bottom that the app draws under, edge to edge.
@@ -50,6 +53,23 @@ void main() {
     await tester.tap(find.text('Your name'));
     await tester.pumpAndSettle();
     expectClearOfBar(tester, find.widgetWithText(FilledButton, 'Save'));
+  });
+
+  testWidgets("a held message's menu and its Select text sheet stay above the navigation bar", (tester) async {
+    await withThreeButtons(tester);
+    await openCoach(tester, seed: (w) => w.coachChat.restore([
+          chatWith([
+            CoachMessage(fromUser: true, text: 'what is left', sentAt: DateTime(2026, 7, 1, 9), id: 1),
+            CoachMessage(fromUser: false, text: 'About RM20.00, once the phone bill is paid.', sentAt: DateTime(2026, 7, 1, 9, 1), id: 2),
+          ]),
+        ]));
+    // The newest message sits lowest, right over the question box.
+    await tester.longPress(find.byKey(const ValueKey(('hold', 1))));
+    await tester.pumpAndSettle();
+    expectClearOfBar(tester, find.text('Select text'));
+    await tester.tap(find.text('Select text'));
+    await tester.pumpAndSettle();
+    expectClearOfBar(tester, find.byKey(const ValueKey('select-text')));
   });
 
   // Every page opened over the tabs, which have no bottom bar of their own:
