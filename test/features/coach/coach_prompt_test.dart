@@ -33,5 +33,6 @@ void main() {
     }
     expect(prompt, contains('names it in for, or the plan counts it twice'));
     expect(prompt, contains('a date that has passed without one means it is still to pay'));
+    expect(prompt, contains('when two lookups disagree, say so and say which you went by'));
   });
 }

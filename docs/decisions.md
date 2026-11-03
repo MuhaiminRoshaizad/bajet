@@ -581,3 +581,19 @@ it at all.
 **Costs:** the check-in no longer notes a day kept from Food alone. Older
 backups still restore, their flexible days as spending.
 
+## 036: The coach checks its figures before it answers
+
+**Decided:** the coach answers at medium effort instead of low, with up to
+eight rounds of lookups a question instead of four, and its instructions
+ask it to check that the figures it uses agree before answering a money
+question, saying so when two lookups disagree.
+
+**Why:** at low effort it answered from the first figure it read. Asked
+what would be left after the month's bills, it took two unpaid bills for
+paid because one list showed only their next month's dates, though another
+lookup said they were still due. A money answer that is confidently wrong
+costs the user more than a slower one.
+
+**Costs:** more tokens per question on the user's own key, and slower
+replies; not yet measured on real questions. Requests allow 8,000 tokens
+for thinking and reply together.

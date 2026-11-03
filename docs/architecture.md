@@ -161,8 +161,8 @@ kind, or the bill, income or event it settles), `bajet_propose_move`,
 `coachDataProvider` builds from the loaded providers, and `coachAnswer`
 runs the loop: send, run any lookups the reply asks for, send their results
 back as `tool_result` blocks with the assistant turn unchanged, and after
-four rounds send `tool_choice: none` so the model must answer. Requests use
-`claude-sonnet-5-5` at `effort: low` with server-side `fallbacks: "default"`;
+eight rounds send `tool_choice: none` so the model must answer. Requests use
+`claude-sonnet-5-5` at `effort: medium` (decision 036) with server-side `fallbacks: "default"`;
 a `refusal` stop reason becomes `CoachProblem.refused`.
 
 The coach's voice is one of six fixed personalities (`CoachPersonality` in

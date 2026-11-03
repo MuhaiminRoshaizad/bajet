@@ -5,8 +5,16 @@ import 'coach_lookups.dart';
 /// budget, and kinder to a personal key than the largest one.
 const coachModel = 'claude-sonnet-5-5';
 
-/// Lookups the coach may make for one question before it has to answer.
-const coachMaxLookups = 4;
+/// Lookups the coach may make for one question before it has to answer:
+/// enough to read entries, the plan and a what-if before a money question.
+const coachMaxLookups = 8;
+
+/// How hard the coach thinks. Low answered from the first figure it saw and
+/// once took an unpaid bill for paid; medium checks its figures first.
+const coachEffort = 'medium';
+
+/// Room for the coach's thinking and its reply together at [coachEffort].
+const coachMaxTokens = 8000;
 
 /// A reply and what was looked up to give it.
 class CoachAnswer {
@@ -41,6 +49,8 @@ Future<CoachAnswer> coachAnswer({
       apiKey: apiKey,
       request: CoachRequest(
         model: coachModel,
+        effort: coachEffort,
+        maxTokens: coachMaxTokens,
         system: system,
         messages: messages,
         tools: [for (final l in tools) l.toJson()],

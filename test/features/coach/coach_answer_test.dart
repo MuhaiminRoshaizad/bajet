@@ -56,15 +56,21 @@ void main() {
     expect(result['is_error'], isTrue);
   });
 
-  test('after four rounds of lookups the model has to answer with what it has', () async {
+  test('after eight rounds of lookups the model has to answer with what it has', () async {
     final coach = FakeCoach();
-    for (var i = 0; i < 6; i++) {
+    for (var i = 0; i < 10; i++) {
       coach.lookups.add(('bajet_overview', const {}));
     }
     final a = await answer(coach);
-    // The fake keeps asking, so the fifth request already forbids lookups.
-    expect([for (final r in coach.requests.take(5)) r.noMoreTools], [false, false, false, false, true]);
+    // The fake keeps asking, so the ninth request already forbids lookups.
+    expect([for (final r in coach.requests.take(9)) r.noMoreTools], [...List.filled(8, false), true]);
     expect(a.text, isNotEmpty);
+  });
+
+  test('the coach thinks at medium effort, with room for it', () async {
+    final coach = FakeCoach();
+    await answer(coach);
+    expect((coach.requests.single.effort, coach.requests.single.maxTokens), ('medium', 8000));
   });
 
   test('a reply with no words is a problem, not an empty bubble', () async {
