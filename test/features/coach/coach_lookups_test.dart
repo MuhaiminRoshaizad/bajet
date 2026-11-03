@@ -6,6 +6,7 @@ import 'package:bajet/features/ledger/domain/ledger_models.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/features/plan/domain/plan_repository.dart';
 import 'package:bajet/features/plan/domain/projection.dart';
+import 'package:bajet/features/plan/domain/upcoming.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_repositories.dart';
@@ -126,6 +127,29 @@ void main() {
     expect(lines({'spend': 'planned'}), startsWith('2 entries'));
     expect(lines({'spend': 'my_call'}), contains('Lunch'));
     expect(runLookup('bajet_entries', {'from': '2026-10-10', 'to': '2026-10-10', 'spend': 'not_my_call'}, mixed).label, 'Entries · not_my_call · 10/10/2026');
+  });
+
+  test("a bill whose day passed with nothing logged reads as still to pay, never as next month's", () {
+    final recurring = [
+      RecurringItem(id: 1, name: 'Phone', amount: 4500, categoryKey: 'bills', isIncome: false, nextDue: d(10, 12)),
+      RecurringItem(id: 2, name: 'Internet', amount: 12900, categoryKey: 'bills', isIncome: false, nextDue: d(10, 20)),
+    ];
+    final overdue = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: entries,
+      categories: demoCategories,
+      accounts: accounts,
+      rules: data.rules,
+      recurring: recurring,
+      projection: null,
+      upcoming: upcoming(recurring: recurring, events: const [], goals: const [], from: data.today, to: d(11, 30)),
+    );
+    final plan = runLookup('bajet_plan', const {}, overdue).text;
+    expect(plan, contains('- Phone (Bills): −RM45.00, was due 12/10/2026 and not logged as paid yet'));
+    expect(plan, contains('- Internet (Bills): −RM129.00, next due 20/10/2026'));
+    expect(plan, contains('- 12/10/2026 Phone: −RM45.00 (date passed, not logged as paid yet)'));
   });
 
   test('the plan names every event with its budget, each listing as last seen, and goals bought', () {

@@ -452,7 +452,8 @@ String _plan(CoachData d, Map<String, Category> categories) {
     'Monthly bills and income:',
     if (d.recurring.where((r) => r.active).isEmpty) '- None',
     for (final r in d.recurring.where((r) => r.active))
-      '- ${r.name} (${categories[r.categoryKey]?.label ?? r.categoryKey}): ${r.isIncome ? '+' : '−'}${Money.format(r.amount)}, next due ${Dates.full(r.nextDue)}',
+      '- ${r.name} (${categories[r.categoryKey]?.label ?? r.categoryKey}): ${r.isIncome ? '+' : '−'}${Money.format(r.amount)}, '
+          '${r.nextDue.isAfter(d.today) ? 'next due ${Dates.full(r.nextDue)}' : 'was due ${Dates.full(r.nextDue)} and ${_notLogged(r.isIncome)}'}',
     '',
     'Planned events:',
     if (!d.events.any((e) => !e.done)) '- None',
@@ -464,9 +465,14 @@ String _plan(CoachData d, Map<String, Category> categories) {
     'Coming up next:',
     if (d.upcoming.isEmpty) '- Nothing planned',
     for (final u in d.upcoming.take(10))
-      '- ${Dates.full(u.date)} ${u.name}: ${u.signedAmount > 0 ? '+' : '−'}${Money.format(u.signedAmount.abs())}${u.counted ? '' : ' (not counted by Runway)'}',
+      '- ${Dates.full(u.date)} ${u.name}: ${u.signedAmount > 0 ? '+' : '−'}${Money.format(u.signedAmount.abs())}'
+          '${u.unpaid ? ' (date passed, ${_notLogged(u.signedAmount > 0)})' : u.counted ? '' : ' (not counted by Runway)'}',
   ].join('\n');
 }
+
+/// A bill or income whose day has passed: a plan only expects it, so it
+/// stays to pay or to come until an entry is logged for it.
+String _notLogged(bool income) => 'not logged as ${income ? 'received' : 'paid'} yet';
 
 /// What a goal's listing showed when the user last looked, as a clause.
 /// The link itself is never sent.
