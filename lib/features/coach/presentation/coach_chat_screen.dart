@@ -29,6 +29,7 @@ import 'coach_chat_settings.dart';
 import 'coach_chats.dart';
 import 'coach_controller.dart';
 import 'coach_reply_text.dart';
+import 'coach_reply_box.dart';
 import 'coach_message_menu.dart';
 import 'coach_providers.dart';
 
@@ -63,6 +64,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
 
   /// The messages on screen, by index, so a new reply can be measured.
   final _rows = <int, BuildContext>{};
+
+  /// The coach's words the next question replies to, if any.
+  String? _replyTo;
 
   /// The message lifted out by a hold, hidden in its place while its menu
   /// is up.
@@ -127,19 +131,22 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   Future<void> _send([String? text]) async {
     final question = text ?? _question.text;
     if (question.trim().isEmpty) return;
+    // A suggestion tapped is its own question, never a reply.
+    final quote = text == null ? _replyTo : null;
     _question.clear();
-    await ref.read(coachControllerProvider(widget.chat).notifier).ask(question);
+    if (_replyTo != null) setState(() => _replyTo = null);
+    await ref.read(coachControllerProvider(widget.chat).notifier).ask(question, quote: quote);
   }
 
   /// Holding message [i]: its menu, and what was picked from it.
-  Future<void> _hold(BuildContext bubble, int i, CoachMessage m) async {
+  Future<void> _hold(BuildContext bubble, int i, CoachMessage m, CoachFace face) async {
     final box = bubble.findRenderObject()! as RenderBox;
     final messenger = ScaffoldMessenger.of(context);
     final words = m.fromUser ? m.text : plainReply(m.text);
     _held.value = i;
     final action = await showMessageMenu(
       context,
-      bubble: _Bubble(message: m),
+      bubble: _Bubble(message: m, face: face),
       at: box.localToGlobal(Offset.zero) & box.size,
       mine: m.fromUser,
     );
@@ -149,6 +156,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
       case MessageAction.copy:
         await Clipboard.setData(ClipboardData(text: words));
         showBar(messenger, 'Message copied');
+      case MessageAction.reply:
+        // Long words are cut, so the quote stays a pointer, not a repeat.
+        setState(() => _replyTo = words.length <= 300 ? words : '${words.substring(0, 299)}…');
       case MessageAction.select:
         if (mounted) await showSelectText(context, words);
       case null:
@@ -310,11 +320,11 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                     child: Builder(
                                       builder: (bubble) => GestureDetector(
                                         key: ValueKey(('hold', i)),
-                                        onLongPress: () => _hold(bubble, i, m),
+                                        onLongPress: () => _hold(bubble, i, m, settings.face),
                                         child: ValueListenableBuilder<int?>(
                                           valueListenable: _held,
                                           builder: (_, held, child) => Opacity(opacity: held == i ? 0 : 1, child: child),
-                                          child: _Bubble(message: m),
+                                          child: _Bubble(message: m, face: settings.face),
                                         ),
                                       ),
                                     ),
@@ -347,6 +357,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                 enabled: !chat.sending && used < coachDailyLimit,
                 showSuggestions: chat.messages.isEmpty,
                 onSend: _send,
+                replyTo: _replyTo,
+                face: settings.face,
+                onCancelReply: () => setState(() => _replyTo = null),
               ),
             ],
           ),
@@ -428,9 +441,12 @@ class _DayLabel extends StatelessWidget {
 /// speaker; the coach is named at the top of the chat, so a reply needs no
 /// face beside it and takes the full width.
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message});
+  const _Bubble({required this.message, required this.face});
 
   final CoachMessage message;
+
+  /// The chat's coach, named on a quote the user replied to.
+  final CoachFace face;
 
   static const _round = Radius.circular(20);
   static const _tail = Radius.circular(6);
@@ -440,8 +456,13 @@ class _Bubble extends StatelessWidget {
     final c = context.colors;
     final mine = message.fromUser;
     final style = TextStyle(color: mine ? c.onPrimary : c.ink, height: 1.45);
-    // The user's words as typed; the coach's as it means them read.
-    final text = mine ? Text(message.text, style: style) : CoachReplyText(message.text, style: style);
+    // The user's words as typed, under what they replied to; the coach's as
+    // it means them read.
+    final quote = message.quote;
+    final words = mine ? Text(message.text, style: style) : CoachReplyText(message.text, style: style);
+    final text = quote == null
+        ? words
+        : Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [SentQuote(quote: quote, face: face), words]);
     const padding = EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m);
     final bubble = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
@@ -688,7 +709,21 @@ class _Problem extends StatelessWidget {
 
 /// Suggested questions and the question box, pinned under the conversation.
 class _Composer extends StatelessWidget {
-  const _Composer({required this.controller, required this.focusNode, required this.enabled, required this.showSuggestions, required this.onSend});
+  const _Composer({
+    required this.controller,
+    required this.focusNode,
+    required this.enabled,
+    required this.showSuggestions,
+    required this.onSend,
+    required this.replyTo,
+    required this.face,
+    required this.onCancelReply,
+  });
+
+  /// The coach's words being replied to, shown with the field while set.
+  final String? replyTo;
+  final CoachFace face;
+  final VoidCallback onCancelReply;
 
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -717,18 +752,35 @@ class _Composer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: TextField(
-                  autofillHints: null,
-                  key: const ValueKey('coach-question'),
-                  controller: controller,
-                  focusNode: focusNode,
-                  enabled: enabled,
-                  minLines: 1,
-                  maxLines: 4,
-                  maxLength: 500,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => onSend(),
-                  decoration: const InputDecoration(hintText: 'Ask the coach…', counterText: ''),
+                child: ReplyBox(
+                  quote: replyTo,
+                  face: face,
+                  onCancel: onCancelReply,
+                  child: TextField(
+                    autofillHints: null,
+                    key: const ValueKey('coach-question'),
+                    controller: controller,
+                    focusNode: focusNode,
+                    enabled: enabled,
+                    minLines: 1,
+                    maxLines: 4,
+                    maxLength: 500,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => onSend(),
+                    // While replying the box is drawn by ReplyBox around both.
+                    decoration: replyTo == null
+                        ? const InputDecoration(hintText: 'Ask the coach…', counterText: '')
+                        : InputDecoration(
+                            hintText: 'Reply to ${face.label}…',
+                            counterText: '',
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.m),
+                          ),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s),

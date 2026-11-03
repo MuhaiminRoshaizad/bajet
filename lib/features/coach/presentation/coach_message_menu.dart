@@ -8,7 +8,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_sheet.dart';
 
 /// What can be done to a message held in the chat.
-enum MessageAction { copy, select }
+enum MessageAction { copy, reply, select }
 
 /// Holding a message: the chat dims, the message lifts out of it (rising a
 /// little when it sits too low for the menu), and the menu springs out
@@ -48,6 +48,7 @@ class _MessageMenuRoute extends PopupRoute<MessageAction> {
 
   static const _rows = [
     (MessageAction.copy, Icons.copy_rounded, 'Copy'),
+    (MessageAction.reply, Icons.reply_rounded, 'Reply'),
     (MessageAction.select, Icons.text_fields_rounded, 'Select text'),
   ];
   static const _rowHeight = 48.0;
@@ -74,7 +75,9 @@ class _MessageMenuRoute extends PopupRoute<MessageAction> {
     final still = MediaQuery.disableAnimationsOf(context);
     final run = still ? kAlwaysCompleteAnimation : animation;
     final screen = MediaQuery.sizeOf(context);
-    final menuHeight = _rows.length * _rowHeight + AppSpacing.s * 2;
+    // Replying is to the coach; the user's own words can be copied or picked.
+    final rows = [for (final r in _rows) if (!mine || r.$1 != MessageAction.reply) r];
+    final menuHeight = rows.length * _rowHeight + AppSpacing.s * 2;
     // A message too low for its menu rises just enough to show it whole.
     final room = screen.height - MediaQuery.paddingOf(context).bottom - AppSpacing.l;
     final lift = math.max(0.0, at.bottom + AppSpacing.s + menuHeight - room);
@@ -116,7 +119,7 @@ class _MessageMenuRoute extends PopupRoute<MessageAction> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      for (final (i, (action, icon, label)) in _rows.indexed)
+                      for (final (i, (action, icon, label)) in rows.indexed)
                         _Row(
                           animation: run,
                           start: 0.15 + 0.1 * i,
