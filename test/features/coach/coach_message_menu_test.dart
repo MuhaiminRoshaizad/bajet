@@ -96,4 +96,50 @@ void main() {
     final sent = world.coach.requests.last.messages.where((m) => m['role'] == 'user').last['content'] as String;
     expect(sent, 'and next month?');
   });
+
+  testWidgets("swiping the coach's reply past the mark starts a reply; a short swipe or the user's own message does not", (tester) async {
+    await openChat(tester);
+    await tester.drag(find.byKey(const ValueKey(('swipe', 1))), const Offset(30, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('reply-quote')), findsNothing, reason: 'not far enough');
+    await tester.drag(find.byKey(const ValueKey(('swipe', 0))), const Offset(100, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('reply-quote')), findsNothing, reason: "the user's own words are not replied to");
+
+    await tester.drag(find.byKey(const ValueKey(('swipe', 1))), const Offset(100, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('reply-quote')), findsOneWidget);
+    expect(find.text('Replying to Aina'), findsOneWidget);
+    // The message itself sprang back into place.
+    expect(tester.getTopLeft(find.byKey(const ValueKey(('hold', 1)))).dx, lessThan(40));
+  });
+
+  testWidgets('a tap on the quote in a sent reply goes back to the words it quoted and lights them up', (tester) async {
+    await openCoach(tester, seed: (w) {
+      final at = DateTime(2026, 7, 1, 9);
+      w.coachChat.restore([
+        chatWith([
+          CoachMessage(fromUser: true, text: 'what is left this month', sentAt: at, id: 1),
+          CoachMessage(fromUser: false, text: _reply, sentAt: at, face: CoachFace.aina, id: 2),
+          // Enough said since that the quoted words are well off screen.
+          for (var k = 0; k < 10; k++) ...[
+            CoachMessage(fromUser: true, text: 'and question $k?', sentAt: at, id: 3 + k * 2),
+            CoachMessage(fromUser: false, text: 'An answer to question $k, long enough to take a few lines of the chat.', sentAt: at, face: CoachFace.aina, id: 4 + k * 2),
+          ],
+          CoachMessage(fromUser: true, text: 'i paid this one', sentAt: at, id: 30, quote: 'Phone plan: −RM45.00, was due 28/10 and not logged as paid yet.\n• Internet: −RM129.00'),
+        ], face: CoachFace.aina),
+      ]);
+    });
+    expect(find.byKey(const ValueKey(('hold', 1))), findsNothing, reason: 'the quoted reply starts off screen');
+
+    await tester.tap(find.textContaining('was due 28/10', findRichText: true).last);
+    for (var k = 0; k < 20; k++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.byKey(const ValueKey('quoted-message')), findsOneWidget);
+    expect(tester.getRect(find.byKey(const ValueKey(('hold', 1)))).top, greaterThan(0));
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('quoted-message')), findsNothing, reason: 'the glow is only for a moment');
+  });
 }

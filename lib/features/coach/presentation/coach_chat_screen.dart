@@ -30,6 +30,7 @@ import 'coach_chats.dart';
 import 'coach_controller.dart';
 import 'coach_reply_text.dart';
 import 'coach_reply_box.dart';
+import 'coach_swipe_reply.dart';
 import 'coach_message_menu.dart';
 import 'coach_providers.dart';
 
@@ -72,6 +73,9 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
   /// is up.
   final _held = ValueNotifier<int?>(null);
 
+  /// The message a tap on a quote jumped back to, glowing for a moment.
+  final _found = ValueNotifier<int?>(null);
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +95,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     _question.dispose();
     _typing.dispose();
     _held.dispose();
+    _found.dispose();
     _attention.dispose();
     _scroll.dispose();
     super.dispose();
@@ -138,6 +143,42 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
     await ref.read(coachControllerProvider(widget.chat).notifier).ask(question, quote: quote);
   }
 
+  /// Starts a reply to the coach's message [m]. Long words are cut, so the
+  /// quote stays a pointer, not a repeat.
+  void _reply(CoachMessage m) {
+    final words = plainReply(m.text);
+    setState(() => _replyTo = words.length <= 300 ? words : '${words.substring(0, 299)}…');
+  }
+
+  /// Scrolls back to the coach's words that message [i] quoted and lights
+  /// them up for a moment. Rows are built only on screen, so the list steps
+  /// back a screen at a time until the one wanted exists.
+  Future<void> _showQuoted(int i) async {
+    final messages = ref.read(coachControllerProvider(widget.chat)).messages;
+    final quote = messages[i].quote;
+    if (quote == null) return;
+    final at = [for (var j = i - 1; j >= 0; j--) j].where((j) => !messages[j].fromUser && !messages[j].note && quotes(quote, plainReply(messages[j].text))).firstOrNull;
+    if (at == null || !_scroll.hasClients) return;
+    for (var step = 0; step < 50 && _rows[at] == null; step++) {
+      final position = _scroll.position;
+      // Older messages lie further up: higher offsets in a list laid out
+      // from the bottom.
+      final next = (position.pixels + position.viewportDimension * 0.8).clamp(position.minScrollExtent, position.maxScrollExtent);
+      if (next == position.pixels) break;
+      _scroll.jumpTo(next);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+    }
+    final row = _rows[at];
+    if (row == null || !row.mounted) return;
+    final still = MediaQuery.disableAnimationsOf(context);
+    await Scrollable.ensureVisible(row, alignment: 0.3, duration: still ? Duration.zero : AppMotion.enter, curve: AppMotion.ease);
+    if (!mounted) return;
+    _found.value = at;
+    await Future<void>.delayed(const Duration(milliseconds: 1400));
+    if (mounted && _found.value == at) _found.value = null;
+  }
+
   /// Holding message [i]: its menu, and what was picked from it.
   Future<void> _hold(BuildContext bubble, int i, CoachMessage m, CoachFace face) async {
     final box = bubble.findRenderObject()! as RenderBox;
@@ -157,8 +198,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
         await Clipboard.setData(ClipboardData(text: words));
         showBar(messenger, 'Message copied');
       case MessageAction.reply:
-        // Long words are cut, so the quote stays a pointer, not a repeat.
-        setState(() => _replyTo = words.length <= 300 ? words : '${words.substring(0, 299)}…');
+        _reply(m);
       case MessageAction.select:
         if (mounted) await showSelectText(context, words);
       case null:
@@ -317,14 +357,22 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                 : SpringIn(
                                     animate: _shown,
                                     alignment: m.fromUser ? Alignment.bottomRight : Alignment.bottomLeft,
-                                    child: Builder(
-                                      builder: (bubble) => GestureDetector(
-                                        key: ValueKey(('hold', i)),
-                                        onLongPress: () => _hold(bubble, i, m, settings.face),
-                                        child: ValueListenableBuilder<int?>(
-                                          valueListenable: _held,
-                                          builder: (_, held, child) => Opacity(opacity: held == i ? 0 : 1, child: child),
-                                          child: _Bubble(message: m, face: settings.face),
+                                    child: _Swipeable(
+                                      key: ValueKey(('swipe', i)),
+                                      // Replying is to the coach's words.
+                                      onReply: m.fromUser ? null : () => _reply(m),
+                                      child: Builder(
+                                        builder: (bubble) => GestureDetector(
+                                          key: ValueKey(('hold', i)),
+                                          onLongPress: () => _hold(bubble, i, m, settings.face),
+                                          child: ListenableBuilder(
+                                            listenable: Listenable.merge([_held, _found]),
+                                            builder: (context, child) => _Lit(
+                                              lit: _found.value == i,
+                                              child: Opacity(opacity: _held.value == i ? 0 : 1, child: child),
+                                            ),
+                                            child: _Bubble(message: m, face: settings.face, onQuote: () => _showQuoted(i)),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -396,6 +444,41 @@ class _RowState extends State<_Row> {
   }
 }
 
+/// A message that can be swiped to reply to it, or a plain one when it
+/// cannot.
+class _Swipeable extends StatelessWidget {
+  const _Swipeable({super.key, required this.onReply, required this.child});
+
+  final VoidCallback? onReply;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => onReply == null ? child : SwipeToReply(onReply: onReply!, child: child);
+}
+
+/// A message glowing for a moment after a tap on a quote led back to it.
+class _Lit extends StatelessWidget {
+  const _Lit({required this.lit, required this.child});
+
+  final bool lit;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return AnimatedContainer(
+      key: lit ? const ValueKey('quoted-message') : null,
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.enter,
+      curve: AppMotion.ease,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [BoxShadow(color: c.primary.withValues(alpha: lit ? 0.55 : 0), blurRadius: 22, spreadRadius: lit ? 2 : 0)],
+      ),
+      child: child,
+    );
+  }
+}
+
 /// The chat's rows, oldest first, in the order the list lays them out: a
 /// list laid out from the bottom takes its newest row first.
 List<Widget> _topDown(bool fromBottom, List<Widget> rows) => fromBottom ? rows.reversed.toList() : rows;
@@ -441,9 +524,12 @@ class _DayLabel extends StatelessWidget {
 /// speaker; the coach is named at the top of the chat, so a reply needs no
 /// face beside it and takes the full width.
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, required this.face});
+  const _Bubble({required this.message, required this.face, this.onQuote});
 
   final CoachMessage message;
+
+  /// A tap on the quote a reply carries, to go back to the words it quoted.
+  final VoidCallback? onQuote;
 
   /// The chat's coach, named on a quote the user replied to.
   final CoachFace face;
@@ -462,7 +548,7 @@ class _Bubble extends StatelessWidget {
     final words = mine ? Text(message.text, style: style) : CoachReplyText(message.text, style: style);
     final text = quote == null
         ? words
-        : Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [SentQuote(quote: quote, face: face), words]);
+        : Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [GestureDetector(onTap: onQuote, child: SentQuote(quote: quote, face: face)), words]);
     const padding = EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.m);
     final bubble = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.82),
