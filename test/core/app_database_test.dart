@@ -60,7 +60,7 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 16);
+    expect(db.schemaVersion, 17);
     expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
   });
 
@@ -313,5 +313,16 @@ void main() {
     addTearDown(old.close);
     final messages = await old.select(old.coachMessages).get();
     expect([for (final m in messages) (m.body, m.quote)], [('How was lunch?', null)]);
+  });
+
+  test('a version 16 database keeps its chats, none of them searching the web', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v16.sql').readAsStringSync());
+      raw.execute("INSERT INTO coach_threads (id, title, face, personality, created_at) VALUES (1, 'Lunch', 'bajety', 'friendly', 0)");
+      raw.execute('PRAGMA user_version = 16');
+    }));
+    addTearDown(old.close);
+    final chats = await old.select(old.coachThreads).get();
+    expect([for (final t in chats) (t.title, t.webSearch)], [('Lunch', false)]);
   });
 }

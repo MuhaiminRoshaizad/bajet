@@ -251,6 +251,10 @@ class CoachThreads extends Table {
 
   /// When it was started, in milliseconds since the epoch.
   IntColumn get createdAt => integer()();
+
+  /// Whether the coach may search the web in this chat. Off until the user
+  /// turns it on, so no search costs anything unasked.
+  BoolColumn get webSearch => boolean().withDefault(const Constant(false))();
 }
 
 /// The remembered messages, oldest first, each in its chat. They stay on

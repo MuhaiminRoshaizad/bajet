@@ -5853,6 +5853,21 @@ class $CoachThreadsTable extends CoachThreads
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _webSearchMeta = const VerificationMeta(
+    'webSearch',
+  );
+  @override
+  late final GeneratedColumn<bool> webSearch = GeneratedColumn<bool>(
+    'web_search',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("web_search" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5861,6 +5876,7 @@ class $CoachThreadsTable extends CoachThreads
     face,
     personality,
     createdAt,
+    webSearch,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5918,6 +5934,12 @@ class $CoachThreadsTable extends CoachThreads
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('web_search')) {
+      context.handle(
+        _webSearchMeta,
+        webSearch.isAcceptableOrUnknown(data['web_search']!, _webSearchMeta),
+      );
+    }
     return context;
   }
 
@@ -5951,6 +5973,10 @@ class $CoachThreadsTable extends CoachThreads
         DriftSqlType.int,
         data['${effectivePrefix}created_at'],
       )!,
+      webSearch: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}web_search'],
+      )!,
     );
   }
 
@@ -5973,6 +5999,10 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
 
   /// When it was started, in milliseconds since the epoch.
   final int createdAt;
+
+  /// Whether the coach may search the web in this chat. Off until the user
+  /// turns it on, so no search costs anything unasked.
+  final bool webSearch;
   const CoachThread({
     required this.id,
     required this.title,
@@ -5980,6 +6010,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
     required this.face,
     required this.personality,
     required this.createdAt,
+    required this.webSearch,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5990,6 +6021,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
     map['face'] = Variable<String>(face);
     map['personality'] = Variable<String>(personality);
     map['created_at'] = Variable<int>(createdAt);
+    map['web_search'] = Variable<bool>(webSearch);
     return map;
   }
 
@@ -6001,6 +6033,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
       face: Value(face),
       personality: Value(personality),
       createdAt: Value(createdAt),
+      webSearch: Value(webSearch),
     );
   }
 
@@ -6016,6 +6049,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
       face: serializer.fromJson<String>(json['face']),
       personality: serializer.fromJson<String>(json['personality']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
+      webSearch: serializer.fromJson<bool>(json['webSearch']),
     );
   }
   @override
@@ -6028,6 +6062,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
       'face': serializer.toJson<String>(face),
       'personality': serializer.toJson<String>(personality),
       'createdAt': serializer.toJson<int>(createdAt),
+      'webSearch': serializer.toJson<bool>(webSearch),
     };
   }
 
@@ -6038,6 +6073,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
     String? face,
     String? personality,
     int? createdAt,
+    bool? webSearch,
   }) => CoachThread(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -6045,6 +6081,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
     face: face ?? this.face,
     personality: personality ?? this.personality,
     createdAt: createdAt ?? this.createdAt,
+    webSearch: webSearch ?? this.webSearch,
   );
   CoachThread copyWithCompanion(CoachThreadsCompanion data) {
     return CoachThread(
@@ -6056,6 +6093,7 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
           ? data.personality.value
           : this.personality,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      webSearch: data.webSearch.present ? data.webSearch.value : this.webSearch,
     );
   }
 
@@ -6067,14 +6105,15 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
           ..write('pinned: $pinned, ')
           ..write('face: $face, ')
           ..write('personality: $personality, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('webSearch: $webSearch')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, title, pinned, face, personality, createdAt);
+      Object.hash(id, title, pinned, face, personality, createdAt, webSearch);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6084,7 +6123,8 @@ class CoachThread extends DataClass implements Insertable<CoachThread> {
           other.pinned == this.pinned &&
           other.face == this.face &&
           other.personality == this.personality &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.webSearch == this.webSearch);
 }
 
 class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
@@ -6094,6 +6134,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
   final Value<String> face;
   final Value<String> personality;
   final Value<int> createdAt;
+  final Value<bool> webSearch;
   const CoachThreadsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -6101,6 +6142,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
     this.face = const Value.absent(),
     this.personality = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.webSearch = const Value.absent(),
   });
   CoachThreadsCompanion.insert({
     this.id = const Value.absent(),
@@ -6109,6 +6151,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
     required String face,
     required String personality,
     required int createdAt,
+    this.webSearch = const Value.absent(),
   }) : title = Value(title),
        face = Value(face),
        personality = Value(personality),
@@ -6120,6 +6163,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
     Expression<String>? face,
     Expression<String>? personality,
     Expression<int>? createdAt,
+    Expression<bool>? webSearch,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6128,6 +6172,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
       if (face != null) 'face': face,
       if (personality != null) 'personality': personality,
       if (createdAt != null) 'created_at': createdAt,
+      if (webSearch != null) 'web_search': webSearch,
     });
   }
 
@@ -6138,6 +6183,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
     Value<String>? face,
     Value<String>? personality,
     Value<int>? createdAt,
+    Value<bool>? webSearch,
   }) {
     return CoachThreadsCompanion(
       id: id ?? this.id,
@@ -6146,6 +6192,7 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
       face: face ?? this.face,
       personality: personality ?? this.personality,
       createdAt: createdAt ?? this.createdAt,
+      webSearch: webSearch ?? this.webSearch,
     );
   }
 
@@ -6170,6 +6217,9 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
     if (createdAt.present) {
       map['created_at'] = Variable<int>(createdAt.value);
     }
+    if (webSearch.present) {
+      map['web_search'] = Variable<bool>(webSearch.value);
+    }
     return map;
   }
 
@@ -6181,7 +6231,8 @@ class CoachThreadsCompanion extends UpdateCompanion<CoachThread> {
           ..write('pinned: $pinned, ')
           ..write('face: $face, ')
           ..write('personality: $personality, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('webSearch: $webSearch')
           ..write(')'))
         .toString();
   }
@@ -12107,6 +12158,7 @@ typedef $$CoachThreadsTableCreateCompanionBuilder =
       required String face,
       required String personality,
       required int createdAt,
+      Value<bool> webSearch,
     });
 typedef $$CoachThreadsTableUpdateCompanionBuilder =
     CoachThreadsCompanion Function({
@@ -12116,6 +12168,7 @@ typedef $$CoachThreadsTableUpdateCompanionBuilder =
       Value<String> face,
       Value<String> personality,
       Value<int> createdAt,
+      Value<bool> webSearch,
     });
 
 final class $$CoachThreadsTableReferences
@@ -12177,6 +12230,11 @@ class $$CoachThreadsTableFilterComposer
 
   ColumnFilters<int> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get webSearch => $composableBuilder(
+    column: $table.webSearch,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12244,6 +12302,11 @@ class $$CoachThreadsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get webSearch => $composableBuilder(
+    column: $table.webSearch,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CoachThreadsTableAnnotationComposer
@@ -12274,6 +12337,9 @@ class $$CoachThreadsTableAnnotationComposer
 
   GeneratedColumn<int> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get webSearch =>
+      $composableBuilder(column: $table.webSearch, builder: (column) => column);
 
   Expression<T> coachMessagesRefs<T extends Object>(
     Expression<T> Function($$CoachMessagesTableAnnotationComposer a) f,
@@ -12335,6 +12401,7 @@ class $$CoachThreadsTableTableManager
                 Value<String> face = const Value.absent(),
                 Value<String> personality = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
+                Value<bool> webSearch = const Value.absent(),
               }) => CoachThreadsCompanion(
                 id: id,
                 title: title,
@@ -12342,6 +12409,7 @@ class $$CoachThreadsTableTableManager
                 face: face,
                 personality: personality,
                 createdAt: createdAt,
+                webSearch: webSearch,
               ),
           createCompanionCallback:
               ({
@@ -12351,6 +12419,7 @@ class $$CoachThreadsTableTableManager
                 required String face,
                 required String personality,
                 required int createdAt,
+                Value<bool> webSearch = const Value.absent(),
               }) => CoachThreadsCompanion.insert(
                 id: id,
                 title: title,
@@ -12358,6 +12427,7 @@ class $$CoachThreadsTableTableManager
                 face: face,
                 personality: personality,
                 createdAt: createdAt,
+                webSearch: webSearch,
               ),
           withReferenceMapper: (p0) => p0
               .map(
