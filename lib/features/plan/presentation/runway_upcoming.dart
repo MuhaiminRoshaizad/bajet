@@ -15,7 +15,8 @@ import '../domain/upcoming.dart';
 import 'upcoming_calendar.dart';
 
 /// What is planned before buy day, one heading per date so a day with many
-/// bills names its date once, with their total. The first four items show;
+/// bills names its date once, with their total. Bills and income whose day
+/// has passed with nothing logged come first, under one heading of their own. The first four items show;
 /// the rest open and close again on request.
 class UpcomingCard extends ConsumerStatefulWidget {
   const UpcomingCard({super.key, required this.items});
@@ -38,13 +39,15 @@ class _UpcomingCardState extends ConsumerState<UpcomingCard> {
     if (widget.items.isEmpty) return SoftCard(child: Text('No bills, income or events planned yet.', style: TextStyle(color: c.muted)));
 
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
-    final groups = <(DateTime, DateTime?), List<UpcomingItem>>{};
+    // A null key holds everything not logged yet; the items arrive soonest
+    // first, so it is the first group.
+    final groups = <(DateTime, DateTime?)?, List<UpcomingItem>>{};
     for (final item in widget.items) {
-      (groups[(item.date, item.lastDate)] ??= []).add(item);
+      (groups[item.unpaid ? null : (item.date, item.lastDate)] ??= []).add(item);
     }
     final hidden = widget.items.length - _firstItems;
     var budget = _showAll ? widget.items.length : _firstItems;
-    final shown = <(MapEntry<(DateTime, DateTime?), List<UpcomingItem>>, List<UpcomingItem>)>[];
+    final shown = <(MapEntry<(DateTime, DateTime?)?, List<UpcomingItem>>, List<UpcomingItem>)>[];
     for (final g in groups.entries) {
       if (budget <= 0) break;
       shown.add((g, g.value.take(budget).toList()));
@@ -86,8 +89,7 @@ class _UpcomingCardState extends ConsumerState<UpcomingCard> {
                     if (i > 0) const SizedBox(height: AppSpacing.m),
                     // A day's total is worth showing only when more than one thing lands on it.
                     _DateHeading(
-                      first: group.key.$1,
-                      last: group.key.$2,
+                      span: group.key,
                       net: group.value.length > 1 ? group.value.fold<int>(0, (s, x) => s + x.signedAmount) : null,
                     ),
                     for (final item in items) _UpcomingRow(item: item, category: categories[item.categoryKey]),
@@ -110,10 +112,11 @@ class _UpcomingCardState extends ConsumerState<UpcomingCard> {
 }
 
 class _DateHeading extends StatelessWidget {
-  const _DateHeading({required this.first, required this.last, required this.net});
+  const _DateHeading({required this.span, required this.net});
 
-  final DateTime first;
-  final DateTime? last;
+  /// The day, or the days a bill may land between; null for the ones not
+  /// logged yet.
+  final (DateTime, DateTime?)? span;
   final int? net;
 
   @override
@@ -126,7 +129,13 @@ class _DateHeading extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
         child: Row(
           children: [
-            Expanded(child: Text(last == null ? '${Dates.weekday(first)} ${Dates.full(first)}' : Dates.span(first, last!), style: style)),
+            Expanded(
+              child: switch (span) {
+                null => Text('Not logged yet', style: style.copyWith(color: c.bad)),
+                (final first, null) => Text('${Dates.weekday(first)} ${Dates.full(first)}', style: style),
+                (final first, final last?) => Text(Dates.span(first, last), style: style),
+              },
+            ),
             if (net case final net?) Text('${net > 0 ? '+' : net < 0 ? '−' : ''}${Money.format(net.abs())}', style: style.copyWith(color: net > 0 ? c.good : c.muted)),
           ],
         ),
@@ -148,10 +157,11 @@ class _UpcomingRow extends StatelessWidget {
     final tint = item.isGoal ? Tint.apricot : categoryTint(category);
     final icon = item.isGoal ? Icons.flag_outlined : item.categoryKey == null ? Icons.event_outlined : categoryIcon(item.categoryKey!);
     final note = [
+      if (item.unpaid) 'was due ${Dates.full(item.date)}',
       if (item.budget case final budget?) '${Money.format(item.spent)} of ${Money.format(budget)} spent',
       if (item.isGoal) 'buy day',
       if (item.yearly) 'every year',
-      if (!item.counted) 'not counted',
+      if (!item.counted && !item.unpaid) 'not counted',
     ].join(' · ');
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),

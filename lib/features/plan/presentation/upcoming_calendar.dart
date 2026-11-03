@@ -37,7 +37,11 @@ class _UpcomingCalendarState extends State<UpcomingCalendar> {
     return DateTime.utc(last.year, last.month);
   }
 
-  DateTime get _firstMonth => DateTime.utc(widget.today.year, widget.today.month);
+  // A bill not logged yet can sit in a month already gone; it stays reachable.
+  DateTime get _firstMonth {
+    final first = widget.items.map((i) => i.date).fold(widget.today, (a, b) => b.isBefore(a) ? b : a);
+    return DateTime.utc(first.year, first.month);
+  }
 
   List<UpcomingItem> _on(DateTime day) => [for (final i in widget.items) if (i.date == day) i];
 

@@ -37,6 +37,25 @@ void main() {
     expect(list, isEmpty);
   });
 
+  test("a bill or income whose day passed with nothing logged stays in as unpaid, and that income is not counted", () {
+    final list = upcoming(
+      recurring: [
+        RecurringItem(id: 1, name: 'Phone', amount: 4500, categoryKey: 'bills', isIncome: false, nextDue: d(2026, 6, 28)),
+        RecurringItem(id: 2, name: 'Side job', amount: 20000, categoryKey: 'salary', isIncome: true, nextDue: d(2026, 6, 30)),
+      ],
+      events: const [],
+      goals: const [],
+      from: d(2026, 7, 1),
+      to: d(2026, 7, 31),
+    );
+    expect([for (final i in list) (i.name, i.date, i.unpaid, i.counted)], [
+      ('Phone', d(2026, 6, 28), true, true),
+      ('Side job', d(2026, 6, 30), true, false),
+      ('Phone', d(2026, 7, 28), false, true),
+      ('Side job', d(2026, 7, 30), false, true),
+    ]);
+  });
+
   test('marks events the projection does not count', () {
     final list = upcoming(
       recurring: const [],

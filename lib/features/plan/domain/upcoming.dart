@@ -12,6 +12,7 @@ class UpcomingItem {
     this.yearly = false,
     this.budget,
     this.spent = 0,
+    this.unpaid = false,
   });
 
   final DateTime date;
@@ -35,10 +36,17 @@ class UpcomingItem {
   /// is then only what is left of it.
   final int? budget;
   final int spent;
+
+  /// A bill or income whose day came before the list starts with nothing
+  /// logged for it yet: its date is only what the plan expected.
+  final bool unpaid;
 }
 
 /// Everything planned from [from] to [to] inclusive, soonest first: each
-/// month's recurring items, planned events and goal purchases.
+/// month's recurring items, planned events and goal purchases. A bill or
+/// income not yet logged stays in from its due day, however long ago, so a
+/// passed date never reads as settled; overdue income is not counted
+/// (docs/decisions.md 008).
 List<UpcomingItem> upcoming({
   required List<RecurringItem> recurring,
   required List<PlannedEvent> events,
@@ -49,14 +57,15 @@ List<UpcomingItem> upcoming({
   final items = <UpcomingItem>[
     for (final r in recurring.where((r) => r.active))
       for (var due = calendarDay(r.nextDue); !due.isAfter(to); due = DateTime.utc(due.year, due.month + 1, due.day))
-        if (!due.isBefore(from))
-          UpcomingItem(
-            date: due,
-            lastDate: r.windowDays == 0 ? null : DateTime.utc(due.year, due.month, due.day + r.windowDays),
-            name: r.name,
-            signedAmount: r.signedAmount,
-            categoryKey: r.categoryKey,
-          ),
+        UpcomingItem(
+          date: due,
+          lastDate: r.windowDays == 0 ? null : DateTime.utc(due.year, due.month, due.day + r.windowDays),
+          name: r.name,
+          signedAmount: r.signedAmount,
+          categoryKey: r.categoryKey,
+          unpaid: due.isBefore(from),
+          counted: !(r.isIncome && due.isBefore(from)),
+        ),
     for (final e in events.where((e) => !e.done))
       for (final day in e.occurrences(from, to))
         UpcomingItem(

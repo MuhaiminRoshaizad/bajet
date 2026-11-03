@@ -104,6 +104,25 @@ void main() {
     expect(find.textContaining(RegExp(r'^Show \d+ more$')), findsNothing);
   });
 
+  testWidgets("a bill not logged by its day comes first under Not logged yet, and leaves once paid", (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.addRecurring(name: 'Phone', isIncome: false, amount: 4500, categoryKey: 'bills', nextDue: d(2026, 6, 28));
+      w.addRecurring(name: 'Rent', isIncome: false, amount: 50000, categoryKey: 'bills', nextDue: d(2026, 7, 5));
+    });
+    await openRunway(tester);
+    await tester.dragUntilVisible(find.text('Sun 05/07/2026'), find.byType(ListView).first, const Offset(0, -200));
+    await tester.pumpAndSettle();
+    expect(find.text('Not logged yet'), findsOneWidget);
+    expect(find.text('was due 28/06/2026'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Not logged yet')).dy, lessThan(tester.getTopLeft(find.text('Sun 05/07/2026')).dy));
+
+    final phone = (await world.watchRecurring().first).firstWhere((r) => r.name == 'Phone');
+    await world.confirmRecurring(phone.id, due: phone.nextDue, paidOn: testToday);
+    await tester.pumpAndSettle();
+    expect(find.text('Not logged yet'), findsNothing);
+    expect(find.text('was due 28/06/2026'), findsNothing);
+  });
+
   testWidgets('only four items show until opened, and Show less closes them again', (tester) async {
     await pumpApp(tester, seed: (w) {
       for (final (i, name) in ['Rent', 'Phone', 'Internet', 'Water', 'Power', 'Gym'].indexed) {

@@ -189,7 +189,7 @@ pw.Document checkinDocument({
             padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
             child: pw.Row(children: [
               pw.SizedBox(width: 62, child: pw.Text(Dates.dayShort(item.date), style: text(colour: muted))),
-              pw.Expanded(child: pw.Text('${item.name}${item.counted ? '' : ' (unconfirmed)'}', style: text())),
+              pw.Expanded(child: pw.Text('${item.name}${nextNote(item)}', style: text())),
               pw.Text(signedMoney(item.signedAmount), style: text(strong: true)),
             ]),
           ),

@@ -286,6 +286,9 @@ WeeklyCheckin weeklyCheckin({
   );
 }
 
+/// What a line in the next days needs said after it, if anything.
+String nextNote(UpcomingItem item) => item.unpaid ? ' (not logged yet)' : item.counted ? '' : ' (unconfirmed)';
+
 /// `+RM8.50` or `−RM4.20`.
 String signedMoney(int sen) => '${sen < 0 ? '−' : '+'}${Money.format(sen.abs())}';
 
@@ -339,7 +342,7 @@ String weeklyCheckinText(WeeklyCheckin w) {
     'NEXT 7 DAYS',
     if (w.next.isEmpty) 'Nothing due',
     for (final item in w.next)
-      '${Dates.dayShort(item.date).padRight(12)}${item.name.padRight(20)} ${signedMoney(item.signedAmount)}${item.counted ? '' : ' (unconfirmed)'}',
+      '${Dates.dayShort(item.date).padRight(12)}${item.name.padRight(20)} ${signedMoney(item.signedAmount)}${nextNote(item)}',
     'Next check-in: ${Dates.dayShort(w.nextCheck)}, stay above ${Money.format(w.nextTarget)}',
     if (w.flags.isNotEmpty) ...['', 'FLAGS', for (final f in w.flags) '- $f'],
   ];
