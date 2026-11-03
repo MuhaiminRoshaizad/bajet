@@ -1,3 +1,4 @@
+import 'package:bajet/core/theme/app_colors.dart';
 import 'package:bajet/core/theme/app_spacing.dart';
 import 'package:bajet/core/widgets/soft.dart';
 import 'package:bajet/features/coach/domain/coach_client.dart';
@@ -232,5 +233,28 @@ void main() {
     await ask(tester, 'And this week?');
     expect(position().pixels, 0);
     expect(find.text('You are on track.').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('a delete the coach suggests is a red button, removes the entry on a tap, and Undo brings it back', (tester) async {
+    final world = await openCoach(tester);
+    final lunch = world.entries.single;
+    world.coach
+      ..lookups.add(('bajet_propose_delete', {'entry_id': lunch.id}))
+      ..reply = 'I have put it up for you to confirm.';
+    await ask(tester, 'delete that RM12 food, I logged it twice');
+    expect(find.text('Delete this entry?'), findsOneWidget);
+    final button = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Delete it'));
+    final colors = tester.element(find.text('Delete it')).colors;
+    expect(button.style!.backgroundColor!.resolve({}), colors.bad);
+    expect(world.entries, hasLength(1), reason: 'nothing goes until the tap');
+
+    await tester.tap(find.text('Delete it'));
+    await tester.pumpAndSettle();
+    expect(find.text('✓ Deleted'), findsOneWidget);
+    expect(world.entries, isEmpty);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(world.entries.single.id, lunch.id);
   });
 }

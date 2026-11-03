@@ -229,4 +229,21 @@ void main() {
     expect((back.name, back.yearly, back.effect), ('Dinner', true, event.effect));
     expect(back.rows, event.rows);
   });
+
+  test('a delete card names the entry and what it settled, and comes back whole from memory', () {
+    final (r, p) = propose('bajet_propose_delete', {'entry_id': 2}, data);
+    expect(r.failed, isFalse);
+    final delete = p! as DeleteProposal;
+    expect(delete.rows.first, ('Entry', 'Lunch · 03/09/2026'));
+    expect(delete.amount, 1200);
+    expect(delete.effect, isNull, reason: 'a lunch settles nothing');
+    final card = CoachCard(delete);
+    expect((card.action, card.destructive, CoachCard(delete, state: CardState.done).outcome), ('Delete it', true, 'Deleted'));
+    final back = cardFromJson(cardToJson(card))!.proposal as DeleteProposal;
+    expect(back.entry.id, 2);
+    expect(back.rows, delete.rows);
+
+    final (no, none) = propose('bajet_propose_delete', {'entry_id': 99}, data);
+    expect((no.failed, none), (true, null));
+  });
 }

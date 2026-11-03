@@ -172,6 +172,30 @@ class ChangeProposal extends CoachProposal {
   }
 }
 
+/// An entry to delete, such as one logged twice. Whatever bill, income or
+/// event it settled goes back to waiting, as a delete from History does.
+class DeleteProposal extends CoachProposal {
+  const DeleteProposal({required this.entry, required this.categoryName, required this.accountName, this.settled});
+
+  final Entry entry;
+  final String categoryName, accountName;
+
+  /// The bill, income or event the entry settled, by name.
+  final String? settled;
+
+  @override
+  String get question => 'Delete this entry?';
+  @override
+  int get amount => entry.amount;
+  @override
+  List<(String, String)> get rows => [
+        ('Entry', '${entry.label ?? categoryName} · ${Dates.full(entry.day)}'),
+        (entry.isIncome ? 'Into' : 'From', accountName),
+      ];
+  @override
+  String? get effect => settled == null ? null : '$settled goes back to waiting.';
+}
+
 /// A planned event to add, with what it does to Runway.
 class EventProposal extends CoachProposal {
   const EventProposal({
@@ -229,17 +253,21 @@ class CoachCard {
   /// Undo takes back the entry, and with it whatever the entry settled.
   bool get canUndo => state == CardState.done && undoId != null;
 
+  /// Its button removes something, so it is drawn in the warning colour.
+  bool get destructive => proposal is DeleteProposal;
+
   String get action => switch (proposal) {
         LogProposal(:final draft) => draft.billId == null ? 'Log it' : (draft.isIncome ? 'Received' : 'Pay it'),
         MoveProposal() => 'Move it',
         BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Mark paid',
         ChangeProposal() => 'Change it',
         EventProposal() => 'Add it',
+        DeleteProposal() => 'Delete it',
       };
 
   String get outcome => switch (state) {
         CardState.waiting => proposal.question,
-        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid', ChangeProposal() => 'Changed', EventProposal() => 'Added' },
+        CardState.done => switch (proposal) { LogProposal(:final draft) => draft.billId == null ? 'Logged' : (draft.isIncome ? 'Received' : 'Paid'), MoveProposal() => 'Moved', BillPaidProposal(:final item) => item.isIncome ? 'Received' : 'Marked paid', ChangeProposal() => 'Changed', EventProposal() => 'Added', DeleteProposal() => 'Deleted' },
         CardState.declined => 'Not done',
         CardState.undone => 'Undone, nothing changed',
         CardState.outdated => 'Already changed elsewhere, nothing done',
@@ -316,6 +344,13 @@ Map<String, Object?> cardToJson(CoachCard c) => {
             'allowance': ?p.allowance,
             'wantBefore': p.wantBefore,
             'wantAfter': p.wantAfter,
+          },
+        DeleteProposal() && final p => {
+            'kind': 'delete',
+            'entry': _entryToJson(p.entry),
+            'categoryName': p.categoryName,
+            'accountName': p.accountName,
+            'settled': ?p.settled,
           },
       },
     };
@@ -418,6 +453,12 @@ CoachCard? cardFromJson(Map<String, Object?> j) {
           wantBefore: j['wantBefore'] as bool? ?? false,
           wantAfter: j['wantAfter'] as bool? ?? false,
         ),
+      'delete' => DeleteProposal(
+          entry: _entryFromJson((j['entry']! as Map).cast()),
+          categoryName: j['categoryName']! as String,
+          accountName: j['accountName']! as String,
+          settled: j['settled'] as String?,
+        ),
       _ => throw const FormatException('unknown card'),
     };
     return CoachCard(p, state: state, undoId: j['undoId'] as int?);
@@ -468,6 +509,20 @@ const proposalTools = [
         'label': {'type': 'string', 'description': 'The new label.'},
         'day': {'type': 'string', 'description': 'The new day as yyyy-mm-dd.'},
         'account': {'type': 'string', 'description': 'The new account, by its name.'},
+      },
+      'required': ['entry_id'],
+    },
+  ),
+  CoachLookup(
+    'bajet_propose_delete',
+    'Suggests deleting one entry already logged, for the user to confirm, such as a spend logged twice or one logged by mistake. It '
+        'deletes nothing itself: the app shows a card with a red Delete it, and only the user\'s tap removes the entry, with Undo. Use '
+        'it only when the user asks to delete or remove an entry. Find its id with bajet_entries. A bill, income or event the entry '
+        'settled goes back to waiting.',
+    {
+      'type': 'object',
+      'properties': {
+        'entry_id': {'type': 'integer', 'description': 'The id bajet_entries gives the entry.'},
       },
       'required': ['entry_id'],
     },
@@ -704,6 +759,21 @@ const proposalTools = [
       );
       if (p.rows.length == 1) return (no('nothing about the entry would change.'), null);
       return (LookupResult('Shown to the user as a card to confirm: ${p.question} Nothing changes unless they tap Change it.', 'A suggestion'), p);
+    case 'bajet_propose_delete':
+      final id = input['entry_id'];
+      final entry = d.entries.where((e) => e.id == (id is num ? id.toInt() : int.tryParse('$id'))).firstOrNull;
+      if (entry == null) return (no('there is no entry with id $id. Find it with bajet_entries.'), null);
+      final bill = d.recurring.where((r) => r.id == entry.billId).firstOrNull;
+      final event = d.events.where((e) => e.id == entry.event?.eventId).firstOrNull;
+      final p = DeleteProposal(
+        entry: entry,
+        categoryName: d.categories.where((c) => c.key == entry.categoryKey).firstOrNull?.label ?? entry.categoryKey,
+        accountName: d.accounts.where((a) => a.id == (entry.accountId ?? d.accounts.first.id)).firstOrNull?.called ?? 'an account',
+        // Only an income event closes when its money arrives; spending on an
+        // event leaves it open.
+        settled: bill?.name ?? (entry.isIncome ? event?.name : null),
+      );
+      return (LookupResult('Shown to the user as a card to confirm: ${p.question} Nothing is deleted unless they tap Delete it.', 'A suggestion'), p);
     default:
       return (no('there is no suggestion called $name.'), null);
   }

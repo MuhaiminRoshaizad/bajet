@@ -333,7 +333,7 @@ key and still within 10 questions a day.
 
 ## 023: The coach suggests changes; only the user's tap makes them
 
-*Amended by 033, which widens what a card can do.*
+*Amended by 033, which widens what a card can do, and 037, which lets a card delete an entry.*
 
 **Decided:** the coach can suggest logging a spend or income, moving money
 between accounts, or marking a bill paid. Each suggestion is checked by the
@@ -597,3 +597,21 @@ costs the user more than a slower one.
 **Costs:** more tokens per question on the user's own key, and slower
 replies; not yet measured on real questions. Requests allow 8,000 tokens
 for thinking and reply together.
+
+## 037: A coach card can delete an entry
+
+*Amends 023, which kept deleting out of the coach's reach.*
+
+**Decided:** the coach can suggest deleting one entry, such as a spend
+logged twice. The card's button is red, as every delete in the app is,
+nothing goes until it is tapped, and Undo puts the entry back. A bill,
+income or event the entry settled goes back to waiting, as a delete from
+History does, and comes back settled with Undo.
+
+**Why:** duplicates are the commonest slip in a quick log, and finding one
+in History by hand is the very work the coach was asked to save. The card
+keeps 023's rule that only the user's tap changes anything.
+
+**Costs:** a card whose entry has changed since it was made is refused as
+out of date rather than deleting something else. Settings, rules, goals
+and bills stay out of the coach's reach.

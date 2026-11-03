@@ -646,7 +646,18 @@ class _ProposalCard extends StatelessWidget {
             children: [
               Expanded(child: OutlinedButton(onPressed: onDecline, style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)), child: const Text('Not now'))),
               const SizedBox(width: AppSpacing.s),
-              Expanded(child: FilledButton(onPressed: onConfirm, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)), child: Text(card.action))),
+              Expanded(
+                child: FilledButton(
+                  onPressed: onConfirm,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    // Removing something is set apart, as everywhere else.
+                    backgroundColor: card.destructive ? c.bad : null,
+                    foregroundColor: card.destructive ? c.onBad : null,
+                  ),
+                  child: Text(card.action),
+                ),
+              ),
             ],
           ),
           // Anything the coach got wrong is fixed on the usual form.

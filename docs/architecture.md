@@ -157,7 +157,7 @@ The coach's lookups (`coachLookups`) are Anthropic tool definitions:
 run unsaved through `runway()`), `bajet_categories` and `bajet_plan`. Its
 cards (`proposalTools`, decision 033) are `bajet_propose_log` (a spend's
 kind, or the bill, income or event it settles), `bajet_propose_move`,
-`bajet_propose_change` and `bajet_propose_event`. `runLookup` answers them from a `CoachData` snapshot that
+`bajet_propose_change`, `bajet_propose_delete` (decision 037) and `bajet_propose_event`. `runLookup` answers them from a `CoachData` snapshot that
 `coachDataProvider` builds from the loaded providers, and `coachAnswer`
 runs the loop: send, run any lookups the reply asks for, send their results
 back as `tool_result` blocks with the assistant turn unchanged, and after

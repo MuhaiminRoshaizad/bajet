@@ -235,6 +235,13 @@ class CoachController extends Notifier<CoachChat> {
         if (now == null || !_sameEntry(now, before)) return _setCard(message, card, c.copyWith(state: CardState.outdated));
         await ref.read(ledgerRepositoryProvider).update(after);
         undoId = after.id;
+      case DeleteProposal(:final entry):
+        // Changed or deleted since the card was made: it would remove more,
+        // or nothing.
+        final now = ref.read(allEntriesProvider).value?.where((e) => e.id == entry.id).firstOrNull;
+        if (now == null || !_sameEntry(now, entry)) return _setCard(message, card, c.copyWith(state: CardState.outdated));
+        await ref.read(ledgerRepositoryProvider).delete(entry.id);
+        undoId = entry.id;
       case EventProposal() && final p:
         undoId = await ref.read(planRepositoryProvider).addEvent(
               name: p.name,
@@ -352,6 +359,8 @@ class CoachController extends Notifier<CoachChat> {
         await ref.read(accountRepositoryProvider).deleteTransfer(c.undoId!);
       case ChangeProposal(:final before):
         await ref.read(ledgerRepositoryProvider).update(before);
+      case DeleteProposal(:final entry):
+        await ref.read(ledgerRepositoryProvider).restore(entry);
       case EventProposal():
         await ref.read(planRepositoryProvider).deleteEvent(c.undoId!);
     }
