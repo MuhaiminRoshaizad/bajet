@@ -12,6 +12,7 @@ import '../../../core/widgets/under_bar.dart';
 import '../domain/upcoming.dart';
 import 'plan_providers.dart';
 import 'runway_chart.dart';
+import '../../ledger/presentation/ledger_providers.dart';
 import 'runway_sums.dart';
 import 'runway_upcoming.dart';
 import 'what_if_panel.dart';
@@ -109,7 +110,7 @@ class RunwayScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(AppSpacing.l + 2),
                     child: Text('Add a goal to see what would be left after buying it.', style: TextStyle(color: c.ink)),
                   ),
-                if (outcome != null) RunwaySumsCard(outcome: outcome),
+                if (outcome != null) RunwaySumsCard(outcome: outcome, owed: ref.watch(owedProvider).fold(0, (s, o) => s + o.left)),
                 if (outcome != null) const SoftCard(child: WhatIfPanel()),
                 Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.xs, top: AppSpacing.s),

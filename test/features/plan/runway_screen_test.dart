@@ -38,6 +38,19 @@ void main() {
     expect(find.text('Keep at least RM500'), findsOneWidget);
   });
 
+  testWidgets('money owed back is named under the sums but never counted', (tester) async {
+    await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+      w.addPayback(entryId: 1, day: testToday, amount: 1750);
+      w.addGoal(name: 'Laptop', price: 50000, targetDate: d(2026, 7, 31));
+    });
+    await openRunway(tester);
+    // RM67.50 left and RM17.50 came back; the RM35.00 still owed is not counted.
+    expect(headline('RM950.00'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Left after buying'), 200);
+    expect(find.text('RM35.00 owed to you is not counted until it comes back.'), findsOneWidget);
+  });
+
   testWidgets('a goal short of the buffer says by how much', (tester) async {
     await pumpApp(tester, seed: (w) => w.addGoal(name: 'Laptop', price: 120000, targetDate: d(2026, 7, 31)));
     await openRunway(tester);

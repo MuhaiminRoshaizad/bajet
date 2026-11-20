@@ -10,11 +10,15 @@ import '../domain/projection.dart';
 
 /// How "left after buying" is reached, line by line, so the figure is never
 /// a black box. Without planned income it says so, since that alone can
-/// turn a reachable goal into a shortfall.
+/// turn a reachable goal into a shortfall. Money owed back by people the
+/// user paid for is named but never counted, as late income is not.
 class RunwaySumsCard extends StatelessWidget {
-  const RunwaySumsCard({super.key, required this.outcome});
+  const RunwaySumsCard({super.key, required this.outcome, this.owed = 0});
 
   final GoalOutcome outcome;
+
+  /// Still owed back for spends partly for others.
+  final int owed;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +39,11 @@ class RunwaySumsCard extends StatelessWidget {
           _Line('${outcome.goal.name} price', outcome.goal.price, sign: '−'),
           Divider(color: c.line, height: AppSpacing.l),
           _Line('Left after buying', outcome.leftAfterBuying.abs(), sign: outcome.leftAfterBuying < 0 ? '−' : '', bold: true),
+          if (owed > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: Text('${Money.format(owed)} owed to you is not counted until it comes back.', style: TextStyle(color: c.muted, fontSize: 13)),
+            ),
           if (s.income == 0) ...[
             const SizedBox(height: AppSpacing.m),
             SoftWell(
