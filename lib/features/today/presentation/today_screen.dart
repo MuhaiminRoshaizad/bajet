@@ -24,6 +24,7 @@ import '../../plan/domain/projection.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../../lock/presentation/lock_providers.dart';
 import '../../opening/presentation/opening_providers.dart';
+import 'owed_card.dart';
 import 'today_providers.dart';
 import 'today_total_card.dart';
 import 'week_dial.dart';
@@ -45,6 +46,7 @@ class TodayScreen extends ConsumerWidget {
     final projection = ref.watch(projectionProvider);
     final goals = ref.watch(goalsProvider).value;
     final due = ref.watch(dueRecurringProvider);
+    final owed = ref.watch(owedProvider);
     final entries = ref.watch(recentEntriesProvider).value;
     final categories = {for (final c in ref.watch(categoriesProvider).value ?? const <Category>[]) c.key: c};
 
@@ -61,6 +63,13 @@ class TodayScreen extends ConsumerWidget {
               const _AccountsStack(),
               if (today.weekday == DateTime.sunday) const _CheckinCard(),
               for (final item in due) _DueCard(item: item),
+              for (final o in owed)
+                OwedCard(
+                  key: ValueKey('owed-card-${o.entry.id}'),
+                  owed: o,
+                  name: o.entry.label ?? categories[o.entry.categoryKey]?.label ?? o.entry.categoryKey,
+                  category: categories[o.entry.categoryKey]?.label ?? o.entry.categoryKey,
+                ),
               if (days != null && weekSpent != null && settings != null)
                 SoftCard(
                   child: Column(children: [

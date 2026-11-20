@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
+import '../../helpers/fake_repositories.dart';
 
 DateTime d(int y, int m, int day) => DateTime.utc(y, m, day);
 
@@ -107,5 +108,44 @@ void main() {
     await tester.pump();
     expect(tester.hasRunningAnimations, isFalse);
     expect(find.text('No goal yet'), findsOneWidget);
+  });
+
+  group('a spend partly for others', () {
+    void seedLunch(FakeWorld w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+      w.addPayback(entryId: 1, day: testToday, amount: 1750);
+    }
+
+    testWidgets('shows what is still owed, and Paid back opens the sheet with it picked', (tester) async {
+      await pumpApp(tester, seed: seedLunch);
+      expect(find.text('Lunch · owed to you'), findsOneWidget);
+      expect(find.text('RM35.00 still to come · paid 01/07'), findsOneWidget);
+      expect(find.text('RM17.50 of RM52.50 back'), findsOneWidget);
+      // The whole RM67.50 left the account; only RM17.50 has come back.
+      expect(find.bySemanticsLabel(RegExp(r'Total balance RM1,450.00')), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Paid back'));
+      await tester.pumpAndSettle();
+      expect(find.text('RM35.00 owed · 01/07'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'From (optional)'), findsOneWidget);
+    });
+
+    testWidgets("Let it go asks, makes the rest the user's own, and Undo puts it back", (tester) async {
+      final world = await pumpApp(tester, seed: seedLunch);
+      await tester.ensureVisible(find.text('Let it go'));
+      await tester.tap(find.text('Let it go'));
+      await tester.pumpAndSettle();
+      expect(find.text('The RM35.00 still owed for Lunch becomes your own Food spending on 01/07/2026.'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Let it go'));
+      await settleUnderBar(tester);
+      expect(find.text('Let go of RM35.00 for Lunch'), findsOneWidget);
+      expect((world.entries.single.amount, world.entries.single.forOthers), (5000, 1750));
+      expect(find.text('Lunch · owed to you'), findsNothing);
+
+      await tester.tap(find.text('Undo'));
+      await settleUnderBar(tester);
+      expect((world.entries.single.amount, world.entries.single.forOthers), (1500, 5250));
+      expect(find.text('Lunch · owed to you'), findsOneWidget);
+    });
   });
 }
