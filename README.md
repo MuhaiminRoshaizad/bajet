@@ -42,7 +42,8 @@ own API key; without a key, nothing leaves the phone.
   the details on the usual log sheet. Pick
   who coaches you, bajety the titanium orb or one of three finance people,
   and how they talk, from friendly to roasting; their face reacts as you
-  chat, scroll and type. Chats are kept apart in a list you can search, pin,
+  chat, scroll and type, and they reply in a few short texts, typed one
+  after another, in plain Malaysian English. Chats are kept apart in a list you can search, pin,
   rename and delete, each with its own coach and personality, and remembered
   on the phone only. Messages that are not about your money are turned away
   on the phone, costing nothing. The week's summary can also be copied to

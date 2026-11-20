@@ -660,3 +660,27 @@ payback can say who it was from. Bills, events and income are never
 split, since sharing a bill changes what it is planned at. The coach reads
 what is owed but cannot change or delete a shared spend, which is changed
 in History.
+
+## 040: The coach texts like a person
+
+**Decided:** a reply comes as up to three short messages, one thought
+each, added one at a time with "typing…" in the header and dots between,
+each pause following the next message's length (half a second to two); a
+tap on the chat brings the rest at once. The coach marks the breaks with
+`<next>`, and a run of messages goes back to it as the one reply it wrote.
+Every coach is told to text, not report: no headings or bullets unless
+asked, no stock openers or closers, no dashes, and Malaysian English as it
+is really texted, with little Malay and no Singaporean or Indonesian forms.
+Each personality has its own texting habits; the face is only the look,
+except bajety, which texts as the orb after Verity in its personality's
+mood. What slips through is tidied on the phone, emoji included.
+
+**Why:** answers arrived as one tidy block in the wording models default
+to, with Manglish piled on and winks, so every coach read as a chatbot.
+Studies of real Malaysian chat put English first, with Malay as a short
+tag or one everyday word and most lines carrying none.
+
+**Costs:** still one question and one request per answer; the pauses are
+on the phone. The tidy is a fixed set of rules, so it cannot catch a new
+habit until it is added, and a second model pass was rejected for doubling
+the cost and the wait.
