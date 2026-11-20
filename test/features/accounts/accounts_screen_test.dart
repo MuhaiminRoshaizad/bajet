@@ -187,8 +187,9 @@ void main() {
     await pumpApp(tester, seed: (w) {
       addAccounts(w, 1);
       w.add(EntryDraft(day: testToday, isIncome: false, amount: 450, categoryKey: 'food', label: 'Coffee', accountId: 2));
-      w.add(EntryDraft(day: testToday, isIncome: false, amount: 900, categoryKey: 'food', label: 'Lunch', accountId: 1));
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 900, forOthers: 1000, categoryKey: 'food', label: 'Lunch', accountId: 1));
       w.transfer(fromId: 1, toId: 2, amount: 5000, day: testToday);
+      w.addPayback(entryId: 2, day: testToday, amount: 1000, accountId: 2, payer: 'Sam');
     });
     await tester.tap(find.byType(AccountStack));
     await tester.pumpAndSettle();
@@ -201,6 +202,9 @@ void main() {
     expect(inActivity('Coffee'), findsOneWidget);
     expect(inActivity('Moved from Main account'), findsOneWidget);
     expect(inActivity('+RM50.00'), findsOneWidget);
+    // Paid back into this account for a spend from the other, after the move.
+    expect(inActivity('Paid back for Lunch'), findsOneWidget);
+    expect(tester.getTopLeft(inActivity('Paid back for Lunch')).dy, greaterThan(tester.getTopLeft(inActivity('Moved from Main account')).dy));
     // Spent from the other account, so not this one's.
     expect(inActivity('Lunch'), findsNothing);
   });

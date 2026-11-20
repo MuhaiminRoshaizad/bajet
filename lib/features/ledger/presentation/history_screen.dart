@@ -18,9 +18,11 @@ import '../domain/ledger_models.dart';
 import 'entry_tile.dart';
 import 'ledger_providers.dart';
 import 'log_sheet.dart';
+import 'payback_tile.dart';
 
-/// Every entry and every transfer, newest first, grouped by day. Transfers
-/// show in their own blue rows and never count in a day's spending.
+/// Every entry, transfer and payback, newest first, grouped by day.
+/// Transfers and paybacks show in their own blue rows and never count in a
+/// day's spending.
 sealed class _Row {}
 
 class _DayRow extends _Row {
@@ -39,6 +41,11 @@ class _TransferRow extends _Row {
   final Transfer transfer;
 }
 
+class _PaybackRow extends _Row {
+  _PaybackRow(this.payback);
+  final Payback payback;
+}
+
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
@@ -47,6 +54,7 @@ class HistoryScreen extends ConsumerWidget {
     final today = ref.watch(todayProvider);
     final entries = ref.watch(allEntriesProvider);
     final transfers = ref.watch(transfersProvider).value ?? const <Transfer>[];
+    final paybacks = ref.watch(paybacksProvider).value ?? const <Payback>[];
     final categories = {for (final x in ref.watch(categoriesProvider).value ?? const <Category>[]) x.key: x};
 
     return Scaffold(
@@ -64,29 +72,33 @@ class HistoryScreen extends ConsumerWidget {
             actionLabel: 'Log a spend',
             onAction: () => showLogSheet(context),
           ),
-        AsyncValue(:final value?) => _HistoryList(rows: _group(value, transfers), categories: categories, today: today),
+        AsyncValue(:final value?) => _HistoryList(rows: _group(value, transfers, paybacks), entries: value, categories: categories, today: today),
         _ => const SizedBox.shrink(),
       },
     );
   }
 
-  static List<_Row> _group(List<Entry> entries, List<Transfer> transfers) {
+  static List<_Row> _group(List<Entry> entries, List<Transfer> transfers, List<Payback> paybacks) {
     final rows = <_Row>[];
-    final days = {...entries.map((e) => e.day), ...transfers.map((t) => t.day)}.toList()..sort((a, b) => b.compareTo(a));
+    final days = {...entries.map((e) => e.day), ...transfers.map((t) => t.day), ...paybacks.map((p) => p.day)}.toList()..sort((a, b) => b.compareTo(a));
     for (final day in days) {
       final ofDay = entries.where((e) => e.day == day);
       rows.add(_DayRow(day, ofDay.where((x) => !x.isIncome).fold(0, (s, x) => s + x.amount)));
       rows.addAll(ofDay.map(_EntryRow.new));
       rows.addAll(transfers.where((t) => t.day == day).map(_TransferRow.new));
+      rows.addAll(paybacks.where((p) => p.day == day).map(_PaybackRow.new));
     }
     return rows;
   }
 }
 
 class _HistoryList extends ConsumerWidget {
-  const _HistoryList({required this.rows, required this.categories, required this.today});
+  const _HistoryList({required this.rows, required this.entries, required this.categories, required this.today});
 
   final List<_Row> rows;
+
+  /// Every entry, to name the spend each payback is for.
+  final List<Entry> entries;
   final Map<String, Category> categories;
   final DateTime today;
 
@@ -146,6 +158,24 @@ class _HistoryList extends ConsumerWidget {
             ),
             child: TransferTile(transfer: transfer, names: names, today: today),
           ),
+        _PaybackRow(:final payback) => Dismissible(
+            key: ValueKey('payback-${payback.id}'),
+            direction: DismissDirection.endToStart,
+            confirmDismiss: (_) => confirmDelete(
+              context,
+              title: 'Delete this payback?',
+              message: '${Money.format(payback.amount)}${payback.payer == null ? '' : ' from ${payback.payer}'} for ${_paybackFor(payback)} on ${Dates.full(payback.day)}. '
+                  'Your balance will change by −${Money.format(payback.amount)}, and it is owed again.',
+            ),
+            onDismissed: (_) => _deletePayback(context, ref, payback),
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: AppSpacing.xl),
+              decoration: BoxDecoration(color: c.bad, borderRadius: BorderRadius.circular(AppRadii.control)),
+              child: Text('Delete', style: TextStyle(color: c.onBad, fontWeight: FontWeight.w700)),
+            ),
+            child: PaybackTile(payback: payback, forName: _paybackFor(payback), today: today),
+          ),
       },
     );
   }
@@ -157,6 +187,19 @@ class _HistoryList extends ConsumerWidget {
   }
 
   String _name(Entry entry) => entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey;
+
+  /// What the spend a payback is for was called.
+  String _paybackFor(Payback p) {
+    final entry = entries.where((e) => e.id == p.entryId).firstOrNull;
+    return entry == null ? 'a shared spend' : _name(entry);
+  }
+
+  Future<void> _deletePayback(BuildContext context, WidgetRef ref, Payback p) async {
+    final repo = ref.read(ledgerRepositoryProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    await repo.deletePayback(p.id);
+    showBar(messenger, 'Deleted the payback of ${Money.format(p.amount)}', undo: () => repo.restorePayback(p));
+  }
 
   Future<bool> _confirmDelete(BuildContext context, WidgetRef ref, Entry entry) {
     final paidBack = ref.read(paybacksProvider).value?.where((p) => p.entryId == entry.id).fold<int>(0, (s, p) => s + p.amount) ?? 0;

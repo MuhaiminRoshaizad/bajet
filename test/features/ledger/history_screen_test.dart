@@ -237,4 +237,26 @@ void main() {
       expect(world.paybacks.single.payer, 'Sam');
     });
   });
+
+  testWidgets('a payback has its own row, apart from income, and deleting it can be undone', (tester) async {
+    final world = await pumpApp(tester, seed: (w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+      w.addPayback(entryId: 1, day: testToday, amount: 1750, payer: 'Sam');
+    });
+    await openHistory(tester);
+    expect(find.text('Paid back for Lunch'), findsOneWidget);
+    expect(find.text('Today · from Sam · not income'), findsOneWidget);
+    expect(find.text('+RM17.50'), findsOneWidget);
+    expect(find.text('−RM15.00'), findsNWidgets(2), reason: 'the day counts only the spend');
+
+    await tester.drag(find.text('Paid back for Lunch'), const Offset(-500, 0));
+    await settleUnderBar(tester);
+    expect(find.textContaining('Your balance will change by −RM17.50, and it is owed again.'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await settleUnderBar(tester);
+    expect(world.paybacks, isEmpty);
+    await tester.tap(find.text('Undo'));
+    await settleUnderBar(tester);
+    expect(world.paybacks.single.payer, 'Sam');
+  });
 }
