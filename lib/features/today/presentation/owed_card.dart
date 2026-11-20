@@ -51,8 +51,8 @@ class OwedCard extends ConsumerWidget {
         Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('$name · owed to you', style: const TextStyle(fontWeight: FontWeight.w700)),
-              Text('${Money.format(owed.left)} still to come · paid ${Dates.short(e.day)}', style: TextStyle(color: c.muted, fontSize: 13)),
+              Text('$name · ${Dates.short(e.day)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text('${Money.format(owed.left)} still owed to you', style: TextStyle(color: c.muted, fontSize: 13)),
             ]),
           ),
           FilledButton.tonal(

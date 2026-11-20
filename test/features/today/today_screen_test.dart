@@ -118,8 +118,8 @@ void main() {
 
     testWidgets('shows what is still owed, and Paid back opens the sheet with it picked', (tester) async {
       await pumpApp(tester, seed: seedLunch);
-      expect(find.text('Lunch · owed to you'), findsOneWidget);
-      expect(find.text('RM35.00 still to come · paid 01/07'), findsOneWidget);
+      expect(find.text('Lunch · 01/07'), findsOneWidget);
+      expect(find.text('RM35.00 still owed to you'), findsOneWidget);
       expect(find.text('RM17.50 of RM52.50 back'), findsOneWidget);
       // The whole RM67.50 left the account; only RM17.50 has come back.
       expect(find.bySemanticsLabel(RegExp(r'Total balance RM1,450.00')), findsOneWidget);
@@ -140,12 +140,12 @@ void main() {
       await settleUnderBar(tester);
       expect(find.text('Let go of RM35.00 for Lunch'), findsOneWidget);
       expect((world.entries.single.amount, world.entries.single.forOthers), (5000, 1750));
-      expect(find.text('Lunch · owed to you'), findsNothing);
+      expect(find.text('Lunch · 01/07'), findsNothing);
 
       await tester.tap(find.text('Undo'));
       await settleUnderBar(tester);
       expect((world.entries.single.amount, world.entries.single.forOthers), (1500, 5250));
-      expect(find.text('Lunch · owed to you'), findsOneWidget);
+      expect(find.text('Lunch · 01/07'), findsOneWidget);
     });
   });
 }
