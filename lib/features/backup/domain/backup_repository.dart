@@ -14,7 +14,9 @@ import '../../accounts/domain/account_models.dart' show firstAccountColor, first
 /// and `listingCheckedOn`, what their listing showed when last looked at.
 /// 11: categories and entries carry `spendKind`, `want` or `need`.
 /// 12: settings carry `needsReserve`, set aside each month for needs.
-const backupFormatVersion = 13;
+/// 13: weekly rules have no flexible days. 14: entries carry `forOthers`,
+/// the part paid for other people, and `paybacks` the money back.
+const backupFormatVersion = 14;
 
 /// Brings an older backup up to [backupFormatVersion] one step at a time,
 /// so every format ever written still restores. Throws
@@ -129,6 +131,12 @@ Map<String, Object?> upgradeBackup(Map<String, Object?> backup) {
     final settings = b['settings'] as Map<String, Object?>?;
     b = {...b, 'format': 12, 'settings': settings == null ? null : {...settings, 'needsReserve': 0}};
     format = 12;
+  }
+  // Format 13 changed no shape: a flexible day restores as a spending day.
+  if (format == 12 || format == 13) {
+    final entries = [for (final e in (b['entries'] as List?) ?? const []) {...(e as Map<String, Object?>), 'forOthers': 0}];
+    b = {...b, 'format': 14, 'entries': entries, 'paybacks': const <Object?>[]};
+    format = 14;
   }
   return b;
 }

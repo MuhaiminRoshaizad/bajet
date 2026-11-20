@@ -137,6 +137,18 @@ class DriftBackupRepository implements BackupRepository {
             'plannedEventOn': e.plannedEventOn == null ? null : _day.toSql(e.plannedEventOn!),
             'accountId': e.accountId,
             'spendKind': e.spendKind.name,
+            'forOthers': e.forOthers,
+          },
+      ],
+      'paybacks': [
+        for (final p in await _db.select(_db.paybacks).get())
+          {
+            'id': p.id,
+            'entryId': p.entryId,
+            'occurredOn': _day.toSql(p.occurredOn),
+            'accountId': p.accountId,
+            'amount': p.amount,
+            'payer': p.payer,
           },
       ],
       'checkins': [
@@ -164,6 +176,7 @@ class DriftBackupRepository implements BackupRepository {
         // Children before parents, so foreign keys never point at nothing.
         for (final TableInfo<Table, Object?> t in [
           _db.checkins,
+          _db.paybacks,
           _db.entries,
           _db.favourites,
           _db.transfers,
@@ -309,6 +322,18 @@ class DriftBackupRepository implements BackupRepository {
                 plannedEventOn: Value(e['plannedEventOn'] == null ? null : _day.fromSql(e['plannedEventOn']! as String)),
                 accountId: e['accountId']! as int,
                 spendKind: Value(SpendKind.values.byName(e['spendKind']! as String)),
+                forOthers: Value(e['forOthers']! as int),
+              ),
+          ]);
+          b.insertAll(_db.paybacks, [
+            for (final p in _list(backup, 'paybacks'))
+              PaybacksCompanion.insert(
+                id: Value(p['id']! as int),
+                entryId: p['entryId']! as int,
+                occurredOn: _day.fromSql(p['occurredOn']! as String),
+                accountId: p['accountId']! as int,
+                amount: p['amount']! as int,
+                payer: Value(p['payer'] as String?),
               ),
           ]);
           b.insertAll(_db.checkins, [

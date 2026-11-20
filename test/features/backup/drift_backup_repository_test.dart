@@ -329,4 +329,24 @@ void main() {
     await DriftBackupRepository(target).restore(v11);
     expect((await target.select(target.appSettings).getSingle()).needsReserve, 0);
   });
+
+  test('a spend paid partly for others and its paybacks survive a round trip, and a format 13 backup restores with none', () async {
+    await fill(source);
+    final ledger = DriftLedgerRepository(source);
+    final lunch = await ledger.add(EntryDraft(day: d(2026, 7, 3), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+    await ledger.addPayback(entryId: lunch, day: d(2026, 7, 3), amount: 1750, payer: 'Sam');
+    final v14 = jsonDecode(jsonEncode(await DriftBackupRepository(source).export())) as Map<String, Object?>;
+    await DriftBackupRepository(target).restore(v14);
+    expect(await DriftBackupRepository(target).export(), v14);
+    expect(await DriftLedgerRepository(target).watchBalance().first, 150000 - 50000 - 450 - 6750 + 1750);
+
+    final v13 = {
+      ...v14,
+      'format': 13,
+      'entries': [for (final e in v14['entries']! as List) {...(e as Map<String, Object?>)}..remove('forOthers')],
+    }..remove('paybacks');
+    await DriftBackupRepository(target).restore(v13);
+    expect(await target.select(target.paybacks).get(), isEmpty);
+    expect([for (final e in await target.select(target.entries).get()) e.forOthers], everyElement(0));
+  });
 }
