@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:bajet/core/database/app_database.dart';
 import 'package:bajet/features/accounts/domain/account_models.dart' show firstAccountName;
-import 'package:drift/drift.dart' show OrderingTerm;
+import 'package:drift/drift.dart' show OrderingTerm, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -60,8 +60,8 @@ void main() {
   });
 
   test('keeps the generated schema in step with the declared version', () {
-    expect(db.schemaVersion, 17);
-    expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads']));
+    expect(db.schemaVersion, 18);
+    expect(db.allTables.map((t) => t.actualTableName), containsAll(['entries', 'categories', 'weekly_rules', 'goals', 'coach_threads', 'paybacks']));
   });
 
   test('a version 1 database gains the receipt column and keeps its entries', () async {
@@ -324,5 +324,40 @@ void main() {
     addTearDown(old.close);
     final chats = await old.select(old.coachThreads).get();
     expect([for (final t in chats) (t.title, t.webSearch)], [('Lunch', false)]);
+  });
+
+  test('a version 17 database keeps its entries, none paid for others, and gains no paybacks', () async {
+    final old = AppDatabase(NativeDatabase.memory(setup: (raw) {
+      raw.execute(File('test/core/fixtures/schema_v17.sql').readAsStringSync());
+      raw.execute("INSERT INTO categories (key, label, kind, tint) VALUES ('food', 'Food', 'expense', 'apricot')");
+      raw.execute("INSERT INTO accounts (kind, name, opening_balance, color) VALUES ('bank', 'Bank', 1000, 1)");
+      raw.execute("INSERT INTO entries (occurred_on, kind, amount, category_key, account_id) VALUES ('2026-07-01', 'expense', 6750, 'food', 1)");
+      raw.execute('PRAGMA user_version = 17');
+    }));
+    addTearDown(old.close);
+    final entry = await old.select(old.entries).getSingle();
+    expect((entry.amount, entry.forOthers), (6750, 0));
+    expect(await old.select(old.paybacks).get(), isEmpty);
+  });
+
+  test('rejects a negative part paid for others, and a payback of zero', () async {
+    await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.cash, name: 'Cash', color: 1));
+    expect(
+      () => db.into(db.entries).insert(EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 6750, categoryKey: 'food', accountId: 1, forOthers: const Value(-1))),
+      throwsA(isA<SqliteException>()),
+    );
+    final id = await db.into(db.entries).insert(EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 6750, categoryKey: 'food', accountId: 1, forOthers: const Value(5250)));
+    expect(
+      () => db.into(db.paybacks).insert(PaybacksCompanion.insert(entryId: id, occurredOn: DateTime.utc(2026, 7, 1), accountId: 1, amount: 0)),
+      throwsA(isA<SqliteException>()),
+    );
+  });
+
+  test('deleting a spend takes its paybacks with it', () async {
+    await db.into(db.accounts).insert(AccountsCompanion.insert(kind: AccountKind.cash, name: 'Cash', color: 1));
+    final id = await db.into(db.entries).insert(EntriesCompanion.insert(occurredOn: DateTime.utc(2026, 7, 1), kind: EntryKind.expense, amount: 6750, categoryKey: 'food', accountId: 1, forOthers: const Value(5250)));
+    await db.into(db.paybacks).insert(PaybacksCompanion.insert(entryId: id, occurredOn: DateTime.utc(2026, 7, 1), accountId: 1, amount: 1750));
+    await (db.delete(db.entries)..where((e) => e.id.equals(id))).go();
+    expect(await db.select(db.paybacks).get(), isEmpty);
   });
 }

@@ -143,6 +143,30 @@ class Entries extends Table {
   /// spending stays with its own year.
   IntColumn get plannedEventId => integer().nullable().references(PlannedEvents, #id)();
   TextColumn get plannedEventOn => text().map(const DayConverter()).nullable()();
+
+  /// Of [amount], the part paid for other people, such as their share of a
+  /// bill paid in full. [amount] is what left the account; only the rest is
+  /// the user's own spending. Paybacks bring the part back.
+  IntColumn get forOthers => integer().withDefault(const Constant(0)).check(forOthers.isBiggerOrEqualValue(0))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Money back from people the user paid for, toward an entry's
+/// [Entries.forOthers]. Neither income nor spending, so like a transfer it
+/// lives apart from entries, and only balances see it.
+class Paybacks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// The spend it pays back; gone with it when that is deleted.
+  IntColumn get entryId => integer().references(Entries, #id, onDelete: KeyAction.cascade)();
+  TextColumn get occurredOn => text().map(const DayConverter())();
+
+  /// Where the money arrived.
+  IntColumn get accountId => integer().references(Accounts, #id)();
+  IntColumn get amount => integer().check(amount.isBiggerThanValue(0))();
+
+  /// Who paid it back, as the user wrote it.
+  TextColumn get payer => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 

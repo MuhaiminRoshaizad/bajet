@@ -13,13 +13,13 @@ export 'tables.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites, CoachSettings, CoachThreads, CoachMessages, Checkins],
+  tables: [AppSettings, Accounts, Transfers, Categories, Entries, WeeklyRules, RecurringItems, PlannedEvents, Goals, Favourites, CoachSettings, CoachThreads, CoachMessages, Checkins, Paybacks],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'bajet'));
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -29,12 +29,13 @@ class AppDatabase extends _$AppDatabase {
         },
         // One step per version, so any older database climbs to the latest.
         onUpgrade: (m, from, to) async {
-          // Versions 11, 13 and 14 add their columns first: versions 6 and 7
-          // rebuild the settings and entries tables in their latest shape,
-          // which already has them.
+          // Versions 11, 13, 14 and 18 add their columns first: versions 6
+          // and 7 rebuild the settings and entries tables in their latest
+          // shape, which already has them.
           if (from < 11) await m.addColumn(appSettings, appSettings.userName);
           if (from < 13) await m.addColumn(entries, entries.spendKind);
           if (from < 14) await m.addColumn(appSettings, appSettings.needsReserve);
+          if (from < 18) await m.addColumn(entries, entries.forOthers);
           // Versions 8 and 10 build coach_messages in its latest shape.
           if (from >= 10 && from < 16) await m.addColumn(coachMessages, coachMessages.quote);
           // Version 10 builds coach_threads in its latest shape.
@@ -60,6 +61,7 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 13) await _sortSpending(m);
           if (from < 15) await _foldFlexibleDays(m);
+          if (from < 18) await m.createTable(paybacks);
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

@@ -3487,6 +3487,19 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   ).withConverter<DateTime?>($EntriesTable.$converterplannedEventOnn);
+  static const VerificationMeta _forOthersMeta = const VerificationMeta(
+    'forOthers',
+  );
+  @override
+  late final GeneratedColumn<int> forOthers = GeneratedColumn<int>(
+    'for_others',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(forOthers).isBiggerOrEqualValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3514,6 +3527,7 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
     recurringItemId,
     plannedEventId,
     plannedEventOn,
+    forOthers,
     createdAt,
   ];
   @override
@@ -3594,6 +3608,12 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
         ),
       );
     }
+    if (data.containsKey('for_others')) {
+      context.handle(
+        _forOthersMeta,
+        forOthers.isAcceptableOrUnknown(data['for_others']!, _forOthersMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3669,6 +3689,10 @@ class $EntriesTable extends Entries with TableInfo<$EntriesTable, Entry> {
           data['${effectivePrefix}planned_event_on'],
         ),
       ),
+      forOthers: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}for_others'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3721,6 +3745,11 @@ class Entry extends DataClass implements Insertable<Entry> {
   /// spending stays with its own year.
   final int? plannedEventId;
   final DateTime? plannedEventOn;
+
+  /// Of [amount], the part paid for other people, such as their share of a
+  /// bill paid in full. [amount] is what left the account; only the rest is
+  /// the user's own spending. Paybacks bring the part back.
+  final int forOthers;
   final DateTime createdAt;
   const Entry({
     required this.id,
@@ -3736,6 +3765,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     this.recurringItemId,
     this.plannedEventId,
     this.plannedEventOn,
+    required this.forOthers,
     required this.createdAt,
   });
   @override
@@ -3778,6 +3808,7 @@ class Entry extends DataClass implements Insertable<Entry> {
         $EntriesTable.$converterplannedEventOnn.toSql(plannedEventOn),
       );
     }
+    map['for_others'] = Variable<int>(forOthers);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3807,6 +3838,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       plannedEventOn: plannedEventOn == null && nullToAbsent
           ? const Value.absent()
           : Value(plannedEventOn),
+      forOthers: Value(forOthers),
       createdAt: Value(createdAt),
     );
   }
@@ -3834,6 +3866,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       recurringItemId: serializer.fromJson<int?>(json['recurringItemId']),
       plannedEventId: serializer.fromJson<int?>(json['plannedEventId']),
       plannedEventOn: serializer.fromJson<DateTime?>(json['plannedEventOn']),
+      forOthers: serializer.fromJson<int>(json['forOthers']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3858,6 +3891,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       'recurringItemId': serializer.toJson<int?>(recurringItemId),
       'plannedEventId': serializer.toJson<int?>(plannedEventId),
       'plannedEventOn': serializer.toJson<DateTime?>(plannedEventOn),
+      'forOthers': serializer.toJson<int>(forOthers),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3876,6 +3910,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     Value<int?> recurringItemId = const Value.absent(),
     Value<int?> plannedEventId = const Value.absent(),
     Value<DateTime?> plannedEventOn = const Value.absent(),
+    int? forOthers,
     DateTime? createdAt,
   }) => Entry(
     id: id ?? this.id,
@@ -3897,6 +3932,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     plannedEventOn: plannedEventOn.present
         ? plannedEventOn.value
         : this.plannedEventOn,
+    forOthers: forOthers ?? this.forOthers,
     createdAt: createdAt ?? this.createdAt,
   );
   Entry copyWithCompanion(EntriesCompanion data) {
@@ -3924,6 +3960,7 @@ class Entry extends DataClass implements Insertable<Entry> {
       plannedEventOn: data.plannedEventOn.present
           ? data.plannedEventOn.value
           : this.plannedEventOn,
+      forOthers: data.forOthers.present ? data.forOthers.value : this.forOthers,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3944,6 +3981,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           ..write('recurringItemId: $recurringItemId, ')
           ..write('plannedEventId: $plannedEventId, ')
           ..write('plannedEventOn: $plannedEventOn, ')
+          ..write('forOthers: $forOthers, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3964,6 +4002,7 @@ class Entry extends DataClass implements Insertable<Entry> {
     recurringItemId,
     plannedEventId,
     plannedEventOn,
+    forOthers,
     createdAt,
   );
   @override
@@ -3983,6 +4022,7 @@ class Entry extends DataClass implements Insertable<Entry> {
           other.recurringItemId == this.recurringItemId &&
           other.plannedEventId == this.plannedEventId &&
           other.plannedEventOn == this.plannedEventOn &&
+          other.forOthers == this.forOthers &&
           other.createdAt == this.createdAt);
 }
 
@@ -4000,6 +4040,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
   final Value<int?> recurringItemId;
   final Value<int?> plannedEventId;
   final Value<DateTime?> plannedEventOn;
+  final Value<int> forOthers;
   final Value<DateTime> createdAt;
   const EntriesCompanion({
     this.id = const Value.absent(),
@@ -4015,6 +4056,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     this.recurringItemId = const Value.absent(),
     this.plannedEventId = const Value.absent(),
     this.plannedEventOn = const Value.absent(),
+    this.forOthers = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   EntriesCompanion.insert({
@@ -4031,6 +4073,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     this.recurringItemId = const Value.absent(),
     this.plannedEventId = const Value.absent(),
     this.plannedEventOn = const Value.absent(),
+    this.forOthers = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : occurredOn = Value(occurredOn),
        kind = Value(kind),
@@ -4051,6 +4094,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Expression<int>? recurringItemId,
     Expression<int>? plannedEventId,
     Expression<String>? plannedEventOn,
+    Expression<int>? forOthers,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -4067,6 +4111,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       if (recurringItemId != null) 'recurring_item_id': recurringItemId,
       if (plannedEventId != null) 'planned_event_id': plannedEventId,
       if (plannedEventOn != null) 'planned_event_on': plannedEventOn,
+      if (forOthers != null) 'for_others': forOthers,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -4085,6 +4130,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
     Value<int?>? recurringItemId,
     Value<int?>? plannedEventId,
     Value<DateTime?>? plannedEventOn,
+    Value<int>? forOthers,
     Value<DateTime>? createdAt,
   }) {
     return EntriesCompanion(
@@ -4101,6 +4147,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
       recurringItemId: recurringItemId ?? this.recurringItemId,
       plannedEventId: plannedEventId ?? this.plannedEventId,
       plannedEventOn: plannedEventOn ?? this.plannedEventOn,
+      forOthers: forOthers ?? this.forOthers,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -4155,6 +4202,9 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
         $EntriesTable.$converterplannedEventOnn.toSql(plannedEventOn.value),
       );
     }
+    if (forOthers.present) {
+      map['for_others'] = Variable<int>(forOthers.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -4177,6 +4227,7 @@ class EntriesCompanion extends UpdateCompanion<Entry> {
           ..write('recurringItemId: $recurringItemId, ')
           ..write('plannedEventId: $plannedEventId, ')
           ..write('plannedEventOn: $plannedEventOn, ')
+          ..write('forOthers: $forOthers, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -7388,6 +7439,463 @@ class CheckinsCompanion extends UpdateCompanion<Checkin> {
   }
 }
 
+class $PaybacksTable extends Paybacks with TableInfo<$PaybacksTable, Payback> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PaybacksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<int> entryId = GeneratedColumn<int>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES entries (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime, String> occurredOn =
+      GeneratedColumn<String>(
+        'occurred_on',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<DateTime>($PaybacksTable.$converteroccurredOn);
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<int> accountId = GeneratedColumn<int>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id)',
+    ),
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<int> amount = GeneratedColumn<int>(
+    'amount',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(amount).isBiggerThanValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payerMeta = const VerificationMeta('payer');
+  @override
+  late final GeneratedColumn<String> payer = GeneratedColumn<String>(
+    'payer',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    entryId,
+    occurredOn,
+    accountId,
+    amount,
+    payer,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'paybacks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Payback> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('payer')) {
+      context.handle(
+        _payerMeta,
+        payer.isAcceptableOrUnknown(data['payer']!, _payerMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Payback map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Payback(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      occurredOn: $PaybacksTable.$converteroccurredOn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}occurred_on'],
+        )!,
+      ),
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}account_id'],
+      )!,
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount'],
+      )!,
+      payer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payer'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PaybacksTable createAlias(String alias) {
+    return $PaybacksTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, String> $converteroccurredOn =
+      const DayConverter();
+}
+
+class Payback extends DataClass implements Insertable<Payback> {
+  final int id;
+
+  /// The spend it pays back; gone with it when that is deleted.
+  final int entryId;
+  final DateTime occurredOn;
+
+  /// Where the money arrived.
+  final int accountId;
+  final int amount;
+
+  /// Who paid it back, as the user wrote it.
+  final String? payer;
+  final DateTime createdAt;
+  const Payback({
+    required this.id,
+    required this.entryId,
+    required this.occurredOn,
+    required this.accountId,
+    required this.amount,
+    this.payer,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['entry_id'] = Variable<int>(entryId);
+    {
+      map['occurred_on'] = Variable<String>(
+        $PaybacksTable.$converteroccurredOn.toSql(occurredOn),
+      );
+    }
+    map['account_id'] = Variable<int>(accountId);
+    map['amount'] = Variable<int>(amount);
+    if (!nullToAbsent || payer != null) {
+      map['payer'] = Variable<String>(payer);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  PaybacksCompanion toCompanion(bool nullToAbsent) {
+    return PaybacksCompanion(
+      id: Value(id),
+      entryId: Value(entryId),
+      occurredOn: Value(occurredOn),
+      accountId: Value(accountId),
+      amount: Value(amount),
+      payer: payer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payer),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Payback.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Payback(
+      id: serializer.fromJson<int>(json['id']),
+      entryId: serializer.fromJson<int>(json['entryId']),
+      occurredOn: serializer.fromJson<DateTime>(json['occurredOn']),
+      accountId: serializer.fromJson<int>(json['accountId']),
+      amount: serializer.fromJson<int>(json['amount']),
+      payer: serializer.fromJson<String?>(json['payer']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'entryId': serializer.toJson<int>(entryId),
+      'occurredOn': serializer.toJson<DateTime>(occurredOn),
+      'accountId': serializer.toJson<int>(accountId),
+      'amount': serializer.toJson<int>(amount),
+      'payer': serializer.toJson<String?>(payer),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Payback copyWith({
+    int? id,
+    int? entryId,
+    DateTime? occurredOn,
+    int? accountId,
+    int? amount,
+    Value<String?> payer = const Value.absent(),
+    DateTime? createdAt,
+  }) => Payback(
+    id: id ?? this.id,
+    entryId: entryId ?? this.entryId,
+    occurredOn: occurredOn ?? this.occurredOn,
+    accountId: accountId ?? this.accountId,
+    amount: amount ?? this.amount,
+    payer: payer.present ? payer.value : this.payer,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Payback copyWithCompanion(PaybacksCompanion data) {
+    return Payback(
+      id: data.id.present ? data.id.value : this.id,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      occurredOn: data.occurredOn.present
+          ? data.occurredOn.value
+          : this.occurredOn,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      payer: data.payer.present ? data.payer.value : this.payer,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Payback(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('accountId: $accountId, ')
+          ..write('amount: $amount, ')
+          ..write('payer: $payer, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, entryId, occurredOn, accountId, amount, payer, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Payback &&
+          other.id == this.id &&
+          other.entryId == this.entryId &&
+          other.occurredOn == this.occurredOn &&
+          other.accountId == this.accountId &&
+          other.amount == this.amount &&
+          other.payer == this.payer &&
+          other.createdAt == this.createdAt);
+}
+
+class PaybacksCompanion extends UpdateCompanion<Payback> {
+  final Value<int> id;
+  final Value<int> entryId;
+  final Value<DateTime> occurredOn;
+  final Value<int> accountId;
+  final Value<int> amount;
+  final Value<String?> payer;
+  final Value<DateTime> createdAt;
+  const PaybacksCompanion({
+    this.id = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.occurredOn = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.payer = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  PaybacksCompanion.insert({
+    this.id = const Value.absent(),
+    required int entryId,
+    required DateTime occurredOn,
+    required int accountId,
+    required int amount,
+    this.payer = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : entryId = Value(entryId),
+       occurredOn = Value(occurredOn),
+       accountId = Value(accountId),
+       amount = Value(amount);
+  static Insertable<Payback> custom({
+    Expression<int>? id,
+    Expression<int>? entryId,
+    Expression<String>? occurredOn,
+    Expression<int>? accountId,
+    Expression<int>? amount,
+    Expression<String>? payer,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entryId != null) 'entry_id': entryId,
+      if (occurredOn != null) 'occurred_on': occurredOn,
+      if (accountId != null) 'account_id': accountId,
+      if (amount != null) 'amount': amount,
+      if (payer != null) 'payer': payer,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  PaybacksCompanion copyWith({
+    Value<int>? id,
+    Value<int>? entryId,
+    Value<DateTime>? occurredOn,
+    Value<int>? accountId,
+    Value<int>? amount,
+    Value<String?>? payer,
+    Value<DateTime>? createdAt,
+  }) {
+    return PaybacksCompanion(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      occurredOn: occurredOn ?? this.occurredOn,
+      accountId: accountId ?? this.accountId,
+      amount: amount ?? this.amount,
+      payer: payer ?? this.payer,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<int>(entryId.value);
+    }
+    if (occurredOn.present) {
+      map['occurred_on'] = Variable<String>(
+        $PaybacksTable.$converteroccurredOn.toSql(occurredOn.value),
+      );
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<int>(accountId.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<int>(amount.value);
+    }
+    if (payer.present) {
+      map['payer'] = Variable<String>(payer.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PaybacksCompanion(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('occurredOn: $occurredOn, ')
+          ..write('accountId: $accountId, ')
+          ..write('amount: $amount, ')
+          ..write('payer: $payer, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -7405,6 +7913,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CoachThreadsTable coachThreads = $CoachThreadsTable(this);
   late final $CoachMessagesTable coachMessages = $CoachMessagesTable(this);
   late final $CheckinsTable checkins = $CheckinsTable(this);
+  late final $PaybacksTable paybacks = $PaybacksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -7424,6 +7933,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     coachThreads,
     coachMessages,
     checkins,
+    paybacks,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -7433,6 +7943,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('coach_messages', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'entries',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('paybacks', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -7774,6 +8291,25 @@ final class $$AccountsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$PaybacksTable, List<Payback>> _paybacksRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.paybacks,
+    aliasName: 'accounts__id__paybacks__account_id',
+  );
+
+  $$PaybacksTableProcessedTableManager get paybacksRefs {
+    final manager = $$PaybacksTableTableManager(
+      $_db,
+      $_db.paybacks,
+    ).filter((f) => f.accountId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_paybacksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$AccountsTableFilterComposer
@@ -7873,6 +8409,31 @@ class $$AccountsTableFilterComposer
           }) => $$EntriesTableFilterComposer(
             $db: $db,
             $table: $db.entries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> paybacksRefs(
+    Expression<bool> Function($$PaybacksTableFilterComposer f) f,
+  ) {
+    final $$PaybacksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.paybacks,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaybacksTableFilterComposer(
+            $db: $db,
+            $table: $db.paybacks,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8025,6 +8586,31 @@ class $$AccountsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> paybacksRefs<T extends Object>(
+    Expression<T> Function($$PaybacksTableAnnotationComposer a) f,
+  ) {
+    final $$PaybacksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.paybacks,
+      getReferencedColumn: (t) => t.accountId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaybacksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.paybacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$AccountsTableTableManager
@@ -8040,7 +8626,11 @@ class $$AccountsTableTableManager
           $$AccountsTableUpdateCompanionBuilder,
           (Account, $$AccountsTableReferences),
           Account,
-          PrefetchHooks Function({bool recurringItemsRefs, bool entriesRefs})
+          PrefetchHooks Function({
+            bool recurringItemsRefs,
+            bool entriesRefs,
+            bool paybacksRefs,
+          })
         > {
   $$AccountsTableTableManager(_$AppDatabase db, $AccountsTable table)
     : super(
@@ -8106,12 +8696,17 @@ class $$AccountsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({recurringItemsRefs = false, entriesRefs = false}) {
+              ({
+                recurringItemsRefs = false,
+                entriesRefs = false,
+                paybacksRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (recurringItemsRefs) db.recurringItems,
                     if (entriesRefs) db.entries,
+                    if (paybacksRefs) db.paybacks,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -8158,6 +8753,27 @@ class $$AccountsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (paybacksRefs)
+                        await $_getPrefetchedData<
+                          Account,
+                          $AccountsTable,
+                          Payback
+                        >(
+                          currentTable: table,
+                          referencedTable: $$AccountsTableReferences
+                              ._paybacksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$AccountsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).paybacksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.accountId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -8178,7 +8794,11 @@ typedef $$AccountsTableProcessedTableManager =
       $$AccountsTableUpdateCompanionBuilder,
       (Account, $$AccountsTableReferences),
       Account,
-      PrefetchHooks Function({bool recurringItemsRefs, bool entriesRefs})
+      PrefetchHooks Function({
+        bool recurringItemsRefs,
+        bool entriesRefs,
+        bool paybacksRefs,
+      })
     >;
 typedef $$TransfersTableCreateCompanionBuilder =
     TransfersCompanion Function({
@@ -10403,6 +11023,7 @@ typedef $$EntriesTableCreateCompanionBuilder =
       Value<int?> recurringItemId,
       Value<int?> plannedEventId,
       Value<DateTime?> plannedEventOn,
+      Value<int> forOthers,
       Value<DateTime> createdAt,
     });
 typedef $$EntriesTableUpdateCompanionBuilder =
@@ -10420,6 +11041,7 @@ typedef $$EntriesTableUpdateCompanionBuilder =
       Value<int?> recurringItemId,
       Value<int?> plannedEventId,
       Value<DateTime?> plannedEventOn,
+      Value<int> forOthers,
       Value<DateTime> createdAt,
     });
 
@@ -10496,6 +11118,25 @@ final class $$EntriesTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<$PaybacksTable, List<Payback>> _paybacksRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.paybacks,
+    aliasName: 'entries__id__paybacks__entry_id',
+  );
+
+  $$PaybacksTableProcessedTableManager get paybacksRefs {
+    final manager = $$PaybacksTableTableManager(
+      $_db,
+      $_db.paybacks,
+    ).filter((f) => f.entryId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_paybacksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$EntriesTableFilterComposer
@@ -10554,6 +11195,11 @@ class $$EntriesTableFilterComposer
   get plannedEventOn => $composableBuilder(
     column: $table.plannedEventOn,
     builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get forOthers => $composableBuilder(
+    column: $table.forOthers,
+    builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
@@ -10652,6 +11298,31 @@ class $$EntriesTableFilterComposer
     );
     return composer;
   }
+
+  Expression<bool> paybacksRefs(
+    Expression<bool> Function($$PaybacksTableFilterComposer f) f,
+  ) {
+    final $$PaybacksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.paybacks,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaybacksTableFilterComposer(
+            $db: $db,
+            $table: $db.paybacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$EntriesTableOrderingComposer
@@ -10705,6 +11376,11 @@ class $$EntriesTableOrderingComposer
 
   ColumnOrderings<String> get plannedEventOn => $composableBuilder(
     column: $table.plannedEventOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get forOthers => $composableBuilder(
+    column: $table.forOthers,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -10848,6 +11524,9 @@ class $$EntriesTableAnnotationComposer
         builder: (column) => column,
       );
 
+  GeneratedColumn<int> get forOthers =>
+      $composableBuilder(column: $table.forOthers, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -10942,6 +11621,31 @@ class $$EntriesTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> paybacksRefs<T extends Object>(
+    Expression<T> Function($$PaybacksTableAnnotationComposer a) f,
+  ) {
+    final $$PaybacksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.paybacks,
+      getReferencedColumn: (t) => t.entryId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PaybacksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.paybacks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$EntriesTableTableManager
@@ -10962,6 +11666,7 @@ class $$EntriesTableTableManager
             bool accountId,
             bool recurringItemId,
             bool plannedEventId,
+            bool paybacksRefs,
           })
         > {
   $$EntriesTableTableManager(_$AppDatabase db, $EntriesTable table)
@@ -10990,6 +11695,7 @@ class $$EntriesTableTableManager
                 Value<int?> recurringItemId = const Value.absent(),
                 Value<int?> plannedEventId = const Value.absent(),
                 Value<DateTime?> plannedEventOn = const Value.absent(),
+                Value<int> forOthers = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => EntriesCompanion(
                 id: id,
@@ -11005,6 +11711,7 @@ class $$EntriesTableTableManager
                 recurringItemId: recurringItemId,
                 plannedEventId: plannedEventId,
                 plannedEventOn: plannedEventOn,
+                forOthers: forOthers,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -11022,6 +11729,7 @@ class $$EntriesTableTableManager
                 Value<int?> recurringItemId = const Value.absent(),
                 Value<int?> plannedEventId = const Value.absent(),
                 Value<DateTime?> plannedEventOn = const Value.absent(),
+                Value<int> forOthers = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => EntriesCompanion.insert(
                 id: id,
@@ -11037,6 +11745,7 @@ class $$EntriesTableTableManager
                 recurringItemId: recurringItemId,
                 plannedEventId: plannedEventId,
                 plannedEventOn: plannedEventOn,
+                forOthers: forOthers,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
@@ -11053,10 +11762,11 @@ class $$EntriesTableTableManager
                 accountId = false,
                 recurringItemId = false,
                 plannedEventId = false,
+                paybacksRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
-                  explicitlyWatchedTables: [],
+                  explicitlyWatchedTables: [if (paybacksRefs) db.paybacks],
                   addJoins:
                       <
                         T extends TableManagerState<
@@ -11129,7 +11839,29 @@ class $$EntriesTableTableManager
                         return state;
                       },
                   getPrefetchedDataCallback: (items) async {
-                    return [];
+                    return [
+                      if (paybacksRefs)
+                        await $_getPrefetchedData<
+                          Entry,
+                          $EntriesTable,
+                          Payback
+                        >(
+                          currentTable: table,
+                          referencedTable: $$EntriesTableReferences
+                              ._paybacksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$EntriesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).paybacksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.entryId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
                 );
               },
@@ -11154,6 +11886,7 @@ typedef $$EntriesTableProcessedTableManager =
         bool accountId,
         bool recurringItemId,
         bool plannedEventId,
+        bool paybacksRefs,
       })
     >;
 typedef $$WeeklyRulesTableCreateCompanionBuilder =
@@ -13166,6 +13899,445 @@ typedef $$CheckinsTableProcessedTableManager =
       Checkin,
       PrefetchHooks Function()
     >;
+typedef $$PaybacksTableCreateCompanionBuilder =
+    PaybacksCompanion Function({
+      Value<int> id,
+      required int entryId,
+      required DateTime occurredOn,
+      required int accountId,
+      required int amount,
+      Value<String?> payer,
+      Value<DateTime> createdAt,
+    });
+typedef $$PaybacksTableUpdateCompanionBuilder =
+    PaybacksCompanion Function({
+      Value<int> id,
+      Value<int> entryId,
+      Value<DateTime> occurredOn,
+      Value<int> accountId,
+      Value<int> amount,
+      Value<String?> payer,
+      Value<DateTime> createdAt,
+    });
+
+final class $$PaybacksTableReferences
+    extends BaseReferences<_$AppDatabase, $PaybacksTable, Payback> {
+  $$PaybacksTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $EntriesTable _entryIdTable(_$AppDatabase db) =>
+      db.entries.createAlias('paybacks__entry_id__entries__id');
+
+  $$EntriesTableProcessedTableManager get entryId {
+    final $_column = $_itemColumn<int>('entry_id')!;
+
+    final manager = $$EntriesTableTableManager(
+      $_db,
+      $_db.entries,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_entryIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $AccountsTable _accountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias('paybacks__account_id__accounts__id');
+
+  $$AccountsTableProcessedTableManager get accountId {
+    final $_column = $_itemColumn<int>('account_id')!;
+
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$PaybacksTableFilterComposer
+    extends Composer<_$AppDatabase, $PaybacksTable> {
+  $$PaybacksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<DateTime, DateTime, String> get occurredOn =>
+      $composableBuilder(
+        column: $table.occurredOn,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payer => $composableBuilder(
+    column: $table.payer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$EntriesTableFilterComposer get entryId {
+    final $$EntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.entries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PaybacksTableOrderingComposer
+    extends Composer<_$AppDatabase, $PaybacksTable> {
+  $$PaybacksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get occurredOn => $composableBuilder(
+    column: $table.occurredOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payer => $composableBuilder(
+    column: $table.payer,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$EntriesTableOrderingComposer get entryId {
+    final $$EntriesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableOrderingComposer(
+            $db: $db,
+            $table: $db.entries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PaybacksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PaybacksTable> {
+  $$PaybacksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<DateTime, String> get occurredOn =>
+      $composableBuilder(
+        column: $table.occurredOn,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<int> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get payer =>
+      $composableBuilder(column: $table.payer, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$EntriesTableAnnotationComposer get entryId {
+    final $$EntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.entryId,
+      referencedTable: $db.entries,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.entries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$PaybacksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PaybacksTable,
+          Payback,
+          $$PaybacksTableFilterComposer,
+          $$PaybacksTableOrderingComposer,
+          $$PaybacksTableAnnotationComposer,
+          $$PaybacksTableCreateCompanionBuilder,
+          $$PaybacksTableUpdateCompanionBuilder,
+          (Payback, $$PaybacksTableReferences),
+          Payback,
+          PrefetchHooks Function({bool entryId, bool accountId})
+        > {
+  $$PaybacksTableTableManager(_$AppDatabase db, $PaybacksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PaybacksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PaybacksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PaybacksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> entryId = const Value.absent(),
+                Value<DateTime> occurredOn = const Value.absent(),
+                Value<int> accountId = const Value.absent(),
+                Value<int> amount = const Value.absent(),
+                Value<String?> payer = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => PaybacksCompanion(
+                id: id,
+                entryId: entryId,
+                occurredOn: occurredOn,
+                accountId: accountId,
+                amount: amount,
+                payer: payer,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int entryId,
+                required DateTime occurredOn,
+                required int accountId,
+                required int amount,
+                Value<String?> payer = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => PaybacksCompanion.insert(
+                id: id,
+                entryId: entryId,
+                occurredOn: occurredOn,
+                accountId: accountId,
+                amount: amount,
+                payer: payer,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PaybacksTable, Payback>(table),
+                  $$PaybacksTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({entryId = false, accountId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (entryId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.entryId,
+                                referencedTable: $$PaybacksTableReferences
+                                    ._entryIdTable(db),
+                                referencedColumn: $$PaybacksTableReferences
+                                    ._entryIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (accountId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.accountId,
+                                referencedTable: $$PaybacksTableReferences
+                                    ._accountIdTable(db),
+                                referencedColumn: $$PaybacksTableReferences
+                                    ._accountIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PaybacksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PaybacksTable,
+      Payback,
+      $$PaybacksTableFilterComposer,
+      $$PaybacksTableOrderingComposer,
+      $$PaybacksTableAnnotationComposer,
+      $$PaybacksTableCreateCompanionBuilder,
+      $$PaybacksTableUpdateCompanionBuilder,
+      (Payback, $$PaybacksTableReferences),
+      Payback,
+      PrefetchHooks Function({bool entryId, bool accountId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13198,4 +14370,6 @@ class $AppDatabaseManager {
       $$CoachMessagesTableTableManager(_db, _db.coachMessages);
   $$CheckinsTableTableManager get checkins =>
       $$CheckinsTableTableManager(_db, _db.checkins);
+  $$PaybacksTableTableManager get paybacks =>
+      $$PaybacksTableTableManager(_db, _db.paybacks);
 }
