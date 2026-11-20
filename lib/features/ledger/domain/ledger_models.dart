@@ -81,11 +81,15 @@ class Entry {
     this.accountId,
     this.billId,
     this.spendKind = SpendKind.want,
+    this.forOthers = 0,
   });
 
   final int id;
   final DateTime day;
   final bool isIncome;
+
+  /// What counts as the user's own: everything that sums spending reads
+  /// this, so a part paid for others never counts as theirs.
   final int amount;
   final String categoryKey;
   final String? label;
@@ -106,7 +110,31 @@ class Entry {
   /// Whose choice it was; only a spend's is read.
   final SpendKind spendKind;
 
+  /// Paid for other people on top of [amount], such as their share of a
+  /// bill paid in full; owed back until paybacks cover it.
+  final int forOthers;
+
+  /// What left the account: the user's own part and the part for others.
+  int get paid => amount + forOthers;
+
   int get signedAmount => isIncome ? amount : -amount;
+
+  /// This entry with a different split, or moved to another account.
+  Entry copyWith({int? amount, int? forOthers, int? accountId}) => Entry(
+        id: id,
+        day: day,
+        isIncome: isIncome,
+        amount: amount ?? this.amount,
+        categoryKey: categoryKey,
+        label: label,
+        note: note,
+        receipt: receipt,
+        event: event,
+        accountId: accountId ?? this.accountId,
+        billId: billId,
+        spendKind: spendKind,
+        forOthers: forOthers ?? this.forOthers,
+      );
 
   /// Day-to-day spending the plan did not count already: not income, not a
   /// fixed category, and not paid toward a bill or spent on a planned
@@ -135,10 +163,13 @@ class EntryDraft {
     this.accountId,
     this.billId,
     this.spendKind = SpendKind.want,
+    this.forOthers = 0,
   });
 
   final DateTime day;
   final bool isIncome;
+
+  /// The user's own part, as on [Entry.amount].
   final int amount;
   final String categoryKey;
   final String? label;
@@ -154,9 +185,54 @@ class EntryDraft {
   final int? billId;
   final SpendKind spendKind;
 
+  /// Paid for other people on top of [amount], as on [Entry.forOthers].
+  final int forOthers;
+
   /// Whether, once saved, it is day-to-day spending, given whether its
   /// category [isFixed]: the only kind of entry that is a want or a need.
   bool isFlexibleSpend(bool isFixed) => !isIncome && !isFixed && billId == null && event == null;
+}
+
+/// Money back from someone the user paid for, toward an entry's
+/// [Entry.forOthers]. Like a transfer it is neither income nor spending: it
+/// only fills the account it arrived in.
+class Payback {
+  const Payback({required this.id, required this.entryId, required this.day, required this.amount, this.accountId, this.payer});
+
+  final int id;
+  final int entryId;
+  final DateTime day;
+  final int amount;
+
+  /// Where it arrived; null means the first account.
+  final int? accountId;
+
+  /// Who paid it back, as the user wrote it.
+  final String? payer;
+}
+
+/// A spend partly for others, with what has come back toward their part.
+class Owed {
+  const Owed(this.entry, this.back);
+
+  final Entry entry;
+  final int back;
+
+  /// Still to come back; never below nothing.
+  int get left => (entry.forOthers - back).clamp(0, entry.forOthers);
+}
+
+/// Every spend with a part for others still owed, oldest first, from
+/// [entries] and the [paybacks] toward them.
+List<Owed> owedFrom(Iterable<Entry> entries, Iterable<Payback> paybacks) {
+  final back = <int, int>{};
+  for (final p in paybacks) {
+    back[p.entryId] = (back[p.entryId] ?? 0) + p.amount;
+  }
+  return [
+    for (final e in entries.where((e) => e.forOthers > 0)) Owed(e, back[e.id] ?? 0),
+  ].where((o) => o.left > 0).toList()
+    ..sort((a, b) => a.entry.day.compareTo(b.entry.day) != 0 ? a.entry.day.compareTo(b.entry.day) : a.entry.id.compareTo(b.entry.id));
 }
 
 class Favourite {

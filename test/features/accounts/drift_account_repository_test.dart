@@ -155,6 +155,35 @@ void main() {
       }
     });
 
+    test('a payback counts in the account it arrived in, and goes or moves with it', () async {
+      final lunch = await ledger.add(EntryDraft(day: d(2026, 7, 5), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', accountId: bank));
+      await ledger.addPayback(entryId: lunch, day: d(2026, 7, 5), amount: 1750, accountId: cash);
+      final before = await balances();
+      expect((await accounts.accountUse(cash)).entries, 2);
+
+      final removal = await accounts.deleteAccount(cash);
+      expect(await ledger.watchPaybacks().first, isEmpty);
+      await accounts.restoreAccount(removal);
+      expect(await balances(), before);
+      expect((await ledger.watchPaybacks().first).single.accountId, cash);
+
+      await accounts.deleteAccount(cash, moveTo: wallet);
+      expect((await ledger.watchPaybacks().first).single.accountId, wallet);
+      expect((await balances())[bank], before[bank]);
+    });
+
+    test('deleting an account takes the paybacks toward its spends, wherever they arrived', () async {
+      final lunch = await ledger.add(EntryDraft(day: d(2026, 7, 5), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', accountId: cash));
+      await ledger.addPayback(entryId: lunch, day: d(2026, 7, 5), amount: 1750, accountId: bank);
+      final before = await balances();
+      final removal = await accounts.deleteAccount(cash);
+      expect(await ledger.watchPaybacks().first, isEmpty);
+      // The bank keeps neither the payback nor its top-up of the cash.
+      expect((await balances())[bank], 100000);
+      await accounts.restoreAccount(removal);
+      expect(await balances(), before);
+    });
+
     test('the last account always stays', () async {
       await accounts.deleteAccount(cash);
       await accounts.deleteAccount(wallet, moveTo: bank);

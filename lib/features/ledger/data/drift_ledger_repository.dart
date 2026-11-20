@@ -41,14 +41,17 @@ class DriftLedgerRepository implements LedgerRepository {
   @override
   Stream<int?> watchBalance() {
     // ISO day strings compare correctly as text, so the date filter stays in
-    // SQL. Transfers only move money between accounts, so the total ignores them.
+    // SQL. Transfers only move money between accounts, so the total ignores
+    // them. An entry's amount is all that left, the part for others too, and
+    // paybacks bring that part back.
     final query = _db.customSelect(
       'SELECT (SELECT COALESCE(SUM(opening_balance), 0) FROM accounts) '
-      '+ COALESCE(SUM(CASE WHEN e.kind = ? THEN e.amount ELSE -e.amount END), 0) AS balance '
+      '+ COALESCE(SUM(CASE WHEN e.kind = ? THEN e.amount ELSE -e.amount END), 0) '
+      '+ (SELECT COALESCE(SUM(p.amount), 0) FROM paybacks p WHERE p.occurred_on >= s.opening_date) AS balance '
       'FROM app_settings s LEFT JOIN entries e ON e.occurred_on >= s.opening_date '
       'GROUP BY s.id',
       variables: [Variable.withString(EntryKind.income.name)],
-      readsFrom: {_db.appSettings, _db.accounts, _db.entries},
+      readsFrom: {_db.appSettings, _db.accounts, _db.entries, _db.paybacks},
     );
     return query.watch().map((rows) => rows.isEmpty ? null : rows.single.read<int>('balance'));
   }
@@ -59,7 +62,8 @@ class DriftLedgerRepository implements LedgerRepository {
               EntriesCompanion.insert(
                 occurredOn: d.day,
                 kind: d.isIncome ? EntryKind.income : EntryKind.expense,
-                amount: d.amount,
+                amount: d.amount + d.forOthers,
+                forOthers: Value(d.forOthers),
                 categoryKey: d.categoryKey,
                 accountId: await _db.accountOrFirst(d.accountId),
                 label: Value(_blankToNull(d.label)),
@@ -109,7 +113,8 @@ class DriftLedgerRepository implements LedgerRepository {
       EntriesCompanion(
         occurredOn: Value(e.day),
         kind: Value(e.isIncome ? EntryKind.income : EntryKind.expense),
-        amount: Value(e.amount),
+        amount: Value(e.paid),
+        forOthers: Value(e.forOthers),
         categoryKey: Value(e.categoryKey),
         label: Value(_blankToNull(e.label)),
         note: Value(_blankToNull(e.note)),
@@ -126,25 +131,29 @@ class DriftLedgerRepository implements LedgerRepository {
   /// a bill only for its latest payment, so deleting an old one never makes
   /// a bill paid since fall due again.
   @override
-  Future<void> delete(int id) => _db.transaction(() async {
+  Future<List<domain.Payback>> delete(int id) => _db.transaction(() async {
         final row = await (_db.select(_db.entries)..where((t) => t.id.equals(id))).getSingleOrNull();
+        // They go with it, as the database removes them; kept for undo.
+        final paybacks = await (_db.select(_db.paybacks)..where((p) => p.entryId.equals(id))).get();
         await (_db.delete(_db.entries)..where((t) => t.id.equals(id))).go();
-        if (row == null) return;
+        if (row == null) return const <domain.Payback>[];
         final bill = row.recurringItemId;
         final latest = bill != null && (await (_db.select(_db.entries)..where((t) => t.recurringItemId.equals(bill) & t.id.isBiggerThanValue(id))).get()).isEmpty;
         final event = row.plannedEventId == null || row.plannedEventOn == null ? null : domain.EventLink(row.plannedEventId!, row.plannedEventOn!);
         await _settle(billId: latest ? bill : null, event: row.kind == EntryKind.income ? event : null, forward: false);
+        return [for (final p in paybacks) _paybackToDomain(p)];
       });
 
-  /// Puts back an entry [delete] took, and what it settled.
+  /// Puts back an entry [delete] took, what it settled, and its paybacks.
   @override
-  Future<void> restore(domain.Entry e) => _db.transaction(() async {
+  Future<void> restore(domain.Entry e, {List<domain.Payback> paybacks = const []}) => _db.transaction(() async {
         await _db.into(_db.entries).insert(
               EntriesCompanion.insert(
                 id: Value(e.id),
                 occurredOn: e.day,
                 kind: e.isIncome ? EntryKind.income : EntryKind.expense,
-                amount: e.amount,
+                amount: e.paid,
+                forOthers: Value(e.forOthers),
                 categoryKey: e.categoryKey,
                 accountId: await _db.accountOrFirst(e.accountId),
                 label: Value(e.label),
@@ -157,13 +166,52 @@ class DriftLedgerRepository implements LedgerRepository {
               ),
             );
         await _settle(billId: e.billId, event: e.isIncome ? e.event : null, forward: true);
+        for (final p in paybacks) {
+          await restorePayback(p);
+        }
       });
 
+  @override
+  Stream<List<domain.Payback>> watchPaybacks() => (_db.select(_db.paybacks)
+        ..orderBy([(p) => OrderingTerm.desc(p.occurredOn), (p) => OrderingTerm.desc(p.id)]))
+      .watch()
+      .map((rows) => rows.map(_paybackToDomain).toList());
+
+  @override
+  Future<int> addPayback({required int entryId, required DateTime day, required int amount, int? accountId, String? payer}) async =>
+      _db.into(_db.paybacks).insert(PaybacksCompanion.insert(
+            entryId: entryId,
+            occurredOn: day,
+            accountId: await _db.accountOrFirst(accountId),
+            amount: amount,
+            payer: Value(_blankToNull(payer)),
+          ));
+
+  @override
+  Future<void> deletePayback(int id) => (_db.delete(_db.paybacks)..where((p) => p.id.equals(id))).go();
+
+  @override
+  Future<void> restorePayback(domain.Payback p) async {
+    await _db.into(_db.paybacks).insert(PaybacksCompanion.insert(
+          id: Value(p.id),
+          entryId: p.entryId,
+          occurredOn: p.day,
+          accountId: await _db.accountOrFirst(p.accountId),
+          amount: p.amount,
+          payer: Value(p.payer),
+        ));
+  }
+
+  domain.Payback _paybackToDomain(Payback r) =>
+      domain.Payback(id: r.id, entryId: r.entryId, day: r.occurredOn, amount: r.amount, accountId: r.accountId, payer: r.payer);
+
+  /// The stored amount is all that was paid; the domain's is the user's own.
   domain.Entry _toDomain(Entry r) => domain.Entry(
         id: r.id,
         day: r.occurredOn,
         isIncome: r.kind == EntryKind.income,
-        amount: r.amount,
+        amount: r.amount - r.forOthers,
+        forOthers: r.forOthers,
         categoryKey: r.categoryKey,
         label: r.label,
         note: r.note,

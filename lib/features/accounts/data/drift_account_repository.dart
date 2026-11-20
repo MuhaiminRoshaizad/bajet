@@ -11,10 +11,12 @@ class DriftAccountRepository implements AccountRepository {
 
   // Each balance is summed in SQL from the opening date on, like the total,
   // so the accounts always add up to it. ISO day strings compare as text.
+  // Paybacks count in the account they arrived in.
   static const _balances = '''
 SELECT a.*, a.opening_balance
   + COALESCE((SELECT SUM(CASE WHEN e.kind = 'income' THEN e.amount ELSE -e.amount END) FROM entries e, app_settings s
       WHERE e.account_id = a.id AND e.occurred_on >= s.opening_date), 0)
+  + COALESCE((SELECT SUM(p.amount) FROM paybacks p, app_settings s WHERE p.account_id = a.id AND p.occurred_on >= s.opening_date), 0)
   + COALESCE((SELECT SUM(t.amount) FROM transfers t, app_settings s WHERE t.to_account_id = a.id AND t.occurred_on >= s.opening_date), 0)
   - COALESCE((SELECT SUM(t.amount) FROM transfers t, app_settings s WHERE t.from_account_id = a.id AND t.occurred_on >= s.opening_date), 0)
   AS balance
@@ -22,7 +24,7 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
 
   @override
   Stream<List<domain.Account>> watchAccounts() => _db
-      .customSelect(_balances, readsFrom: {_db.accounts, _db.entries, _db.transfers, _db.appSettings})
+      .customSelect(_balances, readsFrom: {_db.accounts, _db.entries, _db.transfers, _db.paybacks, _db.appSettings})
       .watch()
       .map((rows) => [
             for (final r in rows)
@@ -81,13 +83,18 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
           ..addColumns([_db.entries.id.count()])
           ..where(_db.entries.accountId.equals(id)))
         .getSingle();
+    final paybacks = await (_db.selectOnly(_db.paybacks)
+          ..addColumns([_db.paybacks.id.count()])
+          ..where(_db.paybacks.accountId.equals(id)))
+        .getSingle();
     final transfers = await (_db.selectOnly(_db.transfers)
           ..addColumns([_db.transfers.id.count()])
           ..where(_db.transfers.fromAccountId.equals(id) | _db.transfers.toAccountId.equals(id)))
         .getSingle();
     final bills = await (_db.select(_db.recurringItems)..where((r) => r.accountId.equals(id))).get();
     return domain.AccountUse(
-      entries: entries.read(_db.entries.id.count()) ?? 0,
+      // Money paid back into it is logged there too.
+      entries: (entries.read(_db.entries.id.count()) ?? 0) + (paybacks.read(_db.paybacks.id.count()) ?? 0),
       transfers: transfers.read(_db.transfers.id.count()) ?? 0,
       bills: [for (final b in bills) b.name],
     );
@@ -110,10 +117,17 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
         final linked = moveTo != null
             ? const <Entry>[]
             : await (_db.select(_db.entries)..where((e) => e.recurringItemId.isIn(billIds) & e.accountId.equals(id).not())).get();
+        // Paybacks into it, and those toward its spends wherever they arrived.
+        final paybacks = await (_db.select(_db.paybacks)
+              ..where((p) => p.accountId.equals(id) | p.entryId.isInQuery(_db.selectOnly(_db.entries)
+                ..addColumns([_db.entries.id])
+                ..where(_db.entries.accountId.equals(id)))))
+            .get();
 
         if (target != null) {
           await (_db.update(_db.entries)..where((e) => e.accountId.equals(id))).write(EntriesCompanion(accountId: Value(target.id)));
           await (_db.update(_db.recurringItems)..where((r) => r.accountId.equals(id))).write(RecurringItemsCompanion(accountId: Value(target.id)));
+          await (_db.update(_db.paybacks)..where((p) => p.accountId.equals(id))).write(PaybacksCompanion(accountId: Value(target.id)));
           await (_db.delete(_db.transfers)
                 ..where((t) => (t.fromAccountId.equals(id) & t.toAccountId.equals(target.id)) | (t.fromAccountId.equals(target.id) & t.toAccountId.equals(id))))
               .go();
@@ -123,12 +137,13 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
               .write(AccountsCompanion(openingBalance: Value(target.openingBalance + row.openingBalance)));
         } else {
           await (_db.update(_db.entries)..where((e) => e.id.isIn([for (final e in linked) e.id]))).write(const EntriesCompanion(recurringItemId: Value(null)));
+          await (_db.delete(_db.paybacks)..where((p) => p.id.isIn([for (final p in paybacks) p.id]))).go();
           await (_db.delete(_db.entries)..where((e) => e.accountId.equals(id))).go();
           await (_db.delete(_db.transfers)..where((t) => t.fromAccountId.equals(id) | t.toAccountId.equals(id))).go();
           await (_db.delete(_db.recurringItems)..where((r) => r.accountId.equals(id))).go();
         }
         await (_db.delete(_db.accounts)..where((a) => a.id.equals(id))).go();
-        return _DriftAccountRemoval(account, row: row, target: target, entries: [...entries, ...linked], transfers: transfers, bills: bills);
+        return _DriftAccountRemoval(account, row: row, target: target, entries: [...entries, ...linked], transfers: transfers, bills: bills, paybacks: paybacks);
       });
 
   @override
@@ -145,6 +160,9 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
         }
         for (final t in removal.transfers) {
           await _db.into(_db.transfers).insertOnConflictUpdate(t);
+        }
+        for (final p in removal.paybacks) {
+          await _db.into(_db.paybacks).insertOnConflictUpdate(p);
         }
       });
 
@@ -188,7 +206,7 @@ FROM accounts a ORDER BY a.sort_order, a.id''';
 /// Every row [DriftAccountRepository.deleteAccount] changed or removed, as
 /// it was before.
 class _DriftAccountRemoval extends domain.AccountRemoval {
-  _DriftAccountRemoval(super.account, {required this.row, required this.target, required this.entries, required this.transfers, required this.bills})
+  _DriftAccountRemoval(super.account, {required this.row, required this.target, required this.entries, required this.transfers, required this.bills, required this.paybacks})
       : super(movedTo: target?.id);
 
   final Account row;
@@ -196,6 +214,7 @@ class _DriftAccountRemoval extends domain.AccountRemoval {
   final List<Entry> entries;
   final List<Transfer> transfers;
   final List<RecurringItem> bills;
+  final List<Payback> paybacks;
 }
 
 String? _blankToNull(String? s) => (s == null || s.trim().isEmpty) ? null : s.trim();

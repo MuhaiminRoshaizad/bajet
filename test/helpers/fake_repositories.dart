@@ -74,6 +74,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
 
   final _Live<PlanSettings?> _settings;
   final _entries = _Live<List<Entry>>([]);
+  final _paybacks = _Live<List<Payback>>([]);
   final _rules = _Live<List<WeeklyRule>>([
     for (var w = 1; w <= 7; w++) WeeklyRule(weekday: w, label: w <= 5 ? 'Weekday' : 'Weekend', type: DayType.spend, plannedSpend: 0),
   ]);
@@ -105,6 +106,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
 
   PlanSettings? get settings => _settings.value;
   List<Entry> get entries => _entries.value;
+  List<Payback> get paybacks => _paybacks.value;
   List<Goal> get goals => _goals.value;
   List<RecurringItem> get recurring => _recurring.value;
   List<PlannedEvent> get events => _events.value;
@@ -124,10 +126,12 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
           final s = _settings.value;
           if (s == null) return null;
           final opening = _accountRows.value.fold<int>(0, (sum, a) => sum + a.openingBalance);
-          return opening + _entries.value.where((e) => !e.day.isBefore(s.openingDate)).fold<int>(0, (sum, e) => sum + e.signedAmount);
+          return opening +
+              _entries.value.where((e) => !e.day.isBefore(s.openingDate)).fold<int>(0, (sum, e) => sum + _moved(e)) +
+              _paybacks.value.where((p) => !p.day.isBefore(s.openingDate)).fold<int>(0, (sum, p) => sum + p.amount);
         }
 
-        final subs = [for (final s in [_settings.stream, _entries.stream, _accountRows.stream]) s.listen((_) => c.add(compute()))];
+        final subs = [for (final s in [_settings.stream, _entries.stream, _paybacks.stream, _accountRows.stream]) s.listen((_) => c.add(compute()))];
         c.onCancel = () => Future.wait(subs.map((s) => s.cancel()));
       });
 
@@ -149,6 +153,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
         accountId: d.accountId,
         billId: d.billId,
         spendKind: d.spendKind,
+        forOthers: d.forOthers,
       ),
     ];
     _settle(d.billId, d.isIncome ? d.event : null, forward: true);
@@ -188,22 +193,46 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   }
 
   @override
-  Future<void> delete(int id) async {
+  Future<List<Payback>> delete(int id) async {
     final gone = _entries.value.where((e) => e.id == id).firstOrNull;
+    final paybacks = [..._paybacks.value.where((p) => p.entryId == id)];
     _entries.value = [..._entries.value.where((e) => e.id != id)];
+    _paybacks.value = [..._paybacks.value.where((p) => p.entryId != id)];
     if (gone != null) {
       final latest = gone.billId != null && !_entries.value.any((e) => e.billId == gone.billId && e.id > id);
       _settle(latest ? gone.billId : null, gone.isIncome ? gone.event : null, forward: false);
     }
     _entriesChanged();
+    return paybacks;
   }
 
   @override
-  Future<void> restore(Entry e) async {
+  Future<void> restore(Entry e, {List<Payback> paybacks = const []}) async {
     _entries.value = [..._entries.value, e];
+    _paybacks.value = [..._paybacks.value, ...paybacks];
     _settle(e.billId, e.isIncome ? e.event : null, forward: true);
     _entriesChanged();
   }
+
+  /// What an entry moved in its account: all that was paid, for others too.
+  static int _moved(Entry e) => e.isIncome ? e.amount : -e.paid;
+
+  @override
+  Stream<List<Payback>> watchPaybacks() =>
+      _paybacks.stream.map((all) => [...all]..sort((a, b) => b.day.compareTo(a.day) != 0 ? b.day.compareTo(a.day) : b.id.compareTo(a.id)));
+
+  @override
+  Future<int> addPayback({required int entryId, required DateTime day, required int amount, int? accountId, String? payer}) async {
+    final id = _nextId++;
+    _paybacks.value = [..._paybacks.value, Payback(id: id, entryId: entryId, day: day, amount: amount, accountId: accountId, payer: _blank(payer))];
+    return id;
+  }
+
+  @override
+  Future<void> deletePayback(int id) async => _paybacks.value = [..._paybacks.value.where((p) => p.id != id)];
+
+  @override
+  Future<void> restorePayback(Payback p) async => _paybacks.value = [..._paybacks.value, p];
 
   // Plan
 
@@ -251,7 +280,8 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
           openingBalance: a.openingBalance,
           look: a.look,
           balance: a.openingBalance +
-              _entries.value.where((e) => (e.accountId ?? firstId) == a.id && counted(e.day)).fold<int>(0, (sum, e) => sum + e.signedAmount) +
+              _entries.value.where((e) => (e.accountId ?? firstId) == a.id && counted(e.day)).fold<int>(0, (sum, e) => sum + _moved(e)) +
+              _paybacks.value.where((p) => (p.accountId ?? firstId) == a.id && counted(p.day)).fold<int>(0, (sum, p) => sum + p.amount) +
               _transfers.value.where((t) => counted(t.day)).fold<int>(0, (sum, t) => sum + (t.toId == a.id ? t.amount : 0) - (t.fromId == a.id ? t.amount : 0)),
         ),
     ];
@@ -260,7 +290,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   @override
   Stream<List<Account>> watchAccounts() => Stream.multi((c) {
         final subs = [
-          for (final s in [_accountRows.stream, _entries.stream, _transfers.stream, _settings.stream]) s.listen((_) => c.add(accounts)),
+          for (final s in [_accountRows.stream, _entries.stream, _paybacks.stream, _transfers.stream, _settings.stream]) s.listen((_) => c.add(accounts)),
         ];
         c.onCancel = () => Future.wait(subs.map((s) => s.cancel()));
       });
@@ -291,7 +321,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   Future<AccountUse> accountUse(int id) async {
     final firstId = _accountRows.value.firstOrNull?.id;
     return AccountUse(
-      entries: _entries.value.where((e) => (e.accountId ?? firstId) == id).length,
+      entries: _entries.value.where((e) => (e.accountId ?? firstId) == id).length + _paybacks.value.where((p) => (p.accountId ?? firstId) == id).length,
       transfers: _transfers.value.where((t) => t.touches(id)).length,
       bills: [for (final r in _recurring.value) if ((r.accountId ?? firstId) == id) r.name],
     );
@@ -301,16 +331,19 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
   Future<AccountRemoval> deleteAccount(int id, {int? moveTo}) async {
     if (moveTo == id) throw ArgumentError.value(moveTo, 'moveTo');
     if (_accountRows.value.length < 2) throw StateError('The last account cannot be deleted.');
-    final removal = _FakeAccountRemoval(accounts.firstWhere((a) => a.id == id), movedTo: moveTo, rows: _accountRows.value, entries: _entries.value, transfers: _transfers.value, recurring: _recurring.value);
+    final removal = _FakeAccountRemoval(accounts.firstWhere((a) => a.id == id),
+        movedTo: moveTo, rows: _accountRows.value, entries: _entries.value, transfers: _transfers.value, recurring: _recurring.value, paybacks: _paybacks.value);
     final firstId = _accountRows.value.first.id;
     bool mine(int? accountId) => (accountId ?? firstId) == id;
     final gone = _accountRows.value.firstWhere((a) => a.id == id);
     if (moveTo != null) {
       _entries.value = [
         for (final e in _entries.value)
-          mine(e.accountId)
-              ? Entry(id: e.id, day: e.day, isIncome: e.isIncome, amount: e.amount, categoryKey: e.categoryKey, label: e.label, note: e.note, receipt: e.receipt, event: e.event, accountId: moveTo, billId: e.billId, spendKind: e.spendKind)
-              : e,
+          mine(e.accountId) ? e.copyWith(accountId: moveTo) : e,
+      ];
+      _paybacks.value = [
+        for (final p in _paybacks.value)
+          mine(p.accountId) ? Payback(id: p.id, entryId: p.entryId, day: p.day, amount: p.amount, accountId: moveTo, payer: p.payer) : p,
       ];
       _recurring.value = [for (final r in _recurring.value) mine(r.accountId) ? r.copyWith(accountId: moveTo) : r];
       _transfers.value = [
@@ -320,6 +353,8 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
       ];
       _accountRows.value = [for (final a in _accountRows.value) a.id == moveTo ? _withOpening(a, a.openingBalance + gone.openingBalance) : a];
     } else {
+      final spends = {for (final e in _entries.value) if (mine(e.accountId)) e.id};
+      _paybacks.value = [..._paybacks.value.where((p) => !mine(p.accountId) && !spends.contains(p.entryId))];
       _entries.value = [..._entries.value.where((e) => !mine(e.accountId))];
       _recurring.value = [..._recurring.value.where((r) => !mine(r.accountId))];
       _transfers.value = [..._transfers.value.where((t) => !t.touches(id))];
@@ -336,6 +371,7 @@ class FakeWorld implements LedgerRepository, PlanRepository, AccountRepository {
     _entries.value = r.entries;
     _transfers.value = r.transfers;
     _recurring.value = r.recurring;
+    _paybacks.value = r.paybacks;
     _entriesChanged();
   }
 
@@ -851,10 +887,11 @@ class FakeSplash implements SplashHandOver {
 
 /// The whole world as it was before a delete: the fake puts it all back.
 class _FakeAccountRemoval extends AccountRemoval {
-  _FakeAccountRemoval(super.account, {super.movedTo, required this.rows, required this.entries, required this.transfers, required this.recurring});
+  _FakeAccountRemoval(super.account, {super.movedTo, required this.rows, required this.entries, required this.transfers, required this.recurring, required this.paybacks});
 
   final List<Account> rows;
   final List<Entry> entries;
   final List<Transfer> transfers;
   final List<RecurringItem> recurring;
+  final List<Payback> paybacks;
 }

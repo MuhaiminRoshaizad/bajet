@@ -195,4 +195,63 @@ void main() {
     final e = (await plan.watchEvents().first).single;
     expect((e.done, e.spent), (false, 20000));
   });
+
+  test("a spend partly for others counts only the user's part, but all of it leaves the balance", () async {
+    await setUpOpening(100000, d(2026, 7, 1));
+    final id = await ledger.add(domain.EntryDraft(day: d(2026, 7, 1), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+    final lunch = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+    expect((lunch.amount, lunch.forOthers, lunch.paid), (1500, 5250, 6750));
+    expect(await ledger.watchBalance().first, 100000 - 6750);
+
+    await ledger.addPayback(entryId: id, day: d(2026, 7, 1), amount: 1750, payer: ' Sam ');
+    await ledger.addPayback(entryId: id, day: d(2026, 7, 2), amount: 2000, payer: '');
+    expect(await ledger.watchBalance().first, 100000 - 6750 + 3750);
+    final back = await ledger.watchPaybacks().first;
+    expect([for (final p in back) (p.amount, p.payer, p.accountId)], [(2000, null, 1), (1750, 'Sam', 1)]);
+    expect(domain.owedFrom([lunch], back).single.left, 1500);
+  });
+
+  test('changing the split keeps what left, and a payback can be taken back', () async {
+    await setUpOpening(100000, d(2026, 7, 1));
+    await ledger.add(domain.EntryDraft(day: d(2026, 7, 1), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food'));
+    final lunch = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+    // Letting the rest go: it becomes the user's own, still RM67.50 out.
+    await ledger.update(lunch.copyWith(amount: 6750, forOthers: 0));
+    final after = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+    expect((after.amount, after.forOthers), (6750, 0));
+    expect(await ledger.watchBalance().first, 100000 - 6750);
+
+    final id = await ledger.addPayback(entryId: lunch.id, day: d(2026, 7, 1), amount: 1750);
+    final payback = (await ledger.watchPaybacks().first).single;
+    await ledger.deletePayback(id);
+    expect(await ledger.watchPaybacks().first, isEmpty);
+    await ledger.restorePayback(payback);
+    expect((await ledger.watchPaybacks().first).single.id, id);
+  });
+
+  test('deleting a spend takes its paybacks, and restore puts both back', () async {
+    await setUpOpening(100000, d(2026, 7, 1));
+    final id = await ledger.add(domain.EntryDraft(day: d(2026, 7, 1), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food'));
+    await ledger.addPayback(entryId: id, day: d(2026, 7, 1), amount: 1750);
+    final lunch = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+
+    final gone = await ledger.delete(id);
+    expect([for (final p in gone) p.amount], [1750]);
+    expect(await ledger.watchPaybacks().first, isEmpty);
+    expect(await ledger.watchBalance().first, 100000);
+
+    await ledger.restore(lunch, paybacks: gone);
+    final back = (await ledger.watchSince(d(2026, 7, 1)).first).single;
+    expect((back.id, back.amount, back.forOthers), (id, 1500, 5250));
+    expect((await ledger.watchPaybacks().first).single.amount, 1750);
+    expect(await ledger.watchBalance().first, 100000 - 6750 + 1750);
+  });
+
+  test('a payback before the opening date is not in the balance, as entries are not', () async {
+    await setUpOpening(100000, d(2026, 7, 1));
+    final id = await ledger.add(domain.EntryDraft(day: d(2026, 6, 30), isIncome: false, amount: 0, forOthers: 5000, categoryKey: 'food'));
+    await ledger.addPayback(entryId: id, day: d(2026, 6, 30), amount: 2000);
+    await ledger.addPayback(entryId: id, day: d(2026, 7, 2), amount: 3000);
+    expect(await ledger.watchBalance().first, 100000 + 3000);
+  });
 }
