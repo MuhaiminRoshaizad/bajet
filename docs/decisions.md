@@ -635,3 +635,28 @@ read; at most three searches and two pages a question. The app asks for no
 location, so the user names the area, and the coach cannot measure
 distance or read map reviews. Page text is untrusted, and any change it
 leads to still needs the user's tap.
+
+## 039: A bill paid for others is owed, not spent
+
+**Decided:** a day-to-day spend can carry a part paid for other people,
+such as their share of a bill the shop would not split. The whole amount
+leaves the balance, but only the rest counts as the user's spending: the
+entry stores what was paid and `for_others`, and the app reads the user's
+part as its amount, so the allowance, Insights, reports, the check-in and
+the coach need no change. Money paid back is a payback, kept apart from
+entries like a transfer: it fills the account it arrives in and is never
+income. Today shows what is still owed, with Paid back and Let it go;
+letting it go makes the rest the user's own spending on the day of the
+bill. Runway never counts money still owed.
+
+**Why:** logged as the user's own, one shared lunch put the day far over
+its plan, and paybacks logged as Refund income filled the balance back but
+never took the meal off the spending, while swelling money in. Keeping the
+part apart, rather than subtracting it wherever spending is summed, leaves
+one place to get it right.
+
+**Costs:** what is owed is an amount per spend, not per person; each
+payback can say who it was from. Bills, events and income are never
+split, since sharing a bill changes what it is planned at. The coach reads
+what is owed but cannot change or delete a shared spend, which is changed
+in History.

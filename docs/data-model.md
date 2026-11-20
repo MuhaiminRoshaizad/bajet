@@ -90,14 +90,15 @@ there offers an undo that writes it again.
 
 ### `entries`
 Every logged spend or income. The total balance is every account's
-`opening_balance` plus the sum of entries on or after `opening_date`.
+`opening_balance` plus the sum of entries and paybacks on or after
+`opening_date`.
 
 | Column              | Type  | Notes                                       |
 |---------------------|-------|---------------------------------------------|
 | `id`                | int   | Primary key                                 |
 | `occurred_on`       | day   |                                             |
 | `kind`              | enum  | `income` or `expense`                       |
-| `amount`            | int   | Greater than zero                           |
+| `amount`            | int   | Greater than zero; all that was paid, the part for others too |
 | `category_key`      | text  | References `categories.key`                 |
 | `account_id`        | int   | References `accounts.id`; the logger asks for it (Paid from / Paid into) once there are two accounts, starting on the latest entry's |
 | `label`             | text? | Short name, e.g. "Coffee", for item stats   |
@@ -107,7 +108,25 @@ Every logged spend or income. The total balance is every account's
 | `recurring_item_id` | int?  | The bill or income it pays or receives; logging it moves that item's `next_due` on a month, and deleting its latest payment moves it back |
 | `planned_event_id`  | int?  | The planned event it was spent on or received for; income for an event closes it (a yearly one moves on a year), and deleting the entry opens it again |
 | `planned_event_on`  | day?  | Which occurrence of that event it was for   |
+| `for_others`        | int   | Of `amount`, the part paid for other people (decision 039); 0 for almost everything. `Entry.amount` in the app is `amount` less this, the user's own part, which is all that sums of spending see |
 | `created_at`        | time  |                                             |
+
+### `paybacks`
+Money back from people the user paid for, toward an entry's `for_others`.
+Neither income nor spending, so like a transfer it is kept apart from
+`entries`: it fills the balance of the account it arrived in and nothing that
+sums entries sees it. Deleting the entry deletes its paybacks; undo puts them
+back.
+
+| Column        | Type  | Notes                                          |
+|---------------|-------|------------------------------------------------|
+| `id`          | int   | Primary key                                    |
+| `entry_id`    | int   | References `entries.id`, deleted with it       |
+| `occurred_on` | day   |                                                |
+| `account_id`  | int   | References `accounts.id`; where it arrived     |
+| `amount`      | int   | Greater than zero; never more than is still owed |
+| `payer`       | text? | Who paid it back, as the user wrote it         |
+| `created_at`  | time  |                                                |
 
 ### `weekly_rules`
 The spending rhythm, one row per weekday (1 is Monday).
@@ -264,7 +283,7 @@ A backup is one JSON file written by `DriftBackupRepository.export`:
   "settings": { "openingDate": "2026-07-01", "weeklyCap": 5000, "buffer": 50000, "totalCardColor": null, "totalCardFinish": "matte" },
   "accounts": [], "transfers": [],
   "categories": [], "weeklyRules": [], "recurringItems": [],
-  "plannedEvents": [], "goals": [], "favourites": [], "entries": [], "checkins": []
+  "plannedEvents": [], "goals": [], "favourites": [], "entries": [], "paybacks": [], "checkins": []
 }
 ```
 
@@ -289,6 +308,7 @@ by hand rather than taken from drift, so the file format only changes when
 | 11     | Categories and entries carry `spendKind`; in older files Family and its spends become `need`, everything else `want` |
 | 12     | Settings carry `needsReserve`; older files restore with 0 |
 | 13     | Weekly rules carry no `isFastingDay`, and their `dayType` is `zero` or `spend`; older files' `flex` days restore as `spend` |
+| 14     | Each entry carries `forOthers`, and `paybacks` the money back toward it; older files restore with nothing paid for others and no paybacks |
 
 A backup holds a receipt's file name, not the image itself, so a backup moved
 to another phone brings the entries but not their pictures. Restoring replaces everything in one transaction; a file that
@@ -297,7 +317,7 @@ data on the phone is left as it was.
 
 ## Migrations
 
-`schemaVersion` is 15. Any change to a table bumps it and adds a step to
+`schemaVersion` is 18. Any change to a table bumps it and adds a step to
 `AppDatabase.migration`, tested against a saved copy of the old schema
 (`test/core/fixtures/schema_v<n>.sql`) before release.
 
@@ -318,3 +338,6 @@ data on the phone is left as it was.
 | 13      | `categories.spend_kind` and `entries.spend_kind`: Family becomes `need`, every other category `want`, and each spend so far takes its category's kind. The entries column is added before the older steps run, since version 6 rebuilds that table |
 | 14      | `app_settings.needs_reserve`, 0, the monthly amount Runway sets aside for needs; added before the older steps run, as version 11's was |
 | 15      | `weekly_rules`: `flex` days become `spend`, keeping their label and amount, and the table is rebuilt without `is_fasting_day` |
+| 16      | `coach_messages.quote`, empty, the coach's words a question replies to |
+| 17      | `coach_threads.web_search`, off, whether a chat may search the web |
+| 18      | `entries.for_others`, 0, added before the older steps run as version 13's column was; `paybacks`, new and empty |
