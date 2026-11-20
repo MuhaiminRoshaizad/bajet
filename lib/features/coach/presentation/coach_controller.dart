@@ -19,6 +19,7 @@ import '../domain/coach_prompt.dart';
 import '../domain/coach_proposals.dart';
 import '../domain/coach_settings.dart';
 import '../domain/coach_thread.dart';
+import '../domain/coach_tidy.dart';
 import 'coach_avatar.dart';
 import 'coach_chats.dart';
 import 'coach_providers.dart';
@@ -215,7 +216,8 @@ class CoachController extends Notifier<CoachChat> {
       _mood(CoachMood.happy);
       // Texted as a person would: a few messages, a pause like typing before
       // each after the first. What it looked at and its cards go on the last.
-      final parts = bursts(answer.text);
+      // Anything the coach was told to avoid that slipped through is tidied first.
+      final parts = bursts(tidyReply(answer.text, emoji: emojiLimit(_face, _personality)));
       for (final (i, part) in parts.indexed) {
         final last = i == parts.length - 1;
         if (i > 0) await _typingBefore(part);

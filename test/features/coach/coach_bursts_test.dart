@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_repositories.dart';
-import 'coach_screen_test.dart' show openCoach, testKey;
+import 'coach_screen_test.dart' show ask, openCoach, testKey;
 
 void main() {
   test('a reply splits at each mark into at most three messages, dropping empty ones', () {
@@ -77,5 +77,13 @@ void main() {
     expect([for (final m in said) m.text], ["how's my week", 'wah RM172.40 already this week', 'food is RM96.10 of it', 'cook at home till sunday, ok ke?']);
     expect(find.byType(CoachChatScreen), findsOneWidget);
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue, reason: 'the box opens again once the reply is all there');
+  });
+
+  testWidgets('what slipped past the rules is tidied before the reply shows', (tester) async {
+    final world = await openCoach(tester);
+    world.coach.reply = "Great question! RM22.40 over — mostly food 😱💸\n<next>\nYou've got this! 💪";
+    await ask(tester, "how's my week");
+    expect(find.text('RM22.40 over, mostly food 😱'), findsOneWidget, reason: 'bajety keeps one emoji');
+    expect(find.textContaining("You've got this"), findsNothing);
   });
 }
