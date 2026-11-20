@@ -843,11 +843,7 @@ class _DayTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final today = ref.watch(todayProvider);
     final yearAgo = DateTime.utc(today.year - 1, today.month, today.day);
-    final label = day == today
-        ? 'Today'
-        : day == DateTime.utc(today.year, today.month, today.day - 1)
-            ? 'Yesterday'
-            : '${Dates.weekday(day)} ${Dates.short(day)}';
+    final label = Dates.near(day, today);
     return DetailTile(
       key: const ValueKey('day-tile'),
       label: 'Day',

@@ -493,8 +493,7 @@ String? _dayLabel(List<CoachMessage> messages, int i, DateTime today) {
   final day = DateTime.utc(at.year, at.month, at.day);
   final before = i == 0 ? null : messages[i - 1].sentAt;
   if (before != null && DateTime.utc(before.year, before.month, before.day) == day) return null;
-  final gap = today.difference(day).inDays;
-  return gap == 0 ? 'Today' : gap == 1 ? 'Yesterday' : '${Dates.weekday(day)} ${Dates.short(day)}';
+  return Dates.near(day, today);
 }
 
 /// A line in the chat said by nobody, such as a change of personality.

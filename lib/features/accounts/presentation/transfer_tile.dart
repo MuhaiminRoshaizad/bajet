@@ -31,11 +31,7 @@ class TransferTile extends StatelessWidget {
       null => '$from → $to',
       _ => out ? 'Moved to $to' : 'Moved from $from',
     };
-    final when = transfer.day == today
-        ? 'Today'
-        : transfer.day == DateTime.utc(today.year, today.month, today.day - 1)
-            ? 'Yesterday'
-            : '${Dates.weekday(transfer.day)} ${Dates.short(transfer.day)}';
+    final when = Dates.near(transfer.day, today);
     final detail = [when, 'Moved, not spent', if (transfer.note != null) transfer.note!].join(' · ');
     final amount = '${seenFrom == null ? '' : out ? '−' : '+'}${Money.format(transfer.amount)}';
     return Semantics(

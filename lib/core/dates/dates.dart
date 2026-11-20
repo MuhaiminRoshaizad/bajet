@@ -18,6 +18,13 @@ abstract final class Dates {
   /// `Sun 25/10`.
   static String dayShort(DateTime d) => '${weekday(d)} ${short(d)}';
 
+  /// `Today`, `Yesterday`, or else `Sun 25/10`: a logged day as lists show it.
+  static String near(DateTime day, DateTime today) => day == today
+      ? 'Today'
+      : day == DateTime.utc(today.year, today.month, today.day - 1)
+          ? 'Yesterday'
+          : dayShort(day);
+
   /// `25/10 to 28/10/2026`, or the full first day when both are the same.
   static String span(DateTime first, DateTime last) {
     if (first == last) return full(first);

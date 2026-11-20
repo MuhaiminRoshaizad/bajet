@@ -20,11 +20,7 @@ class EntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final title = entry.label ?? category?.label ?? entry.categoryKey;
-    final when = entry.day == today
-        ? 'Today'
-        : entry.day == DateTime.utc(today.year, today.month, today.day - 1)
-            ? 'Yesterday'
-            : '${Dates.weekday(entry.day)} ${Dates.short(entry.day)}';
+    final when = Dates.near(entry.day, today);
     final detail = [
       when,
       if (entry.forOthers > 0) '${Money.format(entry.paid)} paid in all' else if (entry.label != null && category != null) category!.label,

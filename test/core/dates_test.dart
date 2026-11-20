@@ -17,4 +17,11 @@ void main() {
     expect(Dates.dayFull(DateTime.utc(2027, 1, 9)), 'Sat 09/01/2027');
     expect(Dates.dayShort(DateTime.utc(2026, 10, 25)), 'Sun 25/10');
   });
+
+  test('near says Today and Yesterday, and the weekday and day before that', () {
+    final today = DateTime.utc(2026, 11, 1);
+    expect(Dates.near(today, today), 'Today');
+    expect(Dates.near(DateTime.utc(2026, 10, 31), today), 'Yesterday');
+    expect(Dates.near(DateTime.utc(2026, 10, 30), today), 'Fri 30/10');
+  });
 }
