@@ -21,6 +21,9 @@ final balanceProvider = StreamProvider<int?>((ref) => ref.watch(ledgerRepository
 /// Every entry, newest first, for History and Insights.
 final allEntriesProvider = StreamProvider<List<Entry>>((ref) => ref.watch(ledgerRepositoryProvider).watchSince(DateTime.utc(2000)));
 
+/// Money paid back toward spends partly for others, newest first.
+final paybacksProvider = StreamProvider<List<Payback>>((ref) => ref.watch(ledgerRepositoryProvider).watchPaybacks());
+
 /// Entries from the last 60 days, newest first; enough for Today, the
 /// weekly ring and recent history without loading the whole ledger.
 final recentEntriesProvider = StreamProvider<List<Entry>>((ref) {

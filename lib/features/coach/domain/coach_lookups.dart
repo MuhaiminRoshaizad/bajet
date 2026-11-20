@@ -33,6 +33,7 @@ class CoachData {
     this.checkin,
     this.checkins = const [],
     this.goals = const [],
+    this.paybacks = const [],
   });
 
   final DateTime today;
@@ -61,6 +62,9 @@ class CoachData {
 
   /// Goals still being saved for, which a what-if runs Runway over.
   final List<Goal> goals;
+
+  /// Money back toward spends partly paid for others.
+  final List<Payback> paybacks;
 }
 
 /// A read-only question the coach can ask bajet, in the shape Anthropic's
@@ -133,8 +137,9 @@ const coachLookups = [
   ),
   CoachLookup(
     'bajet_accounts',
-    'Every account the user keeps money in, such as a bank, cash or an e-wallet, with what each holds now and the total. Use it for '
-        'questions about where money is, or before suggesting a move between accounts. It takes no input.',
+    'Every account the user keeps money in, such as a bank, cash or an e-wallet, with what each holds now and the total, then money '
+        'still owed to the user by people they paid for, which is in no account yet. Use it for questions about where money is, who '
+        'still owes them, or before suggesting a move between accounts. It takes no input.',
     _noInput,
   ),
   CoachLookup(
@@ -248,6 +253,7 @@ LookupResult runLookup(String name, Map<String, Object?> input, CoachData d) {
       final lines = [
         for (final a in d.accounts) '- ${a.called} (${a.kind.name}): ${Money.format(a.balance)}',
         'Total: ${Money.format(d.accounts.fold(0, (s, a) => s + a.balance))}',
+        ..._owed(d, categories),
       ];
       return LookupResult(lines.join('\n'), 'Accounts');
     case 'bajet_plan':
@@ -289,6 +295,18 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
         Entry(:final event?) => ' · planned, spent on ${events[event.eventId] ?? 'a planned event'}',
         _ => ' · ${e.spendKind.words}',
       };
+  final back = <int, int>{};
+  for (final p in d.paybacks) {
+    back[p.entryId] = (back[p.entryId] ?? 0) + p.amount;
+  }
+  // A spend partly for others: what left, and what of their part is back.
+  String shared(Entry e) {
+    if (e.forOthers == 0) return '';
+    final left = e.forOthers - (back[e.id] ?? 0);
+    return ' · paid ${Money.format(e.paid)} in all, ${Money.format(e.forOthers)} of it for others, '
+        '${left > 0 ? '${Money.format(left)} still owed' : 'all paid back'}';
+  }
+
   final picked = [
     for (final e in d.entries)
       if (!e.day.isBefore(from) && !e.day.isAfter(to))
@@ -306,11 +324,23 @@ LookupResult _entries(Map<String, Object?> input, CoachData d, Map<String, Categ
     for (final e in picked.take(cap))
       '- ${Dates.full(e.day)} · ${categories[e.categoryKey]?.label ?? e.categoryKey}'
           '${e.label == null ? '' : ' · ${e.label}'} · ${accountName[e.accountId ?? firstAccount] ?? 'no account'} · '
-          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}${what(e)} · id ${e.id}${e.note == null ? '' : ' · note: ${e.note}'}',
+          '${e.isIncome ? '+' : '−'}${Money.format(e.amount)}${what(e)}${shared(e)} · id ${e.id}${e.note == null ? '' : ' · note: ${e.note}'}',
     if (picked.length > cap) '(${picked.length - cap} more not listed; ask for a shorter span.)',
   ];
   final filter = [if (wantCategory != null && wantCategory.isNotEmpty) input['category'], if (wantAccount != null && wantAccount.isNotEmpty) input['account'], ?spend];
   return LookupResult(lines.join('\n'), ['Entries', ...filter, Dates.span(from, to)].join(' · '));
+}
+
+/// Money still owed back for spends partly paid for others, as lines.
+List<String> _owed(CoachData d, Map<String, Category> categories) {
+  final owed = owedFrom(d.entries, d.paybacks);
+  if (owed.isEmpty) return const ['Owed to the user: nothing.'];
+  return [
+    'Owed to the user, not counted in any balance or by Runway until it comes back: ${Money.format(owed.fold(0, (s, o) => s + o.left))}.',
+    for (final o in owed)
+      '- ${Dates.full(o.entry.day)} ${o.entry.label ?? categories[o.entry.categoryKey]?.label ?? o.entry.categoryKey}: '
+          '${Money.format(o.left)} of ${Money.format(o.entry.forOthers)} still to come · id ${o.entry.id}',
+  ];
 }
 
 LookupResult _moves(Map<String, Object?> input, CoachData d) {

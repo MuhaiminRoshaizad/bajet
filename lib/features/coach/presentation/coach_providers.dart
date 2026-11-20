@@ -90,7 +90,8 @@ final coachDataProvider = Provider<CoachData?>((ref) {
   final moves = ref.watch(transfersProvider).value;
   final checkins = ref.watch(checkinsProvider).value;
   final goals = ref.watch(goalsProvider).value;
-  if (goals == null || checkins == null || favourites == null || moves == null || settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
+  final paybacks = ref.watch(paybacksProvider).value;
+  if (paybacks == null || goals == null || checkins == null || favourites == null || moves == null || settings == null || balance == null || entries == null || categories == null || accounts == null || rules == null || recurring == null || events == null || bought == null) {
     return null;
   }
   return CoachData(
@@ -111,5 +112,6 @@ final coachDataProvider = Provider<CoachData?>((ref) {
     checkin: ref.watch(weeklyCheckinProvider),
     checkins: checkins,
     goals: goals,
+    paybacks: paybacks,
   );
 });

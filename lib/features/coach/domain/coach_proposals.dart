@@ -710,6 +710,7 @@ const proposalTools = [
       final id = input['entry_id'];
       final before = d.entries.where((e) => e.id == (id is num ? id.toInt() : int.tryParse('$id'))).firstOrNull;
       if (before == null) return (no('there is no entry with id $id. Find it with bajet_entries.'), null);
+      if (before.forOthers > 0) return (no(_sharedOnSheet), null);
       final fixed = {for (final c in d.categories) if (c.isFixed) c.key};
       final wantedCategory = text('category')?.toLowerCase();
       final category = wantedCategory == null
@@ -763,6 +764,7 @@ const proposalTools = [
       final id = input['entry_id'];
       final entry = d.entries.where((e) => e.id == (id is num ? id.toInt() : int.tryParse('$id'))).firstOrNull;
       if (entry == null) return (no('there is no entry with id $id. Find it with bajet_entries.'), null);
+      if (entry.forOthers > 0) return (no(_sharedOnSheet), null);
       final bill = d.recurring.where((r) => r.id == entry.billId).firstOrNull;
       final event = d.events.where((e) => e.id == entry.event?.eventId).firstOrNull;
       final p = DeleteProposal(
@@ -778,6 +780,10 @@ const proposalTools = [
       return (no('there is no suggestion called $name.'), null);
   }
 }
+
+/// Why a spend partly for others gets no card: its split and paybacks are
+/// changed together, on the log sheet.
+const _sharedOnSheet = 'this entry was paid partly for others, so only the user can change or delete it, by tapping it in History.';
 
 /// What adding [event] does to Runway, in one line.
 String _runwayLine(CoachData d, PlannedEvent event) {

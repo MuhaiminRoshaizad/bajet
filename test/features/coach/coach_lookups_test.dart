@@ -80,6 +80,28 @@ void main() {
     expect(r.text, contains('Total: RM2,584.50'));
   });
 
+  test('a spend partly for others says what left and what is still owed, and the accounts list who owes', () {
+    final shared = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: [...entries, Entry(id: 5, day: d(10, 13), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Team lunch', accountId: 1)],
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: data.rules,
+      recurring: const [],
+      projection: null,
+      upcoming: const [],
+      paybacks: [Payback(id: 1, entryId: 5, day: d(10, 13), amount: 1750)],
+    );
+    final r = runLookup('bajet_entries', {'from': '2026-10-13', 'to': '2026-10-13'}, shared);
+    expect(r.text, contains('−RM15.00 · my call · paid RM67.50 in all, RM52.50 of it for others, RM35.00 still owed · id 5'));
+    final a = runLookup('bajet_accounts', const {}, shared);
+    expect(a.text, contains('Owed to the user, not counted in any balance or by Runway until it comes back: RM35.00.'));
+    expect(a.text, contains('- 13/10/2026 Team lunch: RM35.00 of RM52.50 still to come · id 5'));
+    expect(runLookup('bajet_accounts', const {}, data).text, contains('Owed to the user: nothing.'));
+  });
+
   test('a bad input or an unknown lookup says why, so the model can try again', () {
     expect(runLookup('bajet_entries', {'from': '2026-13-01', 'to': '2026-09-30'}, data).failed, isTrue);
     expect(runLookup('bajet_entries', {'from': '2026-09-30', 'to': '2026-09-01'}, data).failed, isTrue);

@@ -246,4 +246,24 @@ void main() {
     final (no, none) = propose('bajet_propose_delete', {'entry_id': 99}, data);
     expect((no.failed, none), (true, null));
   });
+
+  test('a spend partly for others gets no change or delete card: the user changes it in History', () {
+    final shared = CoachData(
+      today: data.today,
+      settings: data.settings,
+      balance: data.balance,
+      entries: [Entry(id: 7, day: d(10, 13), isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Team lunch', accountId: 1)],
+      categories: data.categories,
+      accounts: data.accounts,
+      rules: data.rules,
+      recurring: const [],
+      projection: null,
+      upcoming: const [],
+    );
+    for (final (name, input) in [('bajet_propose_change', {'entry_id': 7, 'amount_rm': 20}), ('bajet_propose_delete', {'entry_id': 7})]) {
+      final (r, p) = propose(name, input, shared);
+      expect((r.failed, p), (true, null), reason: name);
+      expect(r.text, contains('paid partly for others'));
+    }
+  });
 }
