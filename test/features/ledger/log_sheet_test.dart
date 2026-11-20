@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/app_harness.dart';
+import '../../helpers/fake_repositories.dart';
 
 Future<void> openLogger(WidgetTester tester) async {
   await tester.tap(find.byKey(const ValueKey('add')));
@@ -461,5 +462,72 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('kind-want')));
     await tester.pumpAndSettle();
     expect(find.text("RM5.00 over today's RM10.00 plan"), findsOneWidget);
+  });
+
+  group('paid for others', () {
+    final theirPart = find.descendant(of: find.byKey(const ValueKey('their-part')), matching: find.byType(EditableText));
+
+    Future<FakeWorld> lunch(WidgetTester tester) async {
+      final world = await pumpApp(tester, seed: (w) => w.saveRule(const WeeklyRule(weekday: 3, label: 'Weekday', type: DayType.spend, plannedSpend: 2000)));
+      await openLogger(tester);
+      await typeKeys(tester, '6750');
+      await tester.tap(find.bySemanticsLabel('Food'));
+      await tester.pumpAndSettle();
+      return world;
+    }
+
+    Future<void> someWasTheirs(WidgetTester tester) async {
+      await tester.ensureVisible(find.byKey(const ValueKey('split-theirs')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('split-theirs')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets("a bill paid partly for others counts only the user's part, and says what is owed", (tester) async {
+      final world = await lunch(tester);
+      expect(find.text("RM47.50 over today's RM20.00 plan"), findsOneWidget);
+      await someWasTheirs(tester);
+      expect(find.widgetWithText(FilledButton, 'Type their part'), findsOneWidget);
+
+      await tester.enterText(theirPart, '5250');
+      await tester.pumpAndSettle();
+      expect(find.text("Within today's plan"), findsOneWidget);
+      expect(find.text('Yours, counted as Food'), findsOneWidget);
+      expect(find.text('Owed to you until paid back'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Log RM67.50'));
+      await settleUnderBar(tester);
+      expect(find.text('Logged Food RM67.50 · RM52.50 owed to you'), findsOneWidget);
+      final e = world.entries.single;
+      expect((e.amount, e.forOthers, e.paid), (1500, 5250, 6750));
+    });
+
+    testWidgets('their part cannot be more than the bill, and Just mine logs all of it as the user\'s', (tester) async {
+      final world = await lunch(tester);
+      await someWasTheirs(tester);
+      await tester.enterText(theirPart, '7000');
+      await tester.pumpAndSettle();
+      final log = find.widgetWithText(FilledButton, 'More than the RM67.50 paid');
+      expect(tester.widget<FilledButton>(log).onPressed, isNull);
+
+      await tester.tap(find.byKey(const ValueKey('split-mine')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Log RM67.50'));
+      await settleUnderBar(tester);
+      final e = world.entries.single;
+      expect((e.amount, e.forOthers), (6750, 0));
+    });
+
+    testWidgets('income and fixed spending are never split', (tester) async {
+      await pumpApp(tester);
+      await openLogger(tester);
+      await typeKeys(tester, '6750');
+      await tester.tap(find.bySemanticsLabel('Bills'));
+      await tester.pumpAndSettle();
+      expect(find.text('Paid for others too?'), findsNothing);
+      await tester.tap(find.text('Income'));
+      await tester.pumpAndSettle();
+      expect(find.text('Paid for others too?'), findsNothing);
+    });
   });
 }

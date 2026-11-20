@@ -1,5 +1,6 @@
 import 'package:bajet/features/accounts/domain/account_models.dart';
 import 'package:bajet/features/ledger/domain/ledger_models.dart';
+import 'package:bajet/features/ledger/presentation/entry_tile.dart';
 import 'package:bajet/features/plan/domain/plan_models.dart';
 import 'package:bajet/core/navigation/routes.dart';
 import 'package:flutter/material.dart';
@@ -181,5 +182,59 @@ void main() {
     await settleUnderBar(tester);
     expect(world.transferCount, 1);
     expect(find.text('Main account → Cash'), findsOneWidget);
+  });
+
+  group('a spend paid partly for others', () {
+    void seedLunch(FakeWorld w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+      w.addPayback(entryId: 1, day: testToday, amount: 1750, payer: 'Sam');
+    }
+
+    testWidgets('shows the user\'s part, with what was paid in all', (tester) async {
+      await pumpApp(tester, seed: seedLunch);
+      await openHistory(tester);
+      final tile = find.ancestor(of: find.text('Lunch'), matching: find.byType(EntryTile));
+      expect(find.descendant(of: tile, matching: find.text('−RM15.00')), findsOneWidget);
+      expect(find.descendant(of: tile, matching: find.text('Today · RM67.50 paid in all')), findsOneWidget);
+    });
+
+    testWidgets('editing keeps the split, and their part cannot drop below what is back', (tester) async {
+      final world = await pumpApp(tester, seed: seedLunch);
+      await openHistory(tester);
+      await tester.tap(find.text('Lunch'));
+      await tester.pumpAndSettle();
+      expect(find.text('RM67.50'), findsWidgets);
+      await tester.ensureVisible(find.text('Still owed, RM17.50 already back'));
+      final theirPart = find.descendant(of: find.byKey(const ValueKey('their-part')), matching: find.byType(EditableText));
+      expect(tester.widget<EditableText>(theirPart).controller.text, '52.50');
+
+      await tester.enterText(theirPart, '1000');
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(FilledButton, 'RM17.50 is already paid back'), findsOneWidget);
+
+      await tester.enterText(theirPart, '5000');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save changes'));
+      await settleUnderBar(tester);
+      final e = world.entries.single;
+      expect((e.amount, e.forOthers), (1750, 5000));
+    });
+
+    testWidgets('deleting it says the paybacks go too, and Undo brings them back', (tester) async {
+      final world = await pumpApp(tester, seed: seedLunch);
+      await openHistory(tester);
+      await tester.drag(find.text('Lunch'), const Offset(-500, 0));
+      await settleUnderBar(tester);
+      expect(find.textContaining('Your balance will change by +RM50.00. The RM17.50 paid back toward it goes too.'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await settleUnderBar(tester);
+      expect(world.entries, isEmpty);
+      expect(world.paybacks, isEmpty);
+
+      await tester.tap(find.text('Undo'));
+      await settleUnderBar(tester);
+      expect(world.entries.single.forOthers, 5250);
+      expect(world.paybacks.single.payer, 'Sam');
+    });
   });
 }

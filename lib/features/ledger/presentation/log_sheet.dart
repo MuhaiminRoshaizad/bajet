@@ -17,7 +17,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_motion.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/validation/ringgit_cents_formatter.dart';
-import '../../../core/widgets/confirm_delete.dart';
+import '../../../core/widgets/confirm_delete.dart' show DeleteButton;
 import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/soft.dart';
 import '../../plan/domain/plan_models.dart' show PlannedEvent, RecurringItem, calendarDay;
@@ -25,6 +25,8 @@ import '../../plan/presentation/plan_providers.dart';
 import '../domain/ledger_models.dart';
 import 'category_visuals.dart';
 import 'detail_tile.dart';
+import 'entry_delete.dart';
+import 'for_others_choice.dart';
 import 'ledger_providers.dart';
 import 'receipt_widgets.dart';
 import 'spend_kind_choice.dart';
@@ -106,6 +108,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   /// is picked, and the user changes it for this spend alone.
   SpendKind _spendKind = SpendKind.want;
 
+  /// Whether some of a spend was for other people, and their part as typed.
+  bool _split = false;
+  final _theirPart = TextEditingController();
+
   /// Where the money came from or went to; null until known means the
   /// first account.
   int? _accountId;
@@ -113,17 +119,34 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   late DateTime _day = ref.read(todayProvider);
   bool _saving = false;
 
+  /// All that was paid, as typed.
   int get _amount => RinggitCentsFormatter.parse(_amountText.text);
+
+  /// The part for others, which only a day-to-day spend can have.
+  int get _forOthers => _asksKind && _split ? RinggitCentsFormatter.parse(_theirPart.text) : 0;
+
+  /// Paid back so far toward the entry being edited.
+  int get _paidBack {
+    final id = widget.editing?.id;
+    return ref.read(paybacksProvider).value?.where((p) => p.entryId == id).fold<int>(0, (s, p) => s + p.amount) ?? 0;
+  }
+
+  /// Why the part for others cannot be saved as typed, or null.
+  String? get _splitProblem => _asksKind && _split ? ForOthersChoice.problem(_forOthers, _amount, _paidBack) : null;
 
   void _setAmount(int sen) => _amountText.text = sen == 0 ? '' : '${_amountFormatter.prefix}${RinggitCentsFormatter.format(sen)}';
 
   @override
   void initState() {
     super.initState();
+    // The plan line and Log follow their part as it is typed.
+    _theirPart.addListener(_onTheirPart);
     final e = widget.editing;
     if (e != null) {
       _isIncome = e.isIncome;
-      _setAmount(e.amount);
+      _setAmount(e.paid);
+      _split = e.forOthers > 0;
+      if (_split) _theirPart.text = RinggitCentsFormatter.format(e.forOthers);
       _categoryKey = e.categoryKey;
       _label = e.label;
       _note.text = e.note ?? '';
@@ -152,6 +175,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     }
   }
 
+  void _onTheirPart() => setState(() {});
+
   SpendKind _startingKind(String categoryKey) =>
       ref.read(categoriesProvider).value?.where((c) => c.key == categoryKey).firstOrNull?.spendKind ?? SpendKind.want;
 
@@ -159,6 +184,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   void dispose() {
     _note.dispose();
     _amountText.dispose();
+    _theirPart
+      ..removeListener(_onTheirPart)
+      ..dispose();
     super.dispose();
   }
 
@@ -215,10 +243,12 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
 
   Future<void> _save() async {
     setState(() => _saving = true);
+    final forOthers = _forOthers;
     final draft = EntryDraft(
       day: _day,
       isIncome: _isIncome,
-      amount: _amount,
+      amount: _amount - forOthers,
+      forOthers: forOthers,
       categoryKey: _categoryKey!,
       label: _label,
       note: _note.text,
@@ -240,7 +270,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       final settled = _billId != null || (_isIncome && _event != null);
       final verb = settled ? (_isIncome ? 'Received' : 'Paid') : (_isIncome ? 'Added' : 'Logged');
       final asNeed = _asksKind && _spendKind == SpendKind.need ? ' as not my call' : '';
-      message = '$verb ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(draft.amount)}$asNeed';
+      final owed = forOthers > 0 ? ' · ${Money.format(forOthers)} owed to you' : '';
+      message = '$verb ${_label ?? _categoryLabel(_categoryKey!)} ${Money.format(_amount)}$asNeed$owed';
       undo = () {
         repo.delete(id);
         widget.onUndone?.call();
@@ -259,6 +290,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         accountId: draft.accountId,
         billId: before.billId,
         spendKind: draft.spendKind,
+        forOthers: draft.forOthers,
       ));
       message = 'Saved changes';
       undo = () => repo.update(before);
@@ -273,18 +305,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   Future<void> _delete() async {
     final entry = widget.editing!;
     final name = entry.label ?? _categoryLabel(entry.categoryKey);
-    final confirmed = await confirmDelete(
-      context,
-      title: 'Delete this entry?',
-      message: '$name ${Money.format(entry.amount)} on ${Dates.full(entry.day)}. '
-          'Your balance will change by ${entry.isIncome ? '−' : '+'}${Money.format(entry.amount)}.',
-    );
-    if (!confirmed || !mounted) return;
-    final repo = ref.read(ledgerRepositoryProvider);
-    await repo.delete(entry.id);
-    if (!mounted) return;
-    Navigator.of(context).pop();
-    showBar(widget.messenger, 'Deleted $name', undo: () => repo.restore(entry));
+    if (!await confirmEntryDelete(context, entry, name: name, paidBack: _paidBack) || !mounted) return;
+    final navigator = Navigator.of(context);
+    await deleteEntry(ref.read(ledgerRepositoryProvider), widget.messenger, entry, name: name);
+    navigator.pop();
   }
 
   void _manageFavourites() {
@@ -308,7 +332,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final categories = [...?ref.watch(categoriesProvider).value?.where((cat) => cat.isIncome == _isIncome && !cat.isAutomatic)];
     final favourites = ref.watch(favouritesProvider).value ?? const [];
     final accounts = ref.watch(accountsProvider).value ?? const [];
-    final ready = _amount > 0 && _categoryKey != null && !_saving;
+    // Watched so the split's check knows what is already paid back.
+    ref.watch(paybacksProvider);
+    final splitProblem = _splitProblem;
+    final ready = _amount > 0 && _categoryKey != null && splitProblem == null && !_saving;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -379,7 +406,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 const SizedBox(height: AppSpacing.s),
                 Center(
                   child: _event == null || _isIncome
-                      ? _PlanHint(amount: _amount, isIncome: _isIncome, forBill: _billId != null, categoryKey: _categoryKey, day: _day, editing: widget.editing, mine: _spendKind == SpendKind.want)
+                      ? _PlanHint(amount: math.max(0, _amount - _forOthers), isIncome: _isIncome, forBill: _billId != null, categoryKey: _categoryKey, day: _day, editing: widget.editing, mine: _spendKind == SpendKind.want)
                       : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
                 ),
               ],
@@ -457,7 +484,18 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     child: _asksKind
                         ? Padding(
                             padding: const EdgeInsets.only(top: AppSpacing.m),
-                            child: SpendKindChoice(kind: _spendKind, onSelect: (k) => setState(() => _spendKind = k)),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                              SpendKindChoice(kind: _spendKind, onSelect: (k) => setState(() => _spendKind = k)),
+                              const SizedBox(height: AppSpacing.l),
+                              ForOthersChoice(
+                                split: _split,
+                                onSplit: (v) => setState(() => _split = v),
+                                theirPart: _theirPart,
+                                amount: _amount,
+                                category: _categoryKey == null ? 'yours' : _categoryLabel(_categoryKey!),
+                                paidBack: _paidBack,
+                              ),
+                            ]),
                           )
                         : const SizedBox(width: double.infinity),
                   ),
@@ -527,9 +565,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     ? 'Type the amount'
                     : _categoryKey == null
                         ? 'Pick a category'
-                        : widget.editing != null
-                            ? 'Save changes'
-                            : '${_isIncome ? 'Add' : 'Log'} ${Money.format(_amount)}',
+                        : splitProblem ?? (widget.editing != null ? 'Save changes' : '${_isIncome ? 'Add' : 'Log'} ${Money.format(_amount)}'),
               ),
             ),
           ),

@@ -25,8 +25,13 @@ class EntryTile extends StatelessWidget {
         : entry.day == DateTime.utc(today.year, today.month, today.day - 1)
             ? 'Yesterday'
             : '${Dates.weekday(entry.day)} ${Dates.short(entry.day)}';
-    final detail = [when, if (entry.label != null && category != null) category!.label, if (entry.note != null) entry.note!].join(' · ');
-    final amount = '${entry.isIncome ? '+' : '−'}${Money.format(entry.amount)}';
+    final detail = [
+      when,
+      if (entry.forOthers > 0) '${Money.format(entry.paid)} paid in all' else if (entry.label != null && category != null) category!.label,
+      if (entry.note != null) entry.note!,
+    ].join(' · ');
+    // The user's own part; a spend all for others shows nothing as theirs.
+    final amount = '${entry.isIncome ? '+' : entry.amount == 0 ? '' : '−'}${Money.format(entry.amount)}';
     return Semantics(
       label: '$title, $amount, $detail${entry.receipt == null ? '' : ', has a receipt'}',
       button: onTap != null,

@@ -8,6 +8,7 @@ import '../../../core/money/money.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/confirm_delete.dart';
+import 'entry_delete.dart';
 import '../../../core/widgets/done_bar.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../accounts/domain/account_models.dart';
@@ -93,6 +94,8 @@ class _HistoryList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
     final names = {for (final a in ref.watch(accountsProvider).value ?? const <Account>[]) a.id: a.name};
+    // Loaded before any swipe, so deleting a shared spend says what goes with it.
+    ref.watch(paybacksProvider);
     return ListView.builder(
       padding: clearOfSystemBar(context, const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.xxl)),
       itemCount: rows.length,
@@ -110,7 +113,7 @@ class _HistoryList extends ConsumerWidget {
         _EntryRow(:final entry) => Dismissible(
             key: ValueKey('entry-${entry.id}'),
             direction: DismissDirection.endToStart,
-            confirmDismiss: (_) => _confirmDelete(context, entry),
+            confirmDismiss: (_) => _confirmDelete(context, ref, entry),
             onDismissed: (_) => _delete(context, ref, entry),
             background: Container(
               alignment: Alignment.centerRight,
@@ -153,19 +156,15 @@ class _HistoryList extends ConsumerWidget {
     return '${Dates.weekday(day)} ${Dates.full(day)}';
   }
 
-  Future<bool> _confirmDelete(BuildContext context, Entry entry) => confirmDelete(
-        context,
-        title: 'Delete this entry?',
-        message: '${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey} ${Money.format(entry.amount)} on ${Dates.full(entry.day)}. '
-            'Your balance will change by ${entry.isIncome ? '−' : '+'}${Money.format(entry.amount)}.',
-      );
+  String _name(Entry entry) => entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey;
 
-  Future<void> _delete(BuildContext context, WidgetRef ref, Entry entry) async {
-    final repo = ref.read(ledgerRepositoryProvider);
-    final messenger = ScaffoldMessenger.of(context);
-    await repo.delete(entry.id);
-    showBar(messenger, 'Deleted ${entry.label ?? categories[entry.categoryKey]?.label ?? entry.categoryKey}', undo: () => repo.restore(entry));
+  Future<bool> _confirmDelete(BuildContext context, WidgetRef ref, Entry entry) {
+    final paidBack = ref.read(paybacksProvider).value?.where((p) => p.entryId == entry.id).fold<int>(0, (s, p) => s + p.amount) ?? 0;
+    return confirmEntryDelete(context, entry, name: _name(entry), paidBack: paidBack);
   }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref, Entry entry) =>
+      deleteEntry(ref.read(ledgerRepositoryProvider), ScaffoldMessenger.of(context), entry, name: _name(entry));
 
   Future<void> _deleteTransfer(BuildContext context, WidgetRef ref, Transfer t) async {
     final repo = ref.read(accountRepositoryProvider);
