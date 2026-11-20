@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/database_provider.dart';
@@ -8,6 +10,7 @@ import '../../ledger/presentation/ledger_providers.dart';
 import '../../ledger/presentation/log_sheet.dart';
 import '../../plan/presentation/plan_providers.dart';
 import '../domain/coach_answer.dart';
+import '../domain/coach_bursts.dart';
 import '../domain/coach_client.dart';
 import '../domain/coach_guard.dart';
 import '../domain/coach_lookups.dart';
@@ -45,10 +48,13 @@ class CoachPushback {
 final coachPushbackProvider = Provider<CoachPushback>((ref) => CoachPushback());
 
 class CoachChat {
-  const CoachChat({this.messages = const [], this.sending = false, this.reading, this.error});
+  const CoachChat({this.messages = const [], this.sending = false, this.typing = false, this.reading, this.error});
 
   final List<CoachMessage> messages;
   final bool sending;
+
+  /// Between two messages of one reply: the coach is typing the next.
+  final bool typing;
 
   /// What the coach is looking at while it works on an answer, such as
   /// "This week"; null before its first lookup.
@@ -69,13 +75,16 @@ class CoachController extends Notifier<CoachChat> {
 
   final int chat;
 
-  var _sending = false;
+  var _sending = false, _typing = false;
   String? _reading, _error;
+
+  /// Ends the pause before the next message of a reply, when the user taps.
+  Completer<void>? _hurry;
 
   @override
   CoachChat build() {
     final messages = ref.watch(coachChatsProvider.select((c) => c.byId(chat)?.messages ?? const <CoachMessage>[]));
-    return CoachChat(messages: messages, sending: _sending, reading: _reading, error: _error);
+    return CoachChat(messages: messages, sending: _sending, typing: _typing, reading: _reading, error: _error);
   }
 
   /// Repeats in a row, so the coach's replies to them get firmer each time.
@@ -101,11 +110,12 @@ class CoachController extends Notifier<CoachChat> {
   /// the others look concerned.
   CoachMood get _unimpressed => _personality == CoachPersonality.seesEverything ? CoachMood.stare : CoachMood.concerned;
 
-  void _set({required bool sending, String? reading, String? error}) {
+  void _set({required bool sending, bool typing = false, String? reading, String? error}) {
     _sending = sending;
+    _typing = typing;
     _reading = reading;
     _error = error;
-    state = CoachChat(messages: state.messages, sending: sending, reading: reading, error: error);
+    state = CoachChat(messages: state.messages, sending: sending, typing: typing, reading: reading, error: error);
   }
 
   /// Asks [question]; with [quote], as a reply to those words of the coach.
@@ -203,7 +213,14 @@ class CoachController extends Notifier<CoachChat> {
         return _reply(declineLine(_personality, _pushback.declined++));
       }
       _mood(CoachMood.happy);
-      await _add(CoachMessage(fromUser: false, text: answer.text, looked: answer.looked, cards: cards, sentAt: _now, face: _face));
+      // Texted as a person would: a few messages, a pause like typing before
+      // each after the first. What it looked at and its cards go on the last.
+      final parts = bursts(answer.text);
+      for (final (i, part) in parts.indexed) {
+        final last = i == parts.length - 1;
+        if (i > 0) await _typingBefore(part);
+        await _add(CoachMessage(fromUser: false, text: part, looked: last ? answer.looked : const [], cards: last ? cards : const [], sentAt: _now, face: _face), more: !last);
+      }
     } on CoachException catch (e) {
       _fail(e.message);
     }
@@ -375,13 +392,30 @@ class CoachController extends Notifier<CoachChat> {
   }
 
   /// Adds [m] to this chat; a reply ends the wait for one, in the same
-  /// frame as it appears.
-  Future<void> _add(CoachMessage m) async {
+  /// frame as it appears, unless [more] of it is still to come.
+  Future<void> _add(CoachMessage m, {bool more = false}) async {
     if (!m.fromUser) {
-      _sending = false;
-      _reading = null;
+      _typing = false;
+      if (!more) {
+        _sending = false;
+        _reading = null;
+      }
     }
     await _chats.add(chat, m);
+  }
+
+  /// Waits as long as typing [next] would take, or until [hurry].
+  Future<void> _typingBefore(String next) async {
+    _set(sending: true, typing: true);
+    final hurry = _hurry = Completer<void>();
+    await Future.any([Future<void>.delayed(typingPause(next)), hurry.future]);
+    _hurry = null;
+  }
+
+  /// Shows the rest of a reply at once, as a tap on the chat does.
+  void hurry() {
+    final hurry = _hurry;
+    if (hurry != null && !hurry.isCompleted) hurry.complete();
   }
 
   Future<void> _reply(String text) => _add(CoachMessage(fromUser: false, text: text, sentAt: _now, face: _face));

@@ -1,3 +1,4 @@
+import 'coach_bursts.dart';
 import 'coach_client.dart';
 import 'coach_lookups.dart';
 
@@ -63,9 +64,15 @@ Future<CoachAnswer> coachAnswer({
   required LookupResult Function(String name, Map<String, Object?> input) lookup,
   bool web = false,
 }) async {
-  final messages = <Map<String, Object?>>[
-    for (final m in conversation) {'role': m.fromUser ? 'user' : 'assistant', 'content': asked(m)},
-  ];
+  final messages = <Map<String, Object?>>[];
+  for (final m in conversation) {
+    // A reply sent as several messages goes back as the one it was written.
+    if (!m.fromUser && messages.isNotEmpty && messages.last['role'] == 'assistant') {
+      messages.last['content'] = joinBursts([messages.last['content']! as String, m.text]);
+    } else {
+      messages.add({'role': m.fromUser ? 'user' : 'assistant', 'content': asked(m)});
+    }
+  }
   final looked = <String>[];
   for (var round = 0;; round++) {
     final turn = await client.send(

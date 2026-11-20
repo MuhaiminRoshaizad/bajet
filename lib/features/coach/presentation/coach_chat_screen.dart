@@ -279,7 +279,7 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                           Icon(Icons.expand_more_rounded, size: 20, color: c.muted),
                                         ],
                                       ),
-                                      Text(chat.sending ? 'thinking…' : settings.personality.label, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 12.5)),
+                                      Text(chat.typing ? 'typing…' : chat.sending ? 'thinking…' : settings.personality.label, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 12.5)),
                                     ],
                                   ),
                                 ),
@@ -300,7 +300,10 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                 ),
               ),
               Expanded(
-                child: ScrollAttention(
+                // A tap while the coach types brings the rest of its reply at once.
+                child: Listener(
+                  onPointerDown: chat.typing ? (_) => ref.read(coachControllerProvider(id).notifier).hurry() : null,
+                  child: ScrollAttention(
                   attention: _attention,
                   reach: 2,
                   child: ListView(
@@ -372,7 +375,13 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                               lit: _found.value == i,
                                               child: Opacity(opacity: _held.value == i ? 0 : 1, child: child),
                                             ),
-                                            child: _Bubble(message: m, face: settings.face, onQuote: () => _showQuoted(i)),
+                                            child: _Bubble(
+                                              message: m,
+                                              face: settings.face,
+                                              onQuote: () => _showQuoted(i),
+                                              follows: _sameSpeaker(chat.messages, i - 1, i) && _dayLabel(chat.messages, i, today) == null,
+                                              tail: !_sameSpeaker(chat.messages, i, i + 1),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -394,10 +403,11 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                               },
                             ),
                         ],
-                        if (chat.sending) _Thinking(reading: chat.reading),
+                        if (chat.sending) _Thinking(reading: chat.reading, typing: chat.typing),
                         if (chat.error != null) _Problem(text: chat.error!, onRetry: chat.canRetry ? () => ref.read(coachControllerProvider(id).notifier).retry() : null),
                       ]),
                   ),
+                ),
                 ),
               ),
               _Composer(
@@ -485,6 +495,14 @@ class _Lit extends StatelessWidget {
 /// list laid out from the bottom takes its newest row first.
 List<Widget> _topDown(bool fromBottom, List<Widget> rows) => fromBottom ? rows.reversed.toList() : rows;
 
+/// Whether messages [a] and [b] are both said, by the same side, with no
+/// cards between them.
+bool _sameSpeaker(List<CoachMessage> messages, int a, int b) {
+  if (a < 0 || b >= messages.length) return false;
+  final x = messages[a], y = messages[b];
+  return !x.note && !y.note && x.fromUser == y.fromUser && x.cards.isEmpty;
+}
+
 /// "Today", "Yesterday" or a day such as "Sat 17/10" above the first
 /// message of each day, or null when the day has not changed.
 String? _dayLabel(List<CoachMessage> messages, int i, DateTime today) {
@@ -525,9 +543,15 @@ class _DayLabel extends StatelessWidget {
 /// speaker; the coach is named at the top of the chat, so a reply needs no
 /// face beside it and takes the full width.
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, required this.face, this.onQuote});
+  const _Bubble({required this.message, required this.face, this.onQuote, this.follows = false, this.tail = true});
 
   final CoachMessage message;
+
+  /// Comes straight after a message from the same side, so it sits close.
+  final bool follows;
+
+  /// The last of its side's run, which alone has the tail.
+  final bool tail;
 
   /// A tap on the quote a reply carries, to go back to the words it quoted.
   final VoidCallback? onQuote;
@@ -560,13 +584,13 @@ class _Bubble extends StatelessWidget {
                 padding: padding,
                 decoration: BoxDecoration(
                   color: c.primary,
-                  borderRadius: const BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _round, bottomRight: _tail),
+                  borderRadius: BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _round, bottomRight: tail ? _tail : _round),
                 ),
                 child: text,
               )
             : SoftCard(
                 padding: padding,
-                borderRadius: const BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: _tail, bottomRight: _round),
+                borderRadius: BorderRadius.only(topLeft: _round, topRight: _round, bottomLeft: tail ? _tail : _round, bottomRight: _round),
                 child: message.looked.isEmpty
                     ? text
                     : Column(
@@ -589,7 +613,7 @@ class _Bubble extends StatelessWidget {
       ),
     );
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.m),
+      padding: EdgeInsets.only(top: follows ? AppSpacing.xs : AppSpacing.m),
       child: Align(alignment: mine ? Alignment.centerRight : Alignment.centerLeft, child: bubble),
     );
   }
@@ -689,11 +713,13 @@ class _ProposalCard extends StatelessWidget {
 }
 
 /// The coach at work: three dots bobbing in a reply bubble, and what it is
-/// reading once it starts looking things up.
+/// reading once it starts looking things up. Between two messages of a
+/// reply it is only typing, so the dots stand alone.
 class _Thinking extends StatefulWidget {
-  const _Thinking({required this.reading});
+  const _Thinking({required this.reading, this.typing = false});
 
   final String? reading;
+  final bool typing;
 
   @override
   State<_Thinking> createState() => _ThinkingState();
@@ -723,7 +749,9 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
     final c = context.colors;
     final reading = widget.reading;
     // No "…": the dots after the words are its ellipsis.
-    final status = reading == null
+    final status = widget.typing
+        ? ''
+        : reading == null
         ? 'Thinking'
         : reading.startsWith('A suggestion')
             ? 'Writing up a suggestion'
@@ -733,7 +761,7 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
       padding: const EdgeInsets.only(top: AppSpacing.m),
       child: Semantics(
         liveRegion: true,
-        label: 'The coach is ${status[0].toLowerCase()}${status.substring(1)}',
+        label: status.isEmpty ? 'The coach is typing' : 'The coach is ${status[0].toLowerCase()}${status.substring(1)}',
         excludeSemantics: true,
         child: Row(
           children: [
@@ -749,8 +777,10 @@ class _ThinkingState extends State<_Thinking> with SingleTickerProviderStateMixi
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(child: Text(status, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 13.5))),
-                    const SizedBox(width: AppSpacing.s),
+                    if (status.isNotEmpty) ...[
+                      Flexible(child: Text(status, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 13.5))),
+                      const SizedBox(width: AppSpacing.s),
+                    ],
                     AnimatedBuilder(
                 animation: _bob,
                 builder: (context, _) => Row(
