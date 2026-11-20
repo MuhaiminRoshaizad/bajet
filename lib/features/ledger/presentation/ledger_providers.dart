@@ -24,6 +24,14 @@ final allEntriesProvider = StreamProvider<List<Entry>>((ref) => ref.watch(ledger
 /// Money paid back toward spends partly for others, newest first.
 final paybacksProvider = StreamProvider<List<Payback>>((ref) => ref.watch(ledgerRepositoryProvider).watchPaybacks());
 
+/// Spends with a part for others still owed, oldest first; empty until
+/// both lists have loaded.
+final owedProvider = Provider<List<Owed>>((ref) {
+  final entries = ref.watch(allEntriesProvider).value;
+  final paybacks = ref.watch(paybacksProvider).value;
+  return entries == null || paybacks == null ? const [] : owedFrom(entries, paybacks);
+});
+
 /// Entries from the last 60 days, newest first; enough for Today, the
 /// weekly ring and recent history without loading the whole ledger.
 final recentEntriesProvider = StreamProvider<List<Entry>>((ref) {

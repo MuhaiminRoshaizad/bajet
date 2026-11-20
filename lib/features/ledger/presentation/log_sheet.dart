@@ -34,7 +34,7 @@ import 'spend_kind_choice.dart';
 /// What to fill the logger with when it opens from somewhere that already
 /// knows part of the entry. Nothing is saved until Log is pressed.
 class LogPrefill {
-  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label, this.accountId, this.billId, this.day, this.event, this.spendKind});
+  const LogPrefill({this.isIncome = false, this.amount, this.categoryKey, this.label, this.accountId, this.billId, this.day, this.event, this.spendKind, this.paybackFor});
 
   final bool isIncome;
   final int? amount;
@@ -52,6 +52,10 @@ class LogPrefill {
   final DateTime? day;
   final EventLink? event;
   final SpendKind? spendKind;
+
+  /// The spend partly for others this is money back toward, already
+  /// picked, as Paid back on Today does.
+  final int? paybackFor;
 }
 
 /// A new entry the log sheet saved.
@@ -108,6 +112,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
   /// is picked, and the user changes it for this spend alone.
   SpendKind _spendKind = SpendKind.want;
 
+  /// The spend partly for others this money pays back, if any: then it is
+  /// a payback, not income, and has no category.
+  int? _paybackFor;
+
   /// Whether some of a spend was for other people, and their part as typed.
   bool _split = false;
   final _theirPart = TextEditingController();
@@ -130,6 +138,20 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final id = widget.editing?.id;
     return ref.read(paybacksProvider).value?.where((p) => p.entryId == id).fold<int>(0, (s, p) => s + p.amount) ?? 0;
   }
+
+  /// What is owed for the spend being paid back, or null when nothing is.
+  Owed? get _owed => ref.read(owedProvider).where((o) => o.entry.id == _paybackFor).firstOrNull;
+
+  /// Why the payback cannot be added as typed, or null.
+  String? get _paybackProblem {
+    final owed = _owed;
+    if (owed == null) return 'Nothing is owed for this';
+    if (_amount == 0) return 'Type the amount';
+    if (_amount > owed.left) return 'Only ${Money.format(owed.left)} is still owed';
+    return null;
+  }
+
+  String _owedName(Owed o) => o.entry.label ?? _categoryLabel(o.entry.categoryKey);
 
   /// Why the part for others cannot be saved as typed, or null.
   String? get _splitProblem => _asksKind && _split ? ForOthersChoice.problem(_forOthers, _amount, _paidBack) : null;
@@ -172,6 +194,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
       _spendKind = p.spendKind ?? _spendKind;
       _day = p.day ?? _day;
       _event = p.event;
+      _paybackFor = p.paybackFor;
     }
   }
 
@@ -241,7 +264,22 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
         _label = null;
       });
 
+  /// Records money back toward the spend picked; it fills the balance but
+  /// is not income.
+  Future<void> _savePayback() async {
+    final owed = _owed!;
+    setState(() => _saving = true);
+    final repo = ref.read(ledgerRepositoryProvider);
+    final amount = _amount;
+    final id = await repo.addPayback(entryId: owed.entry.id, day: _day, amount: amount, accountId: _accountId, payer: _note.text);
+    unawaited(HapticFeedback.lightImpact());
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    showBar(widget.messenger, 'Paid back ${Money.format(amount)} for ${_owedName(owed)}', undo: () => repo.deletePayback(id));
+  }
+
   Future<void> _save() async {
+    if (_paybackFor != null) return _savePayback();
     setState(() => _saving = true);
     final forOthers = _forOthers;
     final draft = EntryDraft(
@@ -332,10 +370,13 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
     final categories = [...?ref.watch(categoriesProvider).value?.where((cat) => cat.isIncome == _isIncome && !cat.isAutomatic)];
     final favourites = ref.watch(favouritesProvider).value ?? const [];
     final accounts = ref.watch(accountsProvider).value ?? const [];
-    // Watched so the split's check knows what is already paid back.
+    // Watched so the split's check and paybacks know what is already back.
     ref.watch(paybacksProvider);
+    final owed = ref.watch(owedProvider);
+    final paying = _paybackFor != null;
     final splitProblem = _splitProblem;
-    final ready = _amount > 0 && _categoryKey != null && splitProblem == null && !_saving;
+    final paybackProblem = paying ? _paybackProblem : null;
+    final ready = !_saving && (paying ? paybackProblem == null : _amount > 0 && _categoryKey != null && splitProblem == null);
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -359,6 +400,7 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     _label = null;
                     _event = null;
                     _billId = null;
+                    _paybackFor = null;
                   }),
                 ),
                 const Spacer(),
@@ -405,7 +447,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 ),
                 const SizedBox(height: AppSpacing.s),
                 Center(
-                  child: _event == null || _isIncome
+                  child: paying
+                      ? _PaybackHint(left: _owed?.left ?? 0, amount: _amount)
+                      : _event == null || _isIncome
                       ? _PlanHint(amount: math.max(0, _amount - _forOthers), isIncome: _isIncome, forBill: _billId != null, categoryKey: _categoryKey, day: _day, editing: widget.editing, mine: _spendKind == SpendKind.want)
                       : _EventHint(link: _event!, amount: _amount, editing: widget.editing),
                 ),
@@ -418,6 +462,8 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_isIncome && widget.editing == null && owed.isNotEmpty)
+                    _OwedChoice(owed: owed, picked: _paybackFor, name: _owedName, onPick: (id) => setState(() => _paybackFor = _paybackFor == id ? null : id)),
                   if (!_isIncome && favourites.isEmpty && widget.editing == null)
                     Align(
                       alignment: Alignment.centerLeft,
@@ -457,51 +503,54 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.l),
-                  _SectionLabel('Category'),
-                  const SizedBox(height: AppSpacing.s),
-                  GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    // Room around each tile for its shadow.
-                    padding: const EdgeInsets.all(AppSpacing.xs),
-                    mainAxisSpacing: AppSpacing.m,
-                    crossAxisSpacing: AppSpacing.m,
-                    // Taller as the label's text grows, read at its own size
-                    // since large text is not scaled as much, so a small phone
-                    // with large text still fits the name under the icon.
-                    childAspectRatio: 1.1 / math.max(1.0, MediaQuery.textScalerOf(context).scale(12) / 12),
-                    children: [
-                      for (final cat in categories)
-                        _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
-                    ],
-                  ),
-                  AnimatedSize(
-                    duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.enter,
-                    curve: Curves.easeOutBack,
-                    alignment: Alignment.topCenter,
-                    child: _asksKind
-                        ? Padding(
-                            padding: const EdgeInsets.only(top: AppSpacing.m),
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                              SpendKindChoice(kind: _spendKind, onSelect: (k) => setState(() => _spendKind = k)),
-                              const SizedBox(height: AppSpacing.l),
-                              ForOthersChoice(
-                                split: _split,
-                                onSplit: (v) => setState(() => _split = v),
-                                theirPart: _theirPart,
-                                amount: _amount,
-                                category: _categoryKey == null ? 'yours' : _categoryLabel(_categoryKey!),
-                                paidBack: _paidBack,
-                              ),
-                            ]),
-                          )
-                        : const SizedBox(width: double.infinity),
-                  ),
-                  // An entry being edited keeps the bill it paid; picking
-                  // another would move a bill's month by surprise.
-                  _DueChoice(isIncome: _isIncome, day: _day, billId: _billId, event: _event, bills: widget.editing == null, onBill: _pickBill, onEvent: _pickEvent),
+                  // Money paid back has no category: it is not income.
+                  if (!paying) ...[
+                    const SizedBox(height: AppSpacing.l),
+                    _SectionLabel('Category'),
+                    const SizedBox(height: AppSpacing.s),
+                    GridView.count(
+                      crossAxisCount: 4,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      // Room around each tile for its shadow.
+                      padding: const EdgeInsets.all(AppSpacing.xs),
+                      mainAxisSpacing: AppSpacing.m,
+                      crossAxisSpacing: AppSpacing.m,
+                      // Taller as the label's text grows, read at its own size
+                      // since large text is not scaled as much, so a small phone
+                      // with large text still fits the name under the icon.
+                      childAspectRatio: 1.1 / math.max(1.0, MediaQuery.textScalerOf(context).scale(12) / 12),
+                      children: [
+                        for (final cat in categories)
+                          _CategoryTile(category: cat, selected: _categoryKey == cat.key, onTap: () => _pickCategory(cat.key)),
+                      ],
+                    ),
+                    AnimatedSize(
+                      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.enter,
+                      curve: Curves.easeOutBack,
+                      alignment: Alignment.topCenter,
+                      child: _asksKind
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: AppSpacing.m),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                                SpendKindChoice(kind: _spendKind, onSelect: (k) => setState(() => _spendKind = k)),
+                                const SizedBox(height: AppSpacing.l),
+                                ForOthersChoice(
+                                  split: _split,
+                                  onSplit: (v) => setState(() => _split = v),
+                                  theirPart: _theirPart,
+                                  amount: _amount,
+                                  category: _categoryKey == null ? 'yours' : _categoryLabel(_categoryKey!),
+                                  paidBack: _paidBack,
+                                ),
+                              ]),
+                            )
+                          : const SizedBox(width: double.infinity),
+                    ),
+                    // An entry being edited keeps the bill it paid; picking
+                    // another would move a bill's month by surprise.
+                    _DueChoice(isIncome: _isIncome, day: _day, billId: _billId, event: _event, bills: widget.editing == null, onBill: _pickBill, onEvent: _pickEvent),
+                  ],
                   // With one account there is nothing to choose.
                   if (accounts.length > 1) ...[
                     const SizedBox(height: AppSpacing.m),
@@ -518,7 +567,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     autofillHints: null,
                     controller: _note,
                     maxLength: 60,
-                    decoration: const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
+                    decoration: paying
+                        ? const InputDecoration(labelText: 'From (optional)', hintText: 'e.g. Sam', counterText: '')
+                        : const InputDecoration(labelText: 'Note (optional)', hintText: 'e.g. Lunch with team', counterText: ''),
                   ),
                   const SizedBox(height: AppSpacing.m),
                   // The day and the receipt as a matched pair; padded for
@@ -528,8 +579,10 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                     child: Row(
                       children: [
                         Expanded(child: _DayTile(day: _day, onChanged: (d) => setState(() => _day = d))),
-                        const SizedBox(width: AppSpacing.m),
-                        Expanded(child: ReceiptTile(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r))),
+                        if (!paying) ...[
+                          const SizedBox(width: AppSpacing.m),
+                          Expanded(child: ReceiptTile(receipt: _receipt, onChanged: (r) => setState(() => _receipt = r))),
+                        ],
                       ],
                     ),
                   ),
@@ -561,7 +614,9 @@ class _LogSheetState extends ConsumerState<_LogSheet> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.control + 4)),
               ),
               child: Text(
-                _amount == 0
+                paying
+                    ? paybackProblem ?? 'Add ${Money.format(_amount)} paid back'
+                    : _amount == 0
                     ? 'Type the amount'
                     : _categoryKey == null
                         ? 'Pick a category'
@@ -658,6 +713,81 @@ class _DueChoice extends ConsumerWidget {
               style: TextStyle(color: c.muted, fontSize: 12),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// In Income, the spends partly for others still owed, as tiles like the
+/// bills: picking one makes the money a payback toward it.
+class _OwedChoice extends ConsumerWidget {
+  const _OwedChoice({required this.owed, required this.picked, required this.name, required this.onPick});
+
+  final List<Owed> owed;
+  final int? picked;
+  final String Function(Owed) name;
+  final ValueChanged<int> onPick;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.colors;
+    final categories = ref.watch(categoriesProvider).value ?? const <Category>[];
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.m),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _SectionLabel('Paid back for (optional)'),
+        SizedBox(
+          height: 72,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            // Room for the tiles' shadows, which a list clips.
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.s - 2),
+            itemCount: owed.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.m),
+            itemBuilder: (_, i) {
+              final o = owed[i];
+              return _DueTile(
+                key: ValueKey('owed-${o.entry.id}'),
+                categoryKey: o.entry.categoryKey,
+                tint: categoryTint(categories.where((x) => x.key == o.entry.categoryKey).firstOrNull),
+                name: name(o),
+                detail: '${Money.format(o.left)} owed · ${Dates.short(o.entry.day)}',
+                selected: picked == o.entry.id,
+                onTap: () => onPick(o.entry.id),
+              );
+            },
+          ),
+        ),
+        if (picked != null) Text('Not income: it fills your balance back, and Insights stays as it was.', style: TextStyle(color: c.muted, fontSize: 12)),
+      ]),
+    );
+  }
+}
+
+/// In place of the day's plan for a payback: what is still owed after it.
+class _PaybackHint extends StatelessWidget {
+  const _PaybackHint({required this.left, required this.amount});
+
+  final int left, amount;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final after = left - amount;
+    final (bg, fg, text) = after < 0
+        ? (c.badSurface, c.bad, 'Only ${Money.format(left)} is still owed')
+        : after == 0
+            ? (c.goodSurface, c.good, 'All of it back')
+            : (c.goodSurface, c.good, '${Money.format(after)} still owed after this');
+    return AnimatedSwitcher(
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppMotion.fast,
+      child: Container(
+        key: ValueKey(text),
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadii.pill)),
+        child: Text(text, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w600)),
       ),
     );
   }

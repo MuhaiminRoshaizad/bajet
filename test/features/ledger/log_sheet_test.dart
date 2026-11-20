@@ -530,4 +530,60 @@ void main() {
       expect(find.text('Paid for others too?'), findsNothing);
     });
   });
+
+  group('paid back', () {
+    void seedLunch(FakeWorld w) {
+      w.add(EntryDraft(day: testToday, isIncome: false, amount: 1500, forOthers: 5250, categoryKey: 'food', label: 'Lunch'));
+      w.addPayback(entryId: 1, day: testToday, amount: 1750);
+    }
+
+    Future<void> openIncome(WidgetTester tester) async {
+      await openLogger(tester);
+      await tester.tap(find.text('Income'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('money back toward a shared spend is a payback, not income, and Undo takes it back', (tester) async {
+      final world = await pumpApp(tester, seed: seedLunch);
+      final balance = world.accounts.single.balance;
+      await openIncome(tester);
+      await tester.tap(find.byKey(const ValueKey('owed-1')));
+      await tester.pumpAndSettle();
+      expect(find.text('Category'), findsNothing, reason: 'money paid back has no category');
+      expect(find.widgetWithText(FilledButton, 'Type the amount'), findsOneWidget);
+
+      await typeKeys(tester, '2000');
+      expect(find.text('RM15.00 still owed after this'), findsOneWidget);
+      await tester.enterText(find.widgetWithText(TextField, 'From (optional)'), 'Sam');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add RM20.00 paid back'));
+      await settleUnderBar(tester);
+      expect(find.text('Paid back RM20.00 for Lunch'), findsOneWidget);
+      expect(world.entries, hasLength(1), reason: 'no income was logged');
+      expect([for (final p in world.paybacks) (p.entryId, p.amount, p.payer)], [(1, 1750, null), (1, 2000, 'Sam')]);
+      expect(world.accounts.single.balance, balance + 2000);
+
+      await tester.tap(find.text('Undo'));
+      await settleUnderBar(tester);
+      expect(world.paybacks, hasLength(1));
+    });
+
+    testWidgets('a payback cannot be more than is still owed', (tester) async {
+      await pumpApp(tester, seed: seedLunch);
+      await openIncome(tester);
+      await tester.tap(find.byKey(const ValueKey('owed-1')));
+      await tester.pumpAndSettle();
+      await typeKeys(tester, '4000');
+      expect(find.text('Only RM35.00 is still owed'), findsNWidgets(2));
+      expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Only RM35.00 is still owed')).onPressed, isNull);
+      await tester.enterText(amountField, '3500');
+      await tester.pumpAndSettle();
+      expect(find.text('All of it back'), findsOneWidget);
+    });
+
+    testWidgets('with nothing owed, Income offers no paybacks', (tester) async {
+      await pumpApp(tester);
+      await openIncome(tester);
+      expect(find.text('Paid back for (optional)'), findsNothing);
+    });
+  });
 }
