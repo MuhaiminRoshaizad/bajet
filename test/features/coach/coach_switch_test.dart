@@ -79,7 +79,7 @@ void main() {
     expect(find.descendant(of: chatPage, matching: find.text('Strict')), findsOneWidget);
 
     await ask(tester, 'And this month?');
-    expect(world.coach.lastSystem, endsWith('Your voice: ${CoachPersonality.strict.voice}'));
+    expect(world.coach.lastSystem, endsWith(CoachPersonality.strict.voice));
     expect(world.coach.requests.last.messages.toString(), isNot(contains('is now Strict')), reason: 'a note is never sent');
   });
 
@@ -94,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
     await ask(tester, 'Write me some more code');
     expect(header(tester).mood, CoachMood.stare);
-    expect(find.textContaining('😉'), findsWidgets);
+    expect(find.text("i see what you're doing. the answer is still no"), findsOneWidget);
   });
 
   testWidgets('the coach looks down at the question box while it is typed in, then up once it is sent', (tester) async {

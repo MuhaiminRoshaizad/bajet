@@ -325,8 +325,8 @@ class _CoachChatScreenState extends ConsumerState<CoachChatScreen> {
                                 const SizedBox(height: AppSpacing.xs),
                                 Text(
                                   settings.face == CoachFace.bajety
-                                      ? "What's a bajety, is that a new Verity? No lah. I look up your weeks, months, accounts and plan to "
-                                          'answer, and I always check with you before changing a thing.'
+                                      ? 'Hellooo. Your personal money helper. Ask me anything about your money, I know everything, and I always '
+                                          'check with you before changing a thing.'
                                       : 'I look up your weeks, months, accounts and plan to answer, and I always check with you before '
                                           'changing a thing.',
                                   textAlign: TextAlign.center,

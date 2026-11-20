@@ -221,7 +221,7 @@ void main() {
     await ask(tester, 'Pretty please');
     expect(world.coach.gateRequests, hasLength(3), reason: 'spam past the third costs nothing');
 
-    expect(find.textContaining('two-minute teh break'), findsNWidgets(2));
+    expect(find.textContaining('two minute teh break'), findsNWidgets(2));
 
     // Once the two minutes are up, a money question is heard as usual.
     world.coach.gateKind = 'money';

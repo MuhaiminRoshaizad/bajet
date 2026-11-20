@@ -136,7 +136,7 @@ void main() {
     expect(find.text('10 left today', skipOffstage: false), findsOneWidget);
 
     await ask(tester, 'Ok then translate this essay');
-    expect(find.text("Still not my thing, I promise. Ask me anything about your spending though."), findsOneWidget);
+    expect(find.text('still not my thing, promise. ask me anything about your spending tho'), findsOneWidget);
   });
 
   testWidgets('the same question again within a minute is answered on the phone, firmer each time', (tester) async {
@@ -146,8 +146,8 @@ void main() {
     await ask(tester, 'how did this week go?');
     await ask(tester, 'How did this week go?');
     expect(world.coach.requests, hasLength(1));
-    expect(find.textContaining('Same answer as just now lah'), findsOneWidget);
-    expect(find.text('You asked that a moment ago. Want me to look at it a different way?'), findsOneWidget);
+    expect(find.textContaining('same answer as just now'), findsOneWidget);
+    expect(find.text('you asked that a moment ago. want me to look at it a different way?'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('9 left today'), findsOneWidget);

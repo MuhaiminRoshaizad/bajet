@@ -21,8 +21,30 @@ void main() {
 
   test('a name changes nothing else: every voice is word for word as before', () {
     for (final p in CoachPersonality.values) {
-      expect(coachSystemPrompt(today, p, userName: 'Sara'), endsWith('Your voice: ${p.voice}'));
+      expect(coachSystemPrompt(today, p, userName: 'Sara'), endsWith(p.voice));
     }
+  });
+
+  test('every coach texts like a person, in Malaysian English, without the habits of a chatbot', () {
+    final prompt = coachSystemPrompt(today, CoachPersonality.friendly, face: CoachFace.aina);
+    expect(prompt, contains('Text like a person, not a report.'));
+    expect(prompt, contains('never close with "Let me know", "Hope this helps"'));
+    expect(prompt, contains('No dashes of any kind between words'));
+    expect(prompt, contains('most messages have no Malay at all'));
+    expect(prompt, contains('no "can or not", no "can?" at the end of a question'));
+    expect(prompt, contains('with a line holding only <next> between two messages'));
+  });
+
+  test('a person speaks in the personality\'s voice; bajety texts as the orb in its mood', () {
+    for (final face in [CoachFace.aina, CoachFace.hafiz, CoachFace.mei]) {
+      final prompt = coachSystemPrompt(today, CoachPersonality.strict, face: face);
+      expect(prompt, endsWith('Your voice: ${CoachPersonality.strict.voice}'));
+      expect(prompt, isNot(contains('titanium orb')));
+    }
+    final orb = coachSystemPrompt(today, CoachPersonality.strict);
+    expect(orb, contains('You are not a person but a titanium orb'));
+    expect(orb, contains('"Hellooo"'));
+    expect(orb, endsWith('Your mood: ${CoachPersonality.strict.voice}'));
   });
 
   test('the rules say what a want and a need are, name every lookup, and link logs to what they settle', () {

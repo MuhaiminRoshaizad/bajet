@@ -346,7 +346,7 @@ class CoachController extends Notifier<CoachChat> {
     await _add(CoachMessage(
       fromUser: false,
       text: face == CoachFace.bajety
-          ? 'bajety here. Is that a new Verity? No lah. I remember everything we said.'
+          ? 'Hellooo, bajety here. I remember everything we said, of course.'
           : "Hi, ${face.label} here. I've read our chat, so carry on.",
       sentAt: _now,
       face: face,

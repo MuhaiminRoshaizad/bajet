@@ -43,7 +43,11 @@ void main() {
       expect(lines[3], lines[2], reason: 'past the last line it stays there');
       expect({for (var i = 0; i < 3; i++) repeatLine(p, i)}, hasLength(3));
     }
-    expect(declineLine(CoachPersonality.seesEverything, 0), endsWith('😉'));
+    for (final p in CoachPersonality.values) {
+      final lines = [for (var i = 0; i < 3; i++) ...[declineLine(p, i), repeatLine(p, i)], pauseLine(p)];
+      expect(lines.join(' '), isNot(contains('😉')), reason: p.name);
+      expect(lines.join(' '), isNot(contains(' lah')), reason: 'no Manglish piled on');
+    }
   });
 
   test("the gatekeeper is told the app's newer topics are money", () {

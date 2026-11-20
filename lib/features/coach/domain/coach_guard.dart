@@ -112,9 +112,9 @@ String _pick(List<String> lines, int times) => lines[times.clamp(0, lines.length
 
 const _decline = {
   CoachPersonality.friendly: [
-    "Haha, that one's not my job lah. I only do your money. Want to see how your week is going?",
-    "Still not my thing, I promise. Ask me anything about your spending though.",
-    'We both know how this ends: money questions only. What is on your mind about your budget?',
+    "haha that one's not my job, i only do your money. want to see how your week's going?",
+    'still not my thing, promise. ask me anything about your spending tho',
+    "we both know how this ends, money questions only. what's on your mind about your budget?",
   ],
   CoachPersonality.strict: [
     'No. Money questions only.',
@@ -122,19 +122,19 @@ const _decline = {
     'This chat is about your money. Nothing else.',
   ],
   CoachPersonality.cheerleader: [
-    "Love the energy! But I'm your money hype person only. Shall we talk budget?",
-    'Still cheering, still money only! What can we celebrate in your spending?',
-    'You are persistent and I respect it! But it is money or nothing, champ.',
+    "love the energy! but i'm only your money hype person. budget talk?",
+    'still cheering, still money only! what can we celebrate in your spending?',
+    "you're persistent and i respect it! but it's money or nothing",
   ],
   CoachPersonality.roaster: [
-    "Bro, I'm a budget coach, not your lecturer.",
-    "Still no lah. Ask me about your duit and I'll roast it properly.",
-    'You really thought the third try would work? Money questions only, boss.',
+    "bro i'm a budget coach, not your lecturer",
+    "still no. ask me about your spending and i'll roast it properly",
+    'you really thought the third try would work? money questions only lol',
   ],
   CoachPersonality.seesEverything: [
-    'Hehe. No. I only watch your money. Only your money 😉',
-    "I see what you're doing... and the answer is still no 😉",
-    'I always see. And I always say no to that. Ask me about your money 😉',
+    'hehe. no. i only watch your money. only your money',
+    "i see what you're doing. the answer is still no",
+    'i always see. and i always say no to that. ask me about your money',
   ],
   CoachPersonality.professional: [
     'I can only help with your finances in bajet.',
@@ -144,19 +144,19 @@ const _decline = {
 };
 
 const _pause = {
-  CoachPersonality.friendly: "Okay, I'm taking a two-minute teh break. Come back with a money question after, ya?",
+  CoachPersonality.friendly: 'ok taking a two minute teh break. come back with a money question after',
   CoachPersonality.strict: 'Two minutes. Then ask about your money.',
-  CoachPersonality.cheerleader: 'Halftime! Two minutes to catch our breath, then back to your budget!',
-  CoachPersonality.roaster: "Bro, I'm muting you for two minutes. Think about your spending meanwhile.",
-  CoachPersonality.seesEverything: "I'll just sit here quietly for two minutes. Watching 😉",
+  CoachPersonality.cheerleader: 'halftime! two minutes to catch our breath, then back to your budget!',
+  CoachPersonality.roaster: "bro i'm muting you for two minutes. think about your spending meanwhile",
+  CoachPersonality.seesEverything: "i'll just sit here quietly for two minutes. watching",
   CoachPersonality.professional: 'I will be available again in two minutes for questions about your finances.',
 };
 
 const _repeat = {
   CoachPersonality.friendly: [
-    'Same answer as just now lah, it is right above. Something worrying you about it?',
-    'You asked that a moment ago. Want me to look at it a different way?',
-    'Third time! Still the same answer above. Tell me what you are trying to work out.',
+    "same answer as just now, it's right above. something worrying you about it?",
+    'you asked that a moment ago. want me to look at it a different way?',
+    "third time! still the same answer above. tell me what you're trying to work out",
   ],
   CoachPersonality.strict: [
     'You just asked that. The answer is above.',
@@ -164,19 +164,19 @@ const _repeat = {
     'Asking again changes nothing. Read the answer above.',
   ],
   CoachPersonality.cheerleader: [
-    'You have this one already, it is just above! Want to dig deeper?',
-    'Same great question, same answer above! Anything new?',
-    'Third time lucky? It is still the answer above, superstar!',
+    "you've got this one already, it's just above! want to dig deeper?",
+    'same great question, same answer above! anything new?',
+    'third time lucky? still the answer above!',
   ],
   CoachPersonality.roaster: [
-    'You literally just asked me that. Scroll up lah.',
-    "Refreshing me won't make the money grow, bro.",
-    'Okay now you are just spamming. Same answer, still above.',
+    'you literally just asked me that. scroll up',
+    "refreshing me won't make the money grow, bro",
+    "ok now you're just spamming. same answer, still above",
   ],
   CoachPersonality.seesEverything: [
-    'You asked that already. I noticed. I notice everything 😉',
-    "Twice now... I'm counting. I'm always counting 😉",
-    'Again? I remember every time you ask. Scroll up 😉',
+    'you asked that already. i noticed. i notice everything',
+    "twice now. i'm counting. i'm always counting",
+    'again? i remember every time you ask. scroll up',
   ],
   CoachPersonality.professional: [
     'That was answered just above.',
